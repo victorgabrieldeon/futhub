@@ -1,0 +1,10 @@
+node_modules/
+.turbo/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+apps/*/.wrangler/
+packages/database/drizzle/

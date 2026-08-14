@@ -1,0 +1,25 @@
+{
+  "name": "@dreamfut/database",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.39.1",
+    "pg": "8.13.3"
+  },
+  "devDependencies": {
+    "@dreamfut/config": "workspace:*",
+    "@types/node": "22.13.4",
+    "@types/pg": "8.11.11",
+    "drizzle-kit": "0.30.4"
+  }
+}
