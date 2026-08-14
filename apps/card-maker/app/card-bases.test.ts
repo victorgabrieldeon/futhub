@@ -4,6 +4,7 @@ import {
   CARD_WIDTH,
   isCreateCardBaseBody,
   isSavedBase,
+  isSavedBaseList,
 } from './card-bases.js';
 
 const validBody = {
@@ -39,7 +40,13 @@ describe('card base contract', () => {
     expect(isCreateCardBaseBody(body)).toBe(false);
   });
 
-  it('rejects malformed saved base', () => {
+  it('rejects malformed saved bases', () => {
     expect(isSavedBase({ id: 'base-1', name: 'Base' })).toBe(false);
+    expect(
+      isSavedBaseList([
+        { id: 'base-1', name: validBody.name, slug: validBody.slug, updatedAt: 'now' },
+        { id: 'base-2', name: 'Base' },
+      ]),
+    ).toBe(false);
   });
 });

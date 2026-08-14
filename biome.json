@@ -4,7 +4,14 @@
     "enabled": true
   },
   "files": {
-    "ignore": ["**/.next/**", "**/.turbo/**", "**/dist/**", "**/coverage/**", "**/drizzle/**"]
+    "ignore": [
+      "**/.next/**",
+      "**/.turbo/**",
+      "**/dist/**",
+      "**/coverage/**",
+      "**/drizzle/**",
+      ".openclaude/worktrees/**"
+    ]
   },
   "formatter": {
     "enabled": true,

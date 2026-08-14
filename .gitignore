@@ -7,4 +7,7 @@ coverage/
 !.env.example
 *.tsbuildinfo
 apps/*/.wrangler/
+.next/
+.openclaude/settings.local.json
+.openclaude/worktrees/
 packages/database/drizzle/

@@ -82,3 +82,7 @@ export function isSavedBase(value: unknown): value is SavedBase {
     typeof value.updatedAt === 'string'
   );
 }
+
+export function isSavedBaseList(value: unknown): value is SavedBase[] {
+  return Array.isArray(value) && value.every(isSavedBase);
+}

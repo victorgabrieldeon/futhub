@@ -5,11 +5,12 @@ import type { CSSProperties } from 'react';
 import {
   CARD_HEIGHT,
   CARD_WIDTH,
-  isSavedBase,
   MAX_LABEL_LENGTH,
   MAX_NAME_LENGTH,
   MAX_PLAYER_NAME_LENGTH,
   MAX_SLUG_LENGTH,
+  isSavedBase,
+  isSavedBaseList,
 } from '../card-bases.js';
 import type { CreateCardBaseBody, SavedBase } from '../card-bases.js';
 
@@ -69,11 +70,11 @@ export function CardMaker() {
         }
 
         const data: unknown = await response.json();
-        if (!Array.isArray(data)) {
+        if (!isSavedBaseList(data)) {
           throw new Error('Invalid catalog');
         }
 
-        setBases(data.filter(isSavedBase));
+        setBases(data);
       })
       .catch(() => setNotice('Catalogo indisponivel ate o banco estar conectado.'));
   }, []);
