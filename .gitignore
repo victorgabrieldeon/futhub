@@ -10,4 +10,3 @@ apps/*/.wrangler/
 .next/
 .openclaude/settings.local.json
 .openclaude/worktrees/
-packages/database/drizzle/
