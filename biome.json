@@ -10,6 +10,8 @@
       "**/dist/**",
       "**/coverage/**",
       "**/drizzle/**",
+      ".agents/**",
+      ".openclaude/skills/**",
       ".openclaude/worktrees/**"
     ]
   },

@@ -9,7 +9,8 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL is required.');
 }
 
-const pool = new Pool({ connectionString: databaseUrl });
+export const pool = new Pool({ connectionString: databaseUrl });
 
 export const db = drizzle({ client: pool, schema });
+export { and, eq, sql } from 'drizzle-orm';
 export { schema };
