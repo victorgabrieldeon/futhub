@@ -10,6 +10,7 @@
       "**/dist/**",
       "**/coverage/**",
       "**/drizzle/**",
+      "packages/api-client/src/generated.ts",
       ".agents/**",
       ".openclaude/skills/**",
       ".openclaude/worktrees/**"
@@ -28,6 +29,9 @@
     }
   },
   "javascript": {
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    },
     "formatter": {
       "quoteStyle": "single",
       "semicolons": "always",

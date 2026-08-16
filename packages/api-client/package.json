@@ -1,22 +1,25 @@
 {
-  "name": "@dreamfut/discord-bot",
+  "name": "@dreamfut/api-client",
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
+    "generate": "orval --config orval.config.ts",
     "test": "tsx --test src/*.test.ts",
     "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@dreamfut/api-client": "workspace:*",
-    "discord.js": "14.18.0"
   },
   "devDependencies": {
     "@dreamfut/config": "workspace:*",
     "@types/node": "22.13.4",
-    "tsx": "4.19.3"
+    "orval": "8.24.0",
+    "tsx": "4.19.3",
+    "typescript": "6.0.3"
   }
 }

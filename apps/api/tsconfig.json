@@ -1,7 +1,13 @@
 {
   "extends": "@dreamfut/config/tsconfig.node.json",
   "compilerOptions": {
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "outDir": "dist",
+    "plugins": [
+      { "transform": "typia/lib/transform", "enabled": false },
+      { "transform": "@nestia/core/native/transform.cjs", "validate": "validateEquals" }
+    ],
     "rootDir": "src"
   },
   "include": ["src"]

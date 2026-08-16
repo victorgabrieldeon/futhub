@@ -1,3 +1,4 @@
+import type { DiscordIdentityDto, LucroResponse } from '@dreamfut/api-client';
 import type {
   Client,
   InteractionReplyOptions,
@@ -5,12 +6,10 @@ import type {
 } from 'discord.js';
 import { Events } from 'discord.js';
 
-import type { CommandResult, DiscordIdentity } from './lucro.js';
-
 export type CommandHandler = Readonly<{
   definition: RESTPostAPIChatInputApplicationCommandsJSONBody;
-  execute(identity: DiscordIdentity, now: Date): Promise<CommandResult>;
-  format(result: CommandResult, now: Date): string;
+  execute(identity: DiscordIdentityDto): Promise<LucroResponse>;
+  format(result: LucroResponse, now: Date): string;
 }>;
 
 export type CommandHandlers = Readonly<Record<string, CommandHandler>>;
@@ -33,14 +32,11 @@ export async function dispatchInteraction(
   const handler = handlers[interaction.commandName];
   if (!handler) return;
   try {
-    const result = await handler.execute(
-      {
-        id: interaction.user.id,
-        name: interaction.user.username,
-        avatarUrl: interaction.user.avatarURL(),
-      },
-      now,
-    );
+    const result = await handler.execute({
+      id: interaction.user.id,
+      name: interaction.user.username,
+      avatarUrl: interaction.user.avatarURL(),
+    });
     await interaction.reply(handler.format(result, now));
   } catch (error) {
     logger.error(`Failed to execute /${interaction.commandName}.`, error);

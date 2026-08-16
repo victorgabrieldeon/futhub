@@ -4,20 +4,37 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "dev": "tsx watch src/server.ts",
+    "build": "ttsc -p tsconfig.build.json",
+    "dev": "ttsc -p tsconfig.build.json && concurrently -k \"ttsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"node --watch dist/server.js\"",
+    "openapi:generate": "nestia swagger && biome format --write openapi.json",
     "start": "node dist/server.js",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "ttsc --noEmit"
   },
   "dependencies": {
     "@dreamfut/database": "workspace:*",
-    "fastify": "5.2.1"
+    "@fastify/static": "10.1.2",
+    "@nestia/core": "12.1.0",
+    "@nestia/fetcher": "12.1.0",
+    "@nestia/sdk": "12.1.0",
+    "@nestjs/common": "11",
+    "@nestjs/core": "11",
+    "@nestjs/platform-fastify": "11",
+    "@nestjs/swagger": "11",
+    "fastify": "5.2.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "typia": "13.3.0"
   },
   "devDependencies": {
     "@dreamfut/config": "workspace:*",
+    "@nestjs/testing": "11",
+    "@ttsc/unplugin": "0.27.0",
     "@types/node": "22.13.4",
-    "tsx": "4.19.3",
+    "concurrently": "10.0.5",
+    "nestia": "12.1.0",
+    "testcontainers": "11",
+    "ttsc": "0.27.0",
     "vitest": "3.0.5"
   }
 }

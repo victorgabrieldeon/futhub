@@ -1,9 +1,12 @@
-import Fastify from 'fastify';
+import { readFile } from 'node:fs/promises';
 
-export function buildApp() {
-  const app = Fastify({ logger: true });
+import type { NestFastifyApplication } from '@nestjs/platform-fastify';
+import { type OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 
-  app.get('/health', () => ({ status: 'ok' }));
+export async function readOpenApiDocument(): Promise<OpenAPIObject> {
+  return JSON.parse(await readFile(new URL('../openapi.json', import.meta.url), 'utf8'));
+}
 
-  return app;
+export async function configureSwagger(app: NestFastifyApplication): Promise<void> {
+  SwaggerModule.setup('docs', app, await readOpenApiDocument());
 }
