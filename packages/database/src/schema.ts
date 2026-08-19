@@ -809,3 +809,15 @@ export const topggHistory = pgTable(
   },
   (table) => [primaryKey({ columns: [table.userId, table.votedOn] })],
 );
+
+export const gameSettings = pgTable(
+  'game_settings',
+  {
+    singleton: boolean('singleton').primaryKey().default(true),
+    maxCardsPerUser: integer('max_cards_per_user').notNull().default(100),
+  },
+  (table) => [
+    check('game_settings_singleton', sql`${table.singleton}`),
+    check('game_settings_max_cards_positive', sql`${table.maxCardsPerUser} > 0`),
+  ],
+);

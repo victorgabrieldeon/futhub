@@ -12,5 +12,5 @@ if (!databaseUrl) {
 export const pool = new pg.Pool({ connectionString: databaseUrl });
 
 export const db = drizzle({ client: pool, schema });
-export { and, eq, sql } from 'drizzle-orm';
+export { and, asc, eq, gte, inArray, lte, notInArray, sql } from 'drizzle-orm';
 export { schema };
