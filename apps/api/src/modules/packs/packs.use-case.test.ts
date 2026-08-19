@@ -10,11 +10,29 @@ describe('pack use cases', () => {
   it('delegates purchase with validated pack id', async () => {
     let received: string | undefined;
     const repository: PackRepository = {
-      buy: async (_identity, packId) => {
+      runPurchase: async (_identity, packId, operation) => {
         received = packId;
-        return { balance: 70, quantity: 2 };
+        return operation({
+          canBuy: true,
+          balance: 100,
+          ownedQuantity: 1,
+          limitPerUser: 2,
+          cardCount: 0,
+          maxCards: 10,
+          price: 30,
+          commit: async () => ({ balance: 70, quantity: 2 }),
+        });
       },
-      open: async () => [],
+      runOpen: async (_identity, _packId, operation) =>
+        operation({
+          ownedQuantity: 1,
+          cardCount: 0,
+          maxCards: 10,
+          cardsAmount: 1,
+          candidates: [{ id: 'card-1', overall: 80 }],
+          probabilities: [{ overall: 80, weight: 1 }],
+          commit: async (cards) => cards.map((card) => ({ id: 'owned-1', card })),
+        }),
     };
     await expect(new PurchasePackUseCase(repository).execute(identity, 'pack-1')).resolves.toEqual({
       balance: 70,
@@ -29,10 +47,28 @@ describe('pack use cases', () => {
   it('delegates opening with injected random source', async () => {
     let received = 0;
     const repository: PackRepository = {
-      buy: async () => ({ balance: 0, quantity: 0 }),
-      open: async (_identity, _packId, random) => {
-        received = random();
-        return [{ id: 'owned-1', card: { id: 'card-1', overall: 80 } }];
+      runPurchase: async (_identity, _packId, operation) =>
+        operation({
+          canBuy: true,
+          balance: 100,
+          ownedQuantity: 1,
+          limitPerUser: 2,
+          cardCount: 0,
+          maxCards: 10,
+          price: 30,
+          commit: async () => ({ balance: 70, quantity: 2 }),
+        }),
+      runOpen: async (_identity, _packId, operation) => {
+        received = 0.5;
+        return operation({
+          ownedQuantity: 1,
+          cardCount: 0,
+          maxCards: 10,
+          cardsAmount: 1,
+          candidates: [{ id: 'card-1', overall: 80 }],
+          probabilities: [{ overall: 80, weight: 1 }],
+          commit: async (cards) => cards.map((card) => ({ id: 'owned-1', card })),
+        });
       },
     };
     await expect(
