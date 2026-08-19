@@ -13,6 +13,7 @@
       "packages/api-client/src/generated.ts",
       ".agents/**",
       ".openclaude/skills/**",
+      "references/**",
       ".openclaude/worktrees/**"
     ]
   },
