@@ -6,6 +6,7 @@ import type {
   PackRepository,
   PurchaseTransaction,
 } from '../packs.types.js';
+import { grantCommandXp } from '../../progression/progression.js';
 
 type Database = typeof DatabaseModule;
 type DatabaseLoader = () => Promise<Database>;
@@ -96,8 +97,9 @@ export class DrizzlePackRepository implements PackRepository {
     packId: string,
     operation: (transaction: OpenTransaction) => Promise<T>,
   ): Promise<T> {
-    const { and, asc, db, eq, gte, inArray, lte, notInArray, sql, schema } =
-      await this.loadDatabase();
+    const database = await this.loadDatabase();
+    const { and, asc, db, eq, gte, inArray, lte, notInArray, sql, schema } = database;
+    const now = new Date();
     return db.transaction(async (tx) => {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtext(${`pack:${identity.id}:${packId}`}))`,
@@ -107,7 +109,7 @@ export class DrizzlePackRepository implements PackRepository {
         .values({ discordUserId: identity.id, nome: identity.name, urlAvatar: identity.avatarUrl })
         .onConflictDoUpdate({
           target: schema.users.discordUserId,
-          set: { nome: identity.name, urlAvatar: identity.avatarUrl, atualizadoEm: new Date() },
+          set: { nome: identity.name, urlAvatar: identity.avatarUrl, atualizadoEm: now },
         })
         .returning({ id: schema.users.id });
       if (!user) throw new Error('Failed to load user.');
@@ -230,6 +232,7 @@ export class DrizzlePackRepository implements PackRepository {
         cardsAmount: pack.cardsAmount,
         candidates,
         probabilities,
+        grantProgression: () => grantCommandXp(database, tx, user.id, 'open_pack', now),
         commit: async (selected) => {
           const created = await tx
             .insert(schema.userCards)

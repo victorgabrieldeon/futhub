@@ -1,5 +1,7 @@
 import type { tags } from 'typia';
 
+import type { ProgressionDto } from '../progression/progression.dto.js';
+
 export interface DiscordIdentityDto {
   id: string & tags.MinLength<1> & tags.MaxLength<80>;
   name: string & tags.MinLength<1> & tags.MaxLength<80>;
@@ -18,6 +20,7 @@ export interface LucroSuccessResponse {
   reward: LucroRewardDto;
   balance: number;
   availableAt: string & tags.Format<'date-time'>;
+  progression: ProgressionDto;
 }
 
 export interface LucroRewardDto {

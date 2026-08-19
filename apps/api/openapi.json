@@ -27,6 +27,291 @@
         "required": ["status"],
         "type": "object"
       },
+      "LeagueDivisionDto": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "minimumPoints": {
+            "type": "number"
+          },
+          "emoji": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "name", "minimumPoints", "emoji", "color", "imageUrl"],
+        "type": "object"
+      },
+      "QueueMatchedResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["matched"],
+            "title": null,
+            "description": null
+          },
+          "matchId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": ["kind", "matchId"],
+        "type": "object"
+      },
+      "QueueWaitingResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["waiting"],
+            "title": null,
+            "description": null
+          },
+          "division": {
+            "$ref": "#/components/schemas/LeagueDivisionDto"
+          }
+        },
+        "required": ["kind", "division"],
+        "type": "object"
+      },
+      "DiscordIdentityDto": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "avatarUrl": {
+            "format": "url",
+            "maxLength": 2048,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "name", "avatarUrl"],
+        "type": "object"
+      },
+      "QueueMatchedResponse.Nullable": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["matched"],
+            "title": null,
+            "description": null
+          },
+          "matchId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": ["kind", "matchId"],
+        "type": "object",
+        "nullable": true
+      },
+      "QueueWaitingResponse.Nullable": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["waiting"],
+            "title": null,
+            "description": null
+          },
+          "division": {
+            "$ref": "#/components/schemas/LeagueDivisionDto"
+          }
+        },
+        "required": ["kind", "division"],
+        "type": "object",
+        "nullable": true
+      },
+      "LeagueStatusResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "points": {
+            "type": "number"
+          },
+          "wins": {
+            "type": "number"
+          },
+          "draws": {
+            "type": "number"
+          },
+          "losses": {
+            "type": "number"
+          },
+          "division": {
+            "$ref": "#/components/schemas/LeagueDivisionDto"
+          },
+          "queue": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QueueMatchedResponse.Nullable"
+              },
+              {
+                "$ref": "#/components/schemas/QueueWaitingResponse.Nullable"
+              }
+            ]
+          }
+        },
+        "required": ["points", "wins", "draws", "losses", "division", "queue"],
+        "type": "object"
+      },
+      "MatchEventDto": {
+        "additionalProperties": false,
+        "properties": {
+          "sequence": {
+            "type": "number"
+          },
+          "minute": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["fulltime", "goal", "kickoff", "red_card", "yellow_card"]
+          },
+          "playerUserCardId": {
+            "format": "uuid",
+            "type": "string",
+            "nullable": true
+          },
+          "assistUserCardId": {
+            "format": "uuid",
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string"
+          },
+          "homeGoals": {
+            "type": "number"
+          },
+          "awayGoals": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "sequence",
+          "minute",
+          "type",
+          "playerUserCardId",
+          "assistUserCardId",
+          "description",
+          "homeGoals",
+          "awayGoals"
+        ],
+        "type": "object"
+      },
+      "MatchResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "homeUserId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "awayUserId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "homeGoals": {
+            "type": "number"
+          },
+          "awayGoals": {
+            "type": "number"
+          },
+          "completedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/MatchEventDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "homeUserId",
+          "awayUserId",
+          "homeGoals",
+          "awayGoals",
+          "completedAt",
+          "events"
+        ],
+        "type": "object"
+      },
+      "Observable__type": {
+        "additionalProperties": false,
+        "description": "A representation of any set of values over any amount of time. This is the most basic building block\nof RxJS.",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/Observableany",
+            "deprecated": true
+          },
+          "operator": {
+            "$ref": "#/components/schemas/Operatorany__type",
+            "deprecated": true
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "Observableany": {
+        "additionalProperties": false,
+        "description": "A representation of any set of values over any amount of time. This is the most basic building block\nof RxJS.",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/Observableany",
+            "deprecated": true
+          },
+          "operator": {
+            "$ref": "#/components/schemas/Operatoranyany",
+            "deprecated": true
+          }
+        },
+        "required": [],
+        "type": "object"
+      },
+      "Operatorany__type": {
+        "additionalProperties": false,
+        "description": "*",
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
+      "Operatoranyany": {
+        "additionalProperties": false,
+        "description": "*",
+        "properties": {},
+        "required": [],
+        "type": "object"
+      },
       "LucroCooldownResponse": {
         "additionalProperties": false,
         "properties": {
@@ -81,12 +366,69 @@
           "availableAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "progression": {
+            "$ref": "#/components/schemas/ProgressionDto"
           }
         },
-        "required": ["kind", "reward", "balance", "availableAt"],
+        "required": ["kind", "reward", "balance", "availableAt", "progression"],
         "type": "object"
       },
-      "DiscordIdentityDto": {
+      "ProgressionDto": {
+        "additionalProperties": false,
+        "properties": {
+          "gainedXp": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "level": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "xp": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "nextLevelXp": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "rewards": {
+            "items": {
+              "$ref": "#/components/schemas/ProgressionRewardDto"
+            },
+            "type": "array",
+            "x-readonly-array": true
+          }
+        },
+        "required": ["gainedXp", "level", "xp", "nextLevelXp", "rewards"],
+        "type": "object"
+      },
+      "ProgressionRewardDto": {
+        "additionalProperties": false,
+        "properties": {
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["balance", "card", "field", "pack"]
+          },
+          "quantity": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "resourceId": {
+            "format": "uuid",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["itemId", "type", "quantity", "resourceId"],
+        "type": "object"
+      },
+      "DiscordIdentityDto.o1": {
         "additionalProperties": false,
         "properties": {
           "id": {
@@ -180,9 +522,12 @@
               "type": "object"
             },
             "type": "array"
+          },
+          "progression": {
+            "$ref": "#/components/schemas/ProgressionDto"
           }
         },
-        "required": ["cards"],
+        "required": ["cards", "progression"],
         "type": "object"
       }
     }
@@ -209,6 +554,179 @@
         "x-samchon-controller": "HealthController"
       }
     },
+    "/v1/ranked/queue": {
+      "post": {
+        "tags": [],
+        "operationId": "joinRankedQueue",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscordIdentityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/QueueMatchedResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/QueueWaitingResponse"
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "kind",
+                    "mapping": {
+                      "matched": "#/components/schemas/QueueMatchedResponse",
+                      "waiting": "#/components/schemas/QueueWaitingResponse"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "ranked", "queue", "join"],
+        "x-samchon-controller": "LeagueController"
+      }
+    },
+    "/v1/ranked/status/{discordUserId}": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "discordUserId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/QueueMatchedResponse.Nullable"
+                    },
+                    {
+                      "$ref": "#/components/schemas/QueueWaitingResponse.Nullable"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "ranked", "status"],
+        "x-samchon-controller": "LeagueController"
+      }
+    },
+    "/v1/league/{discordUserId}": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "discordUserId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeagueStatusResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "league", "standings"],
+        "x-samchon-controller": "LeagueController"
+      }
+    },
+    "/v1/matches/{matchId}": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "matchId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "matches", "match"],
+        "x-samchon-controller": "LeagueController"
+      }
+    },
+    "/v1/matches/{matchId}/events": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "matchId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Observable__type"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "matches", "events"],
+        "x-samchon-controller": "LeagueController"
+      }
+    },
     "/v1/commands/lucro": {
       "post": {
         "summary": "Executa o comando lucro",
@@ -221,7 +739,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DiscordIdentityDto"
+                "$ref": "#/components/schemas/DiscordIdentityDto.o1"
               }
             }
           },

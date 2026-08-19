@@ -1,7 +1,13 @@
+import type { ProgressionSummary } from '../progression/progression.js';
+
 export type DiscordIdentity = Readonly<{ id: string; name: string; avatarUrl: string | null }>;
 export type PackCard = Readonly<{ id: string; overall: number }>;
 export type UserCard = Readonly<{ id: string; card: PackCard }>;
 export type PurchaseResult = Readonly<{ balance: number; quantity: number }>;
+export type OpenPackResult = Readonly<{
+  cards: readonly UserCard[];
+  progression: ProgressionSummary;
+}>;
 
 export type PurchaseTransaction = Readonly<{
   canBuy: boolean;
@@ -21,6 +27,7 @@ export type OpenTransaction = Readonly<{
   candidates: readonly PackCard[];
   probabilities: readonly { overall: number; weight: number }[];
   commit(cards: readonly PackCard[]): Promise<readonly UserCard[]>;
+  grantProgression(): Promise<ProgressionSummary>;
 }>;
 
 export abstract class PackRepository {

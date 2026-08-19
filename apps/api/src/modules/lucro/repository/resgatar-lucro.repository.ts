@@ -4,6 +4,7 @@ import type {
   DiscordIdentity,
   ResgatarLucroRepository,
 } from '../use-cases/resgatar-lucro/resgatar-lucro.types.js';
+import { grantCommandXp } from '../../progression/progression.js';
 
 type Database = typeof import('@dreamfut/database');
 type DatabaseLoader = () => Promise<Database>;
@@ -17,7 +18,8 @@ export class DrizzleResgatarLucroRepository implements ResgatarLucroRepository {
     now: Date,
     operation: (transaction: CommandTransaction, persistedCommand: CommandConfig) => Promise<T>,
   ): Promise<T> {
-    const { and, db, eq, schema, sql } = await this.loadDatabase();
+    const database = await this.loadDatabase();
+    const { and, db, eq, schema, sql } = database;
     return db.transaction(async (tx) => {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtext(${`${command.name}:${identity.id}`}))`,
@@ -84,6 +86,7 @@ export class DrizzleResgatarLucroRepository implements ResgatarLucroRepository {
             if (!credited) throw new Error('Failed to credit user.');
             return credited.balance;
           },
+          grantProgression: () => grantCommandXp(database, tx, user.id, 'lucro', now),
           setAvailableAt: async (availableAt) => {
             await tx
               .insert(schema.userCooldowns)

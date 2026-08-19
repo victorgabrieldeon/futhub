@@ -1,5 +1,7 @@
 import type { tags } from 'typia';
 
+import type { ProgressionDto } from '../progression/progression.dto.js';
+
 export interface PackActionRequest {
   identity: {
     id: string & tags.MinLength<1> & tags.MaxLength<80>;
@@ -14,4 +16,5 @@ export interface PurchasePackResponse {
 }
 export interface OpenPackResponse {
   cards: { id: string; card: { id: string; overall: number } }[];
+  progression: ProgressionDto;
 }

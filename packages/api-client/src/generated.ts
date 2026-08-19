@@ -43,6 +43,31 @@ export interface LucroRewardDto {
   readonly message: string;
 }
 
+export type ProgressionRewardDtoType =
+  (typeof ProgressionRewardDtoType)[keyof typeof ProgressionRewardDtoType];
+
+export const ProgressionRewardDtoType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export interface ProgressionRewardDto {
+  itemId: string;
+  type: ProgressionRewardDtoType;
+  quantity: number;
+  resourceId: string | null;
+}
+
+export interface ProgressionDto {
+  gainedXp: number;
+  level: number;
+  xp: number;
+  nextLevelXp: number;
+  rewards: ProgressionRewardDto[];
+}
+
 /**
  * Resultado com recompensa concedida.
  */
@@ -59,6 +84,7 @@ export interface LucroSuccessResponse {
   reward: LucroRewardDto;
   balance: number;
   availableAt: string;
+  progression: ProgressionDto;
 }
 
 export interface DiscordIdentityDto {
@@ -118,6 +144,7 @@ export type OpenPackResponseCardsItem = {
 
 export interface OpenPackResponse {
   cards: OpenPackResponseCardsItem[];
+  progression: ProgressionDto;
 }
 
 export const getHealthControllerHealthUrl = () => {

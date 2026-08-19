@@ -57,6 +57,8 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   if (!database) throw new Error('Database was not initialized.');
+  await database.db.delete(database.schema.levelRewards);
+  await database.db.delete(database.schema.items);
   await database.db.delete(database.schema.userCooldowns);
   await database.db.delete(database.schema.commandRewards);
   await database.db.delete(database.schema.commandConfigs);
@@ -83,7 +85,41 @@ describe('DrizzleResgatarLucroRepository', () => {
       kind: 'success',
       reward: { value: 50, weight: 1, message: 'Primeiro' },
       balance: 50,
+      progression: { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] },
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
+    });
+  });
+
+  it('grants a configured level reward atomically', async () => {
+    if (!database || !repository) throw new Error('Repository was not initialized.');
+    const [item] = await database.db
+      .insert(database.schema.items)
+      .values({ type: 'balance', amount: 25 })
+      .returning({ id: database.schema.items.id });
+    if (!item) throw new Error('Failed to create reward item.');
+    await database.db.insert(database.schema.levelRewards).values({ level: 1, itemId: item.id });
+    await database.db.insert(database.schema.users).values({
+      discordUserId: identity.id,
+      nome: identity.name,
+      urlAvatar: identity.avatarUrl,
+      xp: 90,
+      level: 1,
+    });
+
+    await expect(
+      useCase(repository).execute(identity, command, new Date('2026-08-15T12:00:00.000Z'), 0),
+    ).resolves.toEqual({
+      kind: 'success',
+      reward: { value: 50, weight: 1, message: 'Primeiro' },
+      balance: 75,
+      availableAt: new Date('2026-08-15T12:00:10.000Z'),
+      progression: {
+        gainedXp: 10,
+        level: 2,
+        xp: 0,
+        nextLevelXp: 250,
+        rewards: [{ itemId: item.id, type: 'balance', quantity: 25, resourceId: null }],
+      },
     });
   });
 

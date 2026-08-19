@@ -36,6 +36,7 @@ export class PacksController {
     @Param('packId') packId: string,
     @TypedBody() request: PackActionRequest,
   ): Promise<OpenPackResponse> {
-    return { cards: [...(await this.open.execute(request.identity, packId))] };
+    const result = await this.open.execute(request.identity, packId);
+    return { cards: [...result.cards], progression: result.progression };
   }
 }

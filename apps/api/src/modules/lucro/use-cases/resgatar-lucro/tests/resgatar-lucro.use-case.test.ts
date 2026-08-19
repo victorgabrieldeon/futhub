@@ -15,6 +15,7 @@ const rewards = [
 ];
 const command: CommandConfig = { name: 'ganho', cooldownSeconds: 10, rewards };
 const identity = { id: '1', name: 'Nome', avatarUrl: 'https://example.com/avatar.png' };
+const progression = { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] };
 
 function memoryRepository(): ResgatarLucroRepository {
   let balance = 0;
@@ -27,6 +28,7 @@ function memoryRepository(): ResgatarLucroRepository {
           balance += value;
           return balance;
         },
+        grantProgression: async () => progression,
         setAvailableAt: async (value) => {
           availableAt = value;
         },
@@ -74,6 +76,7 @@ describe('ResgatarLucroUseCase.execute', () => {
       reward: { value: 50, weight: 1, message: 'Primeiro' },
       balance: 50,
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
+      progression,
     });
   });
 
@@ -112,6 +115,7 @@ describe('ResgatarLucroUseCase.execute', () => {
       reward: { value: 100, weight: 1, message: 'Segundo' },
       balance: 150,
       availableAt: new Date('2026-08-15T12:00:20.000Z'),
+      progression,
     });
   });
 });

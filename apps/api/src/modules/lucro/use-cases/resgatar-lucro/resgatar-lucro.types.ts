@@ -1,3 +1,5 @@
+import type { ProgressionSummary } from '../../../progression/progression.js';
+
 export type Reward = Readonly<{ value: number; weight: number; message: string }>;
 
 export type CommandConfig = Readonly<{
@@ -13,12 +15,19 @@ export type DiscordIdentity = Readonly<{
 }>;
 
 export type CommandResult =
-  | Readonly<{ kind: 'success'; reward: Reward; balance: number; availableAt: Date }>
+  | Readonly<{
+      kind: 'success';
+      reward: Reward;
+      balance: number;
+      availableAt: Date;
+      progression: ProgressionSummary;
+    }>
   | Readonly<{ kind: 'cooldown'; availableAt: Date }>;
 
 export type CommandTransaction = Readonly<{
   getAvailableAt(): Promise<Date | null>;
   credit(value: number): Promise<number>;
+  grantProgression(): Promise<ProgressionSummary>;
   setAvailableAt(availableAt: Date): Promise<void>;
 }>;
 

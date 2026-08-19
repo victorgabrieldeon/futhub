@@ -94,6 +94,7 @@ test('resgata lucro once and enters cooldown', async () => {
   expect(success.statusCode).toBe(200);
   expect(successBody).toMatchObject({
     kind: 'success',
+    progression: { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] },
   });
 
   const cooldown = await request();

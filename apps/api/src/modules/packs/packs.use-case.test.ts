@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { PackRepository } from './packs.types.js';
-import { selectPackCards } from './use-cases/open-pack/select-pack-cards.js';
 import { OpenPackUseCase, PurchasePackUseCase } from './packs.use-case.js';
+import { selectPackCards } from './use-cases/open-pack/select-pack-cards.js';
 
 const identity = { id: 'discord-1', name: 'Jogador', avatarUrl: null };
+const progression = { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] };
 
 describe('pack use cases', () => {
   it('delegates purchase with validated pack id', async () => {
@@ -32,6 +33,7 @@ describe('pack use cases', () => {
           candidates: [{ id: 'card-1', overall: 80 }],
           probabilities: [{ overall: 80, weight: 1 }],
           commit: async (cards) => cards.map((card) => ({ id: 'owned-1', card })),
+          grantProgression: async () => progression,
         }),
     };
     await expect(new PurchasePackUseCase(repository).execute(identity, 'pack-1')).resolves.toEqual({
@@ -68,12 +70,16 @@ describe('pack use cases', () => {
           candidates: [{ id: 'card-1', overall: 80 }],
           probabilities: [{ overall: 80, weight: 1 }],
           commit: async (cards) => cards.map((card) => ({ id: 'owned-1', card })),
+          grantProgression: async () => progression,
         });
       },
     };
     await expect(
       new OpenPackUseCase(repository, () => 0.5).execute(identity, 'pack-1'),
-    ).resolves.toEqual([{ id: 'owned-1', card: { id: 'card-1', overall: 80 } }]);
+    ).resolves.toEqual({
+      cards: [{ id: 'owned-1', card: { id: 'card-1', overall: 80 } }],
+      progression,
+    });
     expect(received).toBe(0.5);
   });
 });

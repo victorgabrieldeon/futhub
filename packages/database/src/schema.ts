@@ -95,7 +95,23 @@ export const cardPosition = pgEnum('card_position', [
   'CA',
 ]);
 
-export const cardClaimOrigin = pgEnum('card_claim_origin', ['pack', 'redeem', 'mission', 'hire']);
+export const cardClaimOrigin = pgEnum('card_claim_origin', [
+  'pack',
+  'redeem',
+  'mission',
+  'hire',
+  'reward',
+]);
+
+export const rankedQueueStatus = pgEnum('ranked_queue_status', ['waiting', 'matched']);
+
+export const matchEventType = pgEnum('match_event_type', [
+  'kickoff',
+  'goal',
+  'yellow_card',
+  'red_card',
+  'fulltime',
+]);
 
 export const localizedTexts = pgTable('localized_texts', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -331,6 +347,30 @@ export const userFormations = pgTable('user_formations', {
     .notNull()
     .references(() => formations.id, { onDelete: 'restrict' }),
 });
+
+export const userLeagueStandings = pgTable(
+  'user_league_standings',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    divisionId: uuid('division_id')
+      .notNull()
+      .references(() => divisions.id, { onDelete: 'restrict' }),
+    points: integer('points').notNull().default(0),
+    wins: integer('wins').notNull().default(0),
+    draws: integer('draws').notNull().default(0),
+    losses: integer('losses').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check(
+      'user_league_standings_nonnegative',
+      sql`${table.points} >= 0 and ${table.wins} >= 0 and ${table.draws} >= 0 and ${table.losses} >= 0`,
+    ),
+  ],
+);
 
 export const soccerFields = pgTable('soccer_fields', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -741,9 +781,73 @@ export const rooms = pgTable(
     awayUserId: uuid('away_user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    seed: integer('seed').notNull().default(1),
+    homeGoals: integer('home_goals').notNull().default(0),
+    awayGoals: integer('away_goals').notNull().default(0),
+    completedAt: timestamp('completed_at', { withTimezone: true }).defaultNow().notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (table) => [check('rooms_distinct_users', sql`${table.homeUserId} <> ${table.awayUserId}`)],
+  (table) => [
+    check('rooms_distinct_users', sql`${table.homeUserId} <> ${table.awayUserId}`),
+    check('rooms_seed_positive', sql`${table.seed} > 0`),
+    check('rooms_scores_nonnegative', sql`${table.homeGoals} >= 0 and ${table.awayGoals} >= 0`),
+  ],
+);
+
+export const roomMatchEvents = pgTable(
+  'room_match_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    roomId: uuid('room_id')
+      .notNull()
+      .references(() => rooms.id, { onDelete: 'cascade' }),
+    sequence: integer('sequence').notNull(),
+    minute: integer('minute').notNull(),
+    type: matchEventType('type').notNull(),
+    playerUserCardId: uuid('player_user_card_id').references(() => userCards.id, {
+      onDelete: 'restrict',
+    }),
+    assistUserCardId: uuid('assist_user_card_id').references(() => userCards.id, {
+      onDelete: 'restrict',
+    }),
+    description: text('description').notNull(),
+    homeGoals: integer('home_goals').notNull(),
+    awayGoals: integer('away_goals').notNull(),
+  },
+  (table) => [
+    uniqueIndex('room_match_events_room_sequence_unique').on(table.roomId, table.sequence),
+    check('room_match_events_sequence_positive', sql`${table.sequence} > 0`),
+    check('room_match_events_minute_range', sql`${table.minute} between 0 and 90`),
+    check(
+      'room_match_events_scores_nonnegative',
+      sql`${table.homeGoals} >= 0 and ${table.awayGoals} >= 0`,
+    ),
+  ],
+);
+
+export const rankedQueues = pgTable(
+  'ranked_queue',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    divisionId: uuid('division_id')
+      .notNull()
+      .references(() => divisions.id, { onDelete: 'restrict' }),
+    status: rankedQueueStatus('status').notNull(),
+    roomId: uuid('room_id').references(() => rooms.id, { onDelete: 'set null' }),
+    queuedAt: timestamp('queued_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check(
+      'ranked_queue_status_room',
+      sql`(${table.status} = 'waiting' and ${table.roomId} is null) or (${table.status} = 'matched' and ${table.roomId} is not null)`,
+    ),
+    uniqueIndex('ranked_queue_waiting_division_user_unique')
+      .on(table.divisionId, table.userId)
+      .where(sql`${table.status} = 'waiting'`),
+  ],
 );
 export const profitConfigs = pgTable(
   'profit_configs',

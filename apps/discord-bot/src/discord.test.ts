@@ -52,6 +52,7 @@ test('dispatch formata sucesso retornado pela API', async () => {
         reward: { value: 50, weight: 50, message: 'Lucro básico: +50' },
         balance: 450,
         availableAt: '2026-08-15T12:10:00.000Z',
+        progression: { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] },
       }),
       format: formatCommandResult,
     },
@@ -60,7 +61,7 @@ test('dispatch formata sucesso retornado pela API', async () => {
   await dispatchInteraction(fake.value, handlers, new Date('2026-08-15T12:00:00.000Z'));
 
   assert.deepEqual(fake.replies, [
-    'Lucro básico: +50 (+50). Saldo: 450. Próximo lucro: <t:1786795800:F>.',
+    'Lucro básico: +50 (+50). Saldo: 450. XP: +10 (10/100). Nível: 1. Próximo lucro: <t:1786795800:F>.',
   ]);
 });
 

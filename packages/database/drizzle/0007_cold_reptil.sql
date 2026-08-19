@@ -1,0 +1,1 @@
+ALTER TYPE "public"."card_claim_origin" ADD VALUE 'reward';
