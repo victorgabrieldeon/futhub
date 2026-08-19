@@ -15,6 +15,27 @@
       "when": 1786812682989,
       "tag": "0001_stiff_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787178770009,
+      "tag": "0002_light_raza",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787178845022,
+      "tag": "0003_sour_medusa",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787178905168,
+      "tag": "0004_gray_roland_deschain",
+      "breakpoints": true
     }
   ]
 }
