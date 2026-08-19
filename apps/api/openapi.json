@@ -108,6 +108,82 @@
         },
         "required": ["id", "name", "avatarUrl"],
         "type": "object"
+      },
+      "PurchasePackResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "balance": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        },
+        "required": ["balance", "quantity"],
+        "type": "object"
+      },
+      "PackActionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "identity": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              "name": {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              "avatarUrl": {
+                "format": "url",
+                "maxLength": 2048,
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": ["id", "name", "avatarUrl"],
+            "type": "object"
+          }
+        },
+        "required": ["identity"],
+        "type": "object"
+      },
+      "OpenPackResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "cards": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "card": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "overall": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["id", "overall"],
+                  "type": "object"
+                }
+              },
+              "required": ["id", "card"],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["cards"],
+        "type": "object"
       }
     }
   },
@@ -184,6 +260,96 @@
         ],
         "x-samchon-accessor": ["v1", "commands", "lucro", "execute"],
         "x-samchon-controller": "LucroController"
+      }
+    },
+    "/v1/packs/{packId}/purchase": {
+      "post": {
+        "tags": [],
+        "operationId": "purchasePack",
+        "parameters": [
+          {
+            "name": "packId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchasePackResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "packs", "purchase", "purchasePack"],
+        "x-samchon-controller": "PacksController"
+      }
+    },
+    "/v1/packs/{packId}/open": {
+      "post": {
+        "tags": [],
+        "operationId": "openPack",
+        "parameters": [
+          {
+            "name": "packId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenPackResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "packs", "open", "openPack"],
+        "x-samchon-controller": "PacksController"
       }
     }
   },

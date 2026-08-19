@@ -79,6 +79,47 @@ export interface DiscordIdentityDto {
   avatarUrl: string | null;
 }
 
+export interface PurchasePackResponse {
+  balance: number;
+  quantity: number;
+}
+
+export type PackActionRequestIdentity = {
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  id: string;
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  name: string;
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  avatarUrl: string | null;
+};
+
+export interface PackActionRequest {
+  identity: PackActionRequestIdentity;
+}
+
+export type OpenPackResponseCardsItemCard = {
+  id: string;
+  overall: number;
+};
+
+export type OpenPackResponseCardsItem = {
+  id: string;
+  card: OpenPackResponseCardsItemCard;
+};
+
+export interface OpenPackResponse {
+  cards: OpenPackResponseCardsItem[];
+}
+
 export const getHealthControllerHealthUrl = () => {
   return `/health`;
 };
@@ -113,4 +154,38 @@ export const executeLucro = async (
       body: JSON.stringify(discordIdentityDto),
     },
   );
+};
+
+export const getPurchasePackUrl = (packId: string) => {
+  return `/v1/packs/${packId}/purchase`;
+};
+
+export const purchasePack = async (
+  packId: string,
+  packActionRequest: PackActionRequest,
+  options?: Parameters<typeof request>[1],
+): Promise<PurchasePackResponse> => {
+  return request<PurchasePackResponse>(getPurchasePackUrl(packId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(packActionRequest),
+  });
+};
+
+export const getOpenPackUrl = (packId: string) => {
+  return `/v1/packs/${packId}/open`;
+};
+
+export const openPack = async (
+  packId: string,
+  packActionRequest: PackActionRequest,
+  options?: Parameters<typeof request>[1],
+): Promise<OpenPackResponse> => {
+  return request<OpenPackResponse>(getOpenPackUrl(packId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(packActionRequest),
+  });
 };
