@@ -73,9 +73,10 @@ Respostas de sucesso de `/lucro` e abertura de Pack incluem `progression`:
   xp: number;
   nextLevelXp: number;
   rewards: readonly {
+    itemId: string;
     type: 'card' | 'pack' | 'balance' | 'field';
     quantity: number;
-    resourceId: string;
+    resourceId: string | null;
   }[];
 }
 ```
