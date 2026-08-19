@@ -16,6 +16,12 @@
 - Current package scripts do not load `.env`; provide required variables in the process environment. Local PostgreSQL is `docker compose up -d`; its connection URL is documented in `.env.example`.
 - Define schema in `packages/database/src/schema.ts`; generate then apply migrations with `pnpm --filter @dreamfut/database db:generate` and `pnpm --filter @dreamfut/database db:migrate`. Both require `DATABASE_URL` and write migrations to `packages/database/drizzle`.
 
+## API Module Structure
+
+- Keep each product module under `apps/api/src/modules/<module>/` with `*.controller.ts`, `*.dto.ts`, `*.module.ts`, `repository/`, and `use-cases/<use-case>/`.
+- Controllers only validate and adapt HTTP input/output. Use cases own domain rules, decisions, and orchestration. Drizzle repositories only acquire transaction/locking context and read or write persistence requested through a use-case port.
+- Keep use cases framework-free and test their observable rules without Nest or PostgreSQL. Add repository integration tests for SQL, locking, and transaction rollback.
+
 ## Repository Rules
 
 - Do not use `any`, type assertions, or non-null assertions without concrete proof.

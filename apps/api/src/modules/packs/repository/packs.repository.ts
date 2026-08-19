@@ -1,22 +1,11 @@
 import type * as DatabaseModule from '@dreamfut/database';
 
-import type { DiscordIdentity, PackRepository, PurchaseResult, UserCard } from './packs.types.js';
+import { selectPackCards } from '../use-cases/open-pack/select-pack-cards.js';
+
+import type { DiscordIdentity, PackRepository, PurchaseResult, UserCard } from '../packs.types.js';
 
 type Database = typeof DatabaseModule;
 type DatabaseLoader = () => Promise<Database>;
-
-function pickWeighted<T extends { weight: number }>(items: readonly T[], random: number): T {
-  if (!Number.isFinite(random) || random < 0 || random >= 1)
-    throw new Error('Random value must be in [0, 1).');
-  const total = items.reduce((sum, item) => sum + item.weight, 0);
-  if (total <= 0) throw new Error('Pack has no eligible probabilities.');
-  let point = random * total;
-  for (const item of items) {
-    point -= item.weight;
-    if (point < 0) return item;
-  }
-  throw new Error('Unable to select pack probability.');
-}
 
 export class DrizzlePackRepository implements PackRepository {
   constructor(private readonly loadDatabase: DatabaseLoader) {}
@@ -224,16 +213,7 @@ export class DrizzlePackRepository implements PackRepository {
           eq(schema.packProbabilityLinks.probabilityId, schema.packProbabilities.id),
         )
         .where(eq(schema.packProbabilityLinks.packId, pack.id));
-      const available = probabilities.filter((probability) =>
-        candidates.some((card) => card.overall === probability.overall),
-      );
-      const selected = Array.from({ length: pack.cardsAmount }, () => {
-        const probability = pickWeighted(available, random());
-        const matching = candidates.filter((card) => card.overall === probability.overall);
-        const card = matching[Math.floor(random() * matching.length)];
-        if (!card) throw new Error('Unable to select an eligible card.');
-        return card;
-      });
+      const selected = selectPackCards(candidates, probabilities, pack.cardsAmount, random);
       const created = await tx
         .insert(schema.userCards)
         .values(selected.map((card) => ({ userId: user.id, cardId: card.id })))

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { PacksController } from './packs.controller.js';
-import { DrizzlePackRepository } from './packs.repository.js';
+import { DrizzlePackRepository } from './repository/packs.repository.js';
 import { PackRepository } from './packs.types.js';
 import { OpenPackUseCase, PurchasePackUseCase } from './packs.use-case.js';
 
