@@ -1,5 +1,5 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import pg from 'pg';
 
 import * as schema from './schema.js';
 
@@ -9,7 +9,7 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL is required.');
 }
 
-export const pool = new Pool({ connectionString: databaseUrl });
+export const pool = new pg.Pool({ connectionString: databaseUrl });
 
 export const db = drizzle({ client: pool, schema });
 export { and, eq, sql } from 'drizzle-orm';
