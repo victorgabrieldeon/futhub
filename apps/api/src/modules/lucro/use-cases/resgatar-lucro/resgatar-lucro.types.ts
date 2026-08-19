@@ -22,6 +22,15 @@ export type CommandTransaction = Readonly<{
   setAvailableAt(availableAt: Date): Promise<void>;
 }>;
 
+export abstract class ResgatarLucroRepository {
+  abstract run<T>(
+    command: CommandConfig,
+    identity: DiscordIdentity,
+    now: Date,
+    operation: (transaction: CommandTransaction, persistedCommand: CommandConfig) => Promise<T>,
+  ): Promise<T>;
+}
+
 export abstract class Clock {
   abstract now(): Date;
 }

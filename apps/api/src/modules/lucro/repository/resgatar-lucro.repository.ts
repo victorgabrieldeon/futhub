@@ -1,40 +1,23 @@
-import { Injectable } from '@nestjs/common';
-
 import type {
   CommandConfig,
   CommandTransaction,
   DiscordIdentity,
+  ResgatarLucroRepository,
 } from '../use-cases/resgatar-lucro/resgatar-lucro.types.js';
 
-export abstract class ResgatarLucroRepository {
-  abstract run<T>(
-    command: CommandConfig,
-    identity: DiscordIdentity,
-    now: Date,
-    operation: (transaction: CommandTransaction, persistedCommand: CommandConfig) => Promise<T>,
-  ): Promise<T>;
-}
+type Database = typeof import('@dreamfut/database');
+type DatabaseLoader = () => Promise<Database>;
 
-@Injectable()
-export class DatabaseConfig {
-  constructor(readonly url: string) {}
-
-  static fromEnvironment(): DatabaseConfig {
-    const url = process.env.DATABASE_URL;
-    if (!url) throw new Error('DATABASE_URL is required.');
-    return new DatabaseConfig(url);
-  }
-}
-
-@Injectable()
 export class DrizzleResgatarLucroRepository implements ResgatarLucroRepository {
+  constructor(private readonly loadDatabase: DatabaseLoader) {}
+
   async run<T>(
     command: CommandConfig,
     identity: DiscordIdentity,
     now: Date,
     operation: (transaction: CommandTransaction, persistedCommand: CommandConfig) => Promise<T>,
   ): Promise<T> {
-    const { and, db, eq, schema, sql } = await import('@dreamfut/database');
+    const { and, db, eq, schema, sql } = await this.loadDatabase();
     return db.transaction(async (tx) => {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtext(${`${command.name}:${identity.id}`}))`,

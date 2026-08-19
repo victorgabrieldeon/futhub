@@ -23,6 +23,7 @@ export class LucroController {
   @TypedRoute.Post('lucro')
   @HttpCode(200)
   @SwaggerCustomizer(({ route }) => {
+    route.operationId = 'executeLucro';
     route.security = [{ bearer: [] }];
   })
   async execute(@TypedBody() identity: DiscordIdentityDto): Promise<LucroResponse> {

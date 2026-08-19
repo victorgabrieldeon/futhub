@@ -1,4 +1,4 @@
-import { TypedRoute } from '@nestia/core';
+import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
 import { Controller } from '@nestjs/common';
 
 interface HealthResponse {
@@ -13,6 +13,9 @@ interface HealthResponse {
 @Controller()
 export class HealthController {
   @TypedRoute.Get('health')
+  @SwaggerCustomizer(({ route }) => {
+    route.operationId = 'HealthController_health';
+  })
   health(): HealthResponse {
     return { status: 'ok' };
   }

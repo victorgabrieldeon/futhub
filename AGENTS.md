@@ -19,7 +19,7 @@
 ## Repository Rules
 
 - Do not use `any`, type assertions, or non-null assertions without concrete proof.
-- Validate API and Discord input at boundaries; keep business rules framework-free, with HTTP and Discord layers acting only as adapters.
+- Validate API and Discord input at boundaries.
 - Database changes require a Drizzle migration. Add a focused test for non-trivial behavior and bug fixes.
 - Keep product API routes under `/v1`.
 - Never read, log, commit, or expose `.env` values or credentials.

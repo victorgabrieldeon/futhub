@@ -5,9 +5,9 @@ import type {
   CommandConfig,
   CommandTransaction,
   RandomSource,
+  ResgatarLucroRepository,
 } from '../resgatar-lucro.types.js';
-import type { ResgatarLucroRepository } from '../../../repository/resgatar-lucro.repository.js';
-import { ResgatarLucroUseCase } from '../resgatar-lucro.use-case.js';
+import { ResgatarLucroUseCase, selectWeightedReward } from '../resgatar-lucro.use-case.js';
 
 const rewards = [
   { value: 50, weight: 1, message: 'Primeiro' },
@@ -44,25 +44,19 @@ function useCase(repository: ResgatarLucroRepository): ResgatarLucroUseCase {
 
 describe('selectWeightedReward', () => {
   it('selects rewards at weight boundaries', () => {
-    const subject = useCase(memoryRepository());
-    expect(subject.selectWeightedReward(rewards, 0)).toEqual(rewards[0]);
-    expect(subject.selectWeightedReward(rewards, 0.499)).toEqual(rewards[0]);
-    expect(subject.selectWeightedReward(rewards, 0.5)).toEqual(rewards[1]);
-    expect(subject.selectWeightedReward(rewards, 0.999)).toEqual(rewards[1]);
+    expect(selectWeightedReward(rewards, 0)).toEqual(rewards[0]);
+    expect(selectWeightedReward(rewards, 0.499)).toEqual(rewards[0]);
+    expect(selectWeightedReward(rewards, 0.5)).toEqual(rewards[1]);
+    expect(selectWeightedReward(rewards, 0.999)).toEqual(rewards[1]);
   });
 
   it('rejects invalid weights and random values', () => {
-    const subject = useCase(memoryRepository());
-    expect(() => subject.selectWeightedReward([], 0)).toThrow('Command has no rewards.');
-    expect(() =>
-      subject.selectWeightedReward([{ value: 50, weight: 0, message: 'Inválida' }], 0),
-    ).toThrow('Reward weight must be positive.');
-    expect(() => subject.selectWeightedReward(rewards, -0.1)).toThrow(
-      'Random value must be in [0, 1).',
+    expect(() => selectWeightedReward([], 0)).toThrow('Command has no rewards.');
+    expect(() => selectWeightedReward([{ value: 50, weight: 0, message: 'Inválida' }], 0)).toThrow(
+      'Reward weight must be positive.',
     );
-    expect(() => subject.selectWeightedReward(rewards, 1)).toThrow(
-      'Random value must be in [0, 1).',
-    );
+    expect(() => selectWeightedReward(rewards, -0.1)).toThrow('Random value must be in [0, 1).');
+    expect(() => selectWeightedReward(rewards, 1)).toThrow('Random value must be in [0, 1).');
   });
 });
 

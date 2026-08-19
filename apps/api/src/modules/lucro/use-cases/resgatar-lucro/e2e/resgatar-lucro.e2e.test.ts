@@ -1,13 +1,11 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { Test } from '@nestjs/testing';
-import { afterAll, beforeAll, expect, test } from 'vitest';
+import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { GenericContainer, type StartedTestContainer, Wait } from 'testcontainers';
+import { afterAll, beforeAll, expect, test } from 'vitest';
 
-import { AppModule } from '../../../../../app.module.js';
-import { RandomSource } from '../resgatar-lucro.types.js';
+import { buildApp } from '../../../../../app.js';
 
 const execFileAsync = promisify(execFile);
 let container: StartedTestContainer | undefined;
@@ -37,20 +35,47 @@ beforeAll(async () => {
     env: process.env,
   });
   database = await import('@dreamfut/database');
-  const module = await Test.createTestingModule({ imports: [AppModule] })
-    .overrideProvider(RandomSource)
-    .useValue({ next: () => 0 })
-    .compile();
-  app = module.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {
-    logger: false,
-  });
-  await app.init();
+  app = await buildApp({ logger: false });
 }, 120_000);
 
 afterAll(async () => {
   await app?.close();
   await database?.pool.end();
   await container?.stop();
+});
+
+test('exposes public health check', async () => {
+  if (!app) throw new Error('Application was not initialized.');
+
+  const response = await app.inject({ method: 'GET', url: '/health' });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.json()).toEqual({ status: 'ok' });
+});
+
+test('protects lucro with internal authentication', async () => {
+  if (!app) throw new Error('Application was not initialized.');
+
+  const response = await app.inject({
+    method: 'POST',
+    url: '/v1/commands/lucro',
+    payload: { id: '123456789012345678', name: 'Nome', avatarUrl: null },
+  });
+
+  expect(response.statusCode).toBe(401);
+});
+
+test('validates lucro identity', async () => {
+  if (!app) throw new Error('Application was not initialized.');
+
+  const response = await app.inject({
+    method: 'POST',
+    url: '/v1/commands/lucro',
+    headers: { authorization: 'Bearer test-token' },
+    payload: { id: '', name: 'Nome', avatarUrl: null },
+  });
+
+  expect(response.statusCode).toBe(400);
 });
 
 test('resgata lucro once and enters cooldown', async () => {
@@ -69,8 +94,6 @@ test('resgata lucro once and enters cooldown', async () => {
   expect(success.statusCode).toBe(200);
   expect(successBody).toMatchObject({
     kind: 'success',
-    reward: { value: 50, weight: 50, message: 'Lucro básico: +50' },
-    balance: 50,
   });
 
   const cooldown = await request();

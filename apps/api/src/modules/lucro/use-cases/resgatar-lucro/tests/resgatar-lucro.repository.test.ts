@@ -1,10 +1,10 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { GenericContainer, type StartedTestContainer, Wait } from 'testcontainers';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import type { ResgatarLucroRepository } from '../../../repository/resgatar-lucro.repository.js';
+import type { ResgatarLucroRepository } from '../resgatar-lucro.types.js';
 import { ResgatarLucroUseCase } from '../resgatar-lucro.use-case.js';
 
 const execFileAsync = promisify(execFile);
@@ -48,10 +48,11 @@ beforeAll(async () => {
     cwd: process.cwd(),
     env: process.env,
   });
-  database = await import('@dreamfut/database');
+  const loadedDatabase = await import('@dreamfut/database');
+  database = loadedDatabase;
   repository = new (
     await import('../../../repository/resgatar-lucro.repository.js')
-  ).DrizzleResgatarLucroRepository();
+  ).DrizzleResgatarLucroRepository(async () => loadedDatabase);
 }, 120_000);
 
 beforeEach(async () => {
