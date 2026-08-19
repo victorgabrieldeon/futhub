@@ -14,3 +14,4 @@
 - **Missão**: objetivo configurável que concede Items ao jogador.
 - **Moeda**: unidade inteira de saldo. Não há valores fracionários.
 - **Ativo visual**: URL opcional de imagem usada por Card, Coleção, Time, Nacionalidade, Campo, Pack ou fundo.
+- **Configuração de jogo**: regras globais singleton, incluindo capacidade máxima de Cards por jogador.
