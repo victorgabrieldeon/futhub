@@ -577,6 +577,7 @@ export const missionType = pgEnum('mission_type', [
   'claim_profit',
   'play_match',
 ]);
+export const missionCadence = pgEnum('mission_cadence', ['daily', 'weekly', 'monthly']);
 export const transactionType = pgEnum('transaction_type', [
   'purchase',
   'sale',
@@ -659,10 +660,15 @@ export const missions = pgTable(
       .notNull()
       .references(() => localizedTexts.id, { onDelete: 'restrict' }),
     type: missionType('type').notNull(),
+    cadence: missionCadence('cadence').notNull().default('daily'),
+    tier: integer('tier').notNull().default(1),
     goal: integer('goal').notNull(),
     active: boolean('active').notNull().default(true),
   },
-  (table) => [check('missions_goal_positive', sql`${table.goal} > 0`)],
+  (table) => [
+    check('missions_goal_positive', sql`${table.goal} > 0`),
+    check('missions_tier_positive', sql`${table.tier} > 0`),
+  ],
 );
 export const missionRewards = pgTable(
   'mission_rewards',
@@ -683,18 +689,31 @@ export const missionRewards = pgTable(
 export const userMissions = pgTable(
   'user_missions',
   {
+    id: uuid('id').defaultRandom().primaryKey(),
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     missionId: uuid('mission_id')
       .notNull()
       .references(() => missions.id, { onDelete: 'cascade' }),
+    rewardItemId: uuid('reward_item_id').references(() => items.id, { onDelete: 'restrict' }),
+    cadence: missionCadence('cadence').notNull(),
+    periodKey: varchar('period_key', { length: 10 }).notNull(),
+    tier: integer('tier').notNull(),
     progress: integer('progress').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     claimedAt: timestamp('claimed_at', { withTimezone: true }),
   },
   (table) => [
-    primaryKey({ columns: [table.userId, table.missionId] }),
+    uniqueIndex('user_missions_user_mission_cadence_period_key_unique').on(
+      table.userId,
+      table.missionId,
+      table.cadence,
+      table.periodKey,
+    ),
     check('user_missions_progress_nonnegative', sql`${table.progress} >= 0`),
+    check('user_missions_tier_positive', sql`${table.tier} > 0`),
   ],
 );
 export const commandXpConfigs = pgTable(

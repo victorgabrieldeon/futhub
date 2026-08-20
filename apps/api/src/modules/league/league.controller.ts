@@ -52,6 +52,7 @@ export class LeagueController {
     return this.handle(() => this.league.match(matchId));
   }
 
+  /** @hidden */
   @Sse('matches/:matchId/events')
   async events(
     @Param('matchId') matchId: string,

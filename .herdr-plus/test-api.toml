@@ -1,0 +1,3 @@
+name = "Test API"
+description = "Executa testes Vitest da API"
+command = "pnpm --filter @dreamfut/api test"

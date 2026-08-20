@@ -135,6 +135,25 @@ export async function createPackFixture(
   return { packId: pack.id, cardId: card.id };
 }
 
+export async function createCardMarketFixture(
+  database: Database,
+): Promise<{ cardId: string; blockedCardId: string }> {
+  const catalog = await createCardCatalog(database, 'market');
+  const card = await createCard(database, catalog, 'Market card', 'CA');
+  const blockedCard = await createCard(database, catalog, 'Blocked market card', 'CA');
+  await database.db
+    .update(database.schema.cards)
+    .set({ contractsBlocked: true })
+    .where(database.eq(database.schema.cards.id, blockedCard.id));
+  await database.db.insert(database.schema.cardPriceConfigs).values({ overall: 80, price: 100 });
+  await database.db.insert(database.schema.cardMarketConfig).values({
+    singleton: true,
+    buyMultiplierBasisPoints: 20_000,
+    sellMultiplierBasisPoints: 2_000,
+  });
+  return { cardId: card.id, blockedCardId: blockedCard.id };
+}
+
 export async function createLeaguePlayer(
   database: Database,
   identity: DiscordIdentity,

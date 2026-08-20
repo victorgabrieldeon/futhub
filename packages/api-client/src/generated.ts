@@ -6,19 +6,105 @@
  * OpenAPI spec version: 1.0
  */
 import { request } from "./request.js";
-/**
- * Estado atual do serviço.
- */
-export type HealthResponseStatus =
-  (typeof HealthResponseStatus)[keyof typeof HealthResponseStatus];
+export type MissionRewardDtoNullableType =
+  (typeof MissionRewardDtoNullableType)[keyof typeof MissionRewardDtoNullableType];
 
-export const HealthResponseStatus = {
-  ok: "ok",
+export const MissionRewardDtoNullableType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+  premium: "premium",
 } as const;
 
-export interface HealthResponse {
-  /** Estado atual do serviço. */
-  status: HealthResponseStatus;
+/**
+ * @nullable
+ */
+export type MissionRewardDtoNullable = {
+  itemId: string;
+  type: MissionRewardDtoNullableType;
+  /** @minimum 1 */
+  quantity: number;
+  /** @nullable */
+  resourceId: string | null;
+} | null;
+
+export type MissionDtoType =
+  (typeof MissionDtoType)[keyof typeof MissionDtoType];
+
+export const MissionDtoType = {
+  claim_profit: "claim_profit",
+  open_pack: "open_pack",
+  play_match: "play_match",
+  sell_player: "sell_player",
+} as const;
+
+export type MissionDtoCadence =
+  (typeof MissionDtoCadence)[keyof typeof MissionDtoCadence];
+
+export const MissionDtoCadence = {
+  daily: "daily",
+  monthly: "monthly",
+  weekly: "weekly",
+} as const;
+
+export interface MissionDto {
+  id: string;
+  title: string;
+  type: MissionDtoType;
+  cadence: MissionDtoCadence;
+  /** @minimum 1 */
+  tier: number;
+  /** @minimum 1 */
+  goal: number;
+  /** @minimum 0 */
+  progress: number;
+  completed: boolean;
+  claimed: boolean;
+  expiresAt: string;
+  reward: MissionRewardDtoNullable | null;
+}
+
+export type MissionRewardDtoType =
+  (typeof MissionRewardDtoType)[keyof typeof MissionRewardDtoType];
+
+export const MissionRewardDtoType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+  premium: "premium",
+} as const;
+
+export interface MissionRewardDto {
+  itemId: string;
+  type: MissionRewardDtoType;
+  /** @minimum 1 */
+  quantity: number;
+  /** @nullable */
+  resourceId: string | null;
+}
+
+export interface MissionsResponse {
+  missions: MissionDto[];
+}
+
+export interface MissionsRequest {
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  id: string;
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  name: string;
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  avatarUrl: string | null;
 }
 
 /**
@@ -43,6 +129,16 @@ export interface LucroRewardDto {
   readonly message: string;
 }
 
+/**
+ * Resultado com recompensa concedida.
+ */
+export type LucroSuccessResponseKind =
+  (typeof LucroSuccessResponseKind)[keyof typeof LucroSuccessResponseKind];
+
+export const LucroSuccessResponseKind = {
+  success: "success",
+} as const;
+
 export type ProgressionRewardDtoType =
   (typeof ProgressionRewardDtoType)[keyof typeof ProgressionRewardDtoType];
 
@@ -56,27 +152,23 @@ export const ProgressionRewardDtoType = {
 export interface ProgressionRewardDto {
   itemId: string;
   type: ProgressionRewardDtoType;
+  /** @minimum 1 */
   quantity: number;
+  /** @nullable */
   resourceId: string | null;
 }
 
 export interface ProgressionDto {
+  /** @minimum 0 */
   gainedXp: number;
+  /** @minimum 1 */
   level: number;
+  /** @minimum 0 */
   xp: number;
+  /** @minimum 1 */
   nextLevelXp: number;
   rewards: ProgressionRewardDto[];
 }
-
-/**
- * Resultado com recompensa concedida.
- */
-export type LucroSuccessResponseKind =
-  (typeof LucroSuccessResponseKind)[keyof typeof LucroSuccessResponseKind];
-
-export const LucroSuccessResponseKind = {
-  success: "success",
-} as const;
 
 export interface LucroSuccessResponse {
   /** Resultado com recompensa concedida. */
@@ -147,16 +239,216 @@ export interface OpenPackResponse {
   progression: ProgressionDto;
 }
 
-export const getHealthControllerHealthUrl = () => {
-  return `/health`;
+export interface LeagueDivisionDto {
+  id: string;
+  name: string;
+  minimumPoints: number;
+  emoji: string;
+  /** @nullable */
+  color: string | null;
+  /** @nullable */
+  imageUrl: string | null;
+}
+
+/**
+ * Partida criada para jogador.
+ */
+export type QueueMatchedResponseKind =
+  (typeof QueueMatchedResponseKind)[keyof typeof QueueMatchedResponseKind];
+
+export const QueueMatchedResponseKind = {
+  matched: "matched",
+} as const;
+
+export interface QueueMatchedResponse {
+  /** Partida criada para jogador. */
+  kind: QueueMatchedResponseKind;
+  matchId: string;
+}
+
+/**
+ * Jogador aguardando adversário.
+ */
+export type QueueWaitingResponseKind =
+  (typeof QueueWaitingResponseKind)[keyof typeof QueueWaitingResponseKind];
+
+export const QueueWaitingResponseKind = {
+  waiting: "waiting",
+} as const;
+
+export interface QueueWaitingResponse {
+  /** Jogador aguardando adversário. */
+  kind: QueueWaitingResponseKind;
+  division: LeagueDivisionDto;
+}
+
+export interface DiscordIdentityDtoO1 {
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  id: string;
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  name: string;
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  avatarUrl: string | null;
+}
+
+/**
+ * Partida criada para jogador.
+ */
+export type QueueMatchedResponseNullableKind =
+  (typeof QueueMatchedResponseNullableKind)[keyof typeof QueueMatchedResponseNullableKind];
+
+export const QueueMatchedResponseNullableKind = {
+  matched: "matched",
+} as const;
+
+/**
+ * @nullable
+ */
+export type QueueMatchedResponseNullable = {
+  /** Partida criada para jogador. */
+  kind: QueueMatchedResponseNullableKind;
+  matchId: string;
+} | null;
+
+/**
+ * Jogador aguardando adversário.
+ */
+export type QueueWaitingResponseNullableKind =
+  (typeof QueueWaitingResponseNullableKind)[keyof typeof QueueWaitingResponseNullableKind];
+
+export const QueueWaitingResponseNullableKind = {
+  waiting: "waiting",
+} as const;
+
+/**
+ * @nullable
+ */
+export type QueueWaitingResponseNullable = {
+  /** Jogador aguardando adversário. */
+  kind: QueueWaitingResponseNullableKind;
+  division: LeagueDivisionDto;
+} | null;
+
+export interface LeagueStatusResponse {
+  points: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  division: LeagueDivisionDto;
+  queue: QueueMatchedResponseNullable | null | QueueWaitingResponseNullable;
+}
+
+export type MatchEventDtoType =
+  (typeof MatchEventDtoType)[keyof typeof MatchEventDtoType];
+
+export const MatchEventDtoType = {
+  fulltime: "fulltime",
+  goal: "goal",
+  kickoff: "kickoff",
+  red_card: "red_card",
+  yellow_card: "yellow_card",
+} as const;
+
+export interface MatchEventDto {
+  sequence: number;
+  minute: number;
+  type: MatchEventDtoType;
+  /** @nullable */
+  playerUserCardId: string | null;
+  /** @nullable */
+  assistUserCardId: string | null;
+  description: string;
+  homeGoals: number;
+  awayGoals: number;
+}
+
+export interface MatchResponse {
+  id: string;
+  homeUserId: string;
+  awayUserId: string;
+  homeGoals: number;
+  awayGoals: number;
+  completedAt: string;
+  events: MatchEventDto[];
+}
+
+/**
+ * Estado atual do serviço.
+ */
+export type HealthResponseStatus =
+  (typeof HealthResponseStatus)[keyof typeof HealthResponseStatus];
+
+export const HealthResponseStatus = {
+  ok: "ok",
+} as const;
+
+export interface HealthResponse {
+  /** Estado atual do serviço. */
+  status: HealthResponseStatus;
+}
+
+export interface PurchaseCardResponse {
+  userCardId: string;
+  balance: number;
+  price: number;
+}
+
+export interface CardMarketIdentity {
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  id: string;
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  name: string;
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  avatarUrl: string | null;
+}
+
+export interface PurchaseCardRequest {
+  identity: CardMarketIdentity;
+}
+
+export interface SellCardsResponse {
+  userCardIds: string[];
+  balance: number;
+  amount: number;
+}
+
+export interface SellCardsRequest {
+  identity: CardMarketIdentity;
+  /** @minItems 1 */
+  userCardIds: string[];
+}
+
+export const getListMissionsUrl = () => {
+  return `/v1/missions`;
 };
 
-export const healthControllerHealth = async (
+export const listMissions = async (
+  missionsRequest: MissionsRequest,
   options?: Parameters<typeof request>[1],
-): Promise<HealthResponse> => {
-  return request<HealthResponse>(getHealthControllerHealthUrl(), {
+): Promise<MissionsResponse> => {
+  return request<MissionsResponse>(getListMissionsUrl(), {
     ...options,
-    method: "GET",
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(missionsRequest),
   });
 };
 
@@ -214,5 +506,119 @@ export const openPack = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(packActionRequest),
+  });
+};
+
+export const getJoinRankedQueueUrl = () => {
+  return `/v1/ranked/queue`;
+};
+
+export const joinRankedQueue = async (
+  discordIdentityDtoO1: DiscordIdentityDtoO1,
+  options?: Parameters<typeof request>[1],
+): Promise<QueueMatchedResponse | QueueWaitingResponse> => {
+  return request<QueueMatchedResponse | QueueWaitingResponse>(
+    getJoinRankedQueueUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(discordIdentityDtoO1),
+    },
+  );
+};
+
+export const getGetV1RankedStatusDiscordUserIdUrl = (discordUserId: string) => {
+  return `/v1/ranked/status/${discordUserId}`;
+};
+
+export const getV1RankedStatusDiscordUserId = async (
+  discordUserId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<
+  QueueMatchedResponseNullable | null | QueueWaitingResponseNullable
+> => {
+  return request<
+    QueueMatchedResponseNullable | null | QueueWaitingResponseNullable
+  >(getGetV1RankedStatusDiscordUserIdUrl(discordUserId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetV1LeagueDiscordUserIdUrl = (discordUserId: string) => {
+  return `/v1/league/${discordUserId}`;
+};
+
+export const getV1LeagueDiscordUserId = async (
+  discordUserId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<LeagueStatusResponse> => {
+  return request<LeagueStatusResponse>(
+    getGetV1LeagueDiscordUserIdUrl(discordUserId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1MatchesMatchIdUrl = (matchId: string) => {
+  return `/v1/matches/${matchId}`;
+};
+
+export const getV1MatchesMatchId = async (
+  matchId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<MatchResponse> => {
+  return request<MatchResponse>(getGetV1MatchesMatchIdUrl(matchId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getHealthControllerHealthUrl = () => {
+  return `/health`;
+};
+
+export const healthControllerHealth = async (
+  options?: Parameters<typeof request>[1],
+): Promise<HealthResponse> => {
+  return request<HealthResponse>(getHealthControllerHealthUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getPurchaseCardUrl = (cardId: string) => {
+  return `/v1/cards/${cardId}/purchase`;
+};
+
+export const purchaseCard = async (
+  cardId: string,
+  purchaseCardRequest: PurchaseCardRequest,
+  options?: Parameters<typeof request>[1],
+): Promise<PurchaseCardResponse> => {
+  return request<PurchaseCardResponse>(getPurchaseCardUrl(cardId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(purchaseCardRequest),
+  });
+};
+
+export const getSellCardsUrl = () => {
+  return `/v1/cards/sell`;
+};
+
+export const sellCards = async (
+  sellCardsRequest: SellCardsRequest,
+  options?: Parameters<typeof request>[1],
+): Promise<SellCardsResponse> => {
+  return request<SellCardsResponse>(getSellCardsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sellCardsRequest),
   });
 };

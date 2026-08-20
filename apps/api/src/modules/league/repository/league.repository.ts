@@ -1,5 +1,7 @@
 import type * as DatabaseModule from '@dreamfut/database';
 
+import { advanceMissions } from '../../missions/missions.service.js';
+import { upsertDiscordUser } from '../../users/user.repository.js';
 import type {
   LeagueStatusResponse,
   MatchEventDto,
@@ -9,9 +11,9 @@ import type {
 import { simulateMatch, validateLineup } from '../use-cases/league/league.simulator.js';
 import type { LineupCard } from '../use-cases/league/league.types.js';
 import {
+  type DiscordIdentity,
   LeagueInputError,
   LeagueNotFoundError,
-  type DiscordIdentity,
   type LeagueRepository,
 } from '../use-cases/league/league.use-case.types.js';
 
@@ -30,15 +32,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtext(${`ranked-user:${identity.id}`}))`,
       );
-      const [user] = await tx
-        .insert(schema.users)
-        .values({ discordUserId: identity.id, nome: identity.name, urlAvatar: identity.avatarUrl })
-        .onConflictDoUpdate({
-          target: schema.users.discordUserId,
-          set: { nome: identity.name, urlAvatar: identity.avatarUrl, atualizadoEm: now },
-        })
-        .returning({ id: schema.users.id });
-      if (!user) throw new Error('Failed to load user.');
+      const user = await upsertDiscordUser(tx, schema, identity, now);
       const bronze = await tx.query.divisions.findFirst({
         columns: { id: true, name: true, points: true, emoji: true, color: true, imageUrl: true },
         where: eq(schema.divisions.name, 'Bronze'),
@@ -181,6 +175,8 @@ export class DrizzleLeagueRepository implements LeagueRepository {
         simulated.homeGoals,
         now,
       );
+      await advanceMissions(database, tx, queued.userId, 'play_match', now);
+      await advanceMissions(database, tx, current.userId, 'play_match', now);
       return { kind: 'matched', matchId: room.id };
     });
   }

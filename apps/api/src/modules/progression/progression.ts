@@ -1,4 +1,5 @@
 import type * as DatabaseModule from '@dreamfut/database';
+import { cardInventoryCapacity } from '../users/user.repository.js';
 
 export type XpCommand = 'lucro' | 'open_pack';
 export type ProgressionReward = Readonly<{
@@ -87,12 +88,13 @@ async function getCommandXp(
   return config.xp;
 }
 
-async function grantReward(
+export async function grantReward(
   database: Database,
   tx: DatabaseTransaction,
   userId: string,
   item: RewardItem,
   now: Date,
+  claimedBy: 'mission' | 'reward' = 'reward',
 ): Promise<ProgressionReward> {
   const { eq, schema, sql } = database;
   if (!Number.isSafeInteger(item.amount) || item.amount < 1)
@@ -114,21 +116,12 @@ async function grantReward(
     case 'card': {
       const cardId = item.cardId;
       if (!cardId) throw new Error('Card reward has no card.');
-      await tx.insert(schema.gameSettings).values({ singleton: true }).onConflictDoNothing();
-      const [settings] = await tx
-        .select({ maxCards: schema.gameSettings.maxCardsPerUser })
-        .from(schema.gameSettings)
-        .limit(1);
-      if (!settings) throw new Error('Game settings unavailable.');
-      const [inventory] = await tx
-        .select({ count: sql<number>`count(*)::int` })
-        .from(schema.userCards)
-        .where(eq(schema.userCards.userId, userId));
-      if (!inventory || inventory.count + item.amount > settings.maxCards)
+      const inventory = await cardInventoryCapacity(database, tx, userId);
+      if (inventory.cardCount + item.amount > inventory.maxCards)
         throw new Error('Card inventory capacity exceeded.');
       const cards: Array<typeof schema.userCards.$inferInsert> = Array.from(
         { length: item.amount },
-        () => ({ userId, cardId, claimedBy: 'reward', claimedAt: now }),
+        () => ({ userId, cardId, claimedBy, claimedAt: now }),
       );
       await tx.insert(schema.userCards).values(cards);
       return {

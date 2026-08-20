@@ -9,11 +9,19 @@ export interface DiscordIdentityDto {
 export type QueueResponse = QueueWaitingResponse | QueueMatchedResponse;
 
 export interface QueueWaitingResponse {
+  /**
+   * @title Estado da fila
+   * @description Jogador aguardando adversário.
+   */
   kind: 'waiting';
   division: LeagueDivisionDto;
 }
 
 export interface QueueMatchedResponse {
+  /**
+   * @title Estado da fila
+   * @description Partida criada para jogador.
+   */
   kind: 'matched';
   matchId: string & tags.Format<'uuid'>;
 }

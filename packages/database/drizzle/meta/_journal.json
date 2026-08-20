@@ -57,6 +57,13 @@
       "when": 1787183026577,
       "tag": "0007_cold_reptil",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787243405944,
+      "tag": "0008_lucky_nova",
+      "breakpoints": true
     }
   ]
 }

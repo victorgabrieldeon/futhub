@@ -1,12 +1,14 @@
 import type * as DatabaseModule from '@dreamfut/database';
 
+import { advanceMissions } from '../../missions/missions.service.js';
+import { grantCommandXp } from '../../progression/progression.js';
+import { cardInventoryCapacity, upsertDiscordUser } from '../../users/user.repository.js';
 import type {
   DiscordIdentity,
   OpenTransaction,
   PackRepository,
   PurchaseTransaction,
 } from '../use-cases/pack.types.js';
-import { grantCommandXp } from '../../progression/progression.js';
 
 type Database = typeof DatabaseModule;
 type DatabaseLoader = () => Promise<Database>;
@@ -19,20 +21,13 @@ export class DrizzlePackRepository implements PackRepository {
     packId: string,
     operation: (transaction: PurchaseTransaction) => Promise<T>,
   ): Promise<T> {
-    const { db, eq, sql, schema } = await this.loadDatabase();
+    const database = await this.loadDatabase();
+    const { db, eq, sql, schema } = database;
     return db.transaction(async (tx) => {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtext(${`pack:${identity.id}:${packId}`}))`,
       );
-      const [user] = await tx
-        .insert(schema.users)
-        .values({ discordUserId: identity.id, nome: identity.name, urlAvatar: identity.avatarUrl })
-        .onConflictDoUpdate({
-          target: schema.users.discordUserId,
-          set: { nome: identity.name, urlAvatar: identity.avatarUrl, atualizadoEm: new Date() },
-        })
-        .returning({ id: schema.users.id, balance: schema.users.saldo });
-      if (!user) throw new Error('Failed to load user.');
+      const user = await upsertDiscordUser(tx, schema, identity, new Date());
       const [pack] = await tx
         .select({
           id: schema.packs.id,
@@ -47,25 +42,14 @@ export class DrizzlePackRepository implements PackRepository {
         columns: { quantity: true },
         where: (row, { and, eq }) => and(eq(row.userId, user.id), eq(row.packId, pack.id)),
       });
-      await tx.insert(schema.gameSettings).values({ singleton: true }).onConflictDoNothing();
-      const [settings] = await tx
-        .select({ maxCards: schema.gameSettings.maxCardsPerUser })
-        .from(schema.gameSettings)
-        .limit(1);
-      if (!settings) throw new Error('Game settings unavailable.');
-      const cardCount = await tx
-        .select({ count: sql<number>`count(*)::int` })
-        .from(schema.userCards)
-        .where(eq(schema.userCards.userId, user.id));
-      const count = cardCount[0]?.count;
-      if (count === undefined) throw new Error('Failed to count user cards.');
+      const inventory = await cardInventoryCapacity(database, tx, user.id);
       return operation({
         canBuy: pack.canBuy,
         balance: user.balance,
         ownedQuantity: current?.quantity ?? 0,
         limitPerUser: pack.limit,
-        cardCount: count,
-        maxCards: settings.maxCards,
+        cardCount: inventory.cardCount,
+        maxCards: inventory.maxCards,
         price: pack.price,
         commit: async () => {
           const [credited] = await tx
@@ -104,15 +88,7 @@ export class DrizzlePackRepository implements PackRepository {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtext(${`pack:${identity.id}:${packId}`}))`,
       );
-      const [user] = await tx
-        .insert(schema.users)
-        .values({ discordUserId: identity.id, nome: identity.name, urlAvatar: identity.avatarUrl })
-        .onConflictDoUpdate({
-          target: schema.users.discordUserId,
-          set: { nome: identity.name, urlAvatar: identity.avatarUrl, atualizadoEm: now },
-        })
-        .returning({ id: schema.users.id });
-      if (!user) throw new Error('Failed to load user.');
+      const user = await upsertDiscordUser(tx, schema, identity, now);
       const [pack] = await tx
         .select({
           id: schema.packs.id,
@@ -129,18 +105,7 @@ export class DrizzlePackRepository implements PackRepository {
         columns: { quantity: true },
         where: (row, { and, eq }) => and(eq(row.userId, user.id), eq(row.packId, pack.id)),
       });
-      await tx.insert(schema.gameSettings).values({ singleton: true }).onConflictDoNothing();
-      const [settings] = await tx
-        .select({ maxCards: schema.gameSettings.maxCardsPerUser })
-        .from(schema.gameSettings)
-        .limit(1);
-      if (!settings) throw new Error('Game settings unavailable.');
-      const cardCount = await tx
-        .select({ count: sql<number>`count(*)::int` })
-        .from(schema.userCards)
-        .where(eq(schema.userCards.userId, user.id));
-      const count = cardCount[0]?.count;
-      if (count === undefined) throw new Error('Failed to count user cards.');
+      const inventory = await cardInventoryCapacity(database, tx, user.id);
       const [
         onlyCards,
         excludedCards,
@@ -227,8 +192,8 @@ export class DrizzlePackRepository implements PackRepository {
         .where(eq(schema.packProbabilityLinks.packId, pack.id));
       return operation({
         ownedQuantity: owned?.quantity ?? 0,
-        cardCount: count,
-        maxCards: settings.maxCards,
+        cardCount: inventory.cardCount,
+        maxCards: inventory.maxCards,
         cardsAmount: pack.cardsAmount,
         candidates,
         probabilities,
@@ -243,6 +208,7 @@ export class DrizzlePackRepository implements PackRepository {
             .update(schema.userPacks)
             .set({ quantity: sql`${schema.userPacks.quantity} - 1` })
             .where(and(eq(schema.userPacks.userId, user.id), eq(schema.userPacks.packId, pack.id)));
+          await advanceMissions(database, tx, user.id, 'open_pack', now);
           return created.map((userCard, index) => {
             const card = selected[index];
             if (!card) throw new Error('Failed to map created card.');

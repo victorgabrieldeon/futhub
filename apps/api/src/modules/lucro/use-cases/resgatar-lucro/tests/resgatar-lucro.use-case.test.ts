@@ -29,6 +29,7 @@ function memoryRepository(): ResgatarLucroRepository {
           return balance;
         },
         grantProgression: async () => progression,
+        advanceMission: async () => undefined,
         setAvailableAt: async (value) => {
           availableAt = value;
         },

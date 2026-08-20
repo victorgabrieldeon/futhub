@@ -44,6 +44,7 @@ export class ResgatarLucroUseCase {
       if (availableAt && now < availableAt) return { kind: 'cooldown', availableAt };
       const reward = selectWeightedReward(persistedCommand.rewards, random);
       const balance = await transaction.credit(reward.value);
+      await transaction.advanceMission();
       const progression = await transaction.grantProgression();
       const levelRewardBalance = progression.rewards.reduce(
         (total, item) => total + (item.type === 'balance' ? item.quantity : 0),

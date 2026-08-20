@@ -1,0 +1,28 @@
+import { SwaggerCustomizer, TypedBody, TypedRoute } from '@nestia/core';
+import { Controller, HttpCode, Inject, UseGuards } from '@nestjs/common';
+
+import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
+import type { MissionsRequest, MissionsResponse } from './missions.dto.js';
+import { MissionsService } from './missions.service.js';
+
+@Controller('v1/missions')
+@UseGuards(InternalAuthGuard)
+export class MissionsController {
+  constructor(@Inject(MissionsService) private readonly missions: MissionsService) {}
+
+  @TypedRoute.Post()
+  @HttpCode(200)
+  @SwaggerCustomizer(({ route }) => {
+    route.operationId = 'listMissions';
+    route.security = [{ bearer: [] }];
+  })
+  async list(@TypedBody() identity: MissionsRequest): Promise<MissionsResponse> {
+    const missions = await this.missions.list(identity);
+    return {
+      missions: missions.map((mission) => ({
+        ...mission,
+        expiresAt: mission.expiresAt.toISOString(),
+      })),
+    };
+  }
+}

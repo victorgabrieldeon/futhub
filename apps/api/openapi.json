@@ -14,6 +14,150 @@
       }
     },
     "schemas": {
+      "MissionRewardDto.Nullable": {
+        "additionalProperties": false,
+        "properties": {
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["balance", "card", "field", "pack", "premium"]
+          },
+          "quantity": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "resourceId": {
+            "format": "uuid",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["itemId", "type", "quantity", "resourceId"],
+        "type": "object",
+        "nullable": true
+      },
+      "MissionDto": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["claim_profit", "open_pack", "play_match", "sell_player"]
+          },
+          "cadence": {
+            "type": "string",
+            "enum": ["daily", "monthly", "weekly"]
+          },
+          "tier": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "goal": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "progress": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "claimed": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reward": {
+            "$ref": "#/components/schemas/MissionRewardDto.Nullable"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "type",
+          "cadence",
+          "tier",
+          "goal",
+          "progress",
+          "completed",
+          "claimed",
+          "expiresAt",
+          "reward"
+        ],
+        "type": "object"
+      },
+      "MissionRewardDto": {
+        "additionalProperties": false,
+        "properties": {
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["balance", "card", "field", "pack", "premium"]
+          },
+          "quantity": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "resourceId": {
+            "format": "uuid",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["itemId", "type", "quantity", "resourceId"],
+        "type": "object"
+      },
+      "MissionsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "missions": {
+            "items": {
+              "$ref": "#/components/schemas/MissionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["missions"],
+        "type": "object"
+      },
+      "MissionsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "avatarUrl": {
+            "format": "url",
+            "maxLength": 2048,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "name", "avatarUrl"],
+        "type": "object"
+      },
       "LucroCooldownResponse": {
         "additionalProperties": false,
         "properties": {
@@ -153,6 +297,85 @@
         "required": ["id", "name", "avatarUrl"],
         "type": "object"
       },
+      "PurchasePackResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "balance": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        },
+        "required": ["balance", "quantity"],
+        "type": "object"
+      },
+      "PackActionRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "identity": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              "name": {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              "avatarUrl": {
+                "format": "url",
+                "maxLength": 2048,
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": ["id", "name", "avatarUrl"],
+            "type": "object"
+          }
+        },
+        "required": ["identity"],
+        "type": "object"
+      },
+      "OpenPackResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "cards": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "card": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "overall": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["id", "overall"],
+                  "type": "object"
+                }
+              },
+              "required": ["id", "card"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "progression": {
+            "$ref": "#/components/schemas/ProgressionDto"
+          }
+        },
+        "required": ["cards", "progression"],
+        "type": "object"
+      },
       "LeagueDivisionDto": {
         "additionalProperties": false,
         "properties": {
@@ -187,8 +410,8 @@
           "kind": {
             "type": "string",
             "enum": ["matched"],
-            "title": null,
-            "description": null
+            "title": "Estado da fila",
+            "description": "Partida criada para jogador."
           },
           "matchId": {
             "format": "uuid",
@@ -204,8 +427,8 @@
           "kind": {
             "type": "string",
             "enum": ["waiting"],
-            "title": null,
-            "description": null
+            "title": "Estado da fila",
+            "description": "Jogador aguardando adversário."
           },
           "division": {
             "$ref": "#/components/schemas/LeagueDivisionDto"
@@ -243,8 +466,8 @@
           "kind": {
             "type": "string",
             "enum": ["matched"],
-            "title": null,
-            "description": null
+            "title": "Estado da fila",
+            "description": "Partida criada para jogador."
           },
           "matchId": {
             "format": "uuid",
@@ -261,8 +484,8 @@
           "kind": {
             "type": "string",
             "enum": ["waiting"],
-            "title": null,
-            "description": null
+            "title": "Estado da fila",
+            "description": "Jogador aguardando adversário."
           },
           "division": {
             "$ref": "#/components/schemas/LeagueDivisionDto"
@@ -392,52 +615,6 @@
         ],
         "type": "object"
       },
-      "Observable__type": {
-        "additionalProperties": false,
-        "description": "A representation of any set of values over any amount of time. This is the most basic building block\nof RxJS.",
-        "properties": {
-          "source": {
-            "$ref": "#/components/schemas/Observableany",
-            "deprecated": true
-          },
-          "operator": {
-            "$ref": "#/components/schemas/Operatorany__type",
-            "deprecated": true
-          }
-        },
-        "required": [],
-        "type": "object"
-      },
-      "Observableany": {
-        "additionalProperties": false,
-        "description": "A representation of any set of values over any amount of time. This is the most basic building block\nof RxJS.",
-        "properties": {
-          "source": {
-            "$ref": "#/components/schemas/Observableany",
-            "deprecated": true
-          },
-          "operator": {
-            "$ref": "#/components/schemas/Operatoranyany",
-            "deprecated": true
-          }
-        },
-        "required": [],
-        "type": "object"
-      },
-      "Operatorany__type": {
-        "additionalProperties": false,
-        "description": "*",
-        "properties": {},
-        "required": [],
-        "type": "object"
-      },
-      "Operatoranyany": {
-        "additionalProperties": false,
-        "description": "*",
-        "properties": {},
-        "required": [],
-        "type": "object"
-      },
       "HealthResponse": {
         "additionalProperties": false,
         "properties": {
@@ -451,88 +628,131 @@
         "required": ["status"],
         "type": "object"
       },
-      "PurchasePackResponse": {
+      "PurchaseCardResponse": {
         "additionalProperties": false,
         "properties": {
+          "userCardId": {
+            "type": "string"
+          },
           "balance": {
             "type": "number"
           },
-          "quantity": {
+          "price": {
             "type": "number"
           }
         },
-        "required": ["balance", "quantity"],
+        "required": ["userCardId", "balance", "price"],
         "type": "object"
       },
-      "PackActionRequest": {
+      "CardMarketIdentity": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "avatarUrl": {
+            "format": "url",
+            "maxLength": 2048,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "name", "avatarUrl"],
+        "type": "object"
+      },
+      "PurchaseCardRequest": {
         "additionalProperties": false,
         "properties": {
           "identity": {
-            "additionalProperties": false,
-            "properties": {
-              "id": {
-                "maxLength": 80,
-                "minLength": 1,
-                "type": "string"
-              },
-              "name": {
-                "maxLength": 80,
-                "minLength": 1,
-                "type": "string"
-              },
-              "avatarUrl": {
-                "format": "url",
-                "maxLength": 2048,
-                "type": "string",
-                "nullable": true
-              }
-            },
-            "required": ["id", "name", "avatarUrl"],
-            "type": "object"
+            "$ref": "#/components/schemas/CardMarketIdentity"
           }
         },
         "required": ["identity"],
         "type": "object"
       },
-      "OpenPackResponse": {
+      "SellCardsResponse": {
         "additionalProperties": false,
         "properties": {
-          "cards": {
+          "userCardIds": {
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "card": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "overall": {
-                      "type": "number"
-                    }
-                  },
-                  "required": ["id", "overall"],
-                  "type": "object"
-                }
-              },
-              "required": ["id", "card"],
-              "type": "object"
+              "type": "string"
             },
             "type": "array"
           },
-          "progression": {
-            "$ref": "#/components/schemas/ProgressionDto"
+          "balance": {
+            "type": "number"
+          },
+          "amount": {
+            "type": "number"
           }
         },
-        "required": ["cards", "progression"],
+        "required": ["userCardIds", "balance", "amount"],
+        "type": "object"
+      },
+      "SellCardsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "identity": {
+            "$ref": "#/components/schemas/CardMarketIdentity"
+          },
+          "userCardIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": ["identity", "userCardIds"],
         "type": "object"
       }
     }
   },
   "paths": {
+    "/v1/missions": {
+      "post": {
+        "tags": [],
+        "operationId": "listMissions",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MissionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MissionsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "missions", "list"],
+        "x-samchon-controller": "MissionsController"
+      }
+    },
     "/v1/commands/lucro": {
       "post": {
         "summary": "Executa o comando lucro",
@@ -584,6 +804,96 @@
         ],
         "x-samchon-accessor": ["v1", "commands", "lucro", "execute"],
         "x-samchon-controller": "LucroController"
+      }
+    },
+    "/v1/packs/{packId}/purchase": {
+      "post": {
+        "tags": [],
+        "operationId": "purchasePack",
+        "parameters": [
+          {
+            "name": "packId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurchasePackResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "packs", "purchase", "purchasePack"],
+        "x-samchon-controller": "PacksController"
+      }
+    },
+    "/v1/packs/{packId}/open": {
+      "post": {
+        "tags": [],
+        "operationId": "openPack",
+        "parameters": [
+          {
+            "name": "packId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenPackResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "packs", "open", "openPack"],
+        "x-samchon-controller": "PacksController"
       }
     },
     "/v1/ranked/queue": {
@@ -730,35 +1040,6 @@
         "x-samchon-controller": "LeagueController"
       }
     },
-    "/v1/matches/{matchId}/events": {
-      "get": {
-        "tags": [],
-        "parameters": [
-          {
-            "name": "matchId",
-            "in": "path",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Observable__type"
-                }
-              }
-            }
-          }
-        },
-        "x-samchon-accessor": ["v1", "matches", "events"],
-        "x-samchon-controller": "LeagueController"
-      }
-    },
     "/health": {
       "get": {
         "tags": [],
@@ -780,13 +1061,13 @@
         "x-samchon-controller": "HealthController"
       }
     },
-    "/v1/packs/{packId}/purchase": {
+    "/v1/cards/{cardId}/purchase": {
       "post": {
         "tags": [],
-        "operationId": "purchasePack",
+        "operationId": "purchaseCard",
         "parameters": [
           {
-            "name": "packId",
+            "name": "cardId",
             "in": "path",
             "schema": {
               "type": "string"
@@ -798,7 +1079,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PackActionRequest"
+                "$ref": "#/components/schemas/PurchaseCardRequest"
               }
             }
           },
@@ -810,7 +1091,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PurchasePackResponse"
+                  "$ref": "#/components/schemas/PurchaseCardResponse"
                 }
               }
             }
@@ -821,29 +1102,20 @@
             "bearer": []
           }
         ],
-        "x-samchon-accessor": ["v1", "packs", "purchase", "purchasePack"],
-        "x-samchon-controller": "PacksController"
+        "x-samchon-accessor": ["v1", "cards", "purchase", "purchaseCard"],
+        "x-samchon-controller": "CardMarketController"
       }
     },
-    "/v1/packs/{packId}/open": {
+    "/v1/cards/sell": {
       "post": {
         "tags": [],
-        "operationId": "openPack",
-        "parameters": [
-          {
-            "name": "packId",
-            "in": "path",
-            "schema": {
-              "type": "string"
-            },
-            "required": true
-          }
-        ],
+        "operationId": "sellCards",
+        "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PackActionRequest"
+                "$ref": "#/components/schemas/SellCardsRequest"
               }
             }
           },
@@ -855,7 +1127,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OpenPackResponse"
+                  "$ref": "#/components/schemas/SellCardsResponse"
                 }
               }
             }
@@ -866,8 +1138,8 @@
             "bearer": []
           }
         ],
-        "x-samchon-accessor": ["v1", "packs", "open", "openPack"],
-        "x-samchon-controller": "PacksController"
+        "x-samchon-accessor": ["v1", "cards", "sell", "sellCards"],
+        "x-samchon-controller": "CardMarketController"
       }
     }
   },

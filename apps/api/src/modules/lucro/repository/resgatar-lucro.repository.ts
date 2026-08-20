@@ -1,10 +1,12 @@
+import { advanceMissions } from '../../missions/missions.service.js';
+import { grantCommandXp } from '../../progression/progression.js';
+import { upsertDiscordUser } from '../../users/user.repository.js';
 import type {
   CommandConfig,
   CommandTransaction,
   DiscordIdentity,
   ResgatarLucroRepository,
 } from '../use-cases/resgatar-lucro/resgatar-lucro.types.js';
-import { grantCommandXp } from '../../progression/progression.js';
 
 type Database = typeof import('@dreamfut/database');
 type DatabaseLoader = () => Promise<Database>;
@@ -24,15 +26,7 @@ export class DrizzleResgatarLucroRepository implements ResgatarLucroRepository {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtext(${`${command.name}:${identity.id}`}))`,
       );
-      const [user] = await tx
-        .insert(schema.users)
-        .values({ discordUserId: identity.id, nome: identity.name, urlAvatar: identity.avatarUrl })
-        .onConflictDoUpdate({
-          target: schema.users.discordUserId,
-          set: { nome: identity.name, urlAvatar: identity.avatarUrl, atualizadoEm: now },
-        })
-        .returning({ id: schema.users.id });
-      if (!user) throw new Error('Failed to load user.');
+      const user = await upsertDiscordUser(tx, schema, identity, now);
 
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtext(${`command-default:${command.name}`}))`,
@@ -87,6 +81,7 @@ export class DrizzleResgatarLucroRepository implements ResgatarLucroRepository {
             return credited.balance;
           },
           grantProgression: () => grantCommandXp(database, tx, user.id, 'lucro', now),
+          advanceMission: () => advanceMissions(database, tx, user.id, 'claim_profit', now),
           setAvailableAt: async (availableAt) => {
             await tx
               .insert(schema.userCooldowns)

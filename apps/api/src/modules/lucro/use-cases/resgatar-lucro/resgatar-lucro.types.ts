@@ -28,6 +28,7 @@ export type CommandTransaction = Readonly<{
   getAvailableAt(): Promise<Date | null>;
   credit(value: number): Promise<number>;
   grantProgression(): Promise<ProgressionSummary>;
+  advanceMission(): Promise<void>;
   setAvailableAt(availableAt: Date): Promise<void>;
 }>;
 
