@@ -14,17 +14,143 @@
       }
     },
     "schemas": {
-      "HealthResponse": {
+      "LucroCooldownResponse": {
         "additionalProperties": false,
         "properties": {
-          "status": {
+          "kind": {
             "type": "string",
-            "enum": ["ok"],
-            "title": "Estado do serviço",
-            "description": "Estado atual do serviço."
+            "enum": ["cooldown"],
+            "title": "Tipo do resultado",
+            "description": "Resultado com cooldown ainda ativo."
+          },
+          "availableAt": {
+            "format": "date-time",
+            "type": "string"
           }
         },
-        "required": ["status"],
+        "required": ["kind", "availableAt"],
+        "type": "object"
+      },
+      "LucroRewardDto": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "readOnly": true,
+            "type": "number"
+          },
+          "weight": {
+            "readOnly": true,
+            "type": "number"
+          },
+          "message": {
+            "readOnly": true,
+            "type": "string"
+          }
+        },
+        "required": ["value", "weight", "message"],
+        "type": "object"
+      },
+      "LucroSuccessResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["success"],
+            "title": "Tipo do resultado",
+            "description": "Resultado com recompensa concedida."
+          },
+          "reward": {
+            "$ref": "#/components/schemas/LucroRewardDto"
+          },
+          "balance": {
+            "type": "number"
+          },
+          "availableAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "progression": {
+            "$ref": "#/components/schemas/ProgressionDto"
+          }
+        },
+        "required": ["kind", "reward", "balance", "availableAt", "progression"],
+        "type": "object"
+      },
+      "ProgressionDto": {
+        "additionalProperties": false,
+        "properties": {
+          "gainedXp": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "level": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "xp": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "nextLevelXp": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "rewards": {
+            "items": {
+              "$ref": "#/components/schemas/ProgressionRewardDto"
+            },
+            "type": "array",
+            "x-readonly-array": true
+          }
+        },
+        "required": ["gainedXp", "level", "xp", "nextLevelXp", "rewards"],
+        "type": "object"
+      },
+      "ProgressionRewardDto": {
+        "additionalProperties": false,
+        "properties": {
+          "itemId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["balance", "card", "field", "pack"]
+          },
+          "quantity": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "resourceId": {
+            "format": "uuid",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["itemId", "type", "quantity", "resourceId"],
+        "type": "object"
+      },
+      "DiscordIdentityDto": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "avatarUrl": {
+            "format": "url",
+            "maxLength": 2048,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "name", "avatarUrl"],
         "type": "object"
       },
       "LeagueDivisionDto": {
@@ -88,7 +214,7 @@
         "required": ["kind", "division"],
         "type": "object"
       },
-      "DiscordIdentityDto": {
+      "DiscordIdentityDto.o1": {
         "additionalProperties": false,
         "properties": {
           "id": {
@@ -312,143 +438,17 @@
         "required": [],
         "type": "object"
       },
-      "LucroCooldownResponse": {
+      "HealthResponse": {
         "additionalProperties": false,
         "properties": {
-          "kind": {
+          "status": {
             "type": "string",
-            "enum": ["cooldown"],
-            "title": "Tipo do resultado",
-            "description": "Resultado com cooldown ainda ativo."
-          },
-          "availableAt": {
-            "format": "date-time",
-            "type": "string"
+            "enum": ["ok"],
+            "title": "Estado do serviço",
+            "description": "Estado atual do serviço."
           }
         },
-        "required": ["kind", "availableAt"],
-        "type": "object"
-      },
-      "LucroRewardDto": {
-        "additionalProperties": false,
-        "properties": {
-          "value": {
-            "readOnly": true,
-            "type": "number"
-          },
-          "weight": {
-            "readOnly": true,
-            "type": "number"
-          },
-          "message": {
-            "readOnly": true,
-            "type": "string"
-          }
-        },
-        "required": ["value", "weight", "message"],
-        "type": "object"
-      },
-      "LucroSuccessResponse": {
-        "additionalProperties": false,
-        "properties": {
-          "kind": {
-            "type": "string",
-            "enum": ["success"],
-            "title": "Tipo do resultado",
-            "description": "Resultado com recompensa concedida."
-          },
-          "reward": {
-            "$ref": "#/components/schemas/LucroRewardDto"
-          },
-          "balance": {
-            "type": "number"
-          },
-          "availableAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "progression": {
-            "$ref": "#/components/schemas/ProgressionDto"
-          }
-        },
-        "required": ["kind", "reward", "balance", "availableAt", "progression"],
-        "type": "object"
-      },
-      "ProgressionDto": {
-        "additionalProperties": false,
-        "properties": {
-          "gainedXp": {
-            "minimum": 0,
-            "type": "number"
-          },
-          "level": {
-            "minimum": 1,
-            "type": "number"
-          },
-          "xp": {
-            "minimum": 0,
-            "type": "number"
-          },
-          "nextLevelXp": {
-            "minimum": 1,
-            "type": "number"
-          },
-          "rewards": {
-            "items": {
-              "$ref": "#/components/schemas/ProgressionRewardDto"
-            },
-            "type": "array",
-            "x-readonly-array": true
-          }
-        },
-        "required": ["gainedXp", "level", "xp", "nextLevelXp", "rewards"],
-        "type": "object"
-      },
-      "ProgressionRewardDto": {
-        "additionalProperties": false,
-        "properties": {
-          "itemId": {
-            "format": "uuid",
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": ["balance", "card", "field", "pack"]
-          },
-          "quantity": {
-            "minimum": 1,
-            "type": "number"
-          },
-          "resourceId": {
-            "format": "uuid",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": ["itemId", "type", "quantity", "resourceId"],
-        "type": "object"
-      },
-      "DiscordIdentityDto.o1": {
-        "additionalProperties": false,
-        "properties": {
-          "id": {
-            "maxLength": 80,
-            "minLength": 1,
-            "type": "string"
-          },
-          "name": {
-            "maxLength": 80,
-            "minLength": 1,
-            "type": "string"
-          },
-          "avatarUrl": {
-            "format": "url",
-            "maxLength": 2048,
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": ["id", "name", "avatarUrl"],
+        "required": ["status"],
         "type": "object"
       },
       "PurchasePackResponse": {
@@ -533,25 +533,57 @@
     }
   },
   "paths": {
-    "/health": {
-      "get": {
-        "tags": [],
-        "operationId": "HealthController_health",
+    "/v1/commands/lucro": {
+      "post": {
+        "summary": "Executa o comando lucro",
+        "description": "Executa o comando lucro.",
+        "tags": ["commands"],
+        "operationId": "executeLucro",
         "parameters": [],
+        "requestBody": {
+          "description": "Identidade atual do usuário Discord.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiscordIdentityDto"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
-            "description": "",
+            "description": "Recompensa concedida ou cooldown ativo.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HealthResponse"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/LucroCooldownResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/LucroSuccessResponse"
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "kind",
+                    "mapping": {
+                      "cooldown": "#/components/schemas/LucroCooldownResponse",
+                      "success": "#/components/schemas/LucroSuccessResponse"
+                    }
+                  }
                 }
               }
             }
           }
         },
-        "x-samchon-accessor": ["health"],
-        "x-samchon-controller": "HealthController"
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "commands", "lucro", "execute"],
+        "x-samchon-controller": "LucroController"
       }
     },
     "/v1/ranked/queue": {
@@ -563,7 +595,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DiscordIdentityDto"
+                "$ref": "#/components/schemas/DiscordIdentityDto.o1"
               }
             }
           },
@@ -727,57 +759,25 @@
         "x-samchon-controller": "LeagueController"
       }
     },
-    "/v1/commands/lucro": {
-      "post": {
-        "summary": "Executa o comando lucro",
-        "description": "Executa o comando lucro.",
-        "tags": ["commands"],
-        "operationId": "executeLucro",
+    "/health": {
+      "get": {
+        "tags": [],
+        "operationId": "HealthController_health",
         "parameters": [],
-        "requestBody": {
-          "description": "Identidade atual do usuário Discord.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DiscordIdentityDto.o1"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "200": {
-            "description": "Recompensa concedida ou cooldown ativo.",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/LucroCooldownResponse"
-                    },
-                    {
-                      "$ref": "#/components/schemas/LucroSuccessResponse"
-                    }
-                  ],
-                  "discriminator": {
-                    "propertyName": "kind",
-                    "mapping": {
-                      "cooldown": "#/components/schemas/LucroCooldownResponse",
-                      "success": "#/components/schemas/LucroSuccessResponse"
-                    }
-                  }
+                  "$ref": "#/components/schemas/HealthResponse"
                 }
               }
             }
           }
         },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "x-samchon-accessor": ["v1", "commands", "lucro", "execute"],
-        "x-samchon-controller": "LucroController"
+        "x-samchon-accessor": ["health"],
+        "x-samchon-controller": "HealthController"
       }
     },
     "/v1/packs/{packId}/purchase": {

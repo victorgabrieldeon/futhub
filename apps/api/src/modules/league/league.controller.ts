@@ -19,19 +19,13 @@ import type {
   MatchResponse,
   QueueResponse,
 } from './league.dto.js';
-import {
-  DrizzleLeagueRepository,
-  LeagueInputError,
-  LeagueNotFoundError,
-} from './league.repository.js';
+import { LeagueInputError, LeagueNotFoundError } from './use-cases/league/league.use-case.types.js';
+import { LeagueUseCase } from './use-cases/league/league.use-case.js';
 
 @Controller('v1')
 @UseGuards(InternalAuthGuard)
 export class LeagueController {
-  constructor(
-    @Inject(DrizzleLeagueRepository)
-    private readonly league: DrizzleLeagueRepository,
-  ) {}
+  constructor(@Inject(LeagueUseCase) private readonly league: LeagueUseCase) {}
 
   @TypedRoute.Post('ranked/queue')
   @HttpCode(200)

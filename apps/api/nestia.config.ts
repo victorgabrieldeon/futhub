@@ -1,8 +1,4 @@
 import type { INestiaConfig } from '@nestia/sdk';
-import { NestFactory } from '@nestjs/core';
-import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
-
-import { AppModule } from './src/app.module.js';
 
 export const swaggerConfig = {
   openapi: '3.0',
@@ -15,12 +11,6 @@ export const swaggerConfig = {
 } satisfies Omit<INestiaConfig.ISwaggerConfig, 'output'>;
 
 export default {
-  input: async () => {
-    process.env.API_INTERNAL_TOKEN ||= 'openapi-generation';
-    process.env.DATABASE_URL ||= 'postgresql://openapi-generation';
-    return NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
-      logger: false,
-    });
-  },
+  input: 'src/**/*.controller.ts',
   swagger: { ...swaggerConfig, output: 'openapi.json' },
 } satisfies INestiaConfig;

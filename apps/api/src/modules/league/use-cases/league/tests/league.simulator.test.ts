@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { LineupCard } from './league.types.js';
-import { simulateMatch, validateLineup } from './league.simulator.js';
+import type { LineupCard } from '../league.types.js';
+import { simulateMatch, validateLineup } from '../league.simulator.js';
 
 const positions = ['GOL', 'LD', 'LE', 'ZAG', 'ZAG', 'VOL', 'MC', 'MA', 'PD', 'PE', 'CA'];
 

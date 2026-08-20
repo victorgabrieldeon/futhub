@@ -5,7 +5,7 @@ import type {
   OpenTransaction,
   PackRepository,
   PurchaseTransaction,
-} from '../packs.types.js';
+} from '../use-cases/pack.types.js';
 import { grantCommandXp } from '../../progression/progression.js';
 
 type Database = typeof DatabaseModule;

@@ -3,7 +3,8 @@ import { Controller, HttpCode, Inject, Param, UseGuards } from '@nestjs/common';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
 import type { OpenPackResponse, PackActionRequest, PurchasePackResponse } from './packs.dto.js';
-import { OpenPackUseCase, PurchasePackUseCase } from './packs.use-case.js';
+import { OpenPackUseCase } from './use-cases/open-pack/open-pack.use-case.js';
+import { PurchasePackUseCase } from './use-cases/purchase-pack/purchase-pack.use-case.js';
 
 @Controller('v1/packs')
 @UseGuards(InternalAuthGuard)

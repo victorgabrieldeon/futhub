@@ -1,4 +1,4 @@
-import type { PackCard } from '../../packs.types.js';
+import type { PackCard } from '../pack.types.js';
 
 type Probability = Readonly<{ overall: number; weight: number }>;
 

@@ -1,4 +1,4 @@
-import type { ProgressionSummary } from '../progression/progression.js';
+import type { ProgressionSummary } from '../../progression/progression.js';
 
 export type DiscordIdentity = Readonly<{ id: string; name: string; avatarUrl: string | null }>;
 export type PackCard = Readonly<{ id: string; overall: number }>;

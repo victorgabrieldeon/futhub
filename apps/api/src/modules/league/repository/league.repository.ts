@@ -5,19 +5,21 @@ import type {
   MatchEventDto,
   MatchResponse,
   QueueResponse,
-} from './league.dto.js';
-import { simulateMatch, validateLineup } from './league.simulator.js';
-import type { LineupCard } from './league.types.js';
+} from '../league.dto.js';
+import { simulateMatch, validateLineup } from '../use-cases/league/league.simulator.js';
+import type { LineupCard } from '../use-cases/league/league.types.js';
+import {
+  LeagueInputError,
+  LeagueNotFoundError,
+  type DiscordIdentity,
+  type LeagueRepository,
+} from '../use-cases/league/league.use-case.types.js';
 
 type Database = typeof DatabaseModule;
 type DatabaseLoader = () => Promise<Database>;
-type DiscordIdentity = Readonly<{ id: string; name: string; avatarUrl: string | null }>;
 type Transaction = Parameters<Parameters<Database['db']['transaction']>[0]>[0];
 
-export class LeagueInputError extends Error {}
-export class LeagueNotFoundError extends Error {}
-
-export class DrizzleLeagueRepository {
+export class DrizzleLeagueRepository implements LeagueRepository {
   constructor(private readonly loadDatabase: DatabaseLoader) {}
 
   async join(identity: DiscordIdentity): Promise<QueueResponse> {
