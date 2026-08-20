@@ -6,6 +6,79 @@
  * OpenAPI spec version: 1.0
  */
 import { request } from "./request.js";
+export interface PurchasePackResponse {
+  balance: number;
+  quantity: number;
+}
+
+export type PackActionRequestIdentity = {
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  id: string;
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  name: string;
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  avatarUrl: string | null;
+};
+
+export interface PackActionRequest {
+  identity: PackActionRequestIdentity;
+}
+
+export type OpenPackResponseCardsItemCard = {
+  id: string;
+  overall: number;
+};
+
+export type OpenPackResponseCardsItem = {
+  id: string;
+  card: OpenPackResponseCardsItemCard;
+};
+
+export type ProgressionRewardDtoType =
+  (typeof ProgressionRewardDtoType)[keyof typeof ProgressionRewardDtoType];
+
+export const ProgressionRewardDtoType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export interface ProgressionRewardDto {
+  itemId: string;
+  type: ProgressionRewardDtoType;
+  /** @minimum 1 */
+  quantity: number;
+  /** @nullable */
+  resourceId: string | null;
+}
+
+export interface ProgressionDto {
+  /** @minimum 0 */
+  gainedXp: number;
+  /** @minimum 1 */
+  level: number;
+  /** @minimum 0 */
+  xp: number;
+  /** @minimum 1 */
+  nextLevelXp: number;
+  rewards: ProgressionRewardDto[];
+}
+
+export interface OpenPackResponse {
+  cards: OpenPackResponseCardsItem[];
+  progression: ProgressionDto;
+}
+
 export type MissionRewardDtoNullableType =
   (typeof MissionRewardDtoNullableType)[keyof typeof MissionRewardDtoNullableType];
 
@@ -139,37 +212,6 @@ export const LucroSuccessResponseKind = {
   success: "success",
 } as const;
 
-export type ProgressionRewardDtoType =
-  (typeof ProgressionRewardDtoType)[keyof typeof ProgressionRewardDtoType];
-
-export const ProgressionRewardDtoType = {
-  balance: "balance",
-  card: "card",
-  field: "field",
-  pack: "pack",
-} as const;
-
-export interface ProgressionRewardDto {
-  itemId: string;
-  type: ProgressionRewardDtoType;
-  /** @minimum 1 */
-  quantity: number;
-  /** @nullable */
-  resourceId: string | null;
-}
-
-export interface ProgressionDto {
-  /** @minimum 0 */
-  gainedXp: number;
-  /** @minimum 1 */
-  level: number;
-  /** @minimum 0 */
-  xp: number;
-  /** @minimum 1 */
-  nextLevelXp: number;
-  rewards: ProgressionRewardDto[];
-}
-
 export interface LucroSuccessResponse {
   /** Resultado com recompensa concedida. */
   kind: LucroSuccessResponseKind;
@@ -195,48 +237,6 @@ export interface DiscordIdentityDto {
    * @nullable
    */
   avatarUrl: string | null;
-}
-
-export interface PurchasePackResponse {
-  balance: number;
-  quantity: number;
-}
-
-export type PackActionRequestIdentity = {
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
-  id: string;
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
-  name: string;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  avatarUrl: string | null;
-};
-
-export interface PackActionRequest {
-  identity: PackActionRequestIdentity;
-}
-
-export type OpenPackResponseCardsItemCard = {
-  id: string;
-  overall: number;
-};
-
-export type OpenPackResponseCardsItem = {
-  id: string;
-  card: OpenPackResponseCardsItemCard;
-};
-
-export interface OpenPackResponse {
-  cards: OpenPackResponseCardsItem[];
-  progression: ProgressionDto;
 }
 
 export interface LeagueDivisionDto {
@@ -436,6 +436,40 @@ export interface SellCardsRequest {
   userCardIds: string[];
 }
 
+export const getPurchasePackUrl = (packId: string) => {
+  return `/v1/packs/${packId}/purchase`;
+};
+
+export const purchasePack = async (
+  packId: string,
+  packActionRequest: PackActionRequest,
+  options?: Parameters<typeof request>[1],
+): Promise<PurchasePackResponse> => {
+  return request<PurchasePackResponse>(getPurchasePackUrl(packId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(packActionRequest),
+  });
+};
+
+export const getOpenPackUrl = (packId: string) => {
+  return `/v1/packs/${packId}/open`;
+};
+
+export const openPack = async (
+  packId: string,
+  packActionRequest: PackActionRequest,
+  options?: Parameters<typeof request>[1],
+): Promise<OpenPackResponse> => {
+  return request<OpenPackResponse>(getOpenPackUrl(packId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(packActionRequest),
+  });
+};
+
 export const getListMissionsUrl = () => {
   return `/v1/missions`;
 };
@@ -473,40 +507,6 @@ export const executeLucro = async (
       body: JSON.stringify(discordIdentityDto),
     },
   );
-};
-
-export const getPurchasePackUrl = (packId: string) => {
-  return `/v1/packs/${packId}/purchase`;
-};
-
-export const purchasePack = async (
-  packId: string,
-  packActionRequest: PackActionRequest,
-  options?: Parameters<typeof request>[1],
-): Promise<PurchasePackResponse> => {
-  return request<PurchasePackResponse>(getPurchasePackUrl(packId), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(packActionRequest),
-  });
-};
-
-export const getOpenPackUrl = (packId: string) => {
-  return `/v1/packs/${packId}/open`;
-};
-
-export const openPack = async (
-  packId: string,
-  packActionRequest: PackActionRequest,
-  options?: Parameters<typeof request>[1],
-): Promise<OpenPackResponse> => {
-  return request<OpenPackResponse>(getOpenPackUrl(packId), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(packActionRequest),
-  });
 };
 
 export const getJoinRankedQueueUrl = () => {

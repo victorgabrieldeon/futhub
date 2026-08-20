@@ -1,3 +1,0 @@
-name = "Generate API client"
-description = "Gera OpenAPI e cliente TypeScript"
-command = "pnpm generate:api"

@@ -7,8 +7,11 @@
     "build": "ttsc -p tsconfig.build.json",
     "dev": "ttsc -p tsconfig.build.json && concurrently -k \"ttsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"node --watch dist/server.js\"",
     "openapi:generate": "nestia swagger && biome format --write openapi.json",
+    "generate:module": "node scripts/generate-module.mjs",
+    "generate:usecase": "node scripts/generate-usecase.mjs",
     "start": "node dist/server.js",
     "test": "vitest run",
+    "test:generators": "node --test scripts/*.test.mjs",
     "typecheck": "ttsc --noEmit"
   },
   "dependencies": {

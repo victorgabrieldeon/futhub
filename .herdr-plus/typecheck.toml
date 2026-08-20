@@ -1,3 +1,0 @@
-name = "Typecheck"
-description = "Executa verificação TypeScript do monorepo"
-command = "pnpm typecheck"

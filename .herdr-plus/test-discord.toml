@@ -1,3 +1,0 @@
-name = "Test Discord bot"
-description = "Executa testes do Discord bot"
-command = "pnpm --filter @dreamfut/discord-bot test"

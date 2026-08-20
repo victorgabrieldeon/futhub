@@ -1,3 +1,0 @@
-name = "Apply migrations"
-description = "Aplica migrations no DATABASE_URL atual"
-command = "pnpm --filter @dreamfut/database db:migrate"

@@ -10,3 +10,4 @@ apps/*/.wrangler/
 .next/
 .openclaude/settings.local.json
 .openclaude/worktrees/
+.herdr-plus/

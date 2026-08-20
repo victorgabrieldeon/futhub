@@ -1,3 +1,0 @@
-name = "Generate migration"
-description = "Gera migration Drizzle a partir do schema"
-command = "pnpm --filter @dreamfut/database db:generate"

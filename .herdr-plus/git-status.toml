@@ -1,3 +1,0 @@
-name = "Git status"
-description = "Exibe estado resumido do repositório"
-command = "git status --short"
