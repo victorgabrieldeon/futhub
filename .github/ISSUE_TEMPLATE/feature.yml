@@ -1,0 +1,35 @@
+name: Propor funcionalidade
+description: Sugira melhoria para jogadores, comunidade ou quem contribui.
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Comece pelo problema. Solução pode ser debatida em público.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema ou oportunidade
+      description: Quem é afetado e qual dificuldade existe hoje?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Resultado esperado
+      description: Como saberemos que melhoria funcionou?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Ideia inicial
+      description: Descreva solução proposta, alternativas ou referências. Opcional.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Verificações
+      options:
+        - label: Procurei issues existentes antes de abrir esta proposta.
+          required: true

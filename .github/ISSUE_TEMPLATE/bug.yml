@@ -1,0 +1,41 @@
+name: Relatar bug
+description: Ajude a reproduzir e corrigir um problema.
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por relatar. Não inclua tokens, URLs privadas ou dados de jogadores.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema
+      description: O que aconteceu e qual comportamento você esperava?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Como reproduzir
+      description: Passos mínimos, incluindo comando, rota ou comando Discord quando aplicável.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto
+      description: Versão, commit, ambiente e logs sanitizados que ajudem a investigar.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Verificações
+      options:
+        - label: Procurei issues existentes e removi dados sensíveis.
+          required: true
