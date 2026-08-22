@@ -20,12 +20,12 @@ importers:
 
   apps/api:
     dependencies:
-      '@dreamfut/database':
-        specifier: workspace:*
-        version: link:../../packages/database
       '@fastify/static':
         specifier: 10.1.2
         version: 10.1.2
+      '@futhub/database':
+        specifier: workspace:*
+        version: link:../../packages/database
       '@nestia/core':
         specifier: 12.1.0
         version: 12.1.0(@nestia/fetcher@12.1.0)(@nestjs/common@11.2.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.2.1(@nestjs/common@11.2.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)(typia@13.3.0(@types/node@22.13.4)(ttsc@0.27.0))
@@ -60,7 +60,7 @@ importers:
         specifier: 13.3.0
         version: 13.3.0(@types/node@22.13.4)(ttsc@0.27.0)
     devDependencies:
-      '@dreamfut/config':
+      '@futhub/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@nestjs/testing':
@@ -90,14 +90,14 @@ importers:
 
   apps/discord-bot:
     dependencies:
-      '@dreamfut/api-client':
+      '@futhub/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
       discord.js:
         specifier: 14.18.0
         version: 14.18.0
     devDependencies:
-      '@dreamfut/config':
+      '@futhub/config':
         specifier: workspace:*
         version: link:../../packages/config
       '@types/node':
@@ -109,7 +109,7 @@ importers:
 
   packages/api-client:
     devDependencies:
-      '@dreamfut/config':
+      '@futhub/config':
         specifier: workspace:*
         version: link:../config
       '@types/node':
@@ -136,7 +136,7 @@ importers:
         specifier: 8.13.3
         version: 8.13.3
     devDependencies:
-      '@dreamfut/config':
+      '@futhub/config':
         specifier: workspace:*
         version: link:../config
       '@types/node':

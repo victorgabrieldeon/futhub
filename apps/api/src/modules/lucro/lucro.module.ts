@@ -18,7 +18,7 @@ import { ResgatarLucroUseCase } from './use-cases/resgatar-lucro/resgatar-lucro.
       provide: ResgatarLucroRepository,
       useFactory: () => {
         if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required.');
-        return new DrizzleResgatarLucroRepository(() => import('@dreamfut/database'));
+        return new DrizzleResgatarLucroRepository(() => import('@futhub/database'));
       },
     },
     {

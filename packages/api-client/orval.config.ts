@@ -1,7 +1,7 @@
 import { defineConfig } from 'orval';
 
 export default defineConfig({
-  dreamfut: {
+  futhub: {
     input: '../../apps/api/openapi.json',
     output: {
       client: 'fetch',

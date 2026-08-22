@@ -13,7 +13,7 @@ import { PurchasePackUseCase } from './use-cases/purchase-pack/purchase-pack.use
       provide: PackRepository,
       useFactory: () => {
         if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required.');
-        return new DrizzlePackRepository(() => import('@dreamfut/database'));
+        return new DrizzlePackRepository(() => import('@futhub/database'));
       },
     },
     {

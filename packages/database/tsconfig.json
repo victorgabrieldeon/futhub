@@ -1,5 +1,5 @@
 {
-  "extends": "@dreamfut/config/tsconfig.node.json",
+  "extends": "@futhub/config/tsconfig.node.json",
   "compilerOptions": {
     "declaration": true,
     "outDir": "dist",

@@ -20,7 +20,7 @@ const identity = {
 };
 
 let container: StartedTestContainer | undefined;
-let database: typeof import('@dreamfut/database') | undefined;
+let database: typeof import('@futhub/database') | undefined;
 let repository: ResgatarLucroRepository | undefined;
 
 function useCase(subject: ResgatarLucroRepository): ResgatarLucroUseCase {
@@ -30,25 +30,25 @@ function useCase(subject: ResgatarLucroRepository): ResgatarLucroUseCase {
 beforeAll(async () => {
   container = await new GenericContainer('postgres:17-alpine')
     .withEnvironment({
-      POSTGRES_DB: 'dreamfut_test',
-      POSTGRES_USER: 'dreamfut',
-      POSTGRES_PASSWORD: 'dreamfut',
+      POSTGRES_DB: 'futhub_test',
+      POSTGRES_USER: 'futhub',
+      POSTGRES_PASSWORD: 'futhub',
     })
     .withExposedPorts(5432)
     .withHealthCheck({
-      test: ['CMD-SHELL', 'pg_isready -U dreamfut -d dreamfut_test'],
+      test: ['CMD-SHELL', 'pg_isready -U futhub -d futhub_test'],
       interval: 1_000,
       timeout: 5_000,
       retries: 10,
     })
     .withWaitStrategy(Wait.forHealthCheck())
     .start();
-  process.env.DATABASE_URL = `postgresql://dreamfut:dreamfut@${container.getHost()}:${container.getMappedPort(5432)}/dreamfut_test`;
-  await execFileAsync('pnpm', ['--filter', '@dreamfut/database', 'db:migrate'], {
+  process.env.DATABASE_URL = `postgresql://futhub:futhub@${container.getHost()}:${container.getMappedPort(5432)}/futhub_test`;
+  await execFileAsync('pnpm', ['--filter', '@futhub/database', 'db:migrate'], {
     cwd: process.cwd(),
     env: process.env,
   });
-  const loadedDatabase = await import('@dreamfut/database');
+  const loadedDatabase = await import('@futhub/database');
   database = loadedDatabase;
   repository = new (
     await import('../../../repository/resgatar-lucro.repository.js')

@@ -1,4 +1,4 @@
-import type { LucroResponse } from '@dreamfut/api-client';
+import type { LucroResponse } from '@futhub/api-client';
 
 export function formatCommandResult(result: LucroResponse, now: Date): string {
   const availableAt = new Date(result.availableAt);

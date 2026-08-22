@@ -2,18 +2,40 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_DB: dreamfut
-      POSTGRES_USER: dreamfut
-      POSTGRES_PASSWORD: dreamfut
-    ports:
-      - '5432:5432'
+      POSTGRES_DB: futhub
+      POSTGRES_USER: futhub
+      POSTGRES_PASSWORD: futhub
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U dreamfut -d dreamfut']
+      test: ['CMD-SHELL', 'pg_isready -U futhub -d futhub']
       interval: 5s
       timeout: 5s
       retries: 5
+
+  api:
+    build: .
+    command: sh -c 'pnpm --filter @futhub/database db:migrate && pnpm --filter @futhub/api start'
+    environment:
+      API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:?API_INTERNAL_TOKEN is required}
+      API_PORT: 3000
+      DATABASE_URL: postgresql://futhub:futhub@postgres:5432/futhub
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  discord-bot:
+    profiles: ['discord']
+    build: .
+    command: pnpm --filter @futhub/discord-bot start
+    environment:
+      API_BASE_URL: http://api:3000
+      API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:?API_INTERNAL_TOKEN is required}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_TOKEN: ${DISCORD_TOKEN:-}
+    depends_on:
+      api:
+        condition: service_started
 
 volumes:
   postgres-data:

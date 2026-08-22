@@ -12,7 +12,7 @@ import { PurchaseCardUseCase, SellCardsUseCase } from './use-cases/card-market.u
       provide: CardMarketRepository,
       useFactory: () => {
         if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required.');
-        return new DrizzleCardMarketRepository(() => import('@dreamfut/database'));
+        return new DrizzleCardMarketRepository(() => import('@futhub/database'));
       },
     },
     {

@@ -10,7 +10,7 @@ import { MissionsService } from './missions.service.js';
       provide: MissionsService,
       useFactory: () => {
         if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required.');
-        return new MissionsService(() => import('@dreamfut/database'));
+        return new MissionsService(() => import('@futhub/database'));
       },
     },
   ],

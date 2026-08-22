@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="FutHub — sistema open source de futebol para criar elencos, disputar ligas e evoluir no Discord."
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <title>FutHub — futebol construído em público</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #000;
+        --primary-active: #1a1a1a;
+        --link: #0d74ce;
+        --ink: #171717;
+        --body: #60646c;
+        --muted: #999;
+        --hairline: #f0f0f3;
+        --hairline-soft: #f5f5f7;
+        --hairline-strong: #dcdee0;
+        --canvas: #fff;
+        --canvas-soft: #fafafa;
+        --surface-strong: #f0f0f3;
+        --surface-dark: #171717;
+        --on-dark: #fff;
+        --on-dark-soft: #b0b4ba;
+        --sky-light: #cfe7ff;
+        --sky-mid: #a8c8e8;
+        --max: 1200px;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        min-width: 320px;
+        margin: 0;
+        color: var(--ink);
+        background: var(--canvas);
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      a { color: var(--link); }
+      h1, h2, h3, p { margin-top: 0; }
+      .shell { width: min(calc(100% - 40px), var(--max)); margin: 0 auto; }
+
+      header { height: 64px; border-bottom: 1px solid var(--hairline); background: #ffffffeb; }
+      .topbar { display: flex; height: 100%; align-items: center; justify-content: space-between; gap: 24px; }
+      .brand { display: inline-flex; align-items: center; gap: 9px; color: var(--ink); font-size: 15px; font-weight: 600; letter-spacing: -.3px; text-decoration: none; }
+      .brand-mark { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 6px; color: #fff; background: #000; font-size: 10px; letter-spacing: -1px; }
+      nav { display: flex; align-items: center; gap: 24px; }
+      nav a { color: var(--ink); font-size: 14px; font-weight: 500; text-decoration: none; }
+      nav a:hover { color: var(--link); }
+      .nav-cta { padding: 10px 14px; border-radius: 8px; color: #fff; background: #000; }
+      .nav-cta:hover { color: #fff; background: var(--primary-active); }
+
+      .hero {
+        position: relative;
+        overflow: hidden;
+        padding: 96px 0 0;
+        text-align: center;
+        background: radial-gradient(ellipse 62% 42% at 50% 4%, var(--sky-light) 0%, #dceeffc2 38%, #fff0 76%);
+      }
+      .hero-copy { max-width: 720px; margin: 0 auto; }
+      .eyebrow { margin-bottom: 16px; color: var(--body); font-size: 13px; font-weight: 600; letter-spacing: .88px; text-transform: uppercase; }
+      h1 { margin-bottom: 20px; font-size: clamp(40px, 6vw, 64px); font-weight: 600; letter-spacing: -1.92px; line-height: 1.05; }
+      .lead { max-width: 600px; margin: 0 auto; color: var(--body); font-size: 16px; }
+      .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 32px; }
+      .button { display: inline-flex; height: 40px; align-items: center; justify-content: center; padding: 10px 18px; border: 1px solid var(--hairline-strong); border-radius: 8px; color: var(--ink); background: #fff; font-size: 14px; font-weight: 500; text-decoration: none; transition: background .15s ease, border-color .15s ease; }
+      .button:hover { border-color: var(--ink); }
+      .button-primary { border-color: #000; color: #fff; background: #000; }
+      .button-primary:hover { border-color: var(--primary-active); color: #fff; background: var(--primary-active); }
+
+      .devices { position: relative; width: min(860px, 100%); height: 492px; margin: 72px auto 0; }
+      .laptop { position: absolute; bottom: 0; left: 50%; width: min(780px, 91%); transform: translateX(-50%); }
+      .laptop-screen { min-height: 412px; overflow: hidden; border: 10px solid #2c2c2c; border-bottom-width: 12px; border-radius: 16px 16px 4px 4px; background: #fff; box-shadow: 0 18px 38px #7491ab42; }
+      .laptop-notch { position: absolute; top: 4px; left: 50%; width: 84px; height: 10px; transform: translateX(-50%); border-radius: 0 0 8px 8px; background: #2c2c2c; }
+      .laptop-base { width: 106%; height: 13px; margin-left: -3%; border-radius: 3px 3px 12px 12px; background: linear-gradient(#d6d8dc, #a8acb2); }
+      .screen-topbar { display: flex; height: 42px; align-items: center; gap: 5px; padding: 0 16px; border-bottom: 1px solid var(--hairline); background: #fbfbfc; }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: #dcdee0; }
+      .screen-title { margin-left: 8px; color: var(--body); font-family: "JetBrains Mono", monospace; font-size: 11px; }
+      .screen-body { display: grid; grid-template-columns: 150px 1fr; min-height: 360px; text-align: left; }
+      .screen-sidebar { padding: 18px 12px; border-right: 1px solid var(--hairline); background: #fafafa; }
+      .screen-logo { margin: 0 0 20px 8px; font-size: 13px; font-weight: 600; }
+      .screen-menu { display: block; padding: 7px 8px; border-radius: 4px; color: var(--body); font-size: 11px; }
+      .screen-menu.active { color: var(--ink); background: var(--surface-strong); font-weight: 600; }
+      .screen-main { padding: 24px; }
+      .screen-main h3 { margin-bottom: 4px; font-size: 20px; font-weight: 600; letter-spacing: -.5px; }
+      .screen-main > p { margin-bottom: 20px; color: var(--body); font-size: 12px; }
+      .dashboard-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 14px; }
+      .panel { padding: 14px; border: 1px solid var(--hairline-strong); border-radius: 8px; background: #fff; }
+      .panel-label { margin-bottom: 9px; color: var(--body); font-size: 10px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; }
+      .match-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--hairline-soft); font-size: 11px; }
+      .match-row:first-of-type { border-top: 0; }
+      .match-row strong { font-family: "JetBrains Mono", monospace; font-weight: 400; }
+      .status { display: inline-block; padding: 3px 6px; border-radius: 999px; color: #166534; background: #dcfce7; font-size: 9px; font-weight: 600; }
+      .terminal { min-height: 148px; color: #fff; background: var(--surface-dark); }
+      .terminal .panel-label { color: var(--on-dark-soft); }
+      .terminal code { color: var(--on-dark); font-family: "JetBrains Mono", monospace; font-size: 10px; line-height: 1.9; }
+      .terminal .green { color: #86efac; }
+
+      .phone { position: absolute; z-index: 2; right: 2%; bottom: 0; width: 190px; padding: 8px; border: 6px solid #2c2c2c; border-radius: 27px; background: #2c2c2c; box-shadow: 0 20px 45px #56657555; }
+      .phone-notch { position: absolute; z-index: 1; top: 8px; left: 50%; width: 76px; height: 18px; transform: translateX(-50%); border-radius: 0 0 12px 12px; background: #2c2c2c; }
+      .phone-screen { min-height: 320px; overflow: hidden; border-radius: 16px; color: #fff; background: #313338; text-align: left; }
+      .discord-top { padding: 29px 14px 12px; border-bottom: 1px solid #42454a; font-size: 11px; font-weight: 600; }
+      .discord-message { display: grid; grid-template-columns: 23px 1fr; gap: 8px; padding: 13px; }
+      .avatar { width: 23px; height: 23px; border-radius: 50%; background: linear-gradient(135deg, #5e6ad2, #a3a8ff); }
+      .message-name { margin-bottom: 3px; color: #fff; font-size: 10px; font-weight: 600; }
+      .message-copy { color: #dbdee1; font-size: 10px; line-height: 1.45; }
+      .match-card { margin: 0 13px; padding: 10px; border-left: 3px solid #5865f2; border-radius: 4px; background: #2b2d31; }
+      .match-card small { display: block; margin-bottom: 7px; color: #949ba4; font-size: 9px; }
+      .match-score { display: flex; justify-content: space-between; font-family: "JetBrains Mono", monospace; font-size: 13px; }
+
+      section { padding: 96px 0; }
+      .section-head { max-width: 650px; margin-bottom: 48px; }
+      .section-head .eyebrow { margin-bottom: 12px; }
+      h2 { margin-bottom: 12px; font-size: clamp(32px, 4vw, 48px); font-weight: 600; letter-spacing: -1.44px; line-height: 1.1; }
+      .section-head > p:last-child { margin-bottom: 0; color: var(--body); }
+      .section-soft { background: var(--canvas-soft); }
+      .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      .feature { min-height: 206px; padding: 24px; border: 1px solid var(--hairline-strong); border-radius: 12px; background: #fff; }
+      .feature.dark { border-color: var(--surface-dark); color: var(--on-dark); background: var(--surface-dark); }
+      .feature-number { display: grid; width: 32px; height: 32px; place-items: center; margin-bottom: 34px; border-radius: 8px; background: var(--surface-strong); color: var(--ink); font-family: "JetBrains Mono", monospace; font-size: 11px; }
+      .feature.dark .feature-number { color: #fff; background: #2e2e2e; }
+      h3 { margin-bottom: 7px; font-size: 18px; font-weight: 600; letter-spacing: 0; }
+      .feature p { margin-bottom: 0; color: var(--body); font-size: 14px; }
+      .feature.dark p { color: var(--on-dark-soft); }
+
+      .workflow { display: grid; grid-template-columns: .85fr 1.15fr; gap: 48px; align-items: start; }
+      .steps { display: grid; gap: 12px; }
+      .step { display: grid; grid-template-columns: 32px 1fr; gap: 12px; padding: 20px; border: 1px solid var(--hairline-strong); border-radius: 12px; background: #fff; }
+      .step-icon { display: grid; width: 32px; height: 32px; place-items: center; border-radius: 8px; background: var(--surface-strong); font-family: "JetBrains Mono", monospace; font-size: 12px; }
+      .step h3 { margin: 2px 0 3px; font-size: 16px; }
+      .step p { margin-bottom: 0; color: var(--body); font-size: 14px; }
+      pre { min-height: 100%; margin: 0; padding: 20px; overflow: auto; border-radius: 12px; color: #fff; background: var(--surface-dark); font: 13px/1.75 "JetBrains Mono", "Fira Code", monospace; }
+      .code-muted { color: #b0b4ba; }
+      .code-command { color: #fff; }
+
+      .open-source { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; padding: 48px; border: 1px solid var(--hairline); border-radius: 16px; background: #fff; }
+      .open-source h2 { margin-bottom: 16px; font-size: clamp(30px, 3vw, 36px); }
+      .open-source p { max-width: 560px; margin-bottom: 0; color: var(--body); }
+      .resource-list { display: grid; gap: 1px; overflow: hidden; border: 1px solid var(--hairline-strong); border-radius: 8px; }
+      .resource-list a { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; color: var(--ink); background: #fff; font-size: 14px; font-weight: 500; text-decoration: none; }
+      .resource-list a:hover { color: var(--link); background: var(--canvas-soft); }
+      .resource-list span { color: var(--body); }
+
+      .prerequisites { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+      .prerequisite { min-height: 186px; padding: 24px; border: 1px solid var(--hairline-strong); border-radius: 12px; background: #fff; }
+      .prerequisite .step-icon { margin-bottom: 28px; }
+      .prerequisite h3 { margin-bottom: 6px; font-size: 16px; }
+      .prerequisite p { margin-bottom: 0; color: var(--body); font-size: 14px; }
+      .inline-link { color: var(--link); text-decoration: none; }
+      .inline-link:hover { text-decoration: underline; }
+      .windows-guide { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; padding: 32px; border: 1px solid var(--hairline-strong); border-radius: 12px; background: #fff; }
+      .os-label { display: inline-block; margin-bottom: 16px; padding: 4px 10px; border-radius: 999px; background: var(--surface-strong); color: var(--ink); font-size: 11px; font-weight: 600; letter-spacing: .88px; text-transform: uppercase; }
+      .windows-guide h3 { font-size: 22px; letter-spacing: -.5px; }
+      .windows-guide p, .windows-guide li { color: var(--body); font-size: 14px; }
+      .windows-guide ol { margin: 16px 0 0; padding-left: 20px; }
+      .windows-guide li + li { margin-top: 8px; }
+      .roadmap-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      .roadmap-column { min-height: 266px; padding: 24px; border: 1px solid var(--hairline-strong); border-radius: 12px; background: #fff; }
+      .roadmap-column.featured { border-color: var(--surface-dark); color: var(--on-dark); background: var(--surface-dark); }
+      .roadmap-column h3 { margin-bottom: 18px; }
+      .roadmap-column ul { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+      .roadmap-column li { position: relative; padding-left: 16px; color: var(--body); font-size: 14px; }
+      .roadmap-column li::before { position: absolute; left: 0; color: var(--ink); content: "•"; }
+      .roadmap-column.featured li { color: var(--on-dark-soft); }
+      .roadmap-column.featured li::before { color: #fff; }
+
+      footer { padding: 64px 0 32px; border-top: 1px solid var(--hairline); color: var(--body); font-size: 14px; }
+      .footer-grid { display: grid; grid-template-columns: 2fr repeat(2, 1fr); gap: 32px; padding-bottom: 48px; }
+      .footer-grid strong { display: block; margin-bottom: 12px; color: var(--ink); font-size: 14px; font-weight: 600; }
+      .footer-grid a { display: block; margin: 8px 0; color: var(--body); text-decoration: none; }
+      .footer-grid a:hover { color: var(--link); }
+      .footer-bottom { display: flex; justify-content: space-between; gap: 16px; padding-top: 20px; border-top: 1px solid var(--hairline); font-size: 13px; }
+
+      @media (max-width: 760px) {
+        .shell { width: min(calc(100% - 32px), var(--max)); }
+        nav a:not(.nav-cta) { display: none; }
+        .hero { padding-top: 64px; }
+        h1 { font-size: 40px; letter-spacing: -1.2px; }
+        .devices { height: 284px; margin-top: 48px; }
+        .laptop { width: 100%; }
+        .laptop-screen { min-height: 230px; border-width: 6px; border-radius: 10px 10px 3px 3px; }
+        .screen-topbar { height: 28px; padding: 0 9px; }
+        .dot { width: 5px; height: 5px; }
+        .screen-title { font-size: 7px; }
+        .screen-body { min-height: 195px; grid-template-columns: 78px 1fr; }
+        .screen-sidebar { padding: 10px 6px; }
+        .screen-logo { margin: 0 0 10px 3px; font-size: 8px; }
+        .screen-menu { padding: 4px 3px; font-size: 7px; }
+        .screen-main { padding: 12px; }
+        .screen-main h3 { margin-bottom: 2px; font-size: 11px; }
+        .screen-main > p { margin-bottom: 9px; font-size: 7px; }
+        .dashboard-grid { gap: 7px; }
+        .panel { padding: 7px; border-radius: 4px; }
+        .panel-label { margin-bottom: 4px; font-size: 6px; }
+        .match-row { padding: 4px 0; font-size: 6px; }
+        .status { padding: 2px 3px; font-size: 5px; }
+        .terminal { min-height: 77px; }
+        .terminal code { font-size: 6px; }
+        .phone { right: 0; width: 113px; padding: 5px; border-width: 4px; border-radius: 18px; }
+        .phone-notch { top: 4px; width: 45px; height: 11px; border-radius: 0 0 7px 7px; }
+        .phone-screen { min-height: 190px; border-radius: 10px; }
+        .discord-top { padding: 17px 8px 7px; font-size: 7px; }
+        .discord-message { grid-template-columns: 14px 1fr; gap: 5px; padding: 8px; }
+        .avatar { width: 14px; height: 14px; }
+        .message-name, .message-copy { font-size: 6px; }
+        .match-card { margin: 0 8px; padding: 6px; }
+        .match-card small { margin-bottom: 4px; font-size: 5px; }
+        .match-score { font-size: 8px; }
+        section { padding: 64px 0; }
+        .section-head { margin-bottom: 32px; }
+        .features, .workflow, .open-source, .prerequisites, .windows-guide, .roadmap-grid { grid-template-columns: 1fr; gap: 16px; }
+        .feature { min-height: 0; }
+        .feature-number { margin-bottom: 20px; }
+        .workflow { gap: 32px; }
+        pre { min-height: 270px; font-size: 11px; }
+        .open-source { padding: 28px; }
+        .footer-grid { grid-template-columns: 1fr 1fr; }
+        .footer-grid > :first-child { grid-column: 1 / -1; }
+        .footer-bottom { display: block; }
+        .footer-bottom span:last-child { display: block; margin-top: 6px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="shell topbar">
+        <a class="brand" href="#inicio" aria-label="FutHub, início"><span class="brand-mark">FH</span> FutHub</a>
+        <nav aria-label="Navegação principal">
+          <a href="#produto">Produto</a>
+          <a href="#instalar">Instalar</a>
+          <a href="#roadmap">Roadmap</a>
+          <a class="nav-cta" href="https://github.com/victorgabrieldeon/futhub">GitHub ↗</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="inicio">
+      <section class="hero">
+        <div class="shell">
+          <div class="hero-copy">
+            <p class="eyebrow">Open source · futebol · Discord</p>
+            <h1>Futebol para construir, jogar e evoluir junto.</h1>
+            <p class="lead">FutHub transforma comunidade em jogo. Crie elenco, abra packs, dispute partidas e acompanhe evolução pelo Discord.</p>
+            <div class="actions">
+              <a class="button button-primary" href="#comece">Começar agora</a>
+              <a class="button" href="https://github.com/victorgabrieldeon/futhub">Ver no GitHub ↗</a>
+            </div>
+          </div>
+
+          <div class="devices" aria-label="Ambiente FutHub: painel de desenvolvimento e partida no Discord">
+            <div class="laptop">
+              <div class="laptop-notch"></div>
+              <div class="laptop-screen">
+                <div class="screen-topbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="screen-title">localhost:3000 · FutHub Console</span></div>
+                <div class="screen-body">
+                  <aside class="screen-sidebar"><p class="screen-logo">FutHub</p><span class="screen-menu active">Visão geral</span><span class="screen-menu">Ligas</span><span class="screen-menu">Packs</span><span class="screen-menu">Missões</span><span class="screen-menu">API</span></aside>
+                  <div class="screen-main">
+                    <h3>Jogo em execução</h3>
+                    <p>Ambiente local conectado à sua comunidade.</p>
+                    <div class="dashboard-grid">
+                      <div class="panel"><p class="panel-label">Partidas recentes</p><div class="match-row"><span>FutHub FC</span><strong>2 × 1</strong></div><div class="match-row"><span>Dream XI</span><strong>0 × 0</strong></div><div class="match-row"><span>Aurora FC</span><strong>3 × 2</strong></div></div>
+                      <div class="panel"><p class="panel-label">Estado</p><span class="status">API online</span><p style="margin: 15px 0 0; color: #60646c; font-size: 11px">Fila ranqueada pronta para novo adversário.</p></div>
+                      <div class="panel terminal"><p class="panel-label">Servidor</p><code><span class="green">✓</span> migrations applied<br /><span class="green">✓</span> API listening :3000<br />↳ /v1/ranked/queue</code></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="laptop-base"></div>
+            </div>
+            <div class="phone">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <div class="discord-top"># partidas-ranqueadas</div>
+                <div class="discord-message"><span class="avatar"></span><div><div class="message-name">FutHub Bot</div><div class="message-copy">Adversário encontrado. Sua partida começou.</div></div></div>
+                <div class="match-card"><small>PARTIDA RANQUEADA · 72'</small><div class="match-score"><span>FTH</span><strong>2 × 1</strong><span>DXI</span></div></div>
+                <div class="discord-message"><span class="avatar"></span><div><div class="message-name">FutHub Bot</div><div class="message-copy">Gol de empate! Acompanhe eventos e resultado aqui.</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="produto">
+        <div class="shell">
+          <div class="section-head"><p class="eyebrow">Uma base para comunidade</p><h2>Um jogo aberto, do banco ao campo.</h2><p>Regras de jogo na API, comandos no Discord e uma base TypeScript feita para quem quer contribuir.</p></div>
+          <div class="features">
+            <article class="feature"><div class="feature-number">01</div><h3>Cards e elencos</h3><p>Monte elenco com cards conquistados, comprados ou vendidos na economia do jogo.</p></article>
+            <article class="feature dark"><div class="feature-number">02</div><h3>Packs e progressão</h3><p>Packs concedem cards, XP e recompensas. Regras permanecem claras e configuráveis.</p></article>
+            <article class="feature"><div class="feature-number">03</div><h3>Ligas ranqueadas</h3><p>Entre na fila, encontre adversário e acompanhe placar, pontos e divisão.</p></article>
+            <article class="feature"><div class="feature-number">04</div><h3>Missões</h3><p>Objetivos recorrentes dão direção para jogar e novas razões para voltar.</p></article>
+            <article class="feature"><div class="feature-number">05</div><h3>Bot Discord</h3><p>A comunidade joga no canal onde já conversa, sem instalar outro cliente.</p></article>
+            <article class="feature dark"><div class="feature-number">06</div><h3>API tipada</h3><p>Fastify, Nestia e TypeScript mantêm contrato público entre bot, API e integrações.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="instalar" class="section-soft">
+        <div class="shell">
+          <div class="section-head"><p class="eyebrow">Antes de rodar</p><h2>Prepare uma máquina para jogar e desenvolver.</h2><p>FutHub usa Docker para banco e aplicações. Dependências JavaScript são instaladas dentro do container na primeira execução.</p></div>
+          <div class="prerequisites">
+            <article class="prerequisite"><span class="step-icon">01</span><h3>Git</h3><p>Clone repositório com <a class="inline-link" href="https://git-scm.com/downloads">Git</a> instalado.</p></article>
+            <article class="prerequisite"><span class="step-icon">02</span><h3>Node.js 22.18+</h3><p>Instale <a class="inline-link" href="https://nodejs.org/">Node.js</a>. Ele fornece Corepack para usar pnpm 10.6.5.</p></article>
+            <article class="prerequisite"><span class="step-icon">03</span><h3>Docker Desktop</h3><p>Instale e deixe <a class="inline-link" href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> em execução.</p></article>
+            <article class="prerequisite"><span class="step-icon">04</span><h3>Tilt</h3><p>Instale <a class="inline-link" href="https://docs.tilt.dev/install.html">Tilt</a> para subir, observar e parar stack local.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="comece" class="section-soft">
+        <div class="shell">
+          <div class="section-head"><p class="eyebrow">Ambiente local</p><h2>Suba o jogo. Veja cada peça funcionar.</h2><p>Docker e Tilt cuidam da infraestrutura. Você muda código e acompanha API, banco e bot no mesmo ambiente.</p></div>
+          <div class="workflow">
+            <div class="steps">
+              <article class="step"><span class="step-icon">1</span><div><h3>Prepare ambiente</h3><p>Instale Docker, Tilt, Node.js 22 e habilite Corepack.</p></div></article>
+              <article class="step"><span class="step-icon">2</span><div><h3>Inicie stack</h3><p>Tilt cria ambiente local, inicia PostgreSQL e aplica migrations.</p></div></article>
+              <article class="step"><span class="step-icon">3</span><div><h3>Jogue e contribua</h3><p>Preencha credenciais Discord, teste fluxo e envie melhoria pequena.</p></div></article>
+            </div>
+            <pre><span class="code-muted"># clone repositório</span>
+git clone https://github.com/victorgabrieldeon/futhub.git
+cd futhub
+
+<span class="code-muted"># suba ambiente local</span>
+corepack enable
+<span class="code-command">pnpm dev:tilt</span>
+
+<span class="code-muted"># descubra URL da API</span>
+docker compose -f docker-compose.yml \
+  -f docker-compose.tilt.yml port api 3000
+
+<span class="code-muted"># valide antes do PR</span>
+<span class="code-command">pnpm check</span></pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="windows">
+        <div class="shell">
+          <div class="section-head"><p class="eyebrow">Windows</p><h2>Rode FutHub no Windows com Docker Desktop.</h2><p>Use PowerShell. Este projeto usa Docker Compose pelo Tilt; não precisa habilitar Kubernetes no Docker Desktop.</p></div>
+          <div class="windows-guide">
+            <div>
+              <span class="os-label">Windows 10 ou 11</span>
+              <h3>Instale uma vez</h3>
+              <ol>
+                <li>Instale Git, Node.js 22.18+ e Docker Desktop pelos links acima.</li>
+                <li>Abra Docker Desktop e aguarde motor Docker ficar em execução.</li>
+                <li>Instale Tilt pelo <a class="inline-link" href="https://docs.tilt.dev/install.html">guia oficial</a>. Feche e reabra PowerShell para atualizar <code>PATH</code>.</li>
+                <li>Confirme que <code>git</code>, <code>node</code>, <code>docker</code> e <code>tilt</code> respondem no PowerShell.</li>
+              </ol>
+            </div>
+            <pre><span class="code-muted"># PowerShell</span>
+git clone https://github.com/victorgabrieldeon/futhub.git
+cd futhub
+
+corepack enable
+<span class="code-command">pnpm dev:tilt</span>
+
+<span class="code-muted"># API em porta livre no host</span>
+docker compose -f docker-compose.yml -f docker-compose.tilt.yml port api 3000
+
+<span class="code-muted"># encerre ambiente</span>
+<span class="code-command">pnpm dev:tilt:down</span></pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="roadmap" class="section-soft">
+        <div class="shell">
+          <div class="section-head"><p class="eyebrow">Roadmap público</p><h2>Direção aberta. Prioridade guiada por comunidade.</h2><p>Não há promessa de prazo. Bugs, feedback e contribuições podem alterar a ordem das prioridades.</p></div>
+          <div class="roadmap-grid">
+            <article class="roadmap-column"><h3>Agora</h3><ul><li>Consolidar loop de cards, packs, missões, progressão e mercado.</li><li>Evoluir partidas e liga ranqueada.</li><li>Manter API, cliente TypeScript e bot Discord alinhados.</li><li>Tornar ambiente local simples de usar.</li></ul></article>
+            <article class="roadmap-column featured"><h3>Próximo</h3><ul><li>Melhorar criação e gestão de elenco.</li><li>Aumentar cobertura de fluxos de jogo críticos.</li><li>Refinar comandos e mensagens Discord com feedback de jogadores.</li></ul></article>
+            <article class="roadmap-column"><h3>Mais adiante</h3><ul><li>Ferramentas de administração para conteúdo do jogo.</li><li>Integrações e clientes feitos pela comunidade.</li><li>Recursos priorizados por issues e validação pública.</li></ul></article>
+          </div>
+          <div class="actions" style="justify-content: flex-start"><a class="button button-primary" href="https://github.com/victorgabrieldeon/futhub/issues/new/choose">Sugerir prioridade ↗</a></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="shell open-source">
+          <div><p class="eyebrow">Construído em público</p><h2>Próxima temporada nasce com comunidade.</h2><p>Roadmap, bugs e ideias ficam abertos. Cada contribuição pode melhorar experiência de quem joga e de quem mantém FutHub.</p><div class="actions" style="justify-content: flex-start"><a class="button button-primary" href="https://github.com/victorgabrieldeon/futhub/issues/new/choose">Abrir uma issue ↗</a></div></div>
+          <div class="resource-list">
+            <a href="#roadmap">Roadmap público <span>↓</span></a>
+            <a href="#instalar">Guia de instalação <span>↓</span></a>
+            <a href="https://github.com/victorgabrieldeon/futhub/blob/main/CONTRIBUTING.md">Guia de contribuição <span>↗</span></a>
+            <a href="https://github.com/victorgabrieldeon/futhub/blob/main/SECURITY.md">Segurança <span>↗</span></a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="shell">
+        <div class="footer-grid">
+          <div><a class="brand" href="#inicio"><span class="brand-mark">FH</span> FutHub</a><p style="margin: 16px 0 0; max-width: 300px">Sistema open source de futebol para comunidades que querem jogar e construir juntas.</p></div>
+          <div><strong>Projeto</strong><a href="#produto">Produto</a><a href="#instalar">Instalar</a><a href="#roadmap">Roadmap</a></div>
+          <div><strong>Comunidade</strong><a href="https://github.com/victorgabrieldeon/futhub">GitHub</a><a href="https://github.com/victorgabrieldeon/futhub/issues/new/choose">Issues</a><a href="https://github.com/victorgabrieldeon/futhub/blob/main/CONTRIBUTING.md">Contribuir</a></div>
+        </div>
+        <div class="footer-bottom"><span>FutHub · MIT License</span><span>Feito em público.</span></div>
+      </div>
+    </footer>
+  </body>
+</html>

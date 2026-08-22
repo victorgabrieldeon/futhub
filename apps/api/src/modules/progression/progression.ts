@@ -1,4 +1,4 @@
-import type * as DatabaseModule from '@dreamfut/database';
+import type * as DatabaseModule from '@futhub/database';
 import { cardInventoryCapacity } from '../users/user.repository.js';
 
 export type XpCommand = 'lucro' | 'open_pack';

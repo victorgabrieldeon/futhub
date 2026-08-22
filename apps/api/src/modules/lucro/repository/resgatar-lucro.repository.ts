@@ -8,7 +8,7 @@ import type {
   ResgatarLucroRepository,
 } from '../use-cases/resgatar-lucro/resgatar-lucro.types.js';
 
-type Database = typeof import('@dreamfut/database');
+type Database = typeof import('@futhub/database');
 type DatabaseLoader = () => Promise<Database>;
 
 export class DrizzleResgatarLucroRepository implements ResgatarLucroRepository {

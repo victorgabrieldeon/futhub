@@ -9,7 +9,7 @@ import type {
   QueueWaitingResponse,
   QueueWaitingResponseNullable,
   SellCardsResponse,
-} from '@dreamfut/api-client';
+} from '@futhub/api-client';
 
 type QueueResult =
   | QueueMatchedResponse

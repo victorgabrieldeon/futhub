@@ -13,7 +13,7 @@ import { LeagueUseCase } from './use-cases/league/league.use-case.js';
       useFactory: () => {
         if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required.');
         // Database module validates DATABASE_URL during import, after application bootstrap.
-        return new DrizzleLeagueRepository(() => import('@dreamfut/database'));
+        return new DrizzleLeagueRepository(() => import('@futhub/database'));
       },
     },
     {

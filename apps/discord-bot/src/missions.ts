@@ -1,4 +1,4 @@
-import type { MissionDtoCadence, MissionsResponse } from '@dreamfut/api-client';
+import type { MissionDtoCadence, MissionsResponse } from '@futhub/api-client';
 
 const CADENCE_LABEL: Record<MissionDtoCadence, string> = {
   daily: 'Diária',

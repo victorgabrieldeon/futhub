@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type * as DatabaseModule from '@dreamfut/database';
+import type * as DatabaseModule from '@futhub/database';
 
 type Database = typeof DatabaseModule;
 type DiscordIdentity = Readonly<{ id: string; name: string; avatarUrl: string | null }>;

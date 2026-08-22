@@ -2,7 +2,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
-import type * as DatabaseModule from '@dreamfut/database';
+import type * as DatabaseModule from '@futhub/database';
 import { GenericContainer, type StartedTestContainer, Wait } from 'testcontainers';
 
 import { buildApp } from '../../app.js';
@@ -34,27 +34,27 @@ export async function startE2eContext(): Promise<E2eContext> {
   try {
     container = await new GenericContainer('postgres:17-alpine')
       .withEnvironment({
-        POSTGRES_DB: 'dreamfut_e2e',
-        POSTGRES_USER: 'dreamfut',
-        POSTGRES_PASSWORD: 'dreamfut',
+        POSTGRES_DB: 'futhub_e2e',
+        POSTGRES_USER: 'futhub',
+        POSTGRES_PASSWORD: 'futhub',
       })
       .withExposedPorts(5432)
       .withHealthCheck({
-        test: ['CMD-SHELL', 'pg_isready -U dreamfut -d dreamfut_e2e'],
+        test: ['CMD-SHELL', 'pg_isready -U futhub -d futhub_e2e'],
         interval: 1_000,
         timeout: 5_000,
         retries: 10,
       })
       .withWaitStrategy(Wait.forHealthCheck())
       .start();
-    process.env.DATABASE_URL = `postgresql://dreamfut:dreamfut@${container.getHost()}:${container.getMappedPort(5432)}/dreamfut_e2e`;
+    process.env.DATABASE_URL = `postgresql://futhub:futhub@${container.getHost()}:${container.getMappedPort(5432)}/futhub_e2e`;
     process.env.API_INTERNAL_TOKEN = internalToken;
-    await execFileAsync('pnpm', ['--filter', '@dreamfut/database', 'db:migrate'], {
+    await execFileAsync('pnpm', ['--filter', '@futhub/database', 'db:migrate'], {
       cwd: process.cwd(),
       env: process.env,
     });
     // Database module reads DATABASE_URL during evaluation.
-    database = await import('@dreamfut/database');
+    database = await import('@futhub/database');
     app = await buildApp({ logger: false });
     if (!app || !database || !container) throw new Error('Failed to initialize E2E context.');
     const initializedApp = app;

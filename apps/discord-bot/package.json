@@ -1,21 +1,21 @@
 {
-  "name": "@dreamfut/discord-bot",
+  "name": "@futhub/discord-bot",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
+    "dev": "node --env-file=../../.env --import tsx --watch src/index.ts",
+    "start": "node --env-file=../../.env dist/index.js",
     "test": "tsx --test src/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@dreamfut/api-client": "workspace:*",
+    "@futhub/api-client": "workspace:*",
     "discord.js": "14.18.0"
   },
   "devDependencies": {
-    "@dreamfut/config": "workspace:*",
+    "@futhub/config": "workspace:*",
     "@types/node": "22.13.4",
     "tsx": "4.19.3"
   }

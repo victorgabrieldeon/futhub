@@ -23,6 +23,6 @@ export async function request<T>(url: string, init: RequestInit): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set('authorization', `Bearer ${options.token}`);
   const response = await options.fetch(new URL(url, options.baseUrl), { ...init, headers });
-  if (!response.ok) throw new Error(`Dreamfut API request failed with status ${response.status}.`);
+  if (!response.ok) throw new Error(`FutHub API request failed with status ${response.status}.`);
   return JSON.parse(await response.text());
 }

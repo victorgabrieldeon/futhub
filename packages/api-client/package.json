@@ -1,5 +1,5 @@
 {
-  "name": "@dreamfut/api-client",
+  "name": "@futhub/api-client",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@dreamfut/config": "workspace:*",
+    "@futhub/config": "workspace:*",
     "@types/node": "22.13.4",
     "orval": "8.24.0",
     "tsx": "4.19.3",

@@ -14,12 +14,12 @@ const useCaseGenerator = join(scriptsDirectory, 'generate-usecase.mjs');
 
 async function run(root, script, ...args) {
   return execFile(process.execPath, [script, ...args], {
-    env: { ...process.env, DREAMFUT_API_ROOT: root },
+    env: { ...process.env, FUTHUB_API_ROOT: root },
   });
 }
 
 test('generates a registered module and a delegating use case', async (t) => {
-  const root = await mkdtemp(join(tmpdir(), 'dreamfut-api-'));
+  const root = await mkdtemp(join(tmpdir(), 'futhub-api-'));
   t.after(() => rm(root, { force: true, recursive: true }));
   await mkdir(join(root, 'src/modules'), { recursive: true });
   await writeFile(

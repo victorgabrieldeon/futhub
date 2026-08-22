@@ -1,4 +1,4 @@
-import type { DiscordIdentityDto } from '@dreamfut/api-client';
+import type { DiscordIdentityDto } from '@futhub/api-client';
 import type {
   Client,
   InteractionReplyOptions,

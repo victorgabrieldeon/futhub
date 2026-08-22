@@ -1,4 +1,4 @@
-import type * as DatabaseModule from '@dreamfut/database';
+import type * as DatabaseModule from '@futhub/database';
 
 export type DiscordIdentity = Readonly<{ id: string; name: string; avatarUrl: string | null }>;
 

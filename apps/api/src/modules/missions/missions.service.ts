@@ -1,4 +1,4 @@
-import type * as DatabaseModule from '@dreamfut/database';
+import type * as DatabaseModule from '@futhub/database';
 
 import { grantReward } from '../progression/progression.js';
 import { upsertDiscordUser } from '../users/user.repository.js';

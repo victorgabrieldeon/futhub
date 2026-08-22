@@ -3,7 +3,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
-export const apiRoot = resolve(process.env.DREAMFUT_API_ROOT ?? resolve(scriptDirectory, '..'));
+export const apiRoot = resolve(process.env.FUTHUB_API_ROOT ?? resolve(scriptDirectory, '..'));
 
 export function toPascalCase(value) {
   return value

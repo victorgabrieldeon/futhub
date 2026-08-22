@@ -1,21 +1,21 @@
 {
-  "name": "@dreamfut/api",
+  "name": "@futhub/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "ttsc -p tsconfig.build.json",
-    "dev": "ttsc -p tsconfig.build.json && concurrently -k \"ttsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"node --watch dist/server.js\"",
+    "dev": "ttsc -p tsconfig.build.json && concurrently -k \"ttsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"node --env-file=../../.env --watch dist/server.js\"",
     "openapi:generate": "nestia swagger && biome format --write openapi.json",
     "generate:module": "node scripts/generate-module.mjs",
     "generate:usecase": "node scripts/generate-usecase.mjs",
-    "start": "node dist/server.js",
+    "start": "node --env-file=../../.env dist/server.js",
     "test": "vitest run",
     "test:generators": "node --test scripts/*.test.mjs",
     "typecheck": "ttsc --noEmit"
   },
   "dependencies": {
-    "@dreamfut/database": "workspace:*",
+    "@futhub/database": "workspace:*",
     "@fastify/static": "10.1.2",
     "@nestia/core": "12.1.0",
     "@nestia/fetcher": "12.1.0",
@@ -30,7 +30,7 @@
     "typia": "13.3.0"
   },
   "devDependencies": {
-    "@dreamfut/config": "workspace:*",
+    "@futhub/config": "workspace:*",
     "@nestjs/testing": "11",
     "@ttsc/unplugin": "0.27.0",
     "@types/node": "22.13.4",

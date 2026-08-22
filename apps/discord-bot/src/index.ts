@@ -11,7 +11,7 @@ import {
   purchaseCard,
   purchasePack,
   sellCards,
-} from '@dreamfut/api-client';
+} from '@futhub/api-client';
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js';
 
 import {
