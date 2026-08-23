@@ -174,6 +174,30 @@
       .roadmap-column li::before { position: absolute; left: 0; color: var(--ink); content: "•"; }
       .roadmap-column.featured li { color: var(--on-dark-soft); }
       .roadmap-column.featured li::before { color: #fff; }
+      .updates-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      .update { display: flex; min-height: 264px; flex-direction: column; padding: 24px; border: 1px solid var(--hairline-strong); border-radius: 12px; background: #fff; }
+      .update.featured { border-color: var(--surface-dark); color: var(--on-dark); background: var(--surface-dark); }
+      .update-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 28px; color: var(--body); font: 11px "JetBrains Mono", monospace; }
+      .update.featured .update-meta { color: var(--on-dark-soft); }
+      .update h3 { font-size: 20px; letter-spacing: -.4px; }
+      .update p { margin-bottom: 20px; color: var(--body); font-size: 14px; }
+      .update.featured p { color: var(--on-dark-soft); }
+      .update-link { margin-top: auto; color: var(--link); font-size: 14px; font-weight: 600; text-decoration: none; }
+      .update-link:hover { text-decoration: underline; }
+      .update.featured .update-link { color: #fff; }
+      .admin-capabilities { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 48px; }
+      .admin-capability { padding: 24px; border: 1px solid var(--hairline-strong); border-radius: 12px; background: #fff; }
+      .admin-capability h3 { font-size: 18px; }
+      .admin-capability p { margin-bottom: 0; color: var(--body); font-size: 14px; }
+      .admin-shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 0; }
+      .admin-shots figure { margin: 0; }
+      .admin-shots img { display: block; width: 100%; height: auto; border: 1px solid var(--hairline-strong); border-radius: 12px; background: var(--canvas-soft); }
+      .admin-shots figcaption { margin-top: 12px; color: var(--body); font-size: 14px; }
+
+      .skip-link { position: fixed; z-index: 10; top: 12px; left: 12px; padding: 10px 14px; transform: translateY(-160%); border-radius: 8px; color: #fff; background: #000; font-weight: 600; text-decoration: none; transition: transform .15s ease; }
+      .skip-link:focus-visible { transform: translateY(0); }
+      a:focus-visible { outline: 3px solid var(--link); outline-offset: 3px; border-radius: 4px; }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; } }
 
       footer { padding: 64px 0 32px; border-top: 1px solid var(--hairline); color: var(--body); font-size: 14px; }
       .footer-grid { display: grid; grid-template-columns: 2fr repeat(2, 1fr); gap: 32px; padding-bottom: 48px; }
@@ -220,6 +244,8 @@
         section { padding: 64px 0; }
         .section-head { margin-bottom: 32px; }
         .features, .workflow, .open-source, .prerequisites, .windows-guide, .roadmap-grid { grid-template-columns: 1fr; gap: 16px; }
+        .updates-grid { grid-template-columns: 1fr; gap: 16px; }
+        .admin-capabilities, .admin-shots { grid-template-columns: 1fr; gap: 16px; }
         .feature { min-height: 0; }
         .feature-number { margin-bottom: 20px; }
         .workflow { gap: 32px; }
@@ -233,19 +259,22 @@
     </style>
   </head>
   <body>
+    <a class="skip-link" href="#inicio">Pular para conteúdo</a>
     <header>
       <div class="shell topbar">
         <a class="brand" href="#inicio" aria-label="FutHub, início"><span class="brand-mark">FH</span> FutHub</a>
         <nav aria-label="Navegação principal">
           <a href="#produto">Produto</a>
           <a href="#instalar">Instalar</a>
+          <a href="#novidades">Novidades</a>
+          <a href="#admin">Admin</a>
           <a href="#roadmap">Roadmap</a>
           <a class="nav-cta" href="https://github.com/victorgabrieldeon/futhub">GitHub ↗</a>
         </nav>
       </div>
     </header>
 
-    <main id="inicio">
+    <main id="inicio" tabindex="-1">
       <section class="hero">
         <div class="shell">
           <div class="hero-copy">
@@ -374,6 +403,32 @@ docker compose -f docker-compose.yml -f docker-compose.tilt.yml port api 3000
         </div>
       </section>
 
+      <section id="admin" class="section-soft">
+        <div class="shell">
+          <div class="section-head"><p class="eyebrow">Novo painel administrativo</p><h2>Configure <code>/lucro</code> sem editar banco ou código.</h2><p>O FutHub Admin concentra regras da economia e resposta do bot em uma sessão autorizada por API key, mantida em cookie HTTP-only.</p></div>
+          <div class="admin-capabilities">
+            <article class="admin-capability"><h3>Cooldown do lucro</h3><p>Escolha intervalo em segundos, minutos ou horas. Painel converte valor para segundos, mostra resumo do próximo resgate e exige tempo inteiro acima de zero.</p></article>
+            <article class="admin-capability"><h3>Faixas &amp; chances</h3><p>Defina valor, peso e mensagem em português, espanhol e inglês para cada faixa. Chance exibida é relativa à soma dos pesos e configuração exige pelo menos uma faixa.</p></article>
+            <article class="admin-capability"><h3>Embed pronta para Discord</h3><p>Edite título, descrição, cor e rodapé. Variáveis de recompensa, saldo, XP, nível e próximo uso entram no cursor e prévia mostra mensagem antes de salvar.</p></article>
+          </div>
+          <div class="admin-shots">
+            <figure><img src="admin-lucro-cooldown.webp" alt="Painel FutHub Admin na aba Cooldown do comando /lucro, mostrando intervalo de 10 minutos e resumo da distribuição" width="1440" height="900" loading="lazy" /><figcaption><strong>Cooldown:</strong> intervalo configurável e confirmação do tempo que o bot exibirá entre resgates.</figcaption></figure>
+            <figure><img src="admin-lucro-embed.webp" alt="Painel FutHub Admin na aba Embed Discord, mostrando campos de mensagem e prévia visual da resposta do comando /lucro" width="1440" height="900" loading="lazy" /><figcaption><strong>Embed Discord:</strong> campos e tokens ao lado da prévia fiel da resposta enviada pelo bot.</figcaption></figure>
+          </div>
+        </div>
+      </section>
+
+      <section id="novidades">
+        <div class="shell">
+          <div class="section-head"><p class="eyebrow">Mudanças recentes</p><h2>O que mudou no FutHub.</h2><p>Registro curto das entregas mais recentes. Cada item aponta para commit correspondente no GitHub.</p></div>
+          <div class="updates-grid">
+            <article class="update featured"><div class="update-meta"><time datetime="2026-08-22">22 ago 2026</time><span>Documentação</span></div><h3>Documentação pública no GitHub Pages</h3><p>Guia de instalação, contribuição, segurança e templates de issues agora acompanham página pública do projeto.</p><a class="update-link" href="https://github.com/victorgabrieldeon/futhub/commit/5fcf9ce0b98891a36dac1c96fdbe112b9436157b">Ver commit ↗</a></article>
+            <article class="update"><div class="update-meta"><time datetime="2026-08-20">20 ago 2026</time><span>API</span></div><h3>Geradores para módulos e casos de uso</h3><p>API ganhou comandos para criar módulos e casos de uso. Contrato OpenAPI e cliente TypeScript seguem gerados juntos.</p><a class="update-link" href="https://github.com/victorgabrieldeon/futhub/commit/65875669f90176059c67933fbff198a960075533">Ver commit ↗</a></article>
+            <article class="update"><div class="update-meta"><time datetime="2026-08-20">20 ago 2026</time><span>Discord</span></div><h3>Mais ações dentro do jogo</h3><p>Bot passou a cobrir missões, liga, fila ranqueada, packs e mercado de cartas com identidade de jogador persistida.</p><a class="update-link" href="https://github.com/victorgabrieldeon/futhub/commit/bf609fc586988efacb7115d78428beb02283cf56">Ver commit ↗</a></article>
+          </div>
+        </div>
+      </section>
+
       <section id="roadmap" class="section-soft">
         <div class="shell">
           <div class="section-head"><p class="eyebrow">Roadmap público</p><h2>Direção aberta. Prioridade guiada por comunidade.</h2><p>Não há promessa de prazo. Bugs, feedback e contribuições podem alterar a ordem das prioridades.</p></div>
@@ -390,6 +445,7 @@ docker compose -f docker-compose.yml -f docker-compose.tilt.yml port api 3000
         <div class="shell open-source">
           <div><p class="eyebrow">Construído em público</p><h2>Próxima temporada nasce com comunidade.</h2><p>Roadmap, bugs e ideias ficam abertos. Cada contribuição pode melhorar experiência de quem joga e de quem mantém FutHub.</p><div class="actions" style="justify-content: flex-start"><a class="button button-primary" href="https://github.com/victorgabrieldeon/futhub/issues/new/choose">Abrir uma issue ↗</a></div></div>
           <div class="resource-list">
+            <a href="#novidades">Mudanças recentes <span>↑</span></a>
             <a href="#roadmap">Roadmap público <span>↓</span></a>
             <a href="#instalar">Guia de instalação <span>↓</span></a>
             <a href="https://github.com/victorgabrieldeon/futhub/blob/main/CONTRIBUTING.md">Guia de contribuição <span>↗</span></a>
@@ -403,7 +459,7 @@ docker compose -f docker-compose.yml -f docker-compose.tilt.yml port api 3000
       <div class="shell">
         <div class="footer-grid">
           <div><a class="brand" href="#inicio"><span class="brand-mark">FH</span> FutHub</a><p style="margin: 16px 0 0; max-width: 300px">Sistema open source de futebol para comunidades que querem jogar e construir juntas.</p></div>
-          <div><strong>Projeto</strong><a href="#produto">Produto</a><a href="#instalar">Instalar</a><a href="#roadmap">Roadmap</a></div>
+          <div><strong>Projeto</strong><a href="#produto">Produto</a><a href="#admin">Admin</a><a href="#instalar">Instalar</a><a href="#roadmap">Roadmap</a></div>
           <div><strong>Comunidade</strong><a href="https://github.com/victorgabrieldeon/futhub">GitHub</a><a href="https://github.com/victorgabrieldeon/futhub/issues/new/choose">Issues</a><a href="https://github.com/victorgabrieldeon/futhub/blob/main/CONTRIBUTING.md">Contribuir</a></div>
         </div>
         <div class="footer-bottom"><span>FutHub · MIT License</span><span>Feito em público.</span></div>
