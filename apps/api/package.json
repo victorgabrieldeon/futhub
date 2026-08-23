@@ -9,7 +9,7 @@
     "openapi:generate": "nestia swagger && biome format --write openapi.json",
     "generate:module": "node scripts/generate-module.mjs",
     "generate:usecase": "node scripts/generate-usecase.mjs",
-    "start": "node --env-file=../../.env dist/server.js",
+    "start": "node dist/server.js",
     "test": "vitest run",
     "test:generators": "node --test scripts/*.test.mjs",
     "typecheck": "ttsc --noEmit"

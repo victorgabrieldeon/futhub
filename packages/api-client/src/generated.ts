@@ -180,6 +180,23 @@ export interface MissionsRequest {
   avatarUrl: string | null;
 }
 
+export interface CommandEmbedDto {
+  /**
+   * @minLength 1
+   * @maxLength 256
+   */
+  title: string;
+  /**
+   * @minLength 1
+   * @maxLength 4096
+   */
+  description: string;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  color: string;
+  /** @maxLength 2048 */
+  footer: string;
+}
+
 /**
  * Resultado com cooldown ainda ativo.
  */
@@ -219,6 +236,7 @@ export interface LucroSuccessResponse {
   balance: number;
   availableAt: string;
   progression: ProgressionDto;
+  embed: CommandEmbedDto;
 }
 
 export interface DiscordIdentityDto {
@@ -237,6 +255,132 @@ export interface DiscordIdentityDto {
    * @nullable
    */
   avatarUrl: string | null;
+}
+
+export interface CommandContextProperty {
+  type: string;
+  description: string;
+  format?: string;
+  example: string;
+}
+
+export interface RecordstringCommandContextProperty {
+  [key: string]: CommandContextProperty;
+}
+
+export interface CommandContextSchema {
+  $schema: string;
+  title: string;
+  description: string;
+  type: string;
+  properties: RecordstringCommandContextProperty;
+  required: string[];
+  additionalProperties: boolean;
+}
+
+export interface CommandSchemaProperty {
+  type: string;
+  description: string;
+  /** @minimum 0 */
+  minLength?: number;
+  /** @minimum 0 */
+  maxLength?: number;
+  pattern?: string;
+  /** @minItems 1 */
+  examples: string[];
+}
+
+export interface RecordstringCommandSchemaProperty {
+  [key: string]: CommandSchemaProperty;
+}
+
+export interface Recordstringstring {
+  [key: string]: string;
+}
+
+export interface CommandSchemaVariable {
+  token: string;
+  description: string;
+  example: string;
+}
+
+export interface CommandDataSchema {
+  $schema: string;
+  title: string;
+  description: string;
+  type: string;
+  properties: RecordstringCommandSchemaProperty;
+  required: string[];
+  additionalProperties: boolean;
+  /** @minItems 1 */
+  examples: Recordstringstring[];
+  /** @minItems 1 */
+  variables: CommandSchemaVariable[];
+}
+
+export interface CommandUtility {
+  name: string;
+  signature: string;
+  description: string;
+  example: string;
+}
+
+export interface CommandContractResponse {
+  data: CommandDataSchema;
+  contexto: CommandContextSchema;
+  /** @minItems 1 */
+  utilities: CommandUtility[];
+}
+
+export interface AdminLucroRewardMessagesDto {
+  /**
+   * @minLength 1
+   * @maxLength 280
+   */
+  pt: string;
+  /**
+   * @minLength 1
+   * @maxLength 280
+   */
+  es: string;
+  /**
+   * @minLength 1
+   * @maxLength 280
+   */
+  en: string;
+}
+
+export interface AdminLucroRewardDto {
+  id: string;
+  /** @minimum 1 */
+  value: number;
+  /** @minimum 1 */
+  weight: number;
+  messages: AdminLucroRewardMessagesDto;
+}
+
+export interface AdminLucroConfigResponse {
+  /** @minimum 1 */
+  cooldownSeconds: number;
+  /** @minItems 1 */
+  rewards: AdminLucroRewardDto[];
+  embed: CommandEmbedDto;
+}
+
+export interface OmitAdminLucroRewardDtoid {
+  /** @minimum 1 */
+  value: number;
+  /** @minimum 1 */
+  weight: number;
+  messages: AdminLucroRewardMessagesDto;
+}
+
+export interface UpdateLucroConfigRequest {
+  /** @minimum 1 */
+  cooldownSeconds: number;
+  /** @minItems 1 */
+  rewards: OmitAdminLucroRewardDtoid[];
+  embed: CommandEmbedDto;
 }
 
 export interface LeagueDivisionDto {
@@ -507,6 +651,49 @@ export const executeLucro = async (
       body: JSON.stringify(discordIdentityDto),
     },
   );
+};
+
+export const getGetCommandSchemaUrl = (command: string) => {
+  return `/v1/commands/${command}/schema`;
+};
+
+export const getCommandSchema = async (
+  command: string,
+  options?: Parameters<typeof request>[1],
+): Promise<CommandContractResponse> => {
+  return request<CommandContractResponse>(getGetCommandSchemaUrl(command), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAdminLucroConfigUrl = () => {
+  return `/v1/admin/lucro`;
+};
+
+export const getAdminLucroConfig = async (
+  options?: Parameters<typeof request>[1],
+): Promise<AdminLucroConfigResponse> => {
+  return request<AdminLucroConfigResponse>(getGetAdminLucroConfigUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getUpdateAdminLucroConfigUrl = () => {
+  return `/v1/admin/lucro`;
+};
+
+export const updateAdminLucroConfig = async (
+  updateLucroConfigRequest: UpdateLucroConfigRequest,
+  options?: Parameters<typeof request>[1],
+): Promise<AdminLucroConfigResponse> => {
+  return request<AdminLucroConfigResponse>(getUpdateAdminLucroConfigUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateLucroConfigRequest),
+  });
 };
 
 export const getJoinRankedQueueUrl = () => {

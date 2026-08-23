@@ -15,6 +15,14 @@ services:
       retries: 24
       start_period: 10s
 
+
+  admin:
+    image: futhub-dev
+    command: pnpm --filter @futhub/admin dev --hostname 0.0.0.0 --port 3001
+    environment:
+      ADMIN_API_URL: http://api:3000
+    ports:
+      - '127.0.0.1::3001'
   discord-bot:
     image: futhub-dev
     command: pnpm --filter @futhub/discord-bot dev

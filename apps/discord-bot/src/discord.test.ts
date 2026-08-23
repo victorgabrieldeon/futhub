@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { CommandInputError, type CommandHandlers, dispatchInteraction } from './discord.js';
+import { type CommandHandlers, CommandInputError, dispatchInteraction } from './discord.js';
 import { formatCommandResult } from './lucro.js';
 
 function interaction(commandName = 'lucro', options: Record<string, string> = {}) {
@@ -58,6 +58,13 @@ test('dispatch envia resposta formatada pelo comando', async () => {
             balance: 450,
             availableAt: '2026-08-15T12:10:00.000Z',
             progression: { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] },
+            embed: {
+              title: 'Lucro resgatado',
+              description:
+                '{message}\n\n**+{reward} moedas**\nSaldo: **{balance}**\nXP: **+{xp}** · Nível: **{level}**\nPróximo lucro: {availableAt}',
+              color: '#22c55e',
+              footer: 'FutHub',
+            },
           },
           now,
         ),
@@ -67,7 +74,17 @@ test('dispatch envia resposta formatada pelo comando', async () => {
   await dispatchInteraction(fake.value, handlers, new Date('2026-08-15T12:00:00.000Z'));
 
   assert.deepEqual(fake.replies, [
-    'Lucro básico: +50 (+50). Saldo: 450. XP: +10 (10/100). Nível: 1. Próximo lucro: <t:1786795800:F>.',
+    {
+      embeds: [
+        {
+          color: 0x22c55e,
+          description:
+            'Lucro básico: +50\n\n**+50 moedas**\nSaldo: **450**\nXP: **+10** · Nível: **1**\nPróximo lucro: <t:1786795800:F>',
+          footer: { text: 'FutHub' },
+          title: 'Lucro resgatado',
+        },
+      ],
+    },
   ]);
 });
 

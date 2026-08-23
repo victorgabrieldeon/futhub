@@ -12,6 +12,7 @@ const command = {
   name: 'lucro-test',
   cooldownSeconds: 10,
   rewards: [{ value: 50, weight: 1, message: 'Primeiro' }],
+  embed: { title: 'Lucro', description: '{message}', color: '#22c55e', footer: 'FutHub' },
 };
 const identity = {
   id: '123456789012345678',
@@ -87,6 +88,7 @@ describe('DrizzleResgatarLucroRepository', () => {
       balance: 50,
       progression: { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] },
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
+      embed: command.embed,
     });
   });
 
@@ -120,6 +122,7 @@ describe('DrizzleResgatarLucroRepository', () => {
         nextLevelXp: 250,
         rewards: [{ itemId: item.id, type: 'balance', quantity: 25, resourceId: null }],
       },
+      embed: command.embed,
     });
   });
 

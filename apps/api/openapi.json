@@ -291,6 +291,31 @@
         "required": ["id", "name", "avatarUrl"],
         "type": "object"
       },
+      "CommandEmbedDto": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "type": "string"
+          },
+          "color": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "footer": {
+            "maxLength": 2048,
+            "type": "string"
+          }
+        },
+        "required": ["title", "description", "color", "footer"],
+        "type": "object"
+      },
       "LucroCooldownResponse": {
         "additionalProperties": false,
         "properties": {
@@ -348,9 +373,12 @@
           },
           "progression": {
             "$ref": "#/components/schemas/ProgressionDto"
+          },
+          "embed": {
+            "$ref": "#/components/schemas/CommandEmbedDto"
           }
         },
-        "required": ["kind", "reward", "balance", "availableAt", "progression"],
+        "required": ["kind", "reward", "balance", "availableAt", "progression", "embed"],
         "type": "object"
       },
       "DiscordIdentityDto": {
@@ -374,6 +402,327 @@
           }
         },
         "required": ["id", "name", "avatarUrl"],
+        "type": "object"
+      },
+      "CommandContextProperty": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "example": {
+            "type": "string"
+          }
+        },
+        "required": ["type", "description", "example"],
+        "type": "object"
+      },
+      "CommandContextSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "$schema": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/RecordstringCommandContextProperty"
+          },
+          "required": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "$schema",
+          "title",
+          "description",
+          "type",
+          "properties",
+          "required",
+          "additionalProperties"
+        ],
+        "type": "object"
+      },
+      "CommandContractResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CommandDataSchema"
+          },
+          "contexto": {
+            "$ref": "#/components/schemas/CommandContextSchema"
+          },
+          "utilities": {
+            "items": {
+              "$ref": "#/components/schemas/CommandUtility"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": ["data", "contexto", "utilities"],
+        "type": "object"
+      },
+      "CommandDataSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "$schema": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/RecordstringCommandSchemaProperty"
+          },
+          "required": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "examples": {
+            "items": {
+              "$ref": "#/components/schemas/Recordstringstring"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "variables": {
+            "items": {
+              "$ref": "#/components/schemas/CommandSchemaVariable"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "$schema",
+          "title",
+          "description",
+          "type",
+          "properties",
+          "required",
+          "additionalProperties",
+          "examples",
+          "variables"
+        ],
+        "type": "object"
+      },
+      "CommandSchemaProperty": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "minLength": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxLength": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "pattern": {
+            "type": "string"
+          },
+          "examples": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": ["type", "description", "examples"],
+        "type": "object"
+      },
+      "CommandSchemaVariable": {
+        "additionalProperties": false,
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "example": {
+            "type": "string"
+          }
+        },
+        "required": ["token", "description", "example"],
+        "type": "object"
+      },
+      "CommandUtility": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "signature": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "example": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "signature", "description", "example"],
+        "type": "object"
+      },
+      "RecordstringCommandContextProperty": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/CommandContextProperty"
+        },
+        "type": "object"
+      },
+      "RecordstringCommandSchemaProperty": {
+        "additionalProperties": {
+          "$ref": "#/components/schemas/CommandSchemaProperty"
+        },
+        "type": "object"
+      },
+      "Recordstringstring": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "AdminLucroConfigResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "cooldownSeconds": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "rewards": {
+            "items": {
+              "$ref": "#/components/schemas/AdminLucroRewardDto"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "embed": {
+            "$ref": "#/components/schemas/CommandEmbedDto"
+          }
+        },
+        "required": ["cooldownSeconds", "rewards", "embed"],
+        "type": "object"
+      },
+      "AdminLucroRewardDto": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "value": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "weight": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "messages": {
+            "$ref": "#/components/schemas/AdminLucroRewardMessagesDto"
+          }
+        },
+        "required": ["id", "value", "weight", "messages"],
+        "type": "object"
+      },
+      "AdminLucroRewardMessagesDto": {
+        "additionalProperties": false,
+        "properties": {
+          "pt": {
+            "maxLength": 280,
+            "minLength": 1,
+            "type": "string"
+          },
+          "es": {
+            "maxLength": 280,
+            "minLength": 1,
+            "type": "string"
+          },
+          "en": {
+            "maxLength": 280,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": ["pt", "es", "en"],
+        "type": "object"
+      },
+      "OmitAdminLucroRewardDtoid": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "weight": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "messages": {
+            "$ref": "#/components/schemas/AdminLucroRewardMessagesDto"
+          }
+        },
+        "required": ["value", "weight", "messages"],
+        "type": "object"
+      },
+      "UpdateLucroConfigRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "cooldownSeconds": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "rewards": {
+            "items": {
+              "$ref": "#/components/schemas/OmitAdminLucroRewardDtoid"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "embed": {
+            "$ref": "#/components/schemas/CommandEmbedDto"
+          }
+        },
+        "required": ["cooldownSeconds", "rewards", "embed"],
         "type": "object"
       },
       "LeagueDivisionDto": {
@@ -894,6 +1243,101 @@
         ],
         "x-samchon-accessor": ["v1", "commands", "lucro", "execute"],
         "x-samchon-controller": "LucroController"
+      }
+    },
+    "/v1/commands/{command}/schema": {
+      "get": {
+        "tags": [],
+        "operationId": "getCommandSchema",
+        "parameters": [
+          {
+            "name": "command",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandContractResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "commands", "schema", "get"],
+        "x-samchon-controller": "CommandSchemaController"
+      }
+    },
+    "/v1/admin/lucro": {
+      "get": {
+        "tags": [],
+        "operationId": "getAdminLucroConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLucroConfigResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "admin", "lucro", "get"],
+        "x-samchon-controller": "AdminLucroController"
+      },
+      "put": {
+        "tags": [],
+        "operationId": "updateAdminLucroConfig",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLucroConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLucroConfigResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "admin", "lucro", "update"],
+        "x-samchon-controller": "AdminLucroController"
       }
     },
     "/v1/ranked/queue": {
