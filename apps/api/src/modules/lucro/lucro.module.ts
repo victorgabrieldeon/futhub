@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 
+import { AdminLucroController } from './admin-lucro.controller.js';
+import { CommandSchemaController } from './command-schema.controller.js';
+import { LucroConfigService } from './lucro-config.service.js';
 import { LucroController } from './lucro.controller.js';
 import { DrizzleResgatarLucroRepository } from './repository/resgatar-lucro.repository.js';
 import {
@@ -10,8 +13,9 @@ import {
 import { ResgatarLucroUseCase } from './use-cases/resgatar-lucro/resgatar-lucro.use-case.js';
 
 @Module({
-  controllers: [LucroController],
+  controllers: [AdminLucroController, CommandSchemaController, LucroController],
   providers: [
+    LucroConfigService,
     { provide: Clock, useValue: { now: () => new Date() } },
     { provide: RandomSource, useValue: { next: () => Math.random() } },
     {

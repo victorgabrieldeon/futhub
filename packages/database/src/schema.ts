@@ -43,6 +43,14 @@ export const commandConfigs = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     commandName: varchar('command_name', { length: 80 }).notNull().unique(),
     cooldownSeconds: integer('cooldown_seconds').notNull(),
+    embedTitle: varchar('embed_title', { length: 256 }).notNull().default('Lucro resgatado'),
+    embedDescription: text('embed_description')
+      .notNull()
+      .default(
+        '{message}\n\n**+{reward} moedas**\nSaldo: **{balance}**\nXP: **+{xp}** · Nível: **{level}**\nPróximo lucro: {availableAt}',
+      ),
+    embedColor: varchar('embed_color', { length: 7 }).notNull().default('#22c55e'),
+    embedFooter: varchar('embed_footer', { length: 2048 }).notNull().default('FutHub'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
@@ -58,7 +66,9 @@ export const commandRewards = pgTable(
       .references(() => commandConfigs.id, { onDelete: 'cascade' }),
     value: integer('value').notNull(),
     weight: integer('weight').notNull(),
-    message: text('message').notNull(),
+    messageTextId: uuid('message_text_id')
+      .notNull()
+      .references(() => localizedTexts.id, { onDelete: 'restrict' }),
   },
   (table) => [
     check('command_reward_value_positive', sql`${table.value} > 0`),

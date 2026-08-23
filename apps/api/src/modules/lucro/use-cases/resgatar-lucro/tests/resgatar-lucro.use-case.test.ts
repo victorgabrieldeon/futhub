@@ -13,7 +13,13 @@ const rewards = [
   { value: 50, weight: 1, message: 'Primeiro' },
   { value: 100, weight: 1, message: 'Segundo' },
 ];
-const command: CommandConfig = { name: 'ganho', cooldownSeconds: 10, rewards };
+const embed = {
+  title: 'Lucro',
+  description: '{message}',
+  color: '#22c55e',
+  footer: 'FutHub',
+};
+const command: CommandConfig = { name: 'ganho', cooldownSeconds: 10, rewards, embed };
 const identity = { id: '1', name: 'Nome', avatarUrl: 'https://example.com/avatar.png' };
 const progression = { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] };
 
@@ -78,6 +84,7 @@ describe('ResgatarLucroUseCase.execute', () => {
       balance: 50,
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
       progression,
+      embed,
     });
   });
 
@@ -117,6 +124,7 @@ describe('ResgatarLucroUseCase.execute', () => {
       balance: 150,
       availableAt: new Date('2026-08-15T12:00:20.000Z'),
       progression,
+      embed,
     });
   });
 });

@@ -14,7 +14,11 @@ export class CommandInputError extends Error {}
 
 export type CommandHandler = Readonly<{
   definition: RESTPostAPIChatInputApplicationCommandsJSONBody;
-  execute(identity: DiscordIdentityDto, options: CommandOptions, now: Date): Promise<string>;
+  execute(
+    identity: DiscordIdentityDto,
+    options: CommandOptions,
+    now: Date,
+  ): Promise<string | InteractionReplyOptions>;
 }>;
 
 export type CommandHandlers = Readonly<Record<string, CommandHandler>>;

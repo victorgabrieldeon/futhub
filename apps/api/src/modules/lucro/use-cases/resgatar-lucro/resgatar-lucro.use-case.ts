@@ -58,6 +58,7 @@ export class ResgatarLucroUseCase {
         balance: balance + levelRewardBalance,
         availableAt: nextAvailableAt,
         progression,
+        embed: persistedCommand.embed,
       };
     });
   }
