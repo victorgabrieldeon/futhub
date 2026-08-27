@@ -58,6 +58,12 @@ test('dispatch envia resposta formatada pelo comando', async () => {
             balance: 450,
             availableAt: '2026-08-15T12:10:00.000Z',
             progression: { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] },
+            embed: {
+              title: '/lucro',
+              description: '{message} {balance}',
+              color: '#123456',
+              footer: 'Próximo: {availableAt}',
+            },
           },
           now,
         ),
@@ -67,7 +73,16 @@ test('dispatch envia resposta formatada pelo comando', async () => {
   await dispatchInteraction(fake.value, handlers, new Date('2026-08-15T12:00:00.000Z'));
 
   assert.deepEqual(fake.replies, [
-    'Lucro básico: +50 (+50). Saldo: 450. XP: +10 (10/100). Nível: 1. Próximo lucro: <t:1786795800:F>.',
+    {
+      embeds: [
+        {
+          title: '/lucro',
+          description: 'Lucro básico: +50 450',
+          color: 1193046,
+          footer: { text: 'Próximo: <t:1786795800:F>' },
+        },
+      ],
+    },
   ]);
 });
 

@@ -8,8 +8,8 @@ Sistema de futebol para criar times e disputar ligas.
 
 - Node.js 22 + TypeScript strict
 - pnpm workspaces + Turborepo
-- Fastify para API
-- Next.js para o Card Maker
+- Fastify para API e proxy do painel
+- Vite + React Router DOM para painel administrativo
 - Discord.js para bot
 - PostgreSQL + Drizzle ORM
 - Biome para formatação e lint
@@ -20,7 +20,7 @@ Sistema de futebol para criar times e disputar ligas.
 ```text
 apps/
   api/          API HTTP
-  card-maker/   Editor e catalogo de bases de cartas
+  admin/        Painel administrativo
   discord-bot/  Bot Discord
 packages/
   config/       Configurações TypeScript compartilhadas

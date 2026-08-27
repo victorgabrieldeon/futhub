@@ -1,6 +1,7 @@
 {
-  "extends": "@futhub/config/tsconfig.node.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "types": ["node"],
     "outDir": "dist",
     "rootDir": "src"
   },

@@ -1,0 +1,32 @@
+{
+  "name": "@futhub/admin",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "predev": "pnpm --filter @futhub/api-client build",
+    "dev": "vite",
+    "start": "node server.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fastify/static": "10.1.2",
+    "@futhub/api-client": "workspace:*",
+    "@imgly/background-removal": "^1.7.0",
+    "@skyra/discord-components-react": "^4.0.2",
+    "fastify": "5.2.1",
+    "onnxruntime-web": "1.21.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-router-dom": "7.9.4"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.4",
+    "@types/react": "19.0.10",
+    "@types/react-dom": "19.0.4",
+    "@vitejs/plugin-react": "6.0.5",
+    "typescript": "5.7.3",
+    "vite": "8.2.0"
+  }
+}

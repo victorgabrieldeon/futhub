@@ -64,6 +64,41 @@
       "when": 1787243405944,
       "tag": "0008_lucky_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787499401245,
+      "tag": "0009_cultured_frank_castle",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787580000000,
+      "tag": "0010_lucro_localization",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1787587690230,
+      "tag": "0011_flippant_moonstone",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1787691430538,
+      "tag": "0012_low_king_cobra",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1787696555439,
+      "tag": "0013_smiling_leader",
+      "breakpoints": true
     }
   ]
 }

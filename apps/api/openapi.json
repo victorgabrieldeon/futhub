@@ -308,6 +308,25 @@
         "required": ["kind", "availableAt"],
         "type": "object"
       },
+      "LucroEmbedDto": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "footer": {
+            "type": "string"
+          }
+        },
+        "required": ["title", "description", "color", "footer"],
+        "type": "object"
+      },
       "LucroRewardDto": {
         "additionalProperties": false,
         "properties": {
@@ -348,9 +367,12 @@
           },
           "progression": {
             "$ref": "#/components/schemas/ProgressionDto"
+          },
+          "embed": {
+            "$ref": "#/components/schemas/LucroEmbedDto"
           }
         },
-        "required": ["kind", "reward", "balance", "availableAt", "progression"],
+        "required": ["kind", "reward", "balance", "availableAt", "progression", "embed"],
         "type": "object"
       },
       "DiscordIdentityDto": {
@@ -374,6 +396,246 @@
           }
         },
         "required": ["id", "name", "avatarUrl"],
+        "type": "object"
+      },
+      "LucroConfigDto": {
+        "additionalProperties": false,
+        "properties": {
+          "cooldownSeconds": {
+            "type": "number"
+          },
+          "rewards": {
+            "items": {
+              "$ref": "#/components/schemas/LucroRewardDto.o1"
+            },
+            "type": "array"
+          },
+          "embed": {
+            "$ref": "#/components/schemas/LucroEmbedDto.o1"
+          }
+        },
+        "required": ["cooldownSeconds", "rewards", "embed"],
+        "type": "object"
+      },
+      "LucroEmbedDto.o1": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "maxLength": 256,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "color": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "footer": {
+            "maxLength": 2048,
+            "type": "string"
+          }
+        },
+        "required": ["title", "description", "color", "footer"],
+        "type": "object"
+      },
+      "LucroMessagesDto": {
+        "additionalProperties": false,
+        "properties": {
+          "pt": {
+            "maxLength": 280,
+            "minLength": 1,
+            "type": "string"
+          },
+          "es": {
+            "maxLength": 280,
+            "minLength": 1,
+            "type": "string"
+          },
+          "en": {
+            "maxLength": 280,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": ["pt", "es", "en"],
+        "type": "object"
+      },
+      "LucroRewardDto.o1": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "weight": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "messages": {
+            "$ref": "#/components/schemas/LucroMessagesDto"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": ["value", "weight", "messages", "id"],
+        "type": "object"
+      },
+      "LucroEmbedSchemaDto": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "variables": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "token": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "example": {
+                  "type": "string"
+                }
+              },
+              "required": ["token", "description", "example"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "properties": {
+            "additionalProperties": false,
+            "properties": {
+              "title": {
+                "additionalProperties": false,
+                "properties": {
+                  "maxLength": {
+                    "type": "number"
+                  },
+                  "examples": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["maxLength", "examples"],
+                "type": "object"
+              },
+              "description": {
+                "additionalProperties": false,
+                "properties": {
+                  "maxLength": {
+                    "type": "number"
+                  },
+                  "examples": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["maxLength", "examples"],
+                "type": "object"
+              },
+              "color": {
+                "additionalProperties": false,
+                "properties": {
+                  "maxLength": {
+                    "type": "number"
+                  },
+                  "examples": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["maxLength", "examples"],
+                "type": "object"
+              },
+              "footer": {
+                "additionalProperties": false,
+                "properties": {
+                  "maxLength": {
+                    "type": "number"
+                  },
+                  "examples": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["maxLength", "examples"],
+                "type": "object"
+              }
+            },
+            "required": ["title", "description", "color", "footer"],
+            "type": "object"
+          }
+        },
+        "required": ["description", "variables", "properties"],
+        "type": "object"
+      },
+      "LucroConfigInputDto": {
+        "additionalProperties": false,
+        "properties": {
+          "cooldownSeconds": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "rewards": {
+            "items": {
+              "$ref": "#/components/schemas/LucroRewardInputDto"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "embed": {
+            "$ref": "#/components/schemas/LucroEmbedDto.o1"
+          }
+        },
+        "required": ["cooldownSeconds", "rewards", "embed"],
+        "type": "object"
+      },
+      "LucroRewardInputDto": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "weight": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "messages": {
+            "$ref": "#/components/schemas/LucroMessagesDto"
+          }
+        },
+        "required": ["value", "weight", "messages"],
+        "type": "object"
+      },
+      "HealthResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok"],
+            "title": "Estado do serviço",
+            "description": "Estado atual do serviço."
+          }
+        },
+        "required": ["status"],
         "type": "object"
       },
       "LeagueDivisionDto": {
@@ -615,19 +877,6 @@
         ],
         "type": "object"
       },
-      "HealthResponse": {
-        "additionalProperties": false,
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": ["ok"],
-            "title": "Estado do serviço",
-            "description": "Estado atual do serviço."
-          }
-        },
-        "required": ["status"],
-        "type": "object"
-      },
       "PurchaseCardResponse": {
         "additionalProperties": false,
         "properties": {
@@ -712,6 +961,926 @@
           }
         },
         "required": ["identity", "userCardIds"],
+        "type": "object"
+      },
+      "AdminSessionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "ok": {
+            "description": "Indica que a sessão administrativa está ativa.",
+            "title": "Sessão ativa",
+            "type": "boolean"
+          }
+        },
+        "required": ["ok"],
+        "type": "object"
+      },
+      "AdminSessionInput": {
+        "additionalProperties": false,
+        "properties": {
+          "apiKey": {
+            "description": "Credencial administrativa fornecida pelo operador.",
+            "title": "API key",
+            "type": "string"
+          }
+        },
+        "required": ["apiKey"],
+        "type": "object"
+      },
+      "CardCatalog": {
+        "additionalProperties": false,
+        "properties": {
+          "collections": {
+            "items": {
+              "$ref": "#/components/schemas/CardReference"
+            },
+            "type": "array"
+          },
+          "teams": {
+            "items": {
+              "$ref": "#/components/schemas/CardReference"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["collections", "teams"],
+        "type": "object"
+      },
+      "CardReference": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "name", "slug", "emoji", "imageUrl"],
+        "type": "object"
+      },
+      "TeamLogoSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "slug", "description", "imageUrl", "sourceUrl"],
+        "type": "object"
+      },
+      "TeamLogoSuggestionsQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "q": {
+            "maxLength": 100,
+            "minLength": 2,
+            "type": "string"
+          }
+        },
+        "required": ["q"],
+        "type": "object"
+      },
+      "TeamLogoDetails": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "colors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "slug", "symbol", "colors", "imageUrl", "sourceUrl"],
+        "type": "object"
+      },
+      "TeamLogoDetailsQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "slug": {
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          }
+        },
+        "required": ["slug"],
+        "type": "object"
+      },
+      "CollectionArtworkSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "primaryColor": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "secondaryColor": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "overlayUrl": {
+            "type": "string"
+          },
+          "bannerUrl": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "slug",
+          "symbol",
+          "primaryColor",
+          "secondaryColor",
+          "imageUrl",
+          "overlayUrl",
+          "bannerUrl",
+          "description",
+          "sourceUrl"
+        ],
+        "type": "object"
+      },
+      "CollectionArtworkSuggestionsQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "q": {
+            "maxLength": 100,
+            "type": "string"
+          }
+        },
+        "required": ["q"],
+        "type": "object"
+      },
+      "PlayerPhotoSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "team": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "sourceUrl": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name", "team", "position", "imageUrl", "sourceUrl", "provider"],
+        "type": "object"
+      },
+      "PlayerPhotoSuggestionsQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "q": {
+            "maxLength": 100,
+            "minLength": 2,
+            "type": "string"
+          }
+        },
+        "required": ["q"],
+        "type": "object"
+      },
+      "AdminCollection": {
+        "additionalProperties": false,
+        "properties": {
+          "slug": {
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "emoji": {
+            "maxLength": 30,
+            "minLength": 1,
+            "type": "string"
+          },
+          "primaryColor": {
+            "maxLength": 16,
+            "minLength": 1,
+            "type": "string"
+          },
+          "secondaryColor": {
+            "maxLength": 16,
+            "minLength": 1,
+            "type": "string"
+          },
+          "imageUrl": {
+            "maxLength": 2048,
+            "type": "string",
+            "nullable": true
+          },
+          "overlayUrl": {
+            "maxLength": 2048,
+            "type": "string",
+            "nullable": true
+          },
+          "bannerUrl": {
+            "maxLength": 2048,
+            "type": "string",
+            "nullable": true
+          },
+          "contractsBlocked": {
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": ["slug", "name", "emoji", "primaryColor", "secondaryColor", "id"],
+        "type": "object"
+      },
+      "CollectionPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminCollection"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": ["items", "total", "page", "pageSize"],
+        "type": "object"
+      },
+      "CollectionListQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "pageSize": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "number"
+          },
+          "contractsBlocked": {
+            "type": "boolean"
+          }
+        },
+        "required": ["page"],
+        "type": "object"
+      },
+      "CollectionInput": {
+        "additionalProperties": false,
+        "properties": {
+          "slug": {
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "emoji": {
+            "maxLength": 30,
+            "minLength": 1,
+            "type": "string"
+          },
+          "primaryColor": {
+            "maxLength": 16,
+            "minLength": 1,
+            "type": "string"
+          },
+          "secondaryColor": {
+            "maxLength": 16,
+            "minLength": 1,
+            "type": "string"
+          },
+          "imageUrl": {
+            "maxLength": 2048,
+            "type": "string",
+            "nullable": true
+          },
+          "overlayUrl": {
+            "maxLength": 2048,
+            "type": "string",
+            "nullable": true
+          },
+          "bannerUrl": {
+            "maxLength": 2048,
+            "type": "string",
+            "nullable": true
+          },
+          "contractsBlocked": {
+            "type": "boolean"
+          }
+        },
+        "required": ["slug", "name", "emoji", "primaryColor", "secondaryColor"],
+        "type": "object"
+      },
+      "AdminTeam": {
+        "additionalProperties": false,
+        "properties": {
+          "slug": {
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "emoji": {
+            "maxLength": 30,
+            "minLength": 1,
+            "type": "string"
+          },
+          "color": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "colors": {
+            "items": {
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "type": "array"
+          },
+          "imageUrl": {
+            "maxLength": 2048,
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": ["slug", "name", "emoji", "color", "id"],
+        "type": "object"
+      },
+      "TeamPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminTeam"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": ["items", "total", "page", "pageSize"],
+        "type": "object"
+      },
+      "TeamListQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "page": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "pageSize": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "number"
+          },
+          "image": {
+            "type": "string",
+            "enum": ["custom", "default"]
+          }
+        },
+        "required": ["page"],
+        "type": "object"
+      },
+      "TeamInput": {
+        "additionalProperties": false,
+        "properties": {
+          "slug": {
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "emoji": {
+            "maxLength": 30,
+            "minLength": 1,
+            "type": "string"
+          },
+          "color": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "colors": {
+            "items": {
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "type": "array"
+          },
+          "imageUrl": {
+            "maxLength": 2048,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["slug", "name", "emoji", "color"],
+        "type": "object"
+      },
+      "CardTemplate": {
+        "additionalProperties": false,
+        "properties": {
+          "filename": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "required": ["filename", "content"],
+        "type": "object"
+      },
+      "ImportError": {
+        "additionalProperties": false,
+        "properties": {
+          "row": {
+            "type": "number"
+          },
+          "field": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["row", "field", "message"],
+        "type": "object"
+      },
+      "ImportPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "createCount": {
+            "type": "number"
+          },
+          "updateCount": {
+            "type": "number"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/ImportError"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["valid", "createCount", "updateCount", "errors"],
+        "type": "object"
+      },
+      "AdminCard": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "slug": {
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "collection": {
+            "$ref": "#/components/schemas/CardReference"
+          },
+          "team": {
+            "$ref": "#/components/schemas/CardReference"
+          },
+          "position": {
+            "type": "string",
+            "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+          },
+          "secondaryPositions": {
+            "items": {
+              "type": "string",
+              "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+            },
+            "type": "array"
+          },
+          "contractsBlocked": {
+            "type": "boolean"
+          },
+          "defense": {
+            "type": "number"
+          },
+          "attack": {
+            "type": "number"
+          },
+          "creation": {
+            "type": "number"
+          },
+          "overall": {
+            "type": "number"
+          },
+          "passing": {
+            "type": "number"
+          },
+          "control": {
+            "type": "number"
+          },
+          "marking": {
+            "type": "number"
+          },
+          "pace": {
+            "type": "number"
+          },
+          "dribbling": {
+            "type": "number"
+          },
+          "finishing": {
+            "type": "number"
+          },
+          "imageUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "collection",
+          "team",
+          "position",
+          "secondaryPositions",
+          "contractsBlocked",
+          "defense",
+          "attack",
+          "creation",
+          "overall",
+          "passing",
+          "control",
+          "marking",
+          "pace",
+          "dribbling",
+          "finishing",
+          "imageUrl"
+        ],
+        "type": "object"
+      },
+      "CardPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminCard"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": ["items", "total", "page", "pageSize"],
+        "type": "object"
+      },
+      "CardListQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "collectionId": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string",
+            "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+          },
+          "image": {
+            "type": "string",
+            "enum": ["custom", "default"]
+          },
+          "contractsBlocked": {
+            "type": "boolean"
+          },
+          "sort": {
+            "type": "string",
+            "enum": ["name", "overall", "recent"]
+          },
+          "page": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "pageSize": {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": ["page"],
+        "type": "object"
+      },
+      "CardInput": {
+        "additionalProperties": false,
+        "properties": {
+          "slug": {
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "collectionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "teamId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "position": {
+            "type": "string",
+            "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+          },
+          "secondaryPositions": {
+            "items": {
+              "type": "string",
+              "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+            },
+            "type": "array"
+          },
+          "contractsBlocked": {
+            "type": "boolean"
+          },
+          "defense": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "attack": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "creation": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "overall": {
+            "maximum": 100,
+            "minimum": 60,
+            "type": "number"
+          },
+          "passing": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "control": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "marking": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "pace": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "dribbling": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "finishing": {
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "collectionId",
+          "teamId",
+          "position",
+          "defense",
+          "attack",
+          "creation",
+          "overall",
+          "passing",
+          "control",
+          "marking",
+          "pace",
+          "dribbling",
+          "finishing"
+        ],
+        "type": "object"
+      },
+      "CardUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "collectionId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "teamId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "position": {
+            "type": "string",
+            "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+          },
+          "secondaryPositions": {
+            "items": {
+              "type": "string",
+              "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+            },
+            "type": "array"
+          },
+          "contractsBlocked": {
+            "type": "boolean"
+          },
+          "defense": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "attack": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "creation": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "overall": {
+            "maximum": 100,
+            "minimum": 60,
+            "type": "number"
+          },
+          "passing": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "control": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "marking": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "pace": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "dribbling": {
+            "minimum": 1,
+            "type": "number"
+          },
+          "finishing": {
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "collectionId",
+          "teamId",
+          "position",
+          "defense",
+          "attack",
+          "creation",
+          "overall",
+          "passing",
+          "control",
+          "marking",
+          "pace",
+          "dribbling",
+          "finishing"
+        ],
         "type": "object"
       }
     }
@@ -896,6 +2065,95 @@
         "x-samchon-controller": "LucroController"
       }
     },
+    "/v1/admin/lucro": {
+      "get": {
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LucroConfigDto"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "lucro", "get"],
+        "x-samchon-controller": "AdminLucroController"
+      },
+      "put": {
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LucroConfigInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LucroConfigDto"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "lucro", "update"],
+        "x-samchon-controller": "AdminLucroController"
+      }
+    },
+    "/v1/admin/lucro/schema": {
+      "get": {
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LucroEmbedSchemaDto"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "lucro", "schema"],
+        "x-samchon-controller": "AdminLucroController"
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [],
+        "operationId": "HealthController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["health"],
+        "x-samchon-controller": "HealthController"
+      }
+    },
     "/v1/ranked/queue": {
       "post": {
         "tags": [],
@@ -1040,27 +2298,6 @@
         "x-samchon-controller": "LeagueController"
       }
     },
-    "/health": {
-      "get": {
-        "tags": [],
-        "operationId": "HealthController_health",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HealthResponse"
-                }
-              }
-            }
-          }
-        },
-        "x-samchon-accessor": ["health"],
-        "x-samchon-controller": "HealthController"
-      }
-    },
     "/v1/cards/{cardId}/purchase": {
       "post": {
         "tags": [],
@@ -1140,6 +2377,930 @@
         ],
         "x-samchon-accessor": ["v1", "cards", "sell", "sellCards"],
         "x-samchon-controller": "CardMarketController"
+      }
+    },
+    "/v1/admin/session": {
+      "post": {
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminSessionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSessionResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "session", "create"],
+        "x-samchon-controller": "AdminSessionController"
+      },
+      "get": {
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSessionResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "session", "status"],
+        "x-samchon-controller": "AdminSessionController"
+      },
+      "delete": {
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "",
+            "content": {
+              "application/json": {}
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "session", "destroy"],
+        "x-samchon-controller": "AdminSessionController"
+      }
+    },
+    "/v1/admin/cards/catalog": {
+      "get": {
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardCatalog"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "catalog"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/team-logo-suggestions": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TeamLogoSuggestion"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": [
+          "v1",
+          "admin",
+          "cards",
+          "team_logo_suggestions",
+          "teamLogoSuggestions"
+        ],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/team-logo-details": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamLogoDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "team_logo_details", "teamLogoDetails"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/team-logos/{filename}": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {}
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "team_logos", "teamLogo"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/collection-artwork-suggestions": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CollectionArtworkSuggestion"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": [
+          "v1",
+          "admin",
+          "cards",
+          "collection_artwork_suggestions",
+          "collectionArtworkSuggestions"
+        ],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/player-photo-suggestions": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlayerPhotoSuggestion"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": [
+          "v1",
+          "admin",
+          "cards",
+          "player_photo_suggestions",
+          "playerPhotoSuggestions"
+        ],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/player-photos/{filename}": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {}
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "player_photos", "playerPhoto"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/player-photos/{kind}/{filename}": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "filename",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {}
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "player_photos", "playerPhotoVariant"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/collections": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": true
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          },
+          {
+            "name": "contractsBlocked",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionPage"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "collections", "collections"],
+        "x-samchon-controller": "AdminCardsController"
+      },
+      "post": {
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCollection"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "collections", "createCollection"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/collections/{collectionId}": {
+      "put": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "collectionId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCollection"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "collections", "updateCollection"],
+        "x-samchon-controller": "AdminCardsController"
+      },
+      "delete": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "collectionId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "",
+            "content": {
+              "application/json": {}
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "collections", "removeCollection"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/teams": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": true
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          },
+          {
+            "name": "image",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["custom", "default"]
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamPage"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "teams", "teams"],
+        "x-samchon-controller": "AdminCardsController"
+      },
+      "post": {
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTeam"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "teams", "createTeam"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/teams/{teamId}": {
+      "put": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "teamId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminTeam"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "teams", "updateTeam"],
+        "x-samchon-controller": "AdminCardsController"
+      },
+      "delete": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "teamId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "",
+            "content": {
+              "application/json": {}
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "teams", "removeTeam"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/template": {
+      "get": {
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardTemplate"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "template"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/preview": {
+      "post": {
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreview"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "preview"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/import": {
+      "post": {
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportPreview"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "_import"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "collectionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "teamId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "position",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+            },
+            "required": false
+          },
+          {
+            "name": "image",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["custom", "default"]
+            },
+            "required": false
+          },
+          {
+            "name": "contractsBlocked",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "required": false
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["name", "overall", "recent"]
+            },
+            "required": false
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": true
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardPage"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "list"],
+        "x-samchon-controller": "AdminCardsController"
+      },
+      "post": {
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCard"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "create"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/{cardId}": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCard"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "get"],
+        "x-samchon-controller": "AdminCardsController"
+      },
+      "put": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCard"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "update"],
+        "x-samchon-controller": "AdminCardsController"
+      },
+      "delete": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "",
+            "content": {
+              "application/json": {}
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "remove"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/{cardId}/image": {
+      "put": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCard"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "image", "uploadImage"],
+        "x-samchon-controller": "AdminCardsController"
+      },
+      "delete": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "cardId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCard"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "image", "removeImage"],
+        "x-samchon-controller": "AdminCardsController"
       }
     }
   },
