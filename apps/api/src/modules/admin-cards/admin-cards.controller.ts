@@ -14,9 +14,11 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import { AdminAuthGuard } from '../auth/admin-auth.guard.js';
+import { imageFile } from '../files/files.service.js';
 import type {
   AdminCard,
   AdminCollection,
@@ -27,24 +29,25 @@ import type {
   CardPage,
   CardTemplate,
   CardUpdate,
-  CollectionListQuery,
-  CollectionInput,
   CollectionArtworkSuggestion,
   CollectionArtworkSuggestionsQuery,
+  CollectionInput,
+  CollectionListQuery,
   CollectionPage,
   ImportPreview,
   PlayerPhotoSuggestion,
   PlayerPhotoSuggestionsQuery,
   TeamInput,
+  TeamListQuery,
   TeamLogoDetails,
   TeamLogoDetailsQuery,
   TeamLogoSuggestion,
   TeamLogoSuggestionsQuery,
-  TeamListQuery,
   TeamPage,
 } from './admin-cards.dto.js';
 import { AdminCardsService } from './admin-cards.service.js';
 
+@ApiTags('Administração / Cards')
 @Controller('v1/admin/cards')
 @UseGuards(AdminAuthGuard)
 export class AdminCardsController {
@@ -210,18 +213,7 @@ export class AdminCardsController {
   ): Promise<AdminCard> {
     const file = await request.file();
     if (!file) throw new BadRequestException('Image file is required.');
-    const formats: Record<string, { extension: string }> = {
-      'image/jpeg': { extension: 'jpg' },
-      'image/png': { extension: 'png' },
-      'image/webp': { extension: 'webp' },
-    };
-    const format = formats[file.mimetype];
-    if (!format) throw new BadRequestException('Use JPEG, PNG, or WebP image.');
-    return this.cards.uploadImage(cardId, {
-      buffer: await file.toBuffer(),
-      contentType: file.mimetype,
-      extension: format.extension,
-    });
+    return this.cards.uploadImage(cardId, imageFile(await file.toBuffer(), file.mimetype));
   }
 
   @Delete(':cardId/image')

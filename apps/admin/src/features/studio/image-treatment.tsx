@@ -1,5 +1,14 @@
 import { type Config, removeBackground } from '@imgly/background-removal';
 import { type ChangeEvent, useEffect, useId, useRef, useState } from 'react';
+import { playerImageSpecification } from './studio-model';
+
+export type ImageTreatmentTarget = Readonly<{
+  description: string;
+  fileName: string;
+  height: number;
+  label: string;
+  width: number;
+}>;
 
 type ImageFilterPreset = Readonly<{
   id: string;
@@ -16,7 +25,20 @@ type ImageTreatmentSettings = Readonly<{
 }>;
 
 type ImageTreatmentProps = Readonly<{
-  onApply: (imageUrl: string) => void;
+  onApply: (imageUrl: string, image: Blob) => void;
+  source?: TreatmentSource;
+  target?: ImageTreatmentTarget;
+}>;
+
+type TreatmentSource = Readonly<{
+  fileName: string;
+  url: string;
+}>;
+
+type ImageCrop = Readonly<{
+  scale: number;
+  x: number;
+  y: number;
 }>;
 
 const defaultSettings: ImageTreatmentSettings = {
@@ -27,34 +49,59 @@ const defaultSettings: ImageTreatmentSettings = {
   sharpen: 0,
 };
 
+const defaultCrop: ImageCrop = { scale: 100, x: 0, y: 0 };
+const playerImageTarget: ImageTreatmentTarget = {
+  description:
+    'PNG 1200 × 1200 é o padrão da foto do jogador. Ajuste o enquadramento antes de aplicar.',
+  fileName: 'jogador',
+  height: playerImageSpecification.height,
+  label: 'card',
+  width: playerImageSpecification.width,
+};
+
 const imageFilterPresets: readonly ImageFilterPreset[] = [
-  { id: 'original', label: 'Original', settings: defaultSettings },
   {
-    id: 'vibrant',
-    label: 'Vibrante',
-    settings: { ...defaultSettings, contrast: 108, saturation: 128, sharpen: 18 },
+    id: 'dramatic',
+    label: 'Dramático',
+    settings: { ...defaultSettings, brightness: 94, contrast: 132, saturation: 92, sharpen: 28 },
   },
   {
-    id: 'mono',
-    label: 'Mono',
-    settings: { ...defaultSettings, brightness: 104, contrast: 118, saturation: 0, sharpen: 12 },
+    id: 'futuristic',
+    label: 'Futurista',
+    settings: { ...defaultSettings, contrast: 120, hue: 15, saturation: 138, sharpen: 20 },
   },
   {
-    id: 'warm',
-    label: 'Quente',
-    settings: { ...defaultSettings, brightness: 104, hue: -8, saturation: 112, sharpen: 10 },
+    id: 'stadium-lights',
+    label: 'Stadium Lights',
+    settings: { ...defaultSettings, brightness: 112, contrast: 124, saturation: 118, sharpen: 20 },
   },
   {
-    id: 'cool',
-    label: 'Frio',
-    settings: { ...defaultSettings, contrast: 105, hue: 10, saturation: 108, sharpen: 10 },
+    id: 'futties-glow',
+    label: 'Futties Glow',
+    settings: {
+      ...defaultSettings,
+      brightness: 110,
+      contrast: 114,
+      hue: -12,
+      saturation: 145,
+      sharpen: 16,
+    },
+  },
+  {
+    id: 'cinematic',
+    label: 'Cinematic',
+    settings: { ...defaultSettings, brightness: 94, contrast: 128, saturation: 75, sharpen: 15 },
   },
 ];
 
-export function ImageTreatment({ onApply }: ImageTreatmentProps) {
+export function ImageTreatment({
+  onApply,
+  source: initialSource,
+  target = playerImageTarget,
+}: ImageTreatmentProps) {
   const inputId = useId();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sourceUrlRef = useRef('');
+  const localSourceUrlRef = useRef('');
   const cutoutUrlRef = useRef('');
   const [source, setSource] = useState<HTMLImageElement | null>(null);
   const [sourceFile, setSourceFile] = useState<File | null>(null);
@@ -65,17 +112,23 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
     null,
   );
   const [settings, setSettings] = useState<ImageTreatmentSettings>(defaultSettings);
+  const [crop, setCrop] = useState<ImageCrop>(defaultCrop);
+  const [activePreset, setActivePreset] = useState<string | null>(null);
   const [status, setStatus] = useState('Envie uma imagem para iniciar o tratamento.');
   const [processing, setProcessing] = useState(false);
   const activeSource = cutout ?? source;
 
   useEffect(
     () => () => {
-      if (sourceUrlRef.current) URL.revokeObjectURL(sourceUrlRef.current);
+      if (localSourceUrlRef.current) URL.revokeObjectURL(localSourceUrlRef.current);
       if (cutoutUrlRef.current) URL.revokeObjectURL(cutoutUrlRef.current);
     },
     [],
   );
+  useEffect(() => {
+    if (!initialSource?.url || initialSource.url === sourceUrl) return;
+    selectSource(initialSource.url, null, initialSource.fileName);
+  }, [initialSource?.fileName, initialSource?.url, sourceUrl]);
 
   useEffect(() => {
     if (!sourceUrl) return;
@@ -85,7 +138,7 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
         if (!active) return;
         setSource(image);
         setSourceSize({ height: image.naturalHeight, width: image.naturalWidth });
-        setStatus('Imagem pronta. Ajuste e aplique no card ou baixe em PNG.');
+        setStatus(`Imagem pronta. Ajuste e aplique no ${target.label} ou baixe em PNG.`);
       })
       .catch(() => {
         if (active) setStatus('Não foi possível ler esta imagem. Use PNG, JPEG ou WebP válido.');
@@ -93,12 +146,27 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
     return () => {
       active = false;
     };
-  }, [sourceUrl]);
+  }, [sourceUrl, target.label]);
 
   useEffect(() => {
     if (!activeSource || !canvasRef.current) return;
-    renderImageTreatment(canvasRef.current, activeSource, settings, 1200);
-  }, [activeSource, settings]);
+    renderImageTreatment(canvasRef.current, activeSource, settings, crop, target);
+  }, [activeSource, crop, settings, target]);
+
+  function selectSource(nextUrl: string, file: File | null, name: string, ownsUrl = false) {
+    if (localSourceUrlRef.current) URL.revokeObjectURL(localSourceUrlRef.current);
+    if (cutoutUrlRef.current) URL.revokeObjectURL(cutoutUrlRef.current);
+    localSourceUrlRef.current = ownsUrl ? nextUrl : '';
+    cutoutUrlRef.current = '';
+    setSource(null);
+    setSourceFile(file);
+    setCutout(null);
+    setSourceUrl(nextUrl);
+    setFileName(name);
+    setCrop(defaultCrop);
+    setActivePreset(null);
+    setStatus('Lendo imagem…');
+  }
 
   function uploadImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -108,17 +176,7 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
       setStatus('Use uma imagem PNG, JPEG ou WebP.');
       return;
     }
-    if (sourceUrlRef.current) URL.revokeObjectURL(sourceUrlRef.current);
-    if (cutoutUrlRef.current) URL.revokeObjectURL(cutoutUrlRef.current);
-    const nextUrl = URL.createObjectURL(file);
-    sourceUrlRef.current = nextUrl;
-    cutoutUrlRef.current = '';
-    setSource(null);
-    setSourceFile(file);
-    setCutout(null);
-    setSourceUrl(nextUrl);
-    setFileName(file.name);
-    setStatus('Lendo imagem…');
+    selectSource(URL.createObjectURL(file), file, file.name, true);
   }
 
   async function removeBackgroundWithAi() {
@@ -143,7 +201,7 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
       if (cutoutUrlRef.current) URL.revokeObjectURL(cutoutUrlRef.current);
       cutoutUrlRef.current = resultUrl;
       setCutout(image);
-      setStatus('Fundo removido com IA. Revise bordas e aplique no card.');
+      setStatus(`Fundo removido com IA. Revise bordas e aplique no ${target.label}.`);
     } catch {
       setStatus('Não foi possível remover o fundo. Confira sua conexão e tente novamente.');
     } finally {
@@ -160,6 +218,7 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
 
   function applyPreset(preset: ImageFilterPreset) {
     setSettings(preset.settings);
+    setActivePreset(preset.id);
   }
 
   function updateSetting<Key extends keyof ImageTreatmentSettings>(
@@ -167,12 +226,13 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
     value: ImageTreatmentSettings[Key],
   ) {
     setSettings((current) => ({ ...current, [key]: value }));
+    setActivePreset(null);
   }
 
   function renderOutput() {
     if (!activeSource) return null;
     const canvas = document.createElement('canvas');
-    renderImageTreatment(canvas, activeSource, settings);
+    renderImageTreatment(canvas, activeSource, settings, crop, target);
     return canvas;
   }
 
@@ -197,7 +257,7 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
       const url = URL.createObjectURL(image);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${fileName.replace(/\.[^.]+$/, '') || 'imagem'}-tratada.png`;
+      link.download = `${fileName.replace(/\.[^.]+$/, '') || target.fileName}-${target.width}x${target.height}.png`;
       link.click();
       URL.revokeObjectURL(url);
       setStatus('PNG tratado baixado.');
@@ -207,8 +267,8 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
   function applyToCard() {
     void runOutput(async (canvas) => {
       const image = await canvasBlob(canvas);
-      onApply(URL.createObjectURL(image));
-      setStatus('Imagem tratada aplicada no card.');
+      onApply(URL.createObjectURL(image), image);
+      setStatus(`Imagem tratada aplicada no ${target.label}.`);
     });
   }
 
@@ -219,8 +279,8 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
       <header className="image-treatment-header">
         <div>
           <p className="eyebrow">Laboratório de imagem</p>
-          <h2 id="image-treatment-title">Prepare recortes para o card</h2>
-          <p>Tratamento local no navegador. Nenhuma imagem é enviada para o servidor.</p>
+          <h2 id="image-treatment-title">Prepare recortes para o {target.label}</h2>
+          <p>{target.description}</p>
         </div>
         {sourceSize && (
           <div className="image-treatment-source">
@@ -228,15 +288,27 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
             <strong>
               {sourceSize.width} × {sourceSize.height}
             </strong>
+            <small>
+              Saída: {target.width} × {target.height} PNG
+            </small>
           </div>
         )}
       </header>
 
       <div className="image-treatment-workspace">
-        <section className="image-treatment-preview" aria-label="Prévia da imagem tratada">
+        <section className="image-treatment-preview" aria-label="Comparação da imagem tratada">
           {hasImage ? (
-            <div className="image-treatment-canvas-wrap">
-              <canvas ref={canvasRef} />
+            <div className="image-treatment-compare">
+              <figure>
+                <figcaption>Original</figcaption>
+                <img alt="Imagem original" src={sourceUrl} />
+              </figure>
+              <figure>
+                <figcaption>Recorte padronizado</figcaption>
+                <div className="image-treatment-canvas-wrap">
+                  <canvas ref={canvasRef} />
+                </div>
+              </figure>
             </div>
           ) : (
             <label className="image-treatment-empty" htmlFor={inputId}>
@@ -262,11 +334,63 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
             />
           </label>
 
+          <fieldset className="image-treatment-crop" disabled={!hasImage}>
+            <legend>Enquadramento</legend>
+            <p>
+              Saída obrigatória: {target.width} × {target.height} px em PNG. No zoom 100%, a imagem
+              inteira é preservada; aumente o zoom somente quando quiser recortar.
+            </p>
+            {sourceSize &&
+              (sourceSize.width < target.width || sourceSize.height < target.height) && (
+                <p className="image-treatment-crop-warning">
+                  Esta imagem será ampliada para atingir a resolução padrão. Prefira um original
+                  maior quando possível.
+                </p>
+              )}
+            <ImageRange
+              label="Zoom do recorte"
+              max={220}
+              min={100}
+              onChange={(value) => setCrop((current) => ({ ...current, scale: value }))}
+              value={crop.scale}
+            />
+            <ImageRange
+              label="Horizontal"
+              max={100}
+              min={-100}
+              onChange={(value) => setCrop((current) => ({ ...current, x: value }))}
+              suffix=""
+              value={crop.x}
+            />
+            <ImageRange
+              label="Vertical"
+              max={100}
+              min={-100}
+              onChange={(value) => setCrop((current) => ({ ...current, y: value }))}
+              suffix=""
+              value={crop.y}
+            />
+            <button
+              className="image-treatment-crop-reset"
+              disabled={crop.scale === defaultCrop.scale && crop.x === 0 && crop.y === 0}
+              onClick={() => setCrop(defaultCrop)}
+              type="button"
+            >
+              Centralizar recorte
+            </button>
+          </fieldset>
+
           <fieldset className="image-treatment-presets" disabled={!hasImage}>
             <legend>Filtros</legend>
             <div>
               {imageFilterPresets.map((preset) => (
-                <button key={preset.id} onClick={() => applyPreset(preset)} type="button">
+                <button
+                  aria-pressed={activePreset === preset.id}
+                  className={activePreset === preset.id ? 'is-active' : undefined}
+                  key={preset.id}
+                  onClick={() => applyPreset(preset)}
+                  type="button"
+                >
                   {preset.label}
                 </button>
               ))}
@@ -360,7 +484,7 @@ export function ImageTreatment({ onApply }: ImageTreatmentProps) {
               onClick={applyToCard}
               type="button"
             >
-              {processing ? 'Gerando…' : 'Aplicar no card'}
+              {processing ? 'Gerando…' : `Aplicar no ${target.label}`}
             </button>
           </div>
         </aside>
@@ -418,38 +542,49 @@ function renderImageTreatment(
   canvas: HTMLCanvasElement,
   image: HTMLImageElement,
   settings: ImageTreatmentSettings,
-  maximumDimension?: number,
+  crop: ImageCrop,
+  target: ImageTreatmentTarget,
 ) {
-  const scale = maximumDimension
-    ? Math.min(1, maximumDimension / Math.max(image.naturalWidth, image.naturalHeight))
-    : 1;
-  const width = Math.max(1, Math.round(image.naturalWidth * scale));
-  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const { height, width } = target;
   canvas.height = height;
   canvas.width = width;
   const context = canvas.getContext('2d', { willReadFrequently: settings.sharpen > 0 });
   if (!context) throw new Error('Canvas indisponível.');
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = 'high';
-  context.drawImage(image, 0, 0, width, height);
-
   if (
     settings.brightness !== 100 ||
     settings.contrast !== 100 ||
     settings.hue !== 0 ||
     settings.saturation !== 100
   ) {
-    const buffer = document.createElement('canvas');
-    buffer.height = height;
-    buffer.width = width;
-    buffer.getContext('2d')?.drawImage(canvas, 0, 0);
-    context.clearRect(0, 0, width, height);
     context.filter = `brightness(${settings.brightness}%) contrast(${settings.contrast}%) saturate(${settings.saturation}%) hue-rotate(${settings.hue}deg)`;
-    context.drawImage(buffer, 0, 0);
-    context.filter = 'none';
   }
-
+  drawCroppedImage(context, image, crop, width, height);
+  context.filter = 'none';
   if (settings.sharpen > 0) sharpenImage(context, width, height, settings.sharpen / 100);
+}
+
+function drawCroppedImage(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  crop: ImageCrop,
+  width: number,
+  height: number,
+) {
+  const baseScale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+  const scale = baseScale * (crop.scale / 100);
+  const renderedWidth = image.naturalWidth * scale;
+  const renderedHeight = image.naturalHeight * scale;
+  const overflowX = Math.max(0, (renderedWidth - width) / 2);
+  const overflowY = Math.max(0, (renderedHeight - height) / 2);
+  context.drawImage(
+    image,
+    (width - renderedWidth) / 2 + overflowX * (crop.x / 100),
+    (height - renderedHeight) / 2 + overflowY * (crop.y / 100),
+    renderedWidth,
+    renderedHeight,
+  );
 }
 
 function sharpenImage(

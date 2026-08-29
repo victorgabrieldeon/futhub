@@ -1,5 +1,6 @@
 import { SwaggerCustomizer, TypedBody, TypedRoute } from '@nestia/core';
 import { Controller, HttpCode, Inject, Param, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
 import type {
@@ -10,6 +11,7 @@ import type {
 } from './card-market.dto.js';
 import { PurchaseCardUseCase, SellCardsUseCase } from './use-cases/card-market.use-case.js';
 
+@ApiTags('Mercado de cards')
 @Controller('v1/cards')
 @UseGuards(InternalAuthGuard)
 export class CardMarketController {

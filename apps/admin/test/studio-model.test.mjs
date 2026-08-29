@@ -5,6 +5,7 @@ import {
   inspectDraft,
   moveLayer,
   parseStoredDraft,
+  playerImageSpecification,
   statsForPosition,
   studioAssetDefinitions,
   studioAssetSize,
@@ -38,9 +39,24 @@ assert.deepEqual(
 assert.deepEqual(studioAssetSize('social-image'), { width: 1200, height: 630 });
 assert.deepEqual(studioAssetSize('share-image', 2160), { width: 2160, height: 2160 });
 assert.deepEqual(studioAssetSize('ea-fc-item', 100), { width: 300, height: 400 });
+assert.deepEqual(playerImageSpecification, { height: 1200, mimeType: 'image/png', width: 1200 });
 
 const emptyHealth = inspectDraft(emptyDraft);
 assert.equal(emptyHealth.find((check) => check.id === 'photo')?.status, 'blocked');
 assert.equal(emptyHealth.find((check) => check.id === 'stats')?.status, 'ready');
+
+const unstandardizedPhoto = inspectDraft({
+  ...emptyDraft,
+  photoFormat: 'png',
+  playerImageUrl: 'https://example.test/player.png',
+});
+assert.equal(unstandardizedPhoto.find((check) => check.id === 'photo')?.status, 'blocked');
+const standardPhoto = inspectDraft({
+  ...emptyDraft,
+  photoFormat: 'png',
+  photoIsStandard: true,
+  playerImageUrl: 'https://example.test/player.png',
+});
+assert.equal(standardPhoto.find((check) => check.id === 'photo')?.status, 'ready');
 
 console.log('studio-model: ok');

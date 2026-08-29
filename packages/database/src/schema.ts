@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   boolean,
   check,
   integer,
@@ -118,6 +119,8 @@ export const matchEventType = pgEnum('match_event_type', [
   'fulltime',
 ]);
 
+export const fileSource = pgEnum('file_source', ['upload', 'import', 'seed', 'generated']);
+
 export const localizedTexts = pgTable('localized_texts', {
   id: uuid('id').defaultRandom().primaryKey(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -138,6 +141,32 @@ export const localizedTextTranslations = pgTable(
   (table) => [primaryKey({ columns: [table.localizedTextId, table.locale] })],
 );
 
+export const files = pgTable(
+  'files',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    objectKey: varchar('object_key', { length: 1024 }).notNull().unique(),
+    contentType: varchar('content_type', { length: 255 }).notNull(),
+    sizeBytes: bigint('size_bytes', { mode: 'number' }).notNull(),
+    originalName: varchar('original_name', { length: 255 }),
+    sha256: varchar('sha256', { length: 64 }),
+    width: integer('width'),
+    height: integer('height'),
+    source: fileSource('source').notNull(),
+    sourceUrl: varchar('source_url', { length: 2048 }),
+    metadata: jsonb('metadata').$type<Record<string, never>>().notNull().default({}),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check('files_size_bytes_positive', sql`${table.sizeBytes} > 0`),
+    check(
+      'files_dimensions_positive',
+      sql`(${table.width} is null and ${table.height} is null) or (${table.width} > 0 and ${table.height} > 0)`,
+    ),
+  ],
+);
+
 export const teams = pgTable('teams', {
   id: uuid('id').defaultRandom().primaryKey(),
   slug: varchar('slug', { length: 100 }).notNull().unique(),
@@ -145,6 +174,7 @@ export const teams = pgTable('teams', {
   emoji: varchar('emoji', { length: 30 }).notNull(),
   color: varchar('color', { length: 16 }).notNull(),
   colors: jsonb('colors').$type<string[]>().notNull().default([]),
+  logoFileId: uuid('logo_file_id').references(() => files.id, { onDelete: 'restrict' }),
   imageUrl: varchar('image_url', { length: 2048 }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -159,6 +189,9 @@ export const collections = pgTable('collections', {
   emoji: varchar('emoji', { length: 30 }).notNull(),
   primaryColor: varchar('primary_color', { length: 16 }).notNull(),
   secondaryColor: varchar('secondary_color', { length: 16 }).notNull(),
+  imageFileId: uuid('image_file_id').references(() => files.id, { onDelete: 'restrict' }),
+  overlayFileId: uuid('overlay_file_id').references(() => files.id, { onDelete: 'restrict' }),
+  bannerFileId: uuid('banner_file_id').references(() => files.id, { onDelete: 'restrict' }),
   imageUrl: varchar('image_url', { length: 2048 }),
   overlayUrl: varchar('overlay_url', { length: 2048 }),
   bannerUrl: varchar('banner_url', { length: 2048 }),
@@ -171,6 +204,7 @@ export const cardBackgrounds = pgTable('card_backgrounds', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: varchar('name', { length: 100 }).notNull().unique(),
   color: varchar('color', { length: 16 }).notNull(),
+  imageFileId: uuid('image_file_id').references(() => files.id, { onDelete: 'restrict' }),
   imageUrl: varchar('image_url', { length: 2048 }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -219,6 +253,7 @@ export const cards = pgTable(
     attack: integer('attack').notNull(),
     creation: integer('creation').notNull(),
     overall: integer('overall').notNull(),
+    imageFileId: uuid('image_file_id').references(() => files.id, { onDelete: 'restrict' }),
     imageUrl: varchar('image_url', { length: 2048 }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -372,6 +407,7 @@ export const soccerFields = pgTable('soccer_fields', {
     .notNull()
     .references(() => localizedTexts.id, { onDelete: 'restrict' }),
   color: varchar('color', { length: 16 }).notNull(),
+  imageFileId: uuid('image_file_id').references(() => files.id, { onDelete: 'restrict' }),
   imageUrl: varchar('image_url', { length: 2048 }),
 });
 
@@ -427,6 +463,7 @@ export const packs = pgTable(
       .notNull()
       .unique()
       .references(() => packConfigs.id, { onDelete: 'cascade' }),
+    imageFileId: uuid('image_file_id').references(() => files.id, { onDelete: 'restrict' }),
     imageUrl: varchar('image_url', { length: 2048 }),
     color: varchar('color', { length: 16 }).notNull(),
     emoji: varchar('emoji', { length: 255 }).notNull(),
@@ -589,6 +626,7 @@ export const divisions = pgTable('divisions', {
   emoji: varchar('emoji', { length: 50 }).notNull(),
   points: integer('points').notNull(),
   color: varchar('color', { length: 16 }),
+  imageFileId: uuid('image_file_id').references(() => files.id, { onDelete: 'restrict' }),
   imageUrl: varchar('image_url', { length: 2048 }),
 });
 export const premiums = pgTable(
@@ -597,6 +635,7 @@ export const premiums = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     name: varchar('name', { length: 255 }).notNull(),
     price: integer('price').notNull(),
+    imageFileId: uuid('image_file_id').references(() => files.id, { onDelete: 'restrict' }),
     imageUrl: varchar('image_url', { length: 2048 }),
     durationDays: integer('duration_days').notNull(),
   },

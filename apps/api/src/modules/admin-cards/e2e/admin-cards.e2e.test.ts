@@ -5,6 +5,7 @@ import { afterAll, beforeAll, expect, test, vi } from 'vitest';
 
 import { type E2eContext, adminToken, startE2eContext } from '../../../test/e2e/context.js';
 import { createPackFixture } from '../../../test/e2e/entities.js';
+import { FilesService } from '../../files/files.service.js';
 
 let context: E2eContext;
 
@@ -501,43 +502,88 @@ test('imports cards atomically and updates them by slug', async () => {
   expect(cards[0]).toMatchObject({ name: 'Updated', overall: 89 });
   const storedCard = cards[0];
   if (!storedCard) throw new Error('Imported card was not persisted.');
+  const files = await context.database.db
+    .insert(context.database.schema.files)
+    .values([
+      {
+        objectKey: `cards/${storedCard.id}/image.png`,
+        contentType: 'image/png',
+        sizeBytes: 1,
+        source: 'upload',
+        metadata: {},
+      },
+      {
+        objectKey: `collections/${source.collectionId}/image.png`,
+        contentType: 'image/png',
+        sizeBytes: 1,
+        source: 'upload',
+        metadata: {},
+      },
+      {
+        objectKey: `teams/${source.teamId}/logo.png`,
+        contentType: 'image/png',
+        sizeBytes: 1,
+        source: 'upload',
+        metadata: {},
+      },
+    ])
+    .returning({
+      id: context.database.schema.files.id,
+      objectKey: context.database.schema.files.objectKey,
+    });
+  const cardImage = files.find((file) => file.objectKey.startsWith('cards/'));
+  const collectionImage = files.find((file) => file.objectKey.startsWith('collections/'));
+  const teamImage = files.find((file) => file.objectKey.startsWith('teams/'));
+  if (!cardImage || !collectionImage || !teamImage)
+    throw new Error('Failed to create image fixtures.');
+  const urls = vi.spyOn(FilesService.prototype, 'urls').mockResolvedValue(
+    new Map([
+      [cardImage.id, 'https://images.test/player.png'],
+      [collectionImage.id, 'https://images.test/collection.png'],
+      [teamImage.id, 'https://images.test/team.png'],
+    ]),
+  );
   await Promise.all([
     context.database.db
       .update(context.database.schema.cards)
-      .set({ imageUrl: 'https://images.test/player.png' })
+      .set({ imageFileId: cardImage.id })
       .where(context.database.eq(context.database.schema.cards.id, storedCard.id)),
     context.database.db
       .update(context.database.schema.collections)
-      .set({ imageUrl: 'https://images.test/collection.png' })
+      .set({ imageFileId: collectionImage.id })
       .where(context.database.eq(context.database.schema.collections.id, source.collectionId)),
     context.database.db
       .update(context.database.schema.teams)
-      .set({ imageUrl: 'https://images.test/team.png' })
+      .set({ logoFileId: teamImage.id })
       .where(context.database.eq(context.database.schema.teams.id, source.teamId)),
   ]);
-  const listed = await context.app.inject({
-    method: 'GET',
-    url: `/v1/admin/cards?page=1&query=Updated&teamId=${source.teamId}`,
-    headers: { authorization: `Bearer ${adminToken}` },
-  });
-  expect(listed.statusCode, listed.body).toBe(200);
-  expect(listed.json()).toMatchObject({
-    total: 1,
-    items: [
-      {
-        name: 'Updated',
-        imageUrl: 'https://images.test/player.png',
-        collection: { emoji: '⚽', imageUrl: 'https://images.test/collection.png' },
-        team: { emoji: '⚽', imageUrl: 'https://images.test/team.png' },
-        passing: 84,
-        control: 85,
-        marking: 50,
-        pace: 88,
-        dribbling: 90,
-        finishing: 93,
-      },
-    ],
-  });
+  try {
+    const listed = await context.app.inject({
+      method: 'GET',
+      url: `/v1/admin/cards?page=1&query=Updated&teamId=${source.teamId}`,
+      headers: { authorization: `Bearer ${adminToken}` },
+    });
+    expect(listed.statusCode, listed.body).toBe(200);
+    expect(listed.json()).toMatchObject({
+      total: 1,
+      items: [
+        {
+          name: 'Updated',
+          imageUrl: 'https://images.test/player.png',
+          collection: { emoji: '⚽', imageUrl: 'https://images.test/collection.png' },
+          team: { emoji: '⚽', imageUrl: 'https://images.test/team.png' },
+          passing: 84,
+          control: 85,
+          marking: 50,
+          pace: 88,
+          dribbling: 90,
+          finishing: 93,
+        },
+      ],
+    });
+  } finally {
+    urls.mockRestore();
+  }
 });
 
 test('exports a Portuguese workbook with safe catalog choices', async () => {

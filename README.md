@@ -39,10 +39,13 @@ pnpm dev:tilt
 
 `Tiltfile` cria `.env` a partir de `.env.example` quando necessário e gera `API_INTERNAL_TOKEN` local. Sobe PostgreSQL, aplica migrations e inicia API. Mudanças em `apps/` e `packages/` são sincronizadas no container; API recompila em modo watch.
 
-PostgreSQL não publica porta no host. API recebe porta livre automaticamente, evitando colisão. URL atual:
+PostgreSQL, API, painel e MinIO não publicam portas próprias. Caddy publica somente loopback:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.tilt.yml port api 3000
+http://admin.futhub.localhost
+http://api.futhub.localhost
+http://s3.futhub.localhost
+http://s3console.futhub.localhost
 ```
 
 Abra painel Tilt para logs e estado dos resources. `discord-bot` inicia manualmente pelo painel depois de preencher `DISCORD_TOKEN` e `DISCORD_CLIENT_ID` em `.env`.

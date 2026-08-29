@@ -1,0 +1,15 @@
+http://admin.futhub.localhost {
+	reverse_proxy admin:3000
+}
+
+http://api.futhub.localhost {
+	reverse_proxy api:3000
+}
+
+http://s3.futhub.localhost {
+	reverse_proxy minio:9000
+}
+
+http://s3console.futhub.localhost {
+	reverse_proxy minio:9001
+}

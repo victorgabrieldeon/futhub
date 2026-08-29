@@ -1,5 +1,6 @@
 import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
 import { Controller } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
 interface HealthResponse {
   /**
@@ -10,6 +11,7 @@ interface HealthResponse {
   status: 'ok';
 }
 
+@ApiTags('Saúde')
 @Controller()
 export class HealthController {
   @TypedRoute.Get('health')

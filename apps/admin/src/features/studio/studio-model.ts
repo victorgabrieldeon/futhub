@@ -10,11 +10,17 @@ export const statFields = [
 ] as const;
 
 export type StatKey = (typeof statFields)[number][0];
-export type InspectorPanel = 'data' | 'photo' | 'visual' | 'layers' | 'health';
+export type InspectorPanel = 'data' | 'photo' | 'visual' | 'layers';
 export type CardStyle = 'elite' | 'signature' | 'midnight' | 'velocity';
 export type CardFinish = 'matte' | 'foil' | 'holo' | 'chrome' | 'energy' | 'retro';
 export type CardRarity = 'common' | 'rare' | 'epic' | 'legendary' | 'icon';
 export type PhotoFormat = 'png' | 'other' | 'missing';
+export const playerImageSpecification = {
+  height: 1200,
+  mimeType: 'image/png',
+  width: 1200,
+} as const;
+
 export type PreviewMode = 'isolated' | 'discord' | 'mobile' | 'artwork';
 export type StudioAssetKind =
   | 'ea-fc-item'
@@ -51,6 +57,7 @@ export type StudioDraft = Readonly<{
   collectionLogoUrl: string;
   playerImageUrl: string;
   photoFormat: PhotoFormat;
+  photoIsStandard: boolean;
   primaryColor: string;
   secondaryColor: string;
   style: CardStyle;
@@ -138,9 +145,9 @@ export const studioAssetDefinitions: readonly StudioAssetDefinition[] = [
   {
     id: 'player-image',
     label: 'Imagem do jogador',
-    description: 'Recorte do jogador em PNG transparente',
-    width: 1200,
-    height: 1200,
+    description: 'Recorte do jogador em PNG transparente de 1200 × 1200',
+    width: playerImageSpecification.width,
+    height: playerImageSpecification.height,
     transparent: true,
   },
 ];
@@ -217,6 +224,7 @@ export const emptyDraft: StudioDraft = {
   photoFormat: 'missing',
   primaryColor: '#071a32',
   secondaryColor: '#48f5e7',
+  photoIsStandard: false,
   style: 'elite',
   finish: 'holo',
   rarity: 'rare',
@@ -358,14 +366,15 @@ export function inspectDraft(draft: StudioDraft): readonly InspectorCheck[] {
     {
       id: 'photo',
       label: 'Foto do jogador',
-      detail:
-        draft.photoFormat === 'png'
-          ? 'PNG configurado e pronto para composição.'
-          : draft.photoFormat === 'other' && draft.playerImageUrl
-            ? 'JPEG ou WebP configurado e pronto para composição.'
-            : 'Selecione uma foto compatível para liberar a exportação.',
+      detail: draft.photoIsStandard
+        ? 'PNG em 1200 × 1200 configurado e pronto para composição.'
+        : draft.playerImageUrl
+          ? 'Padronize o recorte em PNG 1200 × 1200 antes de exportar.'
+          : 'Selecione uma foto compatível para liberar a exportação.',
       status:
-        draft.photoFormat !== 'missing' && Boolean(draft.playerImageUrl) ? 'ready' : 'blocked',
+        draft.photoIsStandard && draft.photoFormat !== 'missing' && Boolean(draft.playerImageUrl)
+          ? 'ready'
+          : 'blocked',
       panel: 'photo',
     },
     {
@@ -499,13 +508,18 @@ export function parseStoredDraft(value: unknown): StudioDraft | null {
   )
     return null;
 
-  const { collectionOverlayUrl: _legacyOverlay, ...draft } = candidate as StudioDraft & {
+  const {
+    collectionOverlayUrl: _legacyOverlay,
+    photoIsStandard,
+    ...draft
+  } = candidate as Omit<StudioDraft, 'photoIsStandard'> & {
     collectionOverlayUrl?: unknown;
+    photoIsStandard?: unknown;
   };
   if (draft.playerImageUrl.startsWith('blob:')) {
-    return { ...draft, playerImageUrl: '', photoFormat: 'missing' };
+    return { ...draft, photoIsStandard: false, playerImageUrl: '', photoFormat: 'missing' };
   }
-  return draft;
+  return { ...draft, photoIsStandard: photoIsStandard === true };
 }
 
 function contrastRatio(first: string, second: string): number {

@@ -22,8 +22,8 @@ docker_build(
         run('pnpm --filter @futhub/database build', trigger=['packages/database/src']),
         run('pnpm --filter @futhub/api-client build', trigger=['packages/api-client/src']),
         run(
-            'pnpm --filter @futhub/api build',
-            trigger=['apps/api/src', 'packages/database/src'],
+            'pnpm --filter @futhub/api openapi:generate && pnpm --filter @futhub/api build',
+            trigger=['apps/api/src', 'apps/api/nestia.config.ts', 'packages/database/src'],
         ),
         run(
             'corepack enable && pnpm install --offline --no-frozen-lockfile',

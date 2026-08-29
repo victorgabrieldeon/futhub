@@ -1,11 +1,13 @@
 import { SwaggerCustomizer, TypedBody, TypedRoute } from '@nestia/core';
 import { Controller, HttpCode, Inject, Param, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
 import type { OpenPackResponse, PackActionRequest, PurchasePackResponse } from './packs.dto.js';
 import { OpenPackUseCase } from './use-cases/open-pack/open-pack.use-case.js';
 import { PurchasePackUseCase } from './use-cases/purchase-pack/purchase-pack.use-case.js';
 
+@ApiTags('Packs')
 @Controller('v1/packs')
 @UseGuards(InternalAuthGuard)
 export class PacksController {
