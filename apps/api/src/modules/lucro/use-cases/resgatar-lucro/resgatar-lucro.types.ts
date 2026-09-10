@@ -58,7 +58,7 @@ export abstract class RandomSource {
   abstract next(): number;
 }
 
-export const lucroCommand: CommandConfig = {
+export const lucroCommand = {
   name: 'lucro',
   cooldownSeconds: 600,
   embed: {
@@ -95,4 +95,4 @@ export const lucroCommand: CommandConfig = {
       message: 'Lucro lendário: +1000',
     },
   ],
-};
+} satisfies CommandConfig;

@@ -37,7 +37,7 @@ export class DrizzleResgatarLucroRepository implements ResgatarLucroRepository {
         .values({
           commandName: command.name,
           cooldownSeconds: command.cooldownSeconds,
-          embed: command.embed ?? lucroCommand.embed!,
+          embed: command.embed ?? lucroCommand.embed,
         })
         .onConflictDoNothing({ target: schema.commandConfigs.commandName })
         .returning({
