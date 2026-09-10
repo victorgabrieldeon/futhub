@@ -1,6 +1,7 @@
 import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
 
 import type { PlayerPhotoSuggestion } from './admin-cards.dto.js';
+import { searchSportsDbTeamPlayers } from './sports-db-team-players.js';
 
 const sportsDbOrigin = 'https://www.thesportsdb.com';
 const sportsDbImageOrigin = 'https://r2.thesportsdb.com';
@@ -62,6 +63,10 @@ type SportsDbPlayerDetails = SportsDbPlayer &
 
 @Injectable()
 export class PlayerPhotosService {
+  async teamPlayers(query: string) {
+    return searchSportsDbTeamPlayers(query);
+  }
+
   async search(query: string): Promise<PlayerPhotoSuggestion[]> {
     const name = query.trim();
     if (name.length < 2) return [];
@@ -74,12 +79,7 @@ export class PlayerPhotosService {
   }
 
   private async searchSportsDb(name: string): Promise<PlayerPhotoSuggestion[]> {
-    const apiKey = process.env.THESPORTSDB_API_KEY?.trim() || '123';
-    const url = new URL(
-      `/api/v1/json/${encodeURIComponent(apiKey)}/searchplayers.php`,
-      sportsDbOrigin,
-    );
-    url.searchParams.set('p', name);
+    const url = sportsDbUrl('searchplayers.php', 'p', name);
 
     const response = await fetch(url, { signal: AbortSignal.timeout(5_000) });
     if (!response.ok) throw new Error(`TheSportsDB returned ${response.status}.`);
@@ -113,12 +113,7 @@ export class PlayerPhotosService {
   }
 
   private async lookupSportsDbPlayer(id: string): Promise<SportsDbPlayerDetails | null> {
-    const apiKey = process.env.THESPORTSDB_API_KEY?.trim() || '123';
-    const url = new URL(
-      `/api/v1/json/${encodeURIComponent(apiKey)}/lookupplayer.php`,
-      sportsDbOrigin,
-    );
-    url.searchParams.set('id', id);
+    const url = sportsDbUrl('lookupplayer.php', 'id', id);
 
     const response = await fetch(url, { signal: AbortSignal.timeout(5_000) });
     if (!response.ok) throw new Error(`TheSportsDB returned ${response.status}.`);
@@ -162,6 +157,13 @@ export class PlayerPhotosService {
     }
     return { buffer, contentType };
   }
+}
+
+function sportsDbUrl(endpoint: string, parameter: string, value: string): URL {
+  const apiKey = process.env.THESPORTSDB_API_KEY?.trim() || '123';
+  const url = new URL(`/api/v1/json/${encodeURIComponent(apiKey)}/${endpoint}`, sportsDbOrigin);
+  url.searchParams.set(parameter, value);
+  return url;
 }
 
 function playerPhotos(value: SportsDbPlayerDetails): PlayerPhotoSuggestion[] {

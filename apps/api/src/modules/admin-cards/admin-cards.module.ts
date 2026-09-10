@@ -11,5 +11,6 @@ import { PlayerPhotosService } from './player-photos.service.js';
   imports: [FilesModule],
   controllers: [AdminCardsController],
   providers: [AdminCardsService, FootyLogosService, FutGgRaritiesService, PlayerPhotosService],
+  exports: [AdminCardsService, PlayerPhotosService],
 })
 export class AdminCardsModule {}

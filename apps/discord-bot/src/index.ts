@@ -1,22 +1,19 @@
 import {
   configureApiClient,
-  executeLucro,
   getV1LeagueDiscordUserId,
   getV1MatchesMatchId,
   getV1RankedStatusDiscordUserId,
   healthControllerHealth,
   joinRankedQueue,
   listMissions,
-  openPack,
   purchaseCard,
-  purchasePack,
   sellCards,
 } from '@futhub/api-client';
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js';
 
 import {
-  CommandInputError,
   type CommandHandlers,
+  CommandInputError,
   type CommandOptions,
   registerDispatch,
 } from './discord.js';
@@ -25,13 +22,12 @@ import {
   formatCardsSale,
   formatLeagueStatus,
   formatMatch,
-  formatPackOpen,
-  formatPackPurchase,
   formatQueueStatus,
   formatRankedQueue,
 } from './game.js';
-import { formatCommandResult } from './lucro.js';
 import { formatMissions } from './missions.js';
+import { isPackId } from './responses.js';
+import { createRuntime } from './runtime.js';
 
 function requiredString(options: CommandOptions, name: string): string {
   const value = options.getString(name, true)?.trim();
@@ -58,6 +54,12 @@ if (!clientId) throw new Error('DISCORD_CLIENT_ID is required.');
 if (!apiBaseUrl) throw new Error('API_BASE_URL is required.');
 if (!apiInternalToken) throw new Error('API_INTERNAL_TOKEN is required.');
 configureApiClient({ baseUrl: apiBaseUrl, token: apiInternalToken });
+const runtime = createRuntime();
+function packId(options: CommandOptions): string {
+  const id = requiredString(options, 'pack_id');
+  if (!isPackId(id)) throw new CommandInputError('Informe um pack_id UUID valido.');
+  return id;
+}
 
 const handlers: CommandHandlers = {
   lucro: {
@@ -66,7 +68,31 @@ const handlers: CommandHandlers = {
       .setDescription('Receba lucro e aumente seu saldo.')
       .toJSON(),
     execute: async (identity, _options, now) =>
-      formatCommandResult(await executeLucro(identity), now),
+      runtime.execute('lucro.claim', identity, { userId: identity.id }, now),
+  },
+  loja: {
+    definition: new SlashCommandBuilder()
+      .setName('loja')
+      .setDescription('Veja os packs disponiveis.')
+      .toJSON(),
+    execute: (identity, _options, now) =>
+      runtime.execute('pack.shop', identity, { userId: identity.id, page: 1 }, now),
+  },
+  'inspecionar-pack': {
+    definition: new SlashCommandBuilder()
+      .setName('inspecionar-pack')
+      .setDescription('Veja detalhes de um pack.')
+      .addStringOption((option) =>
+        option.setName('pack_id').setDescription('ID do pack.').setRequired(true),
+      )
+      .toJSON(),
+    execute: (identity, options, now) =>
+      runtime.execute(
+        'pack.inspect',
+        identity,
+        { userId: identity.id, packId: packId(options) },
+        now,
+      ),
   },
   missoes: {
     definition: new SlashCommandBuilder()
@@ -83,8 +109,13 @@ const handlers: CommandHandlers = {
         option.setName('pack_id').setDescription('ID do pack.').setRequired(true),
       )
       .toJSON(),
-    execute: async (identity, options) =>
-      formatPackPurchase(await purchasePack(requiredString(options, 'pack_id'), { identity })),
+    execute: (identity, options, now) =>
+      runtime.execute(
+        'pack.purchase',
+        identity,
+        { userId: identity.id, packId: packId(options) },
+        now,
+      ),
   },
   'abrir-pack': {
     definition: new SlashCommandBuilder()
@@ -94,8 +125,8 @@ const handlers: CommandHandlers = {
         option.setName('pack_id').setDescription('ID do pack.').setRequired(true),
       )
       .toJSON(),
-    execute: async (identity, options) =>
-      formatPackOpen(await openPack(requiredString(options, 'pack_id'), { identity })),
+    execute: (identity, options, now) =>
+      runtime.execute('pack.open', identity, { userId: identity.id, packId: packId(options) }, now),
   },
   'jogar-ranqueado': {
     definition: new SlashCommandBuilder()
@@ -175,5 +206,5 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.once('ready', (readyClient) =>
   console.info(`Discord bot connected as ${readyClient.user.tag}`),
 );
-registerDispatch(client, handlers);
+registerDispatch(client, handlers, runtime);
 await client.login(token);

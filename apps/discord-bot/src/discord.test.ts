@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { CommandInputError, type CommandHandlers, dispatchInteraction } from './discord.js';
+import { type CommandHandlers, CommandInputError, dispatchInteraction } from './discord.js';
 import { formatCommandResult } from './lucro.js';
+import { noMentions } from './responses.js';
 
 function interaction(commandName = 'lucro', options: Record<string, string> = {}) {
   const replies: unknown[] = [];
@@ -12,6 +13,12 @@ function interaction(commandName = 'lucro', options: Record<string, string> = {}
     user: { id: '1', username: 'Nome', avatarURL: () => 'avatar' },
     replied: false,
     deferred: false,
+    deferReply: async () => {
+      value.deferred = true;
+    },
+    editReply: async (reply: unknown) => {
+      replies.push(reply);
+    },
     reply: async (reply: unknown) => {
       replies.push(reply);
     },
@@ -42,7 +49,7 @@ test('dispatch encaminha identidade, opções e resposta', async () => {
     identity: { id: '1', name: 'Nome', avatarUrl: 'avatar' },
     packId: 'pack-1',
   });
-  assert.deepEqual(fake.replies, ['resposta']);
+  assert.deepEqual(fake.replies, [{ content: 'resposta', allowedMentions: noMentions }]);
 });
 
 test('dispatch envia resposta formatada pelo comando', async () => {
@@ -74,6 +81,7 @@ test('dispatch envia resposta formatada pelo comando', async () => {
 
   assert.deepEqual(fake.replies, [
     {
+      allowedMentions: noMentions,
       embeds: [
         {
           title: '/lucro',
@@ -109,7 +117,13 @@ test('dispatch responde erro interno sem expor detalhe', async () => {
     { error: (...values) => errors.push(values) },
   );
   assert.deepEqual(fake.replies, [
-    { content: 'Não foi possível executar /lucro. Tente novamente.', ephemeral: true },
+    { content: 'Consulte a mensagem privada.', allowedMentions: noMentions },
+    {
+      content:
+        'Nao foi possivel confirmar o resultado. Confira seu saldo e inventario antes de repetir.',
+      flags: 64,
+      allowedMentions: noMentions,
+    },
   ]);
   assert.equal(errors.length, 1);
 });
@@ -130,6 +144,9 @@ test('dispatch retorna erro de entrada sem registrar falha interna', async () =>
     new Date(),
     { error: (...values) => errors.push(values) },
   );
-  assert.deepEqual(fake.replies, [{ content: 'Informe ids.', ephemeral: true }]);
+  assert.deepEqual(fake.replies, [
+    { content: 'Consulte a mensagem privada.', allowedMentions: noMentions },
+    { content: 'Informe ids.', flags: 64, allowedMentions: noMentions },
+  ]);
   assert.equal(errors.length, 0);
 });

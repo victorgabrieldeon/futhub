@@ -14,6 +14,81 @@
       }
     },
     "schemas": {
+      "ReadonlyavatarUrlstringnullbalancenumberexpiresAtnumberidstringnamestring": {
+        "additionalProperties": false,
+        "properties": {
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "balance": {
+            "type": "number"
+          },
+          "expiresAt": {
+            "type": "number"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["avatarUrl", "balance", "expiresAt", "id", "name"],
+        "type": "object"
+      },
+      "PackShopDto": {
+        "additionalProperties": false,
+        "properties": {
+          "packs": {
+            "items": {
+              "$ref": "#/components/schemas/PackShopItemDto"
+            },
+            "type": "array"
+          },
+          "page": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": ["packs", "page", "totalPages"],
+        "type": "object"
+      },
+      "PackShopItemDto": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "cardsPerPack": {
+            "type": "number"
+          }
+        },
+        "required": ["id", "name", "price", "imageUrl", "cardsPerPack"],
+        "type": "object"
+      },
+      "PackShopQueryDto": {
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "PurchasePackResponse": {
         "additionalProperties": false,
         "properties": {
@@ -625,6 +700,19 @@
         "required": ["value", "weight", "messages"],
         "type": "object"
       },
+      "HealthResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok"],
+            "title": "Estado do serviço",
+            "description": "Estado atual do serviço."
+          }
+        },
+        "required": ["status"],
+        "type": "object"
+      },
       "LeagueDivisionDto": {
         "additionalProperties": false,
         "properties": {
@@ -864,19 +952,6 @@
         ],
         "type": "object"
       },
-      "HealthResponse": {
-        "additionalProperties": false,
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": ["ok"],
-            "title": "Estado do serviço",
-            "description": "Estado atual do serviço."
-          }
-        },
-        "required": ["status"],
-        "type": "object"
-      },
       "PurchaseCardResponse": {
         "additionalProperties": false,
         "properties": {
@@ -963,6 +1038,358 @@
         "required": ["identity", "userCardIds"],
         "type": "object"
       },
+      "BotResponseButtonDto": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "style": {
+            "type": "string",
+            "enum": ["danger", "link", "primary", "secondary", "success"]
+          },
+          "url": {
+            "maxLength": 512,
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": ["action", "label", "style", "url", "disabled"],
+        "type": "object"
+      },
+      "BotResponseContainerDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["container"],
+            "title": "Tipo do componente",
+            "description": "Grupo de componentes."
+          },
+          "color": {
+            "pattern": "^(#[0-9A-Fa-f]{6})?$",
+            "type": "string"
+          },
+          "components": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/BotResponseMediaDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseRowDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseSeparatorDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseTextDto"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "media": "#/components/schemas/BotResponseMediaDto",
+                  "row": "#/components/schemas/BotResponseRowDto",
+                  "separator": "#/components/schemas/BotResponseSeparatorDto",
+                  "text": "#/components/schemas/BotResponseTextDto"
+                }
+              }
+            },
+            "maxItems": 39,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": ["type", "color", "components"],
+        "type": "object"
+      },
+      "BotResponseDefinitionDto": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "variables": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "token": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "example": {
+                  "type": "string"
+                }
+              },
+              "required": ["token", "description", "example"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "actions": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "label", "description"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "defaultTemplate": {
+            "$ref": "#/components/schemas/BotResponseTemplateDto"
+          }
+        },
+        "required": [
+          "key",
+          "command",
+          "label",
+          "description",
+          "variables",
+          "actions",
+          "defaultTemplate"
+        ],
+        "type": "object"
+      },
+      "BotResponseEmbedDto": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "maxLength": 256,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 4096,
+            "type": "string"
+          },
+          "color": {
+            "pattern": "^(#[0-9A-Fa-f]{6})?$",
+            "type": "string"
+          },
+          "footer": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "authorName": {
+            "maxLength": 256,
+            "type": "string"
+          },
+          "authorUrl": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "authorIconUrl": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "imageUrl": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "fields": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "value": {
+                  "maxLength": 1024,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "inline": {
+                  "type": "boolean"
+                }
+              },
+              "required": ["name", "value", "inline"],
+              "type": "object"
+            },
+            "maxItems": 25,
+            "type": "array"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "color",
+          "footer",
+          "imageUrl",
+          "thumbnailUrl",
+          "fields"
+        ],
+        "type": "object"
+      },
+      "BotResponseMediaDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["media"],
+            "title": "Tipo do componente",
+            "description": "Imagem da mensagem."
+          },
+          "url": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 1024,
+            "type": "string"
+          }
+        },
+        "required": ["type", "url", "description"],
+        "type": "object"
+      },
+      "BotResponseRowDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["row"],
+            "title": "Tipo do componente",
+            "description": "Linha de controles."
+          },
+          "buttons": {
+            "items": {
+              "$ref": "#/components/schemas/BotResponseButtonDto"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": ["type", "buttons"],
+        "type": "object"
+      },
+      "BotResponseSeparatorDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["separator"],
+            "title": "Tipo do componente",
+            "description": "Separador visual."
+          },
+          "spacing": {
+            "type": "number",
+            "enum": [1, 2]
+          },
+          "divider": {
+            "type": "boolean"
+          }
+        },
+        "required": ["type", "spacing", "divider"],
+        "type": "object"
+      },
+      "BotResponseTemplateDto": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["components_v2", "legacy"]
+          },
+          "content": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "embeds": {
+            "items": {
+              "$ref": "#/components/schemas/BotResponseEmbedDto"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "components": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/BotResponseContainerDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseMediaDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseRowDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseSeparatorDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseTextDto"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "container": "#/components/schemas/BotResponseContainerDto",
+                  "media": "#/components/schemas/BotResponseMediaDto",
+                  "row": "#/components/schemas/BotResponseRowDto",
+                  "separator": "#/components/schemas/BotResponseSeparatorDto",
+                  "text": "#/components/schemas/BotResponseTextDto"
+                }
+              }
+            },
+            "maxItems": 40,
+            "type": "array"
+          }
+        },
+        "required": ["mode", "content", "embeds", "components"],
+        "type": "object"
+      },
+      "BotResponseTextDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["text"],
+            "title": "Tipo do componente",
+            "description": "Texto da mensagem."
+          },
+          "content": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": ["type", "content"],
+        "type": "object"
+      },
       "AdminSessionResponse": {
         "additionalProperties": false,
         "properties": {
@@ -986,6 +1413,99 @@
         },
         "required": ["apiKey"],
         "type": "object"
+      },
+      "AdminPackPresentationInput.Nullable": {
+        "additionalProperties": false,
+        "properties": {
+          "schemaVersion": {
+            "maximum": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "color": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "accentColor": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "textColor": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "effect": {
+            "type": "string",
+            "enum": ["chrome", "foil", "holographic"]
+          },
+          "texture": {
+            "type": "string",
+            "enum": ["aura", "fire", "lightning", "none"]
+          },
+          "textureOpacity": {
+            "maximum": 65,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "tintOpacity": {
+            "maximum": 42,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "headline": {
+            "maxLength": 18,
+            "minLength": 1,
+            "type": "string"
+          },
+          "headlineSize": {
+            "maximum": 100,
+            "minimum": 24,
+            "type": "integer"
+          },
+          "headlineX": {
+            "maximum": 520,
+            "minimum": 80,
+            "type": "integer"
+          },
+          "headlineY": {
+            "maximum": 470,
+            "minimum": 190,
+            "type": "integer"
+          },
+          "kicker": {
+            "maxLength": 60,
+            "type": "string"
+          },
+          "kickerX": {
+            "maximum": 520,
+            "minimum": 80,
+            "type": "integer"
+          },
+          "kickerY": {
+            "maximum": 300,
+            "minimum": 120,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "color",
+          "accentColor",
+          "textColor",
+          "effect",
+          "texture",
+          "textureOpacity",
+          "tintOpacity",
+          "headline",
+          "headlineSize",
+          "headlineX",
+          "headlineY",
+          "kicker",
+          "kickerX",
+          "kickerY"
+        ],
+        "type": "object",
+        "nullable": true
       },
       "AdminPack": {
         "additionalProperties": false,
@@ -1031,6 +1551,9 @@
           },
           "config": {
             "$ref": "#/components/schemas/AdminPackConfig"
+          },
+          "presentation": {
+            "$ref": "#/components/schemas/AdminPackPresentationInput.Nullable"
           }
         },
         "required": [
@@ -1043,7 +1566,8 @@
           "canBuy",
           "limitPerUser",
           "id",
-          "config"
+          "config",
+          "presentation"
         ],
         "type": "object"
       },
@@ -1138,6 +1662,98 @@
           "onlyTeamIds",
           "excludedTeamIds",
           "id"
+        ],
+        "type": "object"
+      },
+      "AdminPackPresentationInput": {
+        "additionalProperties": false,
+        "properties": {
+          "schemaVersion": {
+            "maximum": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "color": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "accentColor": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "textColor": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": "string"
+          },
+          "effect": {
+            "type": "string",
+            "enum": ["chrome", "foil", "holographic"]
+          },
+          "texture": {
+            "type": "string",
+            "enum": ["aura", "fire", "lightning", "none"]
+          },
+          "textureOpacity": {
+            "maximum": 65,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "tintOpacity": {
+            "maximum": 42,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "headline": {
+            "maxLength": 18,
+            "minLength": 1,
+            "type": "string"
+          },
+          "headlineSize": {
+            "maximum": 100,
+            "minimum": 24,
+            "type": "integer"
+          },
+          "headlineX": {
+            "maximum": 520,
+            "minimum": 80,
+            "type": "integer"
+          },
+          "headlineY": {
+            "maximum": 470,
+            "minimum": 190,
+            "type": "integer"
+          },
+          "kicker": {
+            "maxLength": 60,
+            "type": "string"
+          },
+          "kickerX": {
+            "maximum": 520,
+            "minimum": 80,
+            "type": "integer"
+          },
+          "kickerY": {
+            "maximum": 300,
+            "minimum": 120,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "color",
+          "accentColor",
+          "textColor",
+          "effect",
+          "texture",
+          "textureOpacity",
+          "tintOpacity",
+          "headline",
+          "headlineSize",
+          "headlineX",
+          "headlineY",
+          "kicker",
+          "kickerX",
+          "kickerY"
         ],
         "type": "object"
       },
@@ -1272,6 +1888,9 @@
           },
           "config": {
             "$ref": "#/components/schemas/AdminPackConfigInput"
+          },
+          "presentation": {
+            "$ref": "#/components/schemas/AdminPackPresentationInput"
           }
         },
         "required": [
@@ -2182,10 +2801,432 @@
           "finishing"
         ],
         "type": "object"
+      },
+      "AiSavedConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["anthropic", "openai", "opencode-go"]
+          },
+          "baseUrl": {
+            "type": "string"
+          },
+          "apiKeyConfigured": {
+            "type": "boolean"
+          },
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["provider", "baseUrl", "apiKeyConfigured", "models", "model"],
+        "type": "object"
+      },
+      "AiSessionInput": {
+        "additionalProperties": false,
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["anthropic", "openai", "opencode-go"]
+          },
+          "baseUrl": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "type": "string"
+          },
+          "apiKey": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": ["provider", "baseUrl"],
+        "type": "object"
+      },
+      "AiChatAction": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "tool": {
+            "type": "string",
+            "enum": ["create_card", "create_collection", "create_pack", "create_team"]
+          },
+          "arguments": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["failed", "pending", "rejected", "succeeded"]
+          },
+          "result": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "tool", "arguments", "status", "result"],
+        "type": "object"
+      },
+      "AiChatState": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
+          "notice": {
+            "type": "string",
+            "nullable": true
+          },
+          "messages": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string",
+                  "enum": ["assistant", "tool", "user"]
+                },
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "role", "content"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/AiChatAction"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["id", "models", "model", "notice", "messages", "actions"],
+        "type": "object"
+      },
+      "AiHistoryPage": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AiHistorySummary"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number"
+          }
+        },
+        "required": ["items", "total", "page", "pageSize"],
+        "type": "object"
+      },
+      "AiHistorySummary": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["anthropic", "openai", "opencode-go"]
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "title", "provider", "model", "createdAt", "updatedAt"],
+        "type": "object"
+      },
+      "AiHistoryQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "page": {
+            "maximum": 10000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AiHistoryDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": ["anthropic", "openai", "opencode-go"]
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/components/schemas/AiChatState"
+          }
+        },
+        "required": ["id", "title", "provider", "model", "createdAt", "updatedAt", "state"],
+        "type": "object"
+      },
+      "AiPromptInput": {
+        "additionalProperties": false,
+        "properties": {
+          "model": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "message": {
+            "maxLength": 12000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": ["model", "message"],
+        "type": "object"
+      },
+      "AiApprovalInput": {
+        "additionalProperties": false,
+        "properties": {
+          "approved": {
+            "type": "boolean"
+          }
+        },
+        "required": ["approved"],
+        "type": "object"
+      },
+      "AiSavedConfig.Nullable": {
+        "additionalProperties": false,
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["anthropic", "openai", "opencode-go"]
+          },
+          "baseUrl": {
+            "type": "string"
+          },
+          "apiKeyConfigured": {
+            "type": "boolean"
+          },
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "model": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["provider", "baseUrl", "apiKeyConfigured", "models", "model"],
+        "type": "object",
+        "nullable": true
       }
     }
   },
   "paths": {
+    "/v1/auth/player/discord": {
+      "get": {
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {}
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "auth", "player", "discord", "start"],
+        "x-samchon-controller": "PlayerAuthController"
+      }
+    },
+    "/v1/auth/player/discord/callback": {
+      "get": {
+        "tags": [],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {}
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "auth", "player", "discord", "callback"],
+        "x-samchon-controller": "PlayerAuthController"
+      }
+    },
+    "/v1/auth/player/session": {
+      "get": {
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadonlyavatarUrlstringnullbalancenumberexpiresAtnumberidstringnamestring"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "auth", "player", "session", "session"],
+        "x-samchon-controller": "PlayerAuthController"
+      },
+      "delete": {
+        "tags": [],
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "",
+            "content": {
+              "application/json": {}
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "auth", "player", "session", "logout"],
+        "x-samchon-controller": "PlayerAuthController"
+      }
+    },
+    "/v1/packs/shop": {
+      "get": {
+        "tags": ["Packs"],
+        "operationId": "getPackShop",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackShopDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "packs", "shop", "getPackShop"],
+        "x-samchon-controller": "PacksController"
+      }
+    },
+    "/v1/packs/{packId}": {
+      "get": {
+        "tags": ["Packs"],
+        "operationId": "inspectPack",
+        "parameters": [
+          {
+            "name": "packId",
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackShopItemDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "packs", "inspectPack"],
+        "x-samchon-controller": "PacksController"
+      }
+    },
     "/v1/packs/{packId}/purchase": {
       "post": {
         "tags": ["Packs"],
@@ -2195,6 +3236,7 @@
             "name": "packId",
             "in": "path",
             "schema": {
+              "format": "uuid",
               "type": "string"
             },
             "required": true
@@ -2240,6 +3282,7 @@
             "name": "packId",
             "in": "path",
             "schema": {
+              "format": "uuid",
               "type": "string"
             },
             "required": true
@@ -2433,6 +3476,27 @@
         "x-samchon-controller": "AdminLucroController"
       }
     },
+    "/health": {
+      "get": {
+        "tags": ["Saúde"],
+        "operationId": "HealthController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["health"],
+        "x-samchon-controller": "HealthController"
+      }
+    },
     "/v1/ranked/queue": {
       "post": {
         "tags": ["Liga"],
@@ -2577,27 +3641,6 @@
         "x-samchon-controller": "LeagueController"
       }
     },
-    "/health": {
-      "get": {
-        "tags": ["Saúde"],
-        "operationId": "HealthController_health",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HealthResponse"
-                }
-              }
-            }
-          }
-        },
-        "x-samchon-accessor": ["health"],
-        "x-samchon-controller": "HealthController"
-      }
-    },
     "/v1/cards/{cardId}/purchase": {
       "post": {
         "tags": ["Mercado de cards"],
@@ -2677,6 +3720,148 @@
         ],
         "x-samchon-accessor": ["v1", "cards", "sell", "sellCards"],
         "x-samchon-controller": "CardMarketController"
+      }
+    },
+    "/v1/admin/bot-responses/schema": {
+      "get": {
+        "tags": ["Admin bot responses"],
+        "operationId": "getBotResponseSchema",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BotResponseDefinitionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "admin", "bot_responses", "schema"],
+        "x-samchon-controller": "AdminBotResponsesController"
+      }
+    },
+    "/v1/admin/bot-responses/{key}": {
+      "get": {
+        "tags": ["Admin bot responses"],
+        "operationId": "getAdminBotResponse",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotResponseTemplateDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "admin", "bot_responses", "get"],
+        "x-samchon-controller": "AdminBotResponsesController"
+      },
+      "put": {
+        "tags": ["Admin bot responses"],
+        "operationId": "updateBotResponse",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BotResponseTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotResponseTemplateDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "admin", "bot_responses", "update"],
+        "x-samchon-controller": "AdminBotResponsesController"
+      }
+    },
+    "/v1/bot-responses/{key}": {
+      "get": {
+        "tags": ["Bot responses"],
+        "operationId": "getBotResponse",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotResponseTemplateDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "bot_responses", "get"],
+        "x-samchon-controller": "BotResponsesController"
       }
     },
     "/v1/admin/session": {
@@ -3748,6 +4933,429 @@
         "x-samchon-accessor": ["v1", "admin", "cards", "image", "removeImage"],
         "x-samchon-controller": "AdminCardsController"
       }
+    },
+    "/v1/admin/ai/sessions/capabilities": {
+      "get": {
+        "tags": ["Administração / Assistente IA"],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "webSearch": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["webSearch"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "ai", "sessions", "capabilities"],
+        "x-samchon-controller": "AdminAiController"
+      }
+    },
+    "/v1/admin/ai/sessions/config": {
+      "get": {
+        "tags": ["Administração / Assistente IA"],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSavedConfig.Nullable"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "ai", "sessions", "config", "config"],
+        "x-samchon-controller": "AdminAiController"
+      },
+      "put": {
+        "tags": ["Administração / Assistente IA"],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiSessionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSavedConfig"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "ai", "sessions", "config", "configure"],
+        "x-samchon-controller": "AdminAiController"
+      }
+    },
+    "/v1/admin/ai/sessions/saved": {
+      "post": {
+        "tags": ["Administração / Assistente IA"],
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiChatState"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "ai", "sessions", "saved", "connectSaved"],
+        "x-samchon-controller": "AdminAiController"
+      }
+    },
+    "/v1/admin/ai/sessions/history": {
+      "get": {
+        "tags": ["Administração / Assistente IA"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiHistoryPage"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "ai", "sessions", "history", "list"],
+        "x-samchon-controller": "AdminAiController"
+      }
+    },
+    "/v1/admin/ai/sessions/history/{id}": {
+      "get": {
+        "tags": ["Administração / Assistente IA"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiHistoryDetail"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "ai", "sessions", "history", "archived"],
+        "x-samchon-controller": "AdminAiController"
+      }
+    },
+    "/v1/admin/ai/sessions/{id}/messages/stream": {
+      "post": {
+        "tags": ["Administração / Assistente IA streaming"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiPromptInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "SSE data JSON: text deltas, authoritative state, error, done. EOF without done requires GET reconciliation.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": [
+          "v1",
+          "admin",
+          "ai",
+          "sessions",
+          "messages",
+          "stream",
+          "streamMessage"
+        ],
+        "x-samchon-controller": "AdminAiController"
+      }
+    },
+    "/v1/admin/ai/sessions/{id}/actions/{actionId}/stream": {
+      "post": {
+        "tags": ["Administração / Assistente IA streaming"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "actionId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiApprovalInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "SSE data JSON: text deltas, authoritative state, error, done. EOF without done requires GET reconciliation.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": [
+          "v1",
+          "admin",
+          "ai",
+          "sessions",
+          "actions",
+          "stream",
+          "streamDecision"
+        ],
+        "x-samchon-controller": "AdminAiController"
+      }
+    },
+    "/v1/admin/ai/sessions": {
+      "post": {
+        "tags": ["Administração / Assistente IA"],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiSessionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiChatState"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "ai", "sessions", "connect"],
+        "x-samchon-controller": "AdminAiController"
+      }
+    },
+    "/v1/admin/ai/sessions/{id}": {
+      "get": {
+        "tags": ["Administração / Assistente IA"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiChatState"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "ai", "sessions", "state"],
+        "x-samchon-controller": "AdminAiController"
+      },
+      "delete": {
+        "tags": ["Administração / Assistente IA"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "",
+            "content": {
+              "application/json": {}
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "ai", "sessions", "disconnect"],
+        "x-samchon-controller": "AdminAiController"
+      }
+    },
+    "/v1/admin/ai/sessions/{id}/messages": {
+      "post": {
+        "tags": ["Administração / Assistente IA"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiPromptInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiChatState"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "ai", "sessions", "messages", "message"],
+        "x-samchon-controller": "AdminAiController"
+      }
+    },
+    "/v1/admin/ai/sessions/{id}/actions/{actionId}": {
+      "post": {
+        "tags": ["Administração / Assistente IA"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "actionId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiApprovalInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiChatState"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "ai", "sessions", "actions", "decide"],
+        "x-samchon-controller": "AdminAiController"
+      }
     }
   },
   "tags": [
@@ -3790,6 +5398,15 @@
     {
       "name": "Saúde",
       "description": "Estado do serviço."
+    },
+    {
+      "name": "Admin bot responses"
+    },
+    {
+      "name": "Bot responses"
+    },
+    {
+      "name": "Administração / Assistente IA"
     }
   ]
 }

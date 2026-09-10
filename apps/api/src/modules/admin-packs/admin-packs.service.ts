@@ -1,7 +1,12 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 import { type FileDto, FilesService, type ImageFile } from '../files/files.service.js';
-import type { AdminPack, AdminPackConfigInput, AdminPackInput } from './admin-packs.dto.js';
+import type {
+  AdminPack,
+  AdminPackConfigInput,
+  AdminPackInput,
+  AdminPackPresentationInput,
+} from './admin-packs.dto.js';
 
 type Database = typeof import('@futhub/database');
 
@@ -43,6 +48,10 @@ export class AdminPacksService {
           .returning({ id: schema.packs.id });
         if (!pack) throw new Error('Failed to create pack.');
         await this.replaceFilters(database, tx, config.id, input.config);
+        if (input.presentation)
+          await tx
+            .insert(schema.packPresentations)
+            .values({ packId: pack.id, ...this.presentationValues(input.presentation) });
         return pack.id;
       });
     } catch (error) {
@@ -78,6 +87,14 @@ export class AdminPacksService {
           .set(this.configValues(input.config))
           .where(eq(schema.packConfigs.id, pack.configId));
         await this.replaceFilters(database, tx, pack.configId, input.config);
+        if (input.presentation)
+          await tx
+            .insert(schema.packPresentations)
+            .values({ packId: id, ...this.presentationValues(input.presentation) })
+            .onConflictDoUpdate({
+              target: schema.packPresentations.packId,
+              set: this.presentationValues(input.presentation),
+            });
       });
     } catch (error) {
       await this.removeFile(image);
@@ -148,6 +165,26 @@ export class AdminPacksService {
 
   private configValues(input: AdminPackConfigInput) {
     return { name: input.name, minOverall: input.minOverall, maxOverall: input.maxOverall };
+  }
+
+  private presentationValues(input: AdminPackPresentationInput) {
+    return {
+      schemaVersion: input.schemaVersion,
+      color: input.color,
+      accentColor: input.accentColor,
+      textColor: input.textColor,
+      effect: input.effect,
+      texture: input.texture,
+      textureOpacity: input.textureOpacity,
+      tintOpacity: input.tintOpacity,
+      headline: input.headline,
+      headlineSize: input.headlineSize,
+      headlineX: input.headlineX,
+      headlineY: input.headlineY,
+      kicker: input.kicker,
+      kickerX: input.kickerX,
+      kickerY: input.kickerY,
+    };
   }
 
   private async replaceFilters(
@@ -221,6 +258,7 @@ export class AdminPacksService {
       .select()
       .from(schema.packs)
       .innerJoin(schema.packConfigs, eq(schema.packs.configId, schema.packConfigs.id))
+      .leftJoin(schema.packPresentations, eq(schema.packs.id, schema.packPresentations.packId))
       .where(eq(schema.packs.id, id));
     if (!row) throw new NotFoundException('Pack not found.');
     const configId = row.pack_configs.id;
@@ -277,6 +315,7 @@ export class AdminPacksService {
     return {
       ...pack,
       imageUrl: imageFileId ? (imageUrls.get(imageFileId) ?? null) : null,
+      presentation: row.pack_presentations,
       config: {
         ...row.pack_configs,
         onlyPositions,

@@ -60,6 +60,7 @@ export class AdminLucroService {
       const config = await this.ensure(database, tx);
       await tx
         .update(database.schema.commandConfigs)
+        // Legacy embed remains compatible; bot runtime reads bot_response_templates only.
         .set({ cooldownSeconds: input.cooldownSeconds, embed: input.embed, updatedAt: new Date() })
         .where(database.eq(database.schema.commandConfigs.id, config.id));
       await tx

@@ -5,8 +5,6 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import type * as DatabaseModule from '@futhub/database';
 import { GenericContainer, type StartedTestContainer, Wait } from 'testcontainers';
 
-import { buildApp } from '../../app.js';
-
 const execFileAsync = promisify(execFile);
 export const internalToken = 'test-token';
 export const adminToken = 'admin-test-token';
@@ -58,6 +56,7 @@ export async function startE2eContext(): Promise<E2eContext> {
     });
     // Database module reads DATABASE_URL during evaluation.
     database = await import('@futhub/database');
+    const { buildApp } = await import('../../app.js');
     app = await buildApp({ logger: false });
     if (!app || !database || !container) throw new Error('Failed to initialize E2E context.');
     const initializedApp = app;

@@ -36,7 +36,7 @@ export async function createUser(
   return user;
 }
 
-async function createCardCatalog(
+export async function createCardCatalog(
   database: Database,
   name: string,
 ): Promise<{
@@ -234,4 +234,37 @@ export async function createLeaguePlayer(
     });
   }
   return user;
+}
+
+export async function createBotResponseMigrationFixture(database: Database) {
+  const embed = {
+    title: '  Original title  ',
+    description: 'Original **{message}**\n{reward} {balance}',
+    color: '#aAbBcC',
+    footer: '  {availableAt}  ',
+  };
+  await database.db
+    .insert(database.schema.commandConfigs)
+    .values({ commandName: 'lucro', cooldownSeconds: 123, embed });
+  await database.db
+    .delete(database.schema.botResponseTemplates)
+    .where(database.eq(database.schema.botResponseTemplates.key, 'lucro.success'));
+  return embed;
+}
+
+export async function createPackShopFixture(database: Database) {
+  const ids: string[] = [];
+  for (let index = 0; index < 7; index++) {
+    const pack = await createAdminPackFixture(database);
+    await database.db
+      .update(database.schema.packs)
+      .set({
+        name: `Shop ${index}`,
+        canBuy: index < 6,
+        imageUrl: index === 0 ? 'https://example.com/pack.png' : null,
+      })
+      .where(database.eq(database.schema.packs.id, pack.id));
+    ids.push(pack.id);
+  }
+  return ids;
 }

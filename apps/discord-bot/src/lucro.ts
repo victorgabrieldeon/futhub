@@ -1,11 +1,9 @@
 import type { LucroResponse } from '@futhub/api-client';
 import type { InteractionReplyOptions } from 'discord.js';
+import { expand } from './responses.js';
 
 function render(template: string, values: Record<string, string>): string {
-  return Object.entries(values).reduce(
-    (message, [name, value]) => message.replaceAll(`{${name}}`, value),
-    template,
-  );
+  return expand(template, values);
 }
 
 export function formatCommandResult(result: LucroResponse, now: Date): InteractionReplyOptions {

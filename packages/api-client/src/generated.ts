@@ -6,6 +6,34 @@
  * OpenAPI spec version: 1.0
  */
 import { request } from "./request.js";
+export interface ReadonlyavatarUrlstringnullbalancenumberexpiresAtnumberidstringnamestring {
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  expiresAt: number;
+  id: string;
+  name: string;
+}
+
+export interface PackShopItemDto {
+  id: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  cardsPerPack: number;
+}
+
+export interface PackShopDto {
+  packs: PackShopItemDto[];
+  page: number;
+  totalPages: number;
+}
+
+export interface PackShopQueryDto {
+  /** @minimum 1 */
+  page?: number;
+}
+
 export interface PurchasePackResponse {
   balance: number;
   quantity: number;
@@ -509,6 +537,225 @@ export interface HealthResponse {
   status: HealthResponseStatus;
 }
 
+export type BotResponseButtonDtoStyle =
+  (typeof BotResponseButtonDtoStyle)[keyof typeof BotResponseButtonDtoStyle];
+
+export const BotResponseButtonDtoStyle = {
+  danger: "danger",
+  link: "link",
+  primary: "primary",
+  secondary: "secondary",
+  success: "success",
+} as const;
+
+export interface BotResponseButtonDto {
+  /** @maxLength 80 */
+  action: string;
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  label: string;
+  style: BotResponseButtonDtoStyle;
+  /** @maxLength 512 */
+  url: string;
+  disabled: boolean;
+}
+
+/**
+ * Grupo de componentes.
+ */
+export type BotResponseContainerDtoType =
+  (typeof BotResponseContainerDtoType)[keyof typeof BotResponseContainerDtoType];
+
+export const BotResponseContainerDtoType = {
+  container: "container",
+} as const;
+
+/**
+ * Imagem da mensagem.
+ */
+export type BotResponseMediaDtoType =
+  (typeof BotResponseMediaDtoType)[keyof typeof BotResponseMediaDtoType];
+
+export const BotResponseMediaDtoType = {
+  media: "media",
+} as const;
+
+export interface BotResponseMediaDto {
+  /** Imagem da mensagem. */
+  type: BotResponseMediaDtoType;
+  /** @maxLength 2048 */
+  url: string;
+  /** @maxLength 1024 */
+  description: string;
+}
+
+/**
+ * Linha de controles.
+ */
+export type BotResponseRowDtoType =
+  (typeof BotResponseRowDtoType)[keyof typeof BotResponseRowDtoType];
+
+export const BotResponseRowDtoType = {
+  row: "row",
+} as const;
+
+export interface BotResponseRowDto {
+  /** Linha de controles. */
+  type: BotResponseRowDtoType;
+  /**
+   * @minItems 1
+   * @maxItems 5
+   */
+  buttons: BotResponseButtonDto[];
+}
+
+/**
+ * Separador visual.
+ */
+export type BotResponseSeparatorDtoType =
+  (typeof BotResponseSeparatorDtoType)[keyof typeof BotResponseSeparatorDtoType];
+
+export const BotResponseSeparatorDtoType = {
+  separator: "separator",
+} as const;
+
+export type BotResponseSeparatorDtoSpacing =
+  (typeof BotResponseSeparatorDtoSpacing)[keyof typeof BotResponseSeparatorDtoSpacing];
+
+export const BotResponseSeparatorDtoSpacing = {
+  NUMBER_1: 1,
+  NUMBER_2: 2,
+} as const;
+
+export interface BotResponseSeparatorDto {
+  /** Separador visual. */
+  type: BotResponseSeparatorDtoType;
+  spacing: BotResponseSeparatorDtoSpacing;
+  divider: boolean;
+}
+
+/**
+ * Texto da mensagem.
+ */
+export type BotResponseTextDtoType =
+  (typeof BotResponseTextDtoType)[keyof typeof BotResponseTextDtoType];
+
+export const BotResponseTextDtoType = {
+  text: "text",
+} as const;
+
+export interface BotResponseTextDto {
+  /** Texto da mensagem. */
+  type: BotResponseTextDtoType;
+  /**
+   * @minLength 1
+   * @maxLength 4000
+   */
+  content: string;
+}
+
+export interface BotResponseContainerDto {
+  /** Grupo de componentes. */
+  type: BotResponseContainerDtoType;
+  /** @pattern ^(#[0-9A-Fa-f]{6})?$ */
+  color: string;
+  /**
+   * @minItems 1
+   * @maxItems 39
+   */
+  components: (
+    | BotResponseMediaDto
+    | BotResponseRowDto
+    | BotResponseSeparatorDto
+    | BotResponseTextDto
+  )[];
+}
+
+export type BotResponseDefinitionDtoVariablesItem = {
+  token: string;
+  description: string;
+  example: string;
+};
+
+export type BotResponseDefinitionDtoActionsItem = {
+  id: string;
+  label: string;
+  description: string;
+};
+
+export type BotResponseTemplateDtoMode =
+  (typeof BotResponseTemplateDtoMode)[keyof typeof BotResponseTemplateDtoMode];
+
+export const BotResponseTemplateDtoMode = {
+  components_v2: "components_v2",
+  legacy: "legacy",
+} as const;
+
+export type BotResponseEmbedDtoFieldsItem = {
+  /**
+   * @minLength 1
+   * @maxLength 256
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 1024
+   */
+  value: string;
+  inline: boolean;
+};
+
+export interface BotResponseEmbedDto {
+  /** @maxLength 256 */
+  title: string;
+  /** @maxLength 4096 */
+  description: string;
+  /** @pattern ^(#[0-9A-Fa-f]{6})?$ */
+  color: string;
+  /** @maxLength 2048 */
+  footer: string;
+  /** @maxLength 256 */
+  authorName?: string;
+  /** @maxLength 2048 */
+  authorUrl?: string;
+  /** @maxLength 2048 */
+  authorIconUrl?: string;
+  /** @maxLength 2048 */
+  imageUrl: string;
+  /** @maxLength 2048 */
+  thumbnailUrl: string;
+  /** @maxItems 25 */
+  fields: BotResponseEmbedDtoFieldsItem[];
+}
+
+export interface BotResponseTemplateDto {
+  mode: BotResponseTemplateDtoMode;
+  /** @maxLength 2000 */
+  content: string;
+  /** @maxItems 10 */
+  embeds: BotResponseEmbedDto[];
+  /** @maxItems 40 */
+  components: (
+    | BotResponseContainerDto
+    | BotResponseMediaDto
+    | BotResponseRowDto
+    | BotResponseSeparatorDto
+    | BotResponseTextDto
+  )[];
+}
+
+export interface BotResponseDefinitionDto {
+  key: string;
+  command: string;
+  label: string;
+  description: string;
+  variables: BotResponseDefinitionDtoVariablesItem[];
+  actions: BotResponseDefinitionDtoActionsItem[];
+  defaultTemplate: BotResponseTemplateDto;
+}
+
 export interface PurchaseCardResponse {
   userCardId: string;
   balance: number;
@@ -558,6 +805,86 @@ export interface AdminSessionInput {
   /** Credencial administrativa fornecida pelo operador. */
   apiKey: string;
 }
+
+export type AdminPackPresentationInputNullableEffect =
+  (typeof AdminPackPresentationInputNullableEffect)[keyof typeof AdminPackPresentationInputNullableEffect];
+
+export const AdminPackPresentationInputNullableEffect = {
+  chrome: "chrome",
+  foil: "foil",
+  holographic: "holographic",
+} as const;
+
+export type AdminPackPresentationInputNullableTexture =
+  (typeof AdminPackPresentationInputNullableTexture)[keyof typeof AdminPackPresentationInputNullableTexture];
+
+export const AdminPackPresentationInputNullableTexture = {
+  aura: "aura",
+  fire: "fire",
+  lightning: "lightning",
+  none: "none",
+} as const;
+
+/**
+ * @nullable
+ */
+export type AdminPackPresentationInputNullable = {
+  /**
+   * @minimum 1
+   * @maximum 1
+   */
+  schemaVersion: number;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  color: string;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  accentColor: string;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  textColor: string;
+  effect: AdminPackPresentationInputNullableEffect;
+  texture: AdminPackPresentationInputNullableTexture;
+  /**
+   * @minimum 0
+   * @maximum 65
+   */
+  textureOpacity: number;
+  /**
+   * @minimum 0
+   * @maximum 42
+   */
+  tintOpacity: number;
+  /**
+   * @minLength 1
+   * @maxLength 18
+   */
+  headline: string;
+  /**
+   * @minimum 24
+   * @maximum 100
+   */
+  headlineSize: number;
+  /**
+   * @minimum 80
+   * @maximum 520
+   */
+  headlineX: number;
+  /**
+   * @minimum 190
+   * @maximum 470
+   */
+  headlineY: number;
+  /** @maxLength 60 */
+  kicker: string;
+  /**
+   * @minimum 80
+   * @maximum 520
+   */
+  kickerX: number;
+  /**
+   * @minimum 120
+   * @maximum 300
+   */
+  kickerY: number;
+} | null;
 
 export type AdminPackConfigOnlyPositionsItem =
   (typeof AdminPackConfigOnlyPositionsItem)[keyof typeof AdminPackConfigOnlyPositionsItem];
@@ -648,6 +975,84 @@ export interface AdminPack {
   limitPerUser: number;
   id: string;
   config: AdminPackConfig;
+  presentation: AdminPackPresentationInputNullable | null;
+}
+
+export type AdminPackPresentationInputEffect =
+  (typeof AdminPackPresentationInputEffect)[keyof typeof AdminPackPresentationInputEffect];
+
+export const AdminPackPresentationInputEffect = {
+  chrome: "chrome",
+  foil: "foil",
+  holographic: "holographic",
+} as const;
+
+export type AdminPackPresentationInputTexture =
+  (typeof AdminPackPresentationInputTexture)[keyof typeof AdminPackPresentationInputTexture];
+
+export const AdminPackPresentationInputTexture = {
+  aura: "aura",
+  fire: "fire",
+  lightning: "lightning",
+  none: "none",
+} as const;
+
+export interface AdminPackPresentationInput {
+  /**
+   * @minimum 1
+   * @maximum 1
+   */
+  schemaVersion: number;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  color: string;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  accentColor: string;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  textColor: string;
+  effect: AdminPackPresentationInputEffect;
+  texture: AdminPackPresentationInputTexture;
+  /**
+   * @minimum 0
+   * @maximum 65
+   */
+  textureOpacity: number;
+  /**
+   * @minimum 0
+   * @maximum 42
+   */
+  tintOpacity: number;
+  /**
+   * @minLength 1
+   * @maxLength 18
+   */
+  headline: string;
+  /**
+   * @minimum 24
+   * @maximum 100
+   */
+  headlineSize: number;
+  /**
+   * @minimum 80
+   * @maximum 520
+   */
+  headlineX: number;
+  /**
+   * @minimum 190
+   * @maximum 470
+   */
+  headlineY: number;
+  /** @maxLength 60 */
+  kicker: string;
+  /**
+   * @minimum 80
+   * @maximum 520
+   */
+  kickerX: number;
+  /**
+   * @minimum 120
+   * @maximum 300
+   */
+  kickerY: number;
 }
 
 export type AdminPackConfigInputOnlyPositionsItem =
@@ -737,6 +1142,7 @@ export interface AdminPackInput {
   /** @minimum 0 */
   limitPerUser: number;
   config: AdminPackConfigInput;
+  presentation?: AdminPackPresentationInput;
 }
 
 export interface CardReference {
@@ -1314,6 +1720,203 @@ export interface CardUpdate {
   finishing: number;
 }
 
+export type AiSavedConfigProvider =
+  (typeof AiSavedConfigProvider)[keyof typeof AiSavedConfigProvider];
+
+export const AiSavedConfigProvider = {
+  anthropic: "anthropic",
+  openai: "openai",
+  "opencode-go": "opencode-go",
+} as const;
+
+export interface AiSavedConfig {
+  provider: AiSavedConfigProvider;
+  baseUrl: string;
+  apiKeyConfigured: boolean;
+  models: string[];
+  /** @nullable */
+  model: string | null;
+}
+
+export type AiSessionInputProvider =
+  (typeof AiSessionInputProvider)[keyof typeof AiSessionInputProvider];
+
+export const AiSessionInputProvider = {
+  anthropic: "anthropic",
+  openai: "openai",
+  "opencode-go": "opencode-go",
+} as const;
+
+export interface AiSessionInput {
+  provider: AiSessionInputProvider;
+  /**
+   * @minLength 1
+   * @maxLength 2048
+   */
+  baseUrl: string;
+  /**
+   * @minLength 1
+   * @maxLength 4096
+   */
+  apiKey?: string;
+}
+
+export type AiChatActionTool =
+  (typeof AiChatActionTool)[keyof typeof AiChatActionTool];
+
+export const AiChatActionTool = {
+  create_card: "create_card",
+  create_collection: "create_collection",
+  create_pack: "create_pack",
+  create_team: "create_team",
+} as const;
+
+export type AiChatActionStatus =
+  (typeof AiChatActionStatus)[keyof typeof AiChatActionStatus];
+
+export const AiChatActionStatus = {
+  failed: "failed",
+  pending: "pending",
+  rejected: "rejected",
+  succeeded: "succeeded",
+} as const;
+
+export interface AiChatAction {
+  id: string;
+  tool: AiChatActionTool;
+  arguments: string;
+  status: AiChatActionStatus;
+  /** @nullable */
+  result: string | null;
+}
+
+export type AiChatStateMessagesItemRole =
+  (typeof AiChatStateMessagesItemRole)[keyof typeof AiChatStateMessagesItemRole];
+
+export const AiChatStateMessagesItemRole = {
+  assistant: "assistant",
+  tool: "tool",
+  user: "user",
+} as const;
+
+export type AiChatStateMessagesItem = {
+  id: string;
+  role: AiChatStateMessagesItemRole;
+  content: string;
+};
+
+export interface AiChatState {
+  id: string;
+  models: string[];
+  /** @nullable */
+  model: string | null;
+  /** @nullable */
+  notice: string | null;
+  messages: AiChatStateMessagesItem[];
+  actions: AiChatAction[];
+}
+
+export type AiHistorySummaryProvider =
+  (typeof AiHistorySummaryProvider)[keyof typeof AiHistorySummaryProvider];
+
+export const AiHistorySummaryProvider = {
+  anthropic: "anthropic",
+  openai: "openai",
+  "opencode-go": "opencode-go",
+} as const;
+
+export interface AiHistorySummary {
+  id: string;
+  title: string;
+  provider: AiHistorySummaryProvider;
+  /** @nullable */
+  model: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AiHistoryPage {
+  items: AiHistorySummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AiHistoryQuery {
+  /**
+   * @minimum 1
+   * @maximum 10000
+   */
+  page?: number;
+}
+
+export type AiHistoryDetailProvider =
+  (typeof AiHistoryDetailProvider)[keyof typeof AiHistoryDetailProvider];
+
+export const AiHistoryDetailProvider = {
+  anthropic: "anthropic",
+  openai: "openai",
+  "opencode-go": "opencode-go",
+} as const;
+
+export interface AiHistoryDetail {
+  id: string;
+  title: string;
+  provider: AiHistoryDetailProvider;
+  /** @nullable */
+  model: string | null;
+  createdAt: string;
+  updatedAt: string;
+  state: AiChatState;
+}
+
+export interface AiPromptInput {
+  /**
+   * @minLength 1
+   * @maxLength 200
+   */
+  model: string;
+  /**
+   * @minLength 1
+   * @maxLength 12000
+   */
+  message: string;
+}
+
+export interface AiApprovalInput {
+  approved: boolean;
+}
+
+export type AiSavedConfigNullableProvider =
+  (typeof AiSavedConfigNullableProvider)[keyof typeof AiSavedConfigNullableProvider];
+
+export const AiSavedConfigNullableProvider = {
+  anthropic: "anthropic",
+  openai: "openai",
+  "opencode-go": "opencode-go",
+} as const;
+
+/**
+ * @nullable
+ */
+export type AiSavedConfigNullable = {
+  provider: AiSavedConfigNullableProvider;
+  baseUrl: string;
+  apiKeyConfigured: boolean;
+  models: string[];
+  /** @nullable */
+  model: string | null;
+} | null;
+
+export type GetV1AuthPlayerDiscordCallbackParams = {
+  code?: string;
+  state?: string;
+};
+
+export type GetPackShopParams = {
+  page?: number;
+};
+
 export type GetV1AdminCardsTeamLogoSuggestionsParams = {
   q: string;
 };
@@ -1396,6 +1999,124 @@ export const GetV1AdminCardsSort = {
   overall: "overall",
   recent: "recent",
 } as const;
+
+export type GetV1AdminAiSessionsCapabilities200 = {
+  webSearch: boolean;
+};
+
+export type GetV1AdminAiSessionsHistoryParams = {
+  page?: number;
+};
+
+export const getGetV1AuthPlayerDiscordUrl = () => {
+  return `/v1/auth/player/discord`;
+};
+
+export const getV1AuthPlayerDiscord = async (
+  options?: Parameters<typeof request>[1],
+): Promise<unknown> => {
+  return request<unknown>(getGetV1AuthPlayerDiscordUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetV1AuthPlayerDiscordCallbackUrl = (
+  params?: GetV1AuthPlayerDiscordCallbackParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/auth/player/discord/callback?${stringifiedParams}`
+    : `/v1/auth/player/discord/callback`;
+};
+
+export const getV1AuthPlayerDiscordCallback = async (
+  params?: GetV1AuthPlayerDiscordCallbackParams,
+  options?: Parameters<typeof request>[1],
+): Promise<unknown> => {
+  return request<unknown>(getGetV1AuthPlayerDiscordCallbackUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetV1AuthPlayerSessionUrl = () => {
+  return `/v1/auth/player/session`;
+};
+
+export const getV1AuthPlayerSession = async (
+  options?: Parameters<typeof request>[1],
+): Promise<ReadonlyavatarUrlstringnullbalancenumberexpiresAtnumberidstringnamestring> => {
+  return request<ReadonlyavatarUrlstringnullbalancenumberexpiresAtnumberidstringnamestring>(
+    getGetV1AuthPlayerSessionUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getDeleteV1AuthPlayerSessionUrl = () => {
+  return `/v1/auth/player/session`;
+};
+
+export const deleteV1AuthPlayerSession = async (
+  options?: Parameters<typeof request>[1],
+): Promise<unknown> => {
+  return request<unknown>(getDeleteV1AuthPlayerSessionUrl(), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getGetPackShopUrl = (params?: GetPackShopParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/packs/shop?${stringifiedParams}`
+    : `/v1/packs/shop`;
+};
+
+export const getPackShop = async (
+  params?: GetPackShopParams,
+  options?: Parameters<typeof request>[1],
+): Promise<PackShopDto> => {
+  return request<PackShopDto>(getGetPackShopUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getInspectPackUrl = (packId: string) => {
+  return `/v1/packs/${packId}`;
+};
+
+export const inspectPack = async (
+  packId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<PackShopItemDto> => {
+  return request<PackShopItemDto>(getInspectPackUrl(packId), {
+    ...options,
+    method: "GET",
+  });
+};
 
 export const getPurchasePackUrl = (packId: string) => {
   return `/v1/packs/${packId}/purchase`;
@@ -1588,6 +2309,64 @@ export const healthControllerHealth = async (
   options?: Parameters<typeof request>[1],
 ): Promise<HealthResponse> => {
   return request<HealthResponse>(getHealthControllerHealthUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetBotResponseSchemaUrl = () => {
+  return `/v1/admin/bot-responses/schema`;
+};
+
+export const getBotResponseSchema = async (
+  options?: Parameters<typeof request>[1],
+): Promise<BotResponseDefinitionDto[]> => {
+  return request<BotResponseDefinitionDto[]>(getGetBotResponseSchemaUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAdminBotResponseUrl = (key: string) => {
+  return `/v1/admin/bot-responses/${key}`;
+};
+
+export const getAdminBotResponse = async (
+  key: string,
+  options?: Parameters<typeof request>[1],
+): Promise<BotResponseTemplateDto> => {
+  return request<BotResponseTemplateDto>(getGetAdminBotResponseUrl(key), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getUpdateBotResponseUrl = (key: string) => {
+  return `/v1/admin/bot-responses/${key}`;
+};
+
+export const updateBotResponse = async (
+  key: string,
+  botResponseTemplateDto: BotResponseTemplateDto,
+  options?: Parameters<typeof request>[1],
+): Promise<BotResponseTemplateDto> => {
+  return request<BotResponseTemplateDto>(getUpdateBotResponseUrl(key), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(botResponseTemplateDto),
+  });
+};
+
+export const getGetBotResponseUrl = (key: string) => {
+  return `/v1/bot-responses/${key}`;
+};
+
+export const getBotResponse = async (
+  key: string,
+  options?: Parameters<typeof request>[1],
+): Promise<BotResponseTemplateDto> => {
+  return request<BotResponseTemplateDto>(getGetBotResponseUrl(key), {
     ...options,
     method: "GET",
   });
@@ -2240,4 +3019,192 @@ export const deleteV1AdminCardsCardIdImage = async (
     ...options,
     method: "DELETE",
   });
+};
+
+export const getGetV1AdminAiSessionsCapabilitiesUrl = () => {
+  return `/v1/admin/ai/sessions/capabilities`;
+};
+
+export const getV1AdminAiSessionsCapabilities = async (
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminAiSessionsCapabilities200> => {
+  return request<GetV1AdminAiSessionsCapabilities200>(
+    getGetV1AdminAiSessionsCapabilitiesUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminAiSessionsConfigUrl = () => {
+  return `/v1/admin/ai/sessions/config`;
+};
+
+export const getV1AdminAiSessionsConfig = async (
+  options?: Parameters<typeof request>[1],
+): Promise<AiSavedConfigNullable | null> => {
+  return request<AiSavedConfigNullable | null>(
+    getGetV1AdminAiSessionsConfigUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getPutV1AdminAiSessionsConfigUrl = () => {
+  return `/v1/admin/ai/sessions/config`;
+};
+
+export const putV1AdminAiSessionsConfig = async (
+  aiSessionInput: AiSessionInput,
+  options?: Parameters<typeof request>[1],
+): Promise<AiSavedConfig> => {
+  return request<AiSavedConfig>(getPutV1AdminAiSessionsConfigUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(aiSessionInput),
+  });
+};
+
+export const getPostV1AdminAiSessionsSavedUrl = () => {
+  return `/v1/admin/ai/sessions/saved`;
+};
+
+export const postV1AdminAiSessionsSaved = async (
+  options?: Parameters<typeof request>[1],
+): Promise<AiChatState> => {
+  return request<AiChatState>(getPostV1AdminAiSessionsSavedUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getGetV1AdminAiSessionsHistoryUrl = (
+  params?: GetV1AdminAiSessionsHistoryParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/ai/sessions/history?${stringifiedParams}`
+    : `/v1/admin/ai/sessions/history`;
+};
+
+export const getV1AdminAiSessionsHistory = async (
+  params?: GetV1AdminAiSessionsHistoryParams,
+  options?: Parameters<typeof request>[1],
+): Promise<AiHistoryPage> => {
+  return request<AiHistoryPage>(getGetV1AdminAiSessionsHistoryUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetV1AdminAiSessionsHistoryIdUrl = (id: string) => {
+  return `/v1/admin/ai/sessions/history/${id}`;
+};
+
+export const getV1AdminAiSessionsHistoryId = async (
+  id: string,
+  options?: Parameters<typeof request>[1],
+): Promise<AiHistoryDetail> => {
+  return request<AiHistoryDetail>(getGetV1AdminAiSessionsHistoryIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getPostV1AdminAiSessionsUrl = () => {
+  return `/v1/admin/ai/sessions`;
+};
+
+export const postV1AdminAiSessions = async (
+  aiSessionInput: AiSessionInput,
+  options?: Parameters<typeof request>[1],
+): Promise<AiChatState> => {
+  return request<AiChatState>(getPostV1AdminAiSessionsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(aiSessionInput),
+  });
+};
+
+export const getGetV1AdminAiSessionsIdUrl = (id: string) => {
+  return `/v1/admin/ai/sessions/${id}`;
+};
+
+export const getV1AdminAiSessionsId = async (
+  id: string,
+  options?: Parameters<typeof request>[1],
+): Promise<AiChatState> => {
+  return request<AiChatState>(getGetV1AdminAiSessionsIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getDeleteV1AdminAiSessionsIdUrl = (id: string) => {
+  return `/v1/admin/ai/sessions/${id}`;
+};
+
+export const deleteV1AdminAiSessionsId = async (
+  id: string,
+  options?: Parameters<typeof request>[1],
+): Promise<unknown> => {
+  return request<unknown>(getDeleteV1AdminAiSessionsIdUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getPostV1AdminAiSessionsIdMessagesUrl = (id: string) => {
+  return `/v1/admin/ai/sessions/${id}/messages`;
+};
+
+export const postV1AdminAiSessionsIdMessages = async (
+  id: string,
+  aiPromptInput: AiPromptInput,
+  options?: Parameters<typeof request>[1],
+): Promise<AiChatState> => {
+  return request<AiChatState>(getPostV1AdminAiSessionsIdMessagesUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(aiPromptInput),
+  });
+};
+
+export const getPostV1AdminAiSessionsIdActionsActionIdUrl = (
+  id: string,
+  actionId: string,
+) => {
+  return `/v1/admin/ai/sessions/${id}/actions/${actionId}`;
+};
+
+export const postV1AdminAiSessionsIdActionsActionId = async (
+  id: string,
+  actionId: string,
+  aiApprovalInput: AiApprovalInput,
+  options?: Parameters<typeof request>[1],
+): Promise<AiChatState> => {
+  return request<AiChatState>(
+    getPostV1AdminAiSessionsIdActionsActionIdUrl(id, actionId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(aiApprovalInput),
+    },
+  );
 };
