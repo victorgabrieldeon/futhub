@@ -15,6 +15,20 @@ services:
       retries: 24
       start_period: 10s
 
+
+  admin:
+    image: futhub-dev
+    command: pnpm --filter @futhub/admin dev
+    environment:
+      # Tilt changes host port mappings. Docker DNS remains stable.
+      ADMIN_API_URL: http://api:3000
+    volumes:
+      - './.env:/app/.env:ro'
+    ports:
+      - '127.0.0.1::3000'
+    depends_on:
+      api:
+        condition: service_healthy
   discord-bot:
     image: futhub-dev
     command: pnpm --filter @futhub/discord-bot dev

@@ -42,7 +42,6 @@ async function createCardCatalog(
 ): Promise<{
   collectionId: string;
   teamId: string;
-  nationalityId: string;
 }> {
   const suffix = randomUUID();
   const [text] = await database.db
@@ -51,9 +50,15 @@ async function createCardCatalog(
     .returning({ id: database.schema.localizedTexts.id });
   const textId = text?.id;
   if (!textId) throw new Error('Failed to create test text.');
+  await database.db.insert(database.schema.localizedTextTranslations).values({
+    localizedTextId: textId,
+    locale: 'pt-BR',
+    content: `${name} collection ${suffix}`,
+  });
   const [collection] = await database.db
     .insert(database.schema.collections)
     .values({
+      slug: `${name}-collection-${suffix}`,
       nameTextId: textId,
       emoji: '⚽',
       primaryColor: '#000000',
@@ -62,19 +67,20 @@ async function createCardCatalog(
     .returning({ id: database.schema.collections.id });
   const [team] = await database.db
     .insert(database.schema.teams)
-    .values({ name: `${name} team ${suffix}`, emoji: '⚽', color: '#000000' })
+    .values({
+      slug: `${name}-team-${suffix}`,
+      name: `${name} team ${suffix}`,
+      emoji: '⚽',
+      color: '#000000',
+    })
     .returning({ id: database.schema.teams.id });
-  const [nationality] = await database.db
-    .insert(database.schema.nationalities)
-    .values({ name: `${name} nationality ${suffix}`, emoji: '🇧🇷', color: '#000000' })
-    .returning({ id: database.schema.nationalities.id });
-  if (!collection || !team || !nationality) throw new Error('Failed to create test card catalog.');
-  return { collectionId: collection.id, teamId: team.id, nationalityId: nationality.id };
+  if (!collection || !team) throw new Error('Failed to create test card catalog.');
+  return { collectionId: collection.id, teamId: team.id };
 }
 
 async function createCard(
   database: Database,
-  catalog: { collectionId: string; teamId: string; nationalityId: string },
+  catalog: { collectionId: string; teamId: string },
   name: string,
   position: (typeof formationPositions)[number],
 ): Promise<{ id: string }> {
@@ -86,10 +92,10 @@ async function createCard(
   const [card] = await database.db
     .insert(database.schema.cards)
     .values({
+      slug: `test-${randomUUID()}`,
       name,
       collectionId: catalog.collectionId,
       teamId: catalog.teamId,
-      nationalityId: catalog.nationalityId,
       statsId: stats.id,
       position,
       defense: 80,

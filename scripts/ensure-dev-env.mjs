@@ -12,15 +12,29 @@ try {
 }
 
 const contents = await readFile(envPath, 'utf8');
-const token = randomBytes(32).toString('hex');
-const tokenLine = /^API_INTERNAL_TOKEN=(.*)$/m;
-const match = contents.match(tokenLine);
+const requiredVariables = [
+  ['API_INTERNAL_TOKEN', () => randomBytes(32).toString('hex')],
+  ['ADMIN_API_TOKEN', () => randomBytes(32).toString('hex')],
+  ['MINIO_ROOT_USER', () => 'minioadmin'],
+  ['MINIO_ROOT_PASSWORD', () => randomBytes(32).toString('hex')],
+  ['MINIO_PORT', () => '9002'],
+  ['MINIO_CONSOLE_PORT', () => '9003'],
+  ['MINIO_PUBLIC_URL', () => 'http://localhost:9002'],
+];
+let nextContents = contents;
 
-if (match?.[1].trim()) process.exit(0);
+for (const [name, createValue] of requiredVariables) {
+  const line = new RegExp(`^${name}=(.*)$`, 'm');
+  const match = nextContents.match(line);
+  if (match?.[1].trim()) continue;
 
-const nextContents = match
-  ? contents.replace(tokenLine, `API_INTERNAL_TOKEN=${token}`)
-  : `${contents}${contents.endsWith('\n') ? '' : '\n'}API_INTERNAL_TOKEN=${token}\n`;
+  const value = createValue();
+  nextContents = match
+    ? nextContents.replace(line, `${name}=${value}`)
+    : `${nextContents}${nextContents.endsWith('\n') ? '' : '\n'}${name}=${value}\n`;
+}
+
+if (nextContents === contents) process.exit(0);
 
 await writeFile(envPath, nextContents);
-console.info('Generated API_INTERNAL_TOKEN in .env.');
+console.info('Generated missing required values in .env.');

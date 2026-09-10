@@ -196,6 +196,13 @@ export interface LucroCooldownResponse {
   availableAt: string;
 }
 
+export interface LucroEmbedDto {
+  title: string;
+  description: string;
+  color: string;
+  footer: string;
+}
+
 export interface LucroRewardDto {
   readonly value: number;
   readonly weight: number;
@@ -219,6 +226,7 @@ export interface LucroSuccessResponse {
   balance: number;
   availableAt: string;
   progression: ProgressionDto;
+  embed: LucroEmbedDto;
 }
 
 export interface DiscordIdentityDto {
@@ -237,6 +245,126 @@ export interface DiscordIdentityDto {
    * @nullable
    */
   avatarUrl: string | null;
+}
+
+export interface LucroMessagesDto {
+  /**
+   * @minLength 1
+   * @maxLength 280
+   */
+  pt: string;
+  /**
+   * @minLength 1
+   * @maxLength 280
+   */
+  es: string;
+  /**
+   * @minLength 1
+   * @maxLength 280
+   */
+  en: string;
+}
+
+export interface LucroRewardDtoO1 {
+  /** @minimum 1 */
+  value: number;
+  /** @minimum 1 */
+  weight: number;
+  messages: LucroMessagesDto;
+  id: string;
+}
+
+export interface LucroEmbedDtoO1 {
+  /**
+   * @minLength 1
+   * @maxLength 256
+   */
+  title: string;
+  /**
+   * @minLength 1
+   * @maxLength 4000
+   */
+  description: string;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  color: string;
+  /** @maxLength 2048 */
+  footer: string;
+}
+
+export interface LucroConfigDto {
+  cooldownSeconds: number;
+  rewards: LucroRewardDtoO1[];
+  embed: LucroEmbedDtoO1;
+}
+
+export type LucroEmbedSchemaDtoVariablesItem = {
+  token: string;
+  description: string;
+  example: string;
+};
+
+export type LucroEmbedSchemaDtoPropertiesTitle = {
+  maxLength: number;
+  examples: string[];
+};
+
+export type LucroEmbedSchemaDtoPropertiesDescription = {
+  maxLength: number;
+  examples: string[];
+};
+
+export type LucroEmbedSchemaDtoPropertiesColor = {
+  maxLength: number;
+  examples: string[];
+};
+
+export type LucroEmbedSchemaDtoPropertiesFooter = {
+  maxLength: number;
+  examples: string[];
+};
+
+export type LucroEmbedSchemaDtoProperties = {
+  title: LucroEmbedSchemaDtoPropertiesTitle;
+  description: LucroEmbedSchemaDtoPropertiesDescription;
+  color: LucroEmbedSchemaDtoPropertiesColor;
+  footer: LucroEmbedSchemaDtoPropertiesFooter;
+};
+
+export interface LucroEmbedSchemaDto {
+  description: string;
+  variables: LucroEmbedSchemaDtoVariablesItem[];
+  properties: LucroEmbedSchemaDtoProperties;
+}
+
+export interface LucroRewardInputDto {
+  /** @minimum 1 */
+  value: number;
+  /** @minimum 1 */
+  weight: number;
+  messages: LucroMessagesDto;
+}
+
+export interface LucroConfigInputDto {
+  /** @minimum 1 */
+  cooldownSeconds: number;
+  /** @minItems 1 */
+  rewards: LucroRewardInputDto[];
+  embed: LucroEmbedDtoO1;
+}
+
+/**
+ * Estado atual do serviço.
+ */
+export type HealthResponseStatus =
+  (typeof HealthResponseStatus)[keyof typeof HealthResponseStatus];
+
+export const HealthResponseStatus = {
+  ok: "ok",
+} as const;
+
+export interface HealthResponse {
+  /** Estado atual do serviço. */
+  status: HealthResponseStatus;
 }
 
 export interface LeagueDivisionDto {
@@ -381,21 +509,6 @@ export interface MatchResponse {
   events: MatchEventDto[];
 }
 
-/**
- * Estado atual do serviço.
- */
-export type HealthResponseStatus =
-  (typeof HealthResponseStatus)[keyof typeof HealthResponseStatus];
-
-export const HealthResponseStatus = {
-  ok: "ok",
-} as const;
-
-export interface HealthResponse {
-  /** Estado atual do serviço. */
-  status: HealthResponseStatus;
-}
-
 export interface PurchaseCardResponse {
   userCardId: string;
   balance: number;
@@ -435,6 +548,674 @@ export interface SellCardsRequest {
   /** @minItems 1 */
   userCardIds: string[];
 }
+
+export interface AdminSessionResponse {
+  /** Indica que a sessão administrativa está ativa. */
+  ok: boolean;
+}
+
+export interface AdminSessionInput {
+  /** Credencial administrativa fornecida pelo operador. */
+  apiKey: string;
+}
+
+export interface CardReference {
+  id: string;
+  name: string;
+  /**
+   * @maxLength 100
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+}
+
+export interface CardCatalog {
+  collections: CardReference[];
+  teams: CardReference[];
+}
+
+export interface TeamLogoSuggestion {
+  name: string;
+  /**
+   * @maxLength 100
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
+  slug: string;
+  description: string;
+  imageUrl: string;
+  sourceUrl: string;
+}
+
+export interface TeamLogoSuggestionsQuery {
+  /**
+   * @minLength 2
+   * @maxLength 100
+   */
+  q: string;
+}
+
+export interface TeamLogoDetails {
+  name: string;
+  /**
+   * @maxLength 100
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
+  slug: string;
+  symbol: string;
+  colors: string[];
+  imageUrl: string;
+  sourceUrl: string;
+}
+
+export interface TeamLogoDetailsQuery {
+  /**
+   * @maxLength 100
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
+  slug: string;
+}
+
+export interface CollectionArtworkSuggestion {
+  name: string;
+  /**
+   * @maxLength 100
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
+  slug: string;
+  symbol: string;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  primaryColor: string;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  secondaryColor: string;
+  imageUrl: string;
+  overlayUrl: string;
+  bannerUrl: string;
+  description: string;
+  sourceUrl: string;
+}
+
+export interface CollectionArtworkSuggestionsQuery {
+  /** @maxLength 100 */
+  q: string;
+}
+
+export interface PlayerPhotoSuggestion {
+  id: string;
+  name: string;
+  team: string;
+  position: string;
+  imageUrl: string;
+  sourceUrl: string;
+  provider: string;
+}
+
+export interface PlayerPhotoSuggestionsQuery {
+  /**
+   * @minLength 2
+   * @maxLength 100
+   */
+  q: string;
+}
+
+export interface AdminCollection {
+  /**
+   * @maxLength 100
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
+  slug: string;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 30
+   */
+  emoji: string;
+  /**
+   * @minLength 1
+   * @maxLength 16
+   */
+  primaryColor: string;
+  /**
+   * @minLength 1
+   * @maxLength 16
+   */
+  secondaryColor: string;
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  imageUrl?: string | null;
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  overlayUrl?: string | null;
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  bannerUrl?: string | null;
+  contractsBlocked?: boolean;
+  id: string;
+}
+
+export interface CollectionPage {
+  items: AdminCollection[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface CollectionListQuery {
+  /** @maxLength 100 */
+  query?: string;
+  /** @minimum 1 */
+  page: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  pageSize?: number;
+  contractsBlocked?: boolean;
+}
+
+export interface CollectionInput {
+  /**
+   * @maxLength 100
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
+  slug: string;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 30
+   */
+  emoji: string;
+  /**
+   * @minLength 1
+   * @maxLength 16
+   */
+  primaryColor: string;
+  /**
+   * @minLength 1
+   * @maxLength 16
+   */
+  secondaryColor: string;
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  imageUrl?: string | null;
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  overlayUrl?: string | null;
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  bannerUrl?: string | null;
+  contractsBlocked?: boolean;
+}
+
+export interface AdminTeam {
+  /**
+   * @maxLength 100
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
+  slug: string;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 30
+   */
+  emoji: string;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  color: string;
+  /**
+   * @minItems 1
+   * @maxItems 8
+   * @items.pattern ^#[0-9A-Fa-f]{6}$
+   */
+  colors?: string[];
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  imageUrl?: string | null;
+  id: string;
+}
+
+export interface TeamPage {
+  items: AdminTeam[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export type TeamListQueryImage =
+  (typeof TeamListQueryImage)[keyof typeof TeamListQueryImage];
+
+export const TeamListQueryImage = {
+  custom: "custom",
+  default: "default",
+} as const;
+
+export interface TeamListQuery {
+  /** @maxLength 100 */
+  query?: string;
+  /** @minimum 1 */
+  page: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  pageSize?: number;
+  image?: TeamListQueryImage;
+}
+
+export interface TeamInput {
+  /**
+   * @maxLength 100
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
+  slug: string;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 30
+   */
+  emoji: string;
+  /** @pattern ^#[0-9A-Fa-f]{6}$ */
+  color: string;
+  /**
+   * @minItems 1
+   * @maxItems 8
+   * @items.pattern ^#[0-9A-Fa-f]{6}$
+   */
+  colors?: string[];
+  /**
+   * @maxLength 2048
+   * @nullable
+   */
+  imageUrl?: string | null;
+}
+
+export interface CardTemplate {
+  filename: string;
+  content: string;
+}
+
+export interface ImportError {
+  row: number;
+  field: string;
+  message: string;
+}
+
+export interface ImportPreview {
+  valid: boolean;
+  createCount: number;
+  updateCount: number;
+  errors: ImportError[];
+}
+
+export type AdminCardPosition =
+  (typeof AdminCardPosition)[keyof typeof AdminCardPosition];
+
+export const AdminCardPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type AdminCardSecondaryPositionsItem =
+  (typeof AdminCardSecondaryPositionsItem)[keyof typeof AdminCardSecondaryPositionsItem];
+
+export const AdminCardSecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export interface AdminCard {
+  id: string;
+  /**
+   * @maxLength 100
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
+  slug: string;
+  name: string;
+  collection: CardReference;
+  team: CardReference;
+  position: AdminCardPosition;
+  secondaryPositions: AdminCardSecondaryPositionsItem[];
+  contractsBlocked: boolean;
+  defense: number;
+  attack: number;
+  creation: number;
+  overall: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  imageUrl: string;
+}
+
+export interface CardPage {
+  items: AdminCard[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export type CardListQueryPosition =
+  (typeof CardListQueryPosition)[keyof typeof CardListQueryPosition];
+
+export const CardListQueryPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type CardListQueryImage =
+  (typeof CardListQueryImage)[keyof typeof CardListQueryImage];
+
+export const CardListQueryImage = {
+  custom: "custom",
+  default: "default",
+} as const;
+
+export type CardListQuerySort =
+  (typeof CardListQuerySort)[keyof typeof CardListQuerySort];
+
+export const CardListQuerySort = {
+  name: "name",
+  overall: "overall",
+  recent: "recent",
+} as const;
+
+export interface CardListQuery {
+  query?: string;
+  collectionId?: string;
+  teamId?: string;
+  position?: CardListQueryPosition;
+  image?: CardListQueryImage;
+  contractsBlocked?: boolean;
+  sort?: CardListQuerySort;
+  /** @minimum 1 */
+  page: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  pageSize?: number;
+}
+
+export type CardInputPosition =
+  (typeof CardInputPosition)[keyof typeof CardInputPosition];
+
+export const CardInputPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type CardInputSecondaryPositionsItem =
+  (typeof CardInputSecondaryPositionsItem)[keyof typeof CardInputSecondaryPositionsItem];
+
+export const CardInputSecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export interface CardInput {
+  /**
+   * @maxLength 100
+   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
+   */
+  slug: string;
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+  collectionId: string;
+  teamId: string;
+  position: CardInputPosition;
+  secondaryPositions?: CardInputSecondaryPositionsItem[];
+  contractsBlocked?: boolean;
+  /** @minimum 1 */
+  defense: number;
+  /** @minimum 1 */
+  attack: number;
+  /** @minimum 1 */
+  creation: number;
+  /**
+   * @minimum 60
+   * @maximum 100
+   */
+  overall: number;
+  /** @minimum 1 */
+  passing: number;
+  /** @minimum 1 */
+  control: number;
+  /** @minimum 1 */
+  marking: number;
+  /** @minimum 1 */
+  pace: number;
+  /** @minimum 1 */
+  dribbling: number;
+  /** @minimum 1 */
+  finishing: number;
+}
+
+export type CardUpdatePosition =
+  (typeof CardUpdatePosition)[keyof typeof CardUpdatePosition];
+
+export const CardUpdatePosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type CardUpdateSecondaryPositionsItem =
+  (typeof CardUpdateSecondaryPositionsItem)[keyof typeof CardUpdateSecondaryPositionsItem];
+
+export const CardUpdateSecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export interface CardUpdate {
+  /**
+   * @minLength 1
+   * @maxLength 100
+   */
+  name: string;
+  collectionId: string;
+  teamId: string;
+  position: CardUpdatePosition;
+  secondaryPositions?: CardUpdateSecondaryPositionsItem[];
+  contractsBlocked?: boolean;
+  /** @minimum 1 */
+  defense: number;
+  /** @minimum 1 */
+  attack: number;
+  /** @minimum 1 */
+  creation: number;
+  /**
+   * @minimum 60
+   * @maximum 100
+   */
+  overall: number;
+  /** @minimum 1 */
+  passing: number;
+  /** @minimum 1 */
+  control: number;
+  /** @minimum 1 */
+  marking: number;
+  /** @minimum 1 */
+  pace: number;
+  /** @minimum 1 */
+  dribbling: number;
+  /** @minimum 1 */
+  finishing: number;
+}
+
+export type GetV1AdminCardsTeamLogoSuggestionsParams = {
+  q: string;
+};
+
+export type GetV1AdminCardsTeamLogoDetailsParams = {
+  slug: string;
+};
+
+export type GetV1AdminCardsCollectionArtworkSuggestionsParams = {
+  q: string;
+};
+
+export type GetV1AdminCardsPlayerPhotoSuggestionsParams = {
+  q: string;
+};
+
+export type GetV1AdminCardsCollectionsParams = {
+  query?: string;
+  page: number;
+  pageSize?: number;
+  contractsBlocked?: boolean;
+};
+
+export type GetV1AdminCardsTeamsParams = {
+  query?: string;
+  page: number;
+  pageSize?: number;
+  image?: GetV1AdminCardsTeamsImage;
+};
+
+export type GetV1AdminCardsTeamsImage =
+  (typeof GetV1AdminCardsTeamsImage)[keyof typeof GetV1AdminCardsTeamsImage];
+
+export const GetV1AdminCardsTeamsImage = {
+  custom: "custom",
+  default: "default",
+} as const;
+
+export type GetV1AdminCardsParams = {
+  query?: string;
+  collectionId?: string;
+  teamId?: string;
+  position?: GetV1AdminCardsPosition;
+  image?: GetV1AdminCardsImage;
+  contractsBlocked?: boolean;
+  sort?: GetV1AdminCardsSort;
+  page: number;
+  pageSize?: number;
+};
+
+export type GetV1AdminCardsPosition =
+  (typeof GetV1AdminCardsPosition)[keyof typeof GetV1AdminCardsPosition];
+
+export const GetV1AdminCardsPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type GetV1AdminCardsImage =
+  (typeof GetV1AdminCardsImage)[keyof typeof GetV1AdminCardsImage];
+
+export const GetV1AdminCardsImage = {
+  custom: "custom",
+  default: "default",
+} as const;
+
+export type GetV1AdminCardsSort =
+  (typeof GetV1AdminCardsSort)[keyof typeof GetV1AdminCardsSort];
+
+export const GetV1AdminCardsSort = {
+  name: "name",
+  overall: "overall",
+  recent: "recent",
+} as const;
 
 export const getPurchasePackUrl = (packId: string) => {
   return `/v1/packs/${packId}/purchase`;
@@ -509,6 +1290,61 @@ export const executeLucro = async (
   );
 };
 
+export const getGetV1AdminLucroUrl = () => {
+  return `/v1/admin/lucro`;
+};
+
+export const getV1AdminLucro = async (
+  options?: Parameters<typeof request>[1],
+): Promise<LucroConfigDto> => {
+  return request<LucroConfigDto>(getGetV1AdminLucroUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getPutV1AdminLucroUrl = () => {
+  return `/v1/admin/lucro`;
+};
+
+export const putV1AdminLucro = async (
+  lucroConfigInputDto: LucroConfigInputDto,
+  options?: Parameters<typeof request>[1],
+): Promise<LucroConfigDto> => {
+  return request<LucroConfigDto>(getPutV1AdminLucroUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(lucroConfigInputDto),
+  });
+};
+
+export const getGetV1AdminLucroSchemaUrl = () => {
+  return `/v1/admin/lucro/schema`;
+};
+
+export const getV1AdminLucroSchema = async (
+  options?: Parameters<typeof request>[1],
+): Promise<LucroEmbedSchemaDto> => {
+  return request<LucroEmbedSchemaDto>(getGetV1AdminLucroSchemaUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getHealthControllerHealthUrl = () => {
+  return `/health`;
+};
+
+export const healthControllerHealth = async (
+  options?: Parameters<typeof request>[1],
+): Promise<HealthResponse> => {
+  return request<HealthResponse>(getHealthControllerHealthUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export const getJoinRankedQueueUrl = () => {
   return `/v1/ranked/queue`;
 };
@@ -577,19 +1413,6 @@ export const getV1MatchesMatchId = async (
   });
 };
 
-export const getHealthControllerHealthUrl = () => {
-  return `/health`;
-};
-
-export const healthControllerHealth = async (
-  options?: Parameters<typeof request>[1],
-): Promise<HealthResponse> => {
-  return request<HealthResponse>(getHealthControllerHealthUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
 export const getPurchaseCardUrl = (cardId: string) => {
   return `/v1/cards/${cardId}/purchase`;
 };
@@ -620,5 +1443,547 @@ export const sellCards = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(sellCardsRequest),
+  });
+};
+
+export const getPostV1AdminSessionUrl = () => {
+  return `/v1/admin/session`;
+};
+
+export const postV1AdminSession = async (
+  adminSessionInput: AdminSessionInput,
+  options?: Parameters<typeof request>[1],
+): Promise<AdminSessionResponse> => {
+  return request<AdminSessionResponse>(getPostV1AdminSessionUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminSessionInput),
+  });
+};
+
+export const getGetV1AdminSessionUrl = () => {
+  return `/v1/admin/session`;
+};
+
+export const getV1AdminSession = async (
+  options?: Parameters<typeof request>[1],
+): Promise<AdminSessionResponse> => {
+  return request<AdminSessionResponse>(getGetV1AdminSessionUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getDeleteV1AdminSessionUrl = () => {
+  return `/v1/admin/session`;
+};
+
+export const deleteV1AdminSession = async (
+  options?: Parameters<typeof request>[1],
+): Promise<unknown> => {
+  return request<unknown>(getDeleteV1AdminSessionUrl(), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getGetV1AdminCardsCatalogUrl = () => {
+  return `/v1/admin/cards/catalog`;
+};
+
+export const getV1AdminCardsCatalog = async (
+  options?: Parameters<typeof request>[1],
+): Promise<CardCatalog> => {
+  return request<CardCatalog>(getGetV1AdminCardsCatalogUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetV1AdminCardsTeamLogoSuggestionsUrl = (
+  params: GetV1AdminCardsTeamLogoSuggestionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards/team-logo-suggestions?${stringifiedParams}`
+    : `/v1/admin/cards/team-logo-suggestions`;
+};
+
+export const getV1AdminCardsTeamLogoSuggestions = async (
+  params: GetV1AdminCardsTeamLogoSuggestionsParams,
+  options?: Parameters<typeof request>[1],
+): Promise<TeamLogoSuggestion[]> => {
+  return request<TeamLogoSuggestion[]>(
+    getGetV1AdminCardsTeamLogoSuggestionsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsTeamLogoDetailsUrl = (
+  params: GetV1AdminCardsTeamLogoDetailsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards/team-logo-details?${stringifiedParams}`
+    : `/v1/admin/cards/team-logo-details`;
+};
+
+export const getV1AdminCardsTeamLogoDetails = async (
+  params: GetV1AdminCardsTeamLogoDetailsParams,
+  options?: Parameters<typeof request>[1],
+): Promise<TeamLogoDetails> => {
+  return request<TeamLogoDetails>(
+    getGetV1AdminCardsTeamLogoDetailsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsTeamLogosFilenameUrl = (filename: string) => {
+  return `/v1/admin/cards/team-logos/${filename}`;
+};
+
+export const getV1AdminCardsTeamLogosFilename = async (
+  filename: string,
+  options?: Parameters<typeof request>[1],
+): Promise<unknown> => {
+  return request<unknown>(getGetV1AdminCardsTeamLogosFilenameUrl(filename), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetV1AdminCardsCollectionArtworkSuggestionsUrl = (
+  params: GetV1AdminCardsCollectionArtworkSuggestionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards/collection-artwork-suggestions?${stringifiedParams}`
+    : `/v1/admin/cards/collection-artwork-suggestions`;
+};
+
+export const getV1AdminCardsCollectionArtworkSuggestions = async (
+  params: GetV1AdminCardsCollectionArtworkSuggestionsParams,
+  options?: Parameters<typeof request>[1],
+): Promise<CollectionArtworkSuggestion[]> => {
+  return request<CollectionArtworkSuggestion[]>(
+    getGetV1AdminCardsCollectionArtworkSuggestionsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsPlayerPhotoSuggestionsUrl = (
+  params: GetV1AdminCardsPlayerPhotoSuggestionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards/player-photo-suggestions?${stringifiedParams}`
+    : `/v1/admin/cards/player-photo-suggestions`;
+};
+
+export const getV1AdminCardsPlayerPhotoSuggestions = async (
+  params: GetV1AdminCardsPlayerPhotoSuggestionsParams,
+  options?: Parameters<typeof request>[1],
+): Promise<PlayerPhotoSuggestion[]> => {
+  return request<PlayerPhotoSuggestion[]>(
+    getGetV1AdminCardsPlayerPhotoSuggestionsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsPlayerPhotosFilenameUrl = (filename: string) => {
+  return `/v1/admin/cards/player-photos/${filename}`;
+};
+
+export const getV1AdminCardsPlayerPhotosFilename = async (
+  filename: string,
+  options?: Parameters<typeof request>[1],
+): Promise<unknown> => {
+  return request<unknown>(getGetV1AdminCardsPlayerPhotosFilenameUrl(filename), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetV1AdminCardsPlayerPhotosKindFilenameUrl = (
+  kind: string,
+  filename: string,
+) => {
+  return `/v1/admin/cards/player-photos/${kind}/${filename}`;
+};
+
+export const getV1AdminCardsPlayerPhotosKindFilename = async (
+  kind: string,
+  filename: string,
+  options?: Parameters<typeof request>[1],
+): Promise<unknown> => {
+  return request<unknown>(
+    getGetV1AdminCardsPlayerPhotosKindFilenameUrl(kind, filename),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsCollectionsUrl = (
+  params: GetV1AdminCardsCollectionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards/collections?${stringifiedParams}`
+    : `/v1/admin/cards/collections`;
+};
+
+export const getV1AdminCardsCollections = async (
+  params: GetV1AdminCardsCollectionsParams,
+  options?: Parameters<typeof request>[1],
+): Promise<CollectionPage> => {
+  return request<CollectionPage>(getGetV1AdminCardsCollectionsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getPostV1AdminCardsCollectionsUrl = () => {
+  return `/v1/admin/cards/collections`;
+};
+
+export const postV1AdminCardsCollections = async (
+  collectionInput: CollectionInput,
+  options?: Parameters<typeof request>[1],
+): Promise<AdminCollection> => {
+  return request<AdminCollection>(getPostV1AdminCardsCollectionsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(collectionInput),
+  });
+};
+
+export const getPutV1AdminCardsCollectionsCollectionIdUrl = (
+  collectionId: string,
+) => {
+  return `/v1/admin/cards/collections/${collectionId}`;
+};
+
+export const putV1AdminCardsCollectionsCollectionId = async (
+  collectionId: string,
+  collectionInput: CollectionInput,
+  options?: Parameters<typeof request>[1],
+): Promise<AdminCollection> => {
+  return request<AdminCollection>(
+    getPutV1AdminCardsCollectionsCollectionIdUrl(collectionId),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(collectionInput),
+    },
+  );
+};
+
+export const getDeleteV1AdminCardsCollectionsCollectionIdUrl = (
+  collectionId: string,
+) => {
+  return `/v1/admin/cards/collections/${collectionId}`;
+};
+
+export const deleteV1AdminCardsCollectionsCollectionId = async (
+  collectionId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<unknown> => {
+  return request<unknown>(
+    getDeleteV1AdminCardsCollectionsCollectionIdUrl(collectionId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getGetV1AdminCardsTeamsUrl = (
+  params: GetV1AdminCardsTeamsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards/teams?${stringifiedParams}`
+    : `/v1/admin/cards/teams`;
+};
+
+export const getV1AdminCardsTeams = async (
+  params: GetV1AdminCardsTeamsParams,
+  options?: Parameters<typeof request>[1],
+): Promise<TeamPage> => {
+  return request<TeamPage>(getGetV1AdminCardsTeamsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getPostV1AdminCardsTeamsUrl = () => {
+  return `/v1/admin/cards/teams`;
+};
+
+export const postV1AdminCardsTeams = async (
+  teamInput: TeamInput,
+  options?: Parameters<typeof request>[1],
+): Promise<AdminTeam> => {
+  return request<AdminTeam>(getPostV1AdminCardsTeamsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(teamInput),
+  });
+};
+
+export const getPutV1AdminCardsTeamsTeamIdUrl = (teamId: string) => {
+  return `/v1/admin/cards/teams/${teamId}`;
+};
+
+export const putV1AdminCardsTeamsTeamId = async (
+  teamId: string,
+  teamInput: TeamInput,
+  options?: Parameters<typeof request>[1],
+): Promise<AdminTeam> => {
+  return request<AdminTeam>(getPutV1AdminCardsTeamsTeamIdUrl(teamId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(teamInput),
+  });
+};
+
+export const getDeleteV1AdminCardsTeamsTeamIdUrl = (teamId: string) => {
+  return `/v1/admin/cards/teams/${teamId}`;
+};
+
+export const deleteV1AdminCardsTeamsTeamId = async (
+  teamId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<unknown> => {
+  return request<unknown>(getDeleteV1AdminCardsTeamsTeamIdUrl(teamId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getGetV1AdminCardsTemplateUrl = () => {
+  return `/v1/admin/cards/template`;
+};
+
+export const getV1AdminCardsTemplate = async (
+  options?: Parameters<typeof request>[1],
+): Promise<CardTemplate> => {
+  return request<CardTemplate>(getGetV1AdminCardsTemplateUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getPostV1AdminCardsPreviewUrl = () => {
+  return `/v1/admin/cards/preview`;
+};
+
+export const postV1AdminCardsPreview = async (
+  options?: Parameters<typeof request>[1],
+): Promise<ImportPreview> => {
+  return request<ImportPreview>(getPostV1AdminCardsPreviewUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getPostV1AdminCardsImportUrl = () => {
+  return `/v1/admin/cards/import`;
+};
+
+export const postV1AdminCardsImport = async (
+  options?: Parameters<typeof request>[1],
+): Promise<ImportPreview> => {
+  return request<ImportPreview>(getPostV1AdminCardsImportUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getGetV1AdminCardsUrl = (params: GetV1AdminCardsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards?${stringifiedParams}`
+    : `/v1/admin/cards`;
+};
+
+export const getV1AdminCards = async (
+  params: GetV1AdminCardsParams,
+  options?: Parameters<typeof request>[1],
+): Promise<CardPage> => {
+  return request<CardPage>(getGetV1AdminCardsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getPostV1AdminCardsUrl = () => {
+  return `/v1/admin/cards`;
+};
+
+export const postV1AdminCards = async (
+  cardInput: CardInput,
+  options?: Parameters<typeof request>[1],
+): Promise<AdminCard> => {
+  return request<AdminCard>(getPostV1AdminCardsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(cardInput),
+  });
+};
+
+export const getGetV1AdminCardsCardIdUrl = (cardId: string) => {
+  return `/v1/admin/cards/${cardId}`;
+};
+
+export const getV1AdminCardsCardId = async (
+  cardId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<AdminCard> => {
+  return request<AdminCard>(getGetV1AdminCardsCardIdUrl(cardId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getPutV1AdminCardsCardIdUrl = (cardId: string) => {
+  return `/v1/admin/cards/${cardId}`;
+};
+
+export const putV1AdminCardsCardId = async (
+  cardId: string,
+  cardUpdate: CardUpdate,
+  options?: Parameters<typeof request>[1],
+): Promise<AdminCard> => {
+  return request<AdminCard>(getPutV1AdminCardsCardIdUrl(cardId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(cardUpdate),
+  });
+};
+
+export const getDeleteV1AdminCardsCardIdUrl = (cardId: string) => {
+  return `/v1/admin/cards/${cardId}`;
+};
+
+export const deleteV1AdminCardsCardId = async (
+  cardId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<unknown> => {
+  return request<unknown>(getDeleteV1AdminCardsCardIdUrl(cardId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getPutV1AdminCardsCardIdImageUrl = (cardId: string) => {
+  return `/v1/admin/cards/${cardId}/image`;
+};
+
+export const putV1AdminCardsCardIdImage = async (
+  cardId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<AdminCard> => {
+  return request<AdminCard>(getPutV1AdminCardsCardIdImageUrl(cardId), {
+    ...options,
+    method: "PUT",
+  });
+};
+
+export const getDeleteV1AdminCardsCardIdImageUrl = (cardId: string) => {
+  return `/v1/admin/cards/${cardId}/image`;
+};
+
+export const deleteV1AdminCardsCardIdImage = async (
+  cardId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<AdminCard> => {
+  return request<AdminCard>(getDeleteV1AdminCardsCardIdImageUrl(cardId), {
+    ...options,
+    method: "DELETE",
   });
 };

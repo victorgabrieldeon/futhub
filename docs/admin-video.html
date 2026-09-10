@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FutHub Admin — vídeo de demonstração</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+    <style>
+      * { box-sizing: border-box; }
+      body { display: grid; min-height: 100vh; margin: 0; place-items: center; background: #111; color: #fff; font-family: Inter, system-ui, sans-serif; }
+      canvas { display: block; width: min(100vw, 1440px); height: auto; box-shadow: 0 25px 80px #0008; }
+    </style>
+  </head>
+  <body>
+    <canvas id="demo" width="1440" height="900" aria-label="Prévia animada do painel FutHub Admin"></canvas>
+    <script>
+      const canvas = document.querySelector('#demo');
+      const ctx = canvas.getContext('2d', { alpha: false });
+      const W = canvas.width;
+      const H = canvas.height;
+      const font = 'Inter, Arial, sans-serif';
+      const mono = '"JetBrains Mono", monospace';
+
+      const clamp = (number, min = 0, max = 1) => Math.min(max, Math.max(min, number));
+      const between = (time, start, end) => clamp((time - start) / (end - start));
+      const ease = (value) => value * value * (3 - 2 * value);
+      const lerp = (from, to, value) => from + (to - from) * value;
+      const alpha = (color, value) => {
+        const hex = color.length === 4 ? `#${[...color.slice(1)].map((channel) => channel.repeat(2)).join('')}` : color;
+        return `${hex}${Math.round(clamp(value) * 255).toString(16).padStart(2, '0')}`;
+      };
+
+      function rect(x, y, width, height, radius = 0, fill, stroke) {
+        ctx.beginPath();
+        ctx.roundRect(x, y, width, height, radius);
+        if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+        if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+      }
+      function line(x1, y1, x2, y2, color, width = 1) {
+        ctx.beginPath();
+        ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+        ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
+      }
+      function text(value, x, y, size, weight = 400, color = '#171717', align = 'left', face = font) {
+        ctx.fillStyle = color;
+        ctx.font = `${weight} ${size}px ${face}`;
+        ctx.textAlign = align;
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(value, x, y);
+      }
+      function caps(value, x, y, color = '#727272', align = 'left') {
+        ctx.font = `600 10px ${font}`;
+        ctx.fillStyle = color;
+        ctx.textAlign = align;
+        ctx.textBaseline = 'alphabetic';
+        ctx.letterSpacing = '1.3px';
+        ctx.fillText(value.toUpperCase(), x, y);
+        ctx.letterSpacing = '0px';
+      }
+      function shadow(y = 12, opacity = .08) {
+        ctx.shadowColor = `rgb(0 0 0 / ${opacity})`;
+        ctx.shadowBlur = 28;
+        ctx.shadowOffsetY = y;
+      }
+      function clearShadow() { ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; }
+      function mouse(x, y, pulse = 0) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.shadowColor = '#0006'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 4;
+        ctx.fillStyle = '#171717';
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(0, 30); ctx.lineTo(8, 22); ctx.lineTo(15, 37); ctx.lineTo(21, 34); ctx.lineTo(14, 19); ctx.lineTo(28, 19); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        clearShadow();
+        if (pulse) { ctx.beginPath(); ctx.arc(5, 5, 19 + 10 * pulse, 0, Math.PI * 2); ctx.strokeStyle = alpha('#171717', 1 - pulse); ctx.lineWidth = 2; ctx.stroke(); }
+        ctx.restore();
+      }
+      function logo(x, y) {
+        rect(x, y - 14, 15, 15, 4, '#171717');
+        rect(x + 5, y - 9, 5, 5, 1, '#fff');
+        text('FutHub', x + 23, y - 1, 15, 700);
+        line(x + 89, y - 15, x + 89, y + 1, '#dcdee0');
+        text('Admin', x + 102, y - 1, 14, 500, '#353535');
+      }
+      function button(label, x, y, width, dark = false) {
+        rect(x, y, width, 42, 8, dark ? '#171717' : '#fff', dark ? undefined : '#dcdee0');
+        text(label, x + width / 2, y + 26, 12, 600, dark ? '#fff' : '#171717', 'center');
+      }
+      function panel(x, y, width, height) {
+        shadow(); rect(x, y, width, height, 12, '#fff', '#dcdee0'); clearShadow();
+      }
+      function input(value, label, x, y, width, focused = false) {
+        text(label, x, y - 11, 11, 600, '#353535');
+        rect(x, y, width, 42, 7, '#fff', focused ? '#171717' : '#dcdee0');
+        text(value, x + 13, y + 26, 12, 500, '#171717');
+      }
+      function tab(label, x, active) {
+        text(label, x, 267, 12, active ? 600 : 500, active ? '#171717' : '#737373');
+        if (active) line(x, 281, x + ctx.measureText(label).width, 281, '#171717', 2);
+      }
+      function quickRead(cooldown, average, range, weights) {
+        shadow(10, .12); rect(1120, 232, 270, 425, 12, '#171717'); clearShadow();
+        caps('Leitura rápida', 1145, 262, '#aab0ae');
+        text('Distribuição atual', 1145, 310, 21, 600, '#fff');
+        line(1145, 337, 1365, 337, '#393939');
+        const values = [['Valor médio', average], ['Faixa de valor', range], ['Peso total', weights], ['Próximo resgate', cooldown]];
+        values.forEach(([label, value], index) => {
+          const top = 369 + index * 72;
+          text(label, 1145, top, 11, 400, '#aeb8b2');
+          text(value, 1145, top + 20, 14, 500, '#fff');
+          if (index < values.length - 1) line(1145, top + 42, 1365, top + 42, '#393939');
+        });
+        text('Chance é relativa ao peso total.', 1145, 606, 10, 400, '#aeb8b2');
+        text('Alterações entram em vigor após', 1145, 621, 10, 400, '#aeb8b2');
+        text('salvar.', 1145, 636, 10, 400, '#aeb8b2');
+      }
+      function drawHeader(cooldown = '10 min', tiers = '5') {
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, 68);
+        line(0, 68, W, 68, '#f0f0f3');
+        logo(31, 35);
+        text('API key ativa', 1287, 35, 11, 500, '#747474');
+        button('Sair', 1350, 14, 52);
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 69, 228, H - 69);
+        line(228, 69, 228, H, '#f0f0f3');
+        caps('Comandos', 32, 112);
+        rect(32, 132, 164, 60, 7, '#f0f0f3');
+        text('/lucro', 44, 157, 16, 700);
+        text('Economia', 44, 177, 11, 500, '#707070');
+        line(32, 816, 196, 816, '#f0f0f3');
+        text('Novos comandos', 32, 842, 11, 500, '#808080');
+        text('em breve', 32, 858, 11, 500, '#b0b0b0');
+        rect(32, 866, 36, 36, 18, '#292c2e'); text('N', 50, 889, 13, 500, '#fff', 'center');
+        caps('Economia · Comando', 276, 105);
+        text('/lucro', 276, 153, 37, 600);
+        text('Configure tempo de espera, distribuição das recompensas e resposta do bot.', 276, 191, 16, 400, '#686868');
+        line(1110, 134, 1110, 170, '#dcdee0');
+        caps('Cooldown', 1128, 145); text(cooldown, 1128, 169, 15, 600);
+        line(1308, 134, 1308, 170, '#dcdee0');
+        caps('Faixas', 1326, 145); text(tiers, 1326, 169, 15, 600);
+      }
+      function drawCooldown(t) {
+        panel(276, 232, 820, 420);
+        tab('Cooldown', 300, true); tab('Lucros', 380, false); tab('Embed Discord', 450, false);
+        line(300, 282, 1070, 282, '#f0f0f3');
+        caps('Ritmo do comando', 300, 320); text('Cooldown', 300, 349, 20, 600);
+        const shift = ease(between(t, 2.3, 2.9));
+        const value = shift > .82 ? '15' : '10';
+        const summary = shift > .82 ? '15 MIN' : '10 MIN';
+        rect(1002, 326, 67, 22, 11, '#f0f0f3'); text(summary, 1035, 341, 9, 700, '#272727', 'center');
+        input(value, 'Intervalo entre resgates', 300, 394, 270, between(t, 1.65, 2.3) > 0 && between(t, 2.9, 3.3) < 1);
+        input('minutos', 'Unidade', 584, 394, 180);
+        text(`O bot libera novo uso após ${value} min.`, 300, 464, 12, 400, '#757575');
+        line(300, 534, 1070, 534, '#f0f0f3');
+        button('Salvar alterações', 920, 560, 149, true);
+        quickRead(shift > .82 ? '15 min após uso' : '10 min após uso', '122,5 moedas', '50–1000 moedas', '100');
+        const cursorT = ease(between(t, 1.25, 1.8));
+        if (t >= 1.25 && t < 3.6) mouse(lerp(920, 415, cursorT), lerp(638, 410, cursorT), t > 2.25 && t < 2.5 ? between(t, 2.25, 2.5) : 0);
+      }
+      function rewardRow(y, value, weight, selected = false) {
+        rect(301, y, 745, 52, 7, selected ? '#f6f8f4' : '#fff', selected ? '#94c577' : '#f0f0f3');
+        text(`${value} moedas`, 321, y + 31, 13, 600);
+        text(`Peso ${weight}`, 535, y + 31, 12, 500, '#656565');
+        text(`${weight}% chance`, 850, y + 31, 12, 500, '#656565');
+        text('Editar', 1008, y + 31, 11, 600, '#171717', 'right');
+      }
+      function drawRewards(t) {
+        panel(276, 232, 820, 420);
+        tab('Cooldown', 300, false); tab('Lucros', 380, true); tab('Embed Discord', 450, false);
+        line(300, 282, 1070, 282, '#f0f0f3');
+        caps('Distribuição', 300, 320); text('Faixas de recompensa', 300, 349, 20, 600);
+        text('Cada faixa usa peso relativo para definir a chance.', 300, 373, 12, 400, '#757575');
+        rewardRow(402, '50', '40'); rewardRow(462, '100', '30'); rewardRow(522, '500', '20', t > 4.6); rewardRow(582, '1000', '10');
+        quickRead('10 min após uso', '122,5 moedas', '50–1000 moedas', '100');
+        if (t < 5.8) mouse(lerp(1010, 620, ease(between(t, 3.8, 4.55))), lerp(640, 550, ease(between(t, 3.8, 4.55))), t > 4.45 && t < 4.75 ? between(t, 4.45, 4.75) : 0);
+      }
+      function drawDiscordLogo(x, y) {
+        ctx.fillStyle = '#5865f2'; ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x - 6, y, 2.2, 0, Math.PI * 2); ctx.arc(x + 6, y, 2.2, 0, Math.PI * 2); ctx.fill();
+      }
+      function drawEmbed(t) {
+        panel(276, 232, 820, 420);
+        tab('Cooldown', 300, false); tab('Lucros', 380, false); tab('Embed Discord', 450, true);
+        line(300, 282, 1070, 282, '#f0f0f3');
+        caps('Discord', 300, 320); text('Embed de sucesso', 300, 349, 20, 600);
+        rect(965, 326, 104, 22, 11, '#f0f0f3'); text('JSON SCHEMA', 1017, 341, 9, 700, '#272727', 'center', mono);
+        input('Lucro resgatado', 'Título', 300, 384, 335);
+        text('Descrição', 300, 452, 11, 600, '#353535');
+        rect(300, 465, 335, 133, 7, '#fff', '#dcdee0');
+        const message = '**{reward} moedas**\nSaldo: {balance}\nXP: +{xp} · Nível: {level}\nPróximo lucro: {availableAt}';
+        const typed = message.slice(0, Math.round(message.length * ease(between(t, 6.5, 8.2))));
+        typed.split('\n').forEach((lineText, index) => text(lineText, 315, 491 + index * 20, 11, 500, '#292929', 'left', mono));
+        text('DADOS DO COMANDO', 300, 620, 10, 700, '#737373');
+        rect(300, 630, 335, 1, 0, '#f0f0f3');
+        shadow(8, .12); rect(665, 360, 370, 245, 8, '#282b30'); clearShadow();
+        caps('Prévia Discord', 685, 388, '#b9c0c6');
+        rect(681, 402, 338, 184, 6, '#34373d');
+        drawDiscordLogo(711, 436); text('FutHub', 744, 434, 13, 600, '#fff');
+        rect(807, 420, 37, 16, 3, '#5865f2'); text('APP', 825, 432, 8, 700, '#fff', 'center'); text('08/23/2026', 854, 433, 10, 400, '#9a9fa6');
+        rect(744, 451, 4, 98, 2, '#36c66d');
+        text('Lucro resgatado', 764, 466, 14, 700, '#fff'); text('Lucro raro: +500', 764, 488, 12, 400, '#d6d9dc');
+        text('+500 moedas', 764, 516, 12, 700, '#fff'); text('Saldo: 4.250', 764, 536, 12, 400, '#d6d9dc'); text('XP: +10 · Nível: 12', 764, 556, 12, 400, '#d6d9dc');
+        quickRead('10 min após uso', '122,5 moedas', '50–1000 moedas', '100');
+        if (t < 9.6) mouse(lerp(1010, 500, ease(between(t, 6.2, 6.85))), lerp(640, 540, ease(between(t, 6.2, 6.85))));
+      }
+      function drawToast(t) {
+        const show = ease(between(t, 9.7, 10.1)) * (1 - ease(between(t, 11.8, 12.2)));
+        if (!show) return;
+        const y = lerp(735, 695, show);
+        shadow(12, .16); rect(1064, y, 300, 56, 9, alpha('#171717', show)); clearShadow();
+        ctx.globalAlpha = show;
+        rect(1082, y + 18, 18, 18, 9, '#4bc27a'); text('✓', 1091, y + 32, 13, 700, '#172117', 'center');
+        text('Configuração salva', 1114, y + 34, 13, 600, '#fff');
+        ctx.globalAlpha = 1;
+      }
+      function draw(t) {
+        const appear = ease(between(t, 0, .75));
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = appear;
+        if (t < 3.65) drawHeader(t > 2.9 ? '15 min' : '10 min');
+        else if (t < 6.25) drawHeader();
+        else drawHeader();
+        if (t < 3.65) drawCooldown(t);
+        else if (t < 6.25) drawRewards(t);
+        else drawEmbed(t);
+        drawToast(t);
+        ctx.globalAlpha = 1;
+        if (t < .8) {
+          ctx.fillStyle = alpha('#fff', 1 - appear); ctx.fillRect(0, 0, W, H);
+        }
+      }
+
+      window.renderAdminDemo = async () => {
+        await document.fonts.ready;
+        const duration = 12.2;
+        const stream = canvas.captureStream(30);
+        const track = stream.getVideoTracks()[0];
+        const options = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+          ? { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 2_400_000 }
+          : { mimeType: 'video/webm', videoBitsPerSecond: 2_400_000 };
+        const recorder = new MediaRecorder(stream, options);
+        const chunks = [];
+        recorder.addEventListener('dataavailable', (event) => { if (event.data.size) chunks.push(event.data); });
+        const finished = new Promise((resolve) => recorder.addEventListener('stop', () => resolve(new Blob(chunks, { type: recorder.mimeType }))));
+        recorder.start(200);
+        const startedAt = performance.now();
+        await new Promise((resolve) => {
+          function frame(now) {
+            const elapsed = Math.min((now - startedAt) / 1000, duration);
+            draw(elapsed);
+            if (track.requestFrame) track.requestFrame();
+            if (elapsed < duration) requestAnimationFrame(frame); else resolve();
+          }
+          requestAnimationFrame(frame);
+        });
+        recorder.stop();
+        return finished;
+      };
+
+      draw(0);
+    </script>
+  </body>
+</html>

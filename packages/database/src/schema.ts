@@ -3,6 +3,7 @@ import {
   boolean,
   check,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -43,6 +44,9 @@ export const commandConfigs = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     commandName: varchar('command_name', { length: 80 }).notNull().unique(),
     cooldownSeconds: integer('cooldown_seconds').notNull(),
+    embed: jsonb('embed')
+      .$type<{ title: string; description: string; color: string; footer: string }>()
+      .notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
@@ -59,6 +63,7 @@ export const commandRewards = pgTable(
     value: integer('value').notNull(),
     weight: integer('weight').notNull(),
     message: text('message').notNull(),
+    messages: jsonb('messages').$type<{ pt: string; es: string; en: string }>().notNull(),
   },
   (table) => [
     check('command_reward_value_positive', sql`${table.value} > 0`),
@@ -133,21 +138,13 @@ export const localizedTextTranslations = pgTable(
   (table) => [primaryKey({ columns: [table.localizedTextId, table.locale] })],
 );
 
-export const nationalities = pgTable('nationalities', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  name: varchar('name', { length: 100 }).notNull().unique(),
-  emoji: varchar('emoji', { length: 30 }).notNull(),
-  color: varchar('color', { length: 16 }).notNull(),
-  imageUrl: varchar('image_url', { length: 2048 }),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-});
-
 export const teams = pgTable('teams', {
   id: uuid('id').defaultRandom().primaryKey(),
+  slug: varchar('slug', { length: 100 }).notNull().unique(),
   name: varchar('name', { length: 100 }).notNull().unique(),
   emoji: varchar('emoji', { length: 30 }).notNull(),
   color: varchar('color', { length: 16 }).notNull(),
+  colors: jsonb('colors').$type<string[]>().notNull().default([]),
   imageUrl: varchar('image_url', { length: 2048 }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -155,6 +152,7 @@ export const teams = pgTable('teams', {
 
 export const collections = pgTable('collections', {
   id: uuid('id').defaultRandom().primaryKey(),
+  slug: varchar('slug', { length: 100 }).notNull().unique(),
   nameTextId: uuid('name_text_id')
     .notNull()
     .references(() => localizedTexts.id, { onDelete: 'restrict' }),
@@ -203,6 +201,7 @@ export const cards = pgTable(
   'cards',
   {
     id: uuid('id').defaultRandom().primaryKey(),
+    slug: varchar('slug', { length: 100 }).notNull(),
     name: varchar('name', { length: 100 }).notNull(),
     collectionId: uuid('collection_id')
       .notNull()
@@ -210,16 +209,10 @@ export const cards = pgTable(
     teamId: uuid('team_id')
       .notNull()
       .references(() => teams.id, { onDelete: 'restrict' }),
-    nationalityId: uuid('nationality_id')
-      .notNull()
-      .references(() => nationalities.id, { onDelete: 'restrict' }),
     statsId: uuid('stats_id')
       .notNull()
       .unique()
       .references(() => cardStats.id, { onDelete: 'restrict' }),
-    backgroundId: uuid('background_id').references(() => cardBackgrounds.id, {
-      onDelete: 'set null',
-    }),
     position: cardPosition('position').notNull(),
     contractsBlocked: boolean('contracts_blocked').notNull().default(false),
     defense: integer('defense').notNull(),
@@ -231,6 +224,7 @@ export const cards = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
+    uniqueIndex('cards_slug_unique').on(table.slug),
     check('cards_overall_range', sql`${table.overall} between 60 and 100`),
     check(
       'cards_attributes_positive',

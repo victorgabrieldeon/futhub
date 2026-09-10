@@ -7,6 +7,7 @@ import type {
   RandomSource,
   ResgatarLucroRepository,
 } from '../resgatar-lucro.types.js';
+import { lucroCommand } from '../resgatar-lucro.types.js';
 import { ResgatarLucroUseCase, selectWeightedReward } from '../resgatar-lucro.use-case.js';
 
 const rewards = [
@@ -78,6 +79,7 @@ describe('ResgatarLucroUseCase.execute', () => {
       balance: 50,
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
       progression,
+      embed: lucroCommand.embed,
     });
   });
 
@@ -117,6 +119,7 @@ describe('ResgatarLucroUseCase.execute', () => {
       balance: 150,
       availableAt: new Date('2026-08-15T12:00:20.000Z'),
       progression,
+      embed: lucroCommand.embed,
     });
   });
 });

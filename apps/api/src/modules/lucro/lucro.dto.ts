@@ -2,6 +2,13 @@ import type { tags } from 'typia';
 
 import type { ProgressionDto } from '../progression/progression.dto.js';
 
+export interface LucroEmbedDto {
+  title: string;
+  description: string;
+  color: string;
+  footer: string;
+}
+
 export interface DiscordIdentityDto {
   id: string & tags.MinLength<1> & tags.MaxLength<80>;
   name: string & tags.MinLength<1> & tags.MaxLength<80>;
@@ -21,6 +28,7 @@ export interface LucroSuccessResponse {
   balance: number;
   availableAt: string & tags.Format<'date-time'>;
   progression: ProgressionDto;
+  embed: LucroEmbedDto;
 }
 
 export interface LucroRewardDto {

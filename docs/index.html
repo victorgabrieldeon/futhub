@@ -191,7 +191,7 @@
       .admin-capability p { margin-bottom: 0; color: var(--body); font-size: 14px; }
       .admin-shots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 0; }
       .admin-shots figure { margin: 0; }
-      .admin-shots img { display: block; width: 100%; height: auto; border: 1px solid var(--hairline-strong); border-radius: 12px; background: var(--canvas-soft); }
+      .admin-shots img, .admin-shots video { display: block; width: 100%; height: auto; border: 1px solid var(--hairline-strong); border-radius: 12px; background: var(--canvas-soft); }
       .admin-shots figcaption { margin-top: 12px; color: var(--body); font-size: 14px; }
 
       .skip-link { position: fixed; z-index: 10; top: 12px; left: 12px; padding: 10px 14px; transform: translateY(-160%); border-radius: 8px; color: #fff; background: #000; font-weight: 600; text-decoration: none; transition: transform .15s ease; }
@@ -265,6 +265,7 @@
         <a class="brand" href="#inicio" aria-label="FutHub, início"><span class="brand-mark">FH</span> FutHub</a>
         <nav aria-label="Navegação principal">
           <a href="#produto">Produto</a>
+          <a href="film.html">Experiência</a>
           <a href="#instalar">Instalar</a>
           <a href="#novidades">Novidades</a>
           <a href="#admin">Admin</a>
@@ -282,7 +283,7 @@
             <h1>Futebol para construir, jogar e evoluir junto.</h1>
             <p class="lead">FutHub transforma comunidade em jogo. Crie elenco, abra packs, dispute partidas e acompanhe evolução pelo Discord.</p>
             <div class="actions">
-              <a class="button button-primary" href="#comece">Começar agora</a>
+              <a class="button button-primary" href="film.html">Ver experiência</a>
               <a class="button" href="https://github.com/victorgabrieldeon/futhub">Ver no GitHub ↗</a>
             </div>
           </div>
@@ -412,7 +413,7 @@ docker compose -f docker-compose.yml -f docker-compose.tilt.yml port api 3000
             <article class="admin-capability"><h3>Embed pronta para Discord</h3><p>Edite título, descrição, cor e rodapé. Variáveis de recompensa, saldo, XP, nível e próximo uso entram no cursor e prévia mostra mensagem antes de salvar.</p></article>
           </div>
           <div class="admin-shots">
-            <figure><img src="admin-lucro-cooldown.webp" alt="Painel FutHub Admin na aba Cooldown do comando /lucro, mostrando intervalo de 10 minutos e resumo da distribuição" width="1440" height="900" loading="lazy" /><figcaption><strong>Cooldown:</strong> intervalo configurável e confirmação do tempo que o bot exibirá entre resgates.</figcaption></figure>
+            <figure><video controls muted playsinline preload="metadata" poster="admin-lucro-cooldown.webp" src="admin-configuracao-lucro.webm" width="1440" height="900" aria-label="Vídeo demonstrando a configuração do comando /lucro no painel FutHub Admin"></video><figcaption><strong>Configuração guiada:</strong> ajuste de cooldown, faixas de recompensa e prévia Discord em uma demonstração animada.</figcaption></figure>
             <figure><img src="admin-lucro-embed.webp" alt="Painel FutHub Admin na aba Embed Discord, mostrando campos de mensagem e prévia visual da resposta do comando /lucro" width="1440" height="900" loading="lazy" /><figcaption><strong>Embed Discord:</strong> campos e tokens ao lado da prévia fiel da resposta enviada pelo bot.</figcaption></figure>
           </div>
         </div>

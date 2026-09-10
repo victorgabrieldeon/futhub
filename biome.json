@@ -5,12 +5,12 @@
   },
   "files": {
     "ignore": [
-      "**/.next/**",
       "**/.turbo/**",
       "**/dist/**",
       "**/coverage/**",
       "**/drizzle/**",
       "packages/api-client/src/generated.ts",
+      "apps/admin/src/api/generated.ts",
       ".agents/**",
       ".openclaude/skills/**",
       "references/**",

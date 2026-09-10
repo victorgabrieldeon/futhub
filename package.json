@@ -8,7 +8,7 @@
     "pnpm": ">=10.6.5"
   },
   "scripts": {
-    "build": "turbo run build",
+    "build": "pnpm generate:api && turbo run build",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
     "codegen:check": "pnpm generate:api && git diff --exit-code -- apps/api/openapi.json packages/api-client/src/generated.ts",
     "dev": "turbo run dev --parallel",
