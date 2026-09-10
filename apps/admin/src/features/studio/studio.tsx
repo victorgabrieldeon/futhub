@@ -14,8 +14,9 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { adminApiOptions } from '../../api/admin-client';
+import { AdminIcon } from '../../components/admin-icon';
 import {
   type Card,
   type Collection,
@@ -24,6 +25,10 @@ import {
   listCollections,
   uploadCardImage,
 } from '../cards/actions';
+import { cardFramePaths } from './card-design';
+import { CardDesignFields } from './card-design-fields';
+import { CardEdition, CardNameplate, CardTexture } from './card-details';
+import { cardModelImage } from './card-model';
 import { ImageTreatment } from './image-treatment';
 import {
   type CardFinish,
@@ -48,6 +53,7 @@ import {
   studioAssetSize,
   stylePresets,
 } from './studio-model';
+import { StudioCanvas, StudioHeader, StudioSidebar, StudioWorkspace } from './studio-workspace';
 
 const studioSessionKey = 'futhub.admin.studio.session.v3';
 const movableLayers = ['photo', 'rating', 'identity', 'stats'] as const;
@@ -88,7 +94,7 @@ type BrowserFilter = 'all' | 'recent' | 'favorites';
 type MovableLayer = (typeof movableLayers)[number];
 type AutosaveState = 'saving' | 'saved' | 'error';
 type ExportFormat = 'png' | 'webp';
-type StudioWorkspace = 'cards' | 'image';
+type StudioMode = 'cards' | 'image';
 
 type Snapshot = Readonly<{
   id: string;
@@ -128,11 +134,12 @@ type DragState = {
 
 export function Studio() {
   const location = useLocation();
+  const navigate = useNavigate();
   const linkedCard = (location.state as { card?: Card } | null)?.card ?? null;
   const linkedCardId = useRef('');
   const restoredSession = useRef(readStoredSession());
   const [draft, setDraft] = useState<StudioDraft>(restoredSession.current.draft ?? emptyDraft);
-  const [workspace, setWorkspace] = useState<StudioWorkspace>('cards');
+  const [workspace, setWorkspace] = useState<StudioMode>('cards');
   const [collections, setCollections] = useState<Collection[]>([]);
   const [players, setPlayers] = useState<Page<Card> | null>(null);
   const [selectedCardId, setSelectedCardId] = useState(restoredSession.current.selectedCardId);
@@ -153,10 +160,9 @@ export function Studio() {
   const [notice, setNotice] = useState('');
   const [smartFillCount, setSmartFillCount] = useState(0);
   const [playground, setPlayground] = useState(false);
-  const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
   const [focusMode, setFocusMode] = useState(false);
-  const [focusReveal, setFocusReveal] = useState<'left' | 'right' | null>(null);
+  const [focusReveal, setFocusReveal] = useState<'right' | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const [draggedLayer, setDraggedLayer] = useState<LayerKey | null>(null);
@@ -210,8 +216,6 @@ export function Studio() {
           const sourceCard = cardPage.items.find((card) => card.id === stored.selectedCardId);
           if (sourceCard) originalDraft.current = draftFromCard(sourceCard, collectionPage.items);
           setPhotoQuery(stored.draft.name === emptyDraft.name ? '' : stored.draft.name);
-        } else if (cardPage.items[0]) {
-          applyCard(cardPage.items[0], collectionPage.items);
         }
       })
       .catch((error: unknown) => {
@@ -471,7 +475,7 @@ export function Studio() {
     if (!selectedCardId || !qualityReady || !svgRef.current) return;
     setSavingCardImage(true);
     try {
-      const cardImage = await loadStudioCard(svgRef.current, 'ea-fc-item');
+      const cardImage = await loadStudioCard(svgRef.current, 'ea-fc-item', draft);
       const canvas = document.createElement('canvas');
       canvas.width = 600;
       canvas.height = 800;
@@ -539,6 +543,7 @@ export function Studio() {
       {
         ...draft,
         primaryColor: collection?.primaryColor ?? emptyDraft.primaryColor,
+        design: emptyDraft.design,
         secondaryColor: collection?.secondaryColor ?? emptyDraft.secondaryColor,
         style: 'signature',
         finish: 'foil',
@@ -750,10 +755,8 @@ export function Studio() {
   function toggleFocusMode() {
     setFocusMode((current) => {
       if (current) {
-        setLeftOpen(true);
         setRightOpen(true);
       } else {
-        setLeftOpen(false);
         setRightOpen(false);
       }
       setFocusReveal(null);
@@ -770,7 +773,6 @@ export function Studio() {
   function openPlayerBrowser() {
     setFocusMode(false);
     setFocusReveal(null);
-    setLeftOpen(true);
     window.setTimeout(() => playerBrowserSearchRef.current?.focus());
   }
 
@@ -785,7 +787,7 @@ export function Studio() {
     setNotice(`Compondo ${selectedAsset.label} em ${width} × ${height}…`);
     try {
       const [cardImage, playerImage] = await Promise.all([
-        loadStudioCard(svgRef.current, exportOptions.assetKind),
+        loadStudioCard(svgRef.current, exportOptions.assetKind, draft),
         exportOptions.assetKind === 'player-image'
           ? loadRemoteImage(draft.playerImageUrl)
           : Promise.resolve(null),
@@ -875,26 +877,12 @@ export function Studio() {
     { id: 'data', label: 'Dados', panel: 'data' as const, status: dataHealth },
     { id: 'visual', label: 'Visual', panel: 'visual' as const, status: visualHealth },
   ];
-  const cardReady = cardDna.every((check) => check.status === 'ready');
-  const incompleteCardCheck = cardDna.find((check) => check.status !== 'ready');
-  const cardReadinessStatus = cardReady
-    ? 'ready'
-    : cardDna.some((check) => check.status === 'blocked')
-      ? 'blocked'
-      : 'warning';
-  const exportActionLabel =
-    autosaveState === 'saving'
-      ? 'Alterações não salvas'
-      : cardReady
-        ? 'Exportar card'
-        : 'Completar dados';
-  const showLeftPanel = leftOpen || (focusMode && focusReveal === 'left');
   const showRightPanel = rightOpen || (focusMode && focusReveal === 'right');
   const commandActions = [
     {
       id: 'search-player',
       label: 'Buscar jogador',
-      detail: 'Abra a biblioteca e pesquise no banco de cards.',
+      detail: 'Abra a seleção de card e escolha outro ponto de partida.',
       run: openPlayerBrowser,
     },
     {
@@ -972,38 +960,58 @@ export function Studio() {
     ) : null;
 
   return (
-    <section className="command-page studio-page" aria-label="Studio">
-      <div
-        className="command-tabs studio-workspace-tabs"
-        role="tablist"
-        aria-label="Área do Studio"
-      >
-        <button
-          aria-controls="studio-cards-panel"
-          aria-selected={workspace === 'cards'}
-          id="studio-cards-tab"
-          onClick={() => setWorkspace('cards')}
-          className="command-tab"
-          role="tab"
-          type="button"
-        >
-          Criação de cards
-        </button>
-        <button
-          aria-controls="studio-image-panel"
-          aria-selected={workspace === 'image'}
-          id="studio-image-tab"
-          onClick={() => setWorkspace('image')}
-          className="command-tab"
-          role="tab"
-          type="button"
-        >
-          Tratamento de imagem
-        </button>
-      </div>
+    <section className="studio-page card-studio-page" aria-labelledby="studio-title">
+      <StudioHeader className="pack-studio-topbar studio-page-header">
+        <div className="pack-studio-brand">
+          <AdminIcon className="pack-studio-brand__mark" name="studio" />
+          <div>
+            <p className="eyebrow">Studio de Cards</p>
+            <h1 id="studio-title">{draft.name || 'Novo card'}</h1>
+            <output className="pack-studio-save-state">
+              {autosaveState === 'saving' ? 'Salvando alterações' : 'Versão local'}
+            </output>
+          </div>
+        </div>
+        <div className="pack-studio-topbar__actions">
+          <button
+            className="text-button"
+            onClick={() => navigate('/app/gerenciar/cards')}
+            type="button"
+          >
+            Gestão avançada
+          </button>
+          <button className="text-button" onClick={openPlayerBrowser} type="button">
+            Trocar card
+          </button>
+          <button
+            className="ops-button secondary"
+            onClick={() => setWorkspace(workspace === 'image' ? 'cards' : 'image')}
+            type="button"
+          >
+            {workspace === 'image' ? 'Voltar ao studio' : 'Tratar imagem'}
+          </button>
+          <button
+            className="ops-button secondary"
+            onClick={() => setExportOpen(true)}
+            type="button"
+          >
+            Exportar
+          </button>
+          <button
+            className="ops-button accent"
+            disabled={
+              !selectedCardId || !qualityReady || savingCardImage || autosaveState === 'saving'
+            }
+            onClick={() => void saveCardImage()}
+            type="button"
+          >
+            {savingCardImage ? 'Salvando...' : 'Salvar imagem'}
+          </button>
+        </div>
+      </StudioHeader>
 
       {workspace === 'image' ? (
-        <div aria-labelledby="studio-image-tab" id="studio-image-panel" role="tabpanel">
+        <div className="card-studio-image-workspace" id="studio-image-panel">
           <ImageTreatment
             source={
               draft.playerImageUrl
@@ -1023,88 +1031,136 @@ export function Studio() {
           />
         </div>
       ) : (
-        <div aria-labelledby="studio-cards-tab" id="studio-cards-panel" role="tabpanel">
-          <div className="studio-commandbar">
-            <div className="studio-history-actions">
-              <button disabled={!historyPast.length} onClick={undoDraft} type="button">
-                <span aria-hidden="true">←</span> Undo
-              </button>
-              <button disabled={!historyFuture.length} onClick={redoDraft} type="button">
-                Redo <span aria-hidden="true">→</span>
-              </button>
-              <div className="studio-history-menu">
+        <StudioWorkspace className="card-studio-workspace" id="studio-cards-panel">
+          <StudioSidebar aria-labelledby="studio-card-picker-title" className="studio-card-picker">
+            <header>
+              <p className="eyebrow">Studio de cards</p>
+              <h2 id="studio-card-picker-title">Qual card quer editar?</h2>
+              <p>Escolha um card para carregar seus dados e começar a criação.</p>
+            </header>
+            <label className="studio-search">
+              <span className="sr-only">Buscar card</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="6" />
+                <path d="m16 16 4 4" />
+              </svg>
+              <input
+                autoComplete="off"
+                ref={playerBrowserSearchRef}
+                onChange={(event) => setPlayerQuery(event.target.value)}
+                placeholder="Nome, time ou coleção"
+                type="search"
+                value={playerQuery}
+              />
+            </label>
+            <div className="studio-browser-filters" role="tablist" aria-label="Filtro de cards">
+              {(
+                [
+                  ['all', 'Todos'],
+                  ['recent', 'Recentes'],
+                  ['favorites', 'Favoritos'],
+                ] as const
+              ).map(([id, label]) => (
                 <button
-                  aria-expanded={historyOpen}
-                  className={historyOpen ? 'is-active' : ''}
-                  onClick={() => setHistoryOpen((open) => !open)}
+                  aria-selected={browserFilter === id}
+                  key={id}
+                  onClick={() => setBrowserFilter(id)}
+                  role="tab"
                   type="button"
                 >
-                  Histórico <b>{snapshots.length}</b>
+                  {label}
                 </button>
-                {historyOpen && (
-                  <div className="studio-history-popover">
-                    <header>
-                      <div>
-                        <strong>Snapshots</strong>
-                        <small>Compare ou restaure versões desta criação.</small>
-                      </div>
-                      <button
-                        aria-label="Fechar histórico"
-                        onClick={() => setHistoryOpen(false)}
-                        type="button"
+              ))}
+            </div>
+            <div aria-busy={playersLoading} className="studio-card-picker-list">
+              {playersLoading ? (
+                <div className="studio-list-state">Buscando cards…</div>
+              ) : visiblePlayers.length ? (
+                visiblePlayers.map((card) => (
+                  <button
+                    className="studio-card-picker-option"
+                    key={card.id}
+                    onClick={() => applyCard(card)}
+                    type="button"
+                  >
+                    <span className="studio-player-thumb">
+                      <img alt="" src={card.imageUrl} />
+                    </span>
+                    <span>
+                      <strong>{card.name}</strong>
+                      <small>
+                        {card.team.name} · {card.position}
+                      </small>
+                    </span>
+                    <b>{card.overall}</b>
+                  </button>
+                ))
+              ) : (
+                <div className="studio-list-state">
+                  {browserFilter === 'favorites'
+                    ? 'Nenhum favorito nesta busca.'
+                    : 'Nenhum card encontrado.'}
+                </div>
+              )}
+            </div>
+          </StudioSidebar>
+          <StudioCanvas className="card-studio-canvas">
+            <div className="studio-commandbar">
+              <div className="studio-history-actions">
+                <button disabled={!historyPast.length} onClick={undoDraft} type="button">
+                  <span aria-hidden="true">←</span> Undo
+                </button>
+                <button disabled={!historyFuture.length} onClick={redoDraft} type="button">
+                  Redo <span aria-hidden="true">→</span>
+                </button>
+                <div className="studio-history-menu">
+                  <button
+                    aria-expanded={historyOpen}
+                    className={historyOpen ? 'is-active' : ''}
+                    onClick={() => setHistoryOpen((open) => !open)}
+                    type="button"
+                  >
+                    Histórico <b>{snapshots.length}</b>
+                  </button>
+                  {historyOpen && (
+                    <div className="studio-history-popover">
+                      <header>
+                        <div>
+                          <strong>Snapshots</strong>
+                          <small>Compare ou restaure versões desta criação.</small>
+                        </div>
+                        <button
+                          aria-label="Fechar histórico"
+                          onClick={() => setHistoryOpen(false)}
+                          type="button"
+                        >
+                          ×
+                        </button>
+                      </header>
+                      <form
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          createSnapshot();
+                        }}
                       >
-                        ×
-                      </button>
-                    </header>
-                    <form
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        createSnapshot();
-                      }}
-                    >
-                      <input
-                        maxLength={32}
-                        onChange={(event) => setSnapshotName(event.target.value)}
-                        placeholder={`Versão ${snapshots.length + 1}`}
-                        value={snapshotName}
-                      />
-                      <button type="submit">Salvar snapshot</button>
-                    </form>
-                    <div className="studio-snapshot-list">
-                      <div className="studio-snapshot-row">
-                        <span>
-                          <strong>Original do banco</strong>
-                          <small>Base do Smart Fill</small>
-                        </span>
-                        <button
-                          onClick={() => {
-                            setCompareDraft(originalDraft.current);
-                            setCompareLabel('Original do banco');
-                            setHistoryOpen(false);
-                          }}
-                          type="button"
-                        >
-                          Comparar
-                        </button>
-                        <button
-                          onClick={() =>
-                            commitDraft(originalDraft.current, 'Original do banco restaurado.')
-                          }
-                          type="button"
-                        >
-                          Restaurar
-                        </button>
-                      </div>
-                      {snapshots.map((snapshot) => (
-                        <div className="studio-snapshot-row" key={snapshot.id}>
+                        <input
+                          maxLength={32}
+                          onChange={(event) => setSnapshotName(event.target.value)}
+                          placeholder={`Versão ${snapshots.length + 1}`}
+                          value={snapshotName}
+                        />
+                        <button type="submit">Salvar snapshot</button>
+                      </form>
+                      <div className="studio-snapshot-list">
+                        <div className="studio-snapshot-row">
                           <span>
-                            <strong>{snapshot.name}</strong>
-                            <small>{formatTime(snapshot.createdAt)}</small>
+                            <strong>Original do banco</strong>
+                            <small>Base do Smart Fill</small>
                           </span>
                           <button
                             onClick={() => {
-                              setCompareDraft(snapshot.draft);
-                              setCompareLabel(snapshot.name);
+                              setCompareDraft(originalDraft.current);
+                              setCompareLabel('Original do banco');
                               setHistoryOpen(false);
                             }}
                             type="button"
@@ -1113,948 +1169,755 @@ export function Studio() {
                           </button>
                           <button
                             onClick={() =>
-                              commitDraft(snapshot.draft, `Snapshot “${snapshot.name}” restaurado.`)
+                              commitDraft(originalDraft.current, 'Original do banco restaurado.')
                             }
                             type="button"
                           >
                             Restaurar
                           </button>
                         </div>
-                      ))}
-                      {!snapshots.length && (
-                        <p>Salve uma versão antes de experimentar outro tratamento.</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="studio-mode-actions">
-              <button
-                className="studio-command-palette-trigger"
-                onClick={openCommandPalette}
-                type="button"
-              >
-                Ações <kbd>Ctrl K</kbd>
-              </button>
-              {playground && (
-                <button
-                  className="studio-restore-button"
-                  onClick={restorePlaygroundBase}
-                  type="button"
-                >
-                  Restaurar entrada
-                </button>
-              )}
-              <button
-                aria-pressed={playground}
-                className={
-                  playground ? 'studio-playground-toggle is-active' : 'studio-playground-toggle'
-                }
-                onClick={togglePlayground}
-                type="button"
-              >
-                <i /> Playground
-              </button>
-              <button aria-pressed={focusMode} onClick={toggleFocusMode} type="button">
-                {focusMode ? 'Sair do modo criação' : 'Modo criação'}
-              </button>
-            </div>
-          </div>
-
-          <div
-            className="studio-workbench"
-            data-focus={focusMode}
-            data-left={showLeftPanel ? 'open' : 'closed'}
-            data-right={showRightPanel ? 'open' : 'closed'}
-          >
-            {focusMode && (
-              <>
-                <button
-                  aria-label="Mostrar biblioteca"
-                  className="studio-focus-edge studio-focus-edge--left"
-                  onFocus={() => setFocusReveal('left')}
-                  onMouseEnter={() => setFocusReveal('left')}
-                  type="button"
-                />
-                <button
-                  aria-label="Mostrar ajustes"
-                  className="studio-focus-edge studio-focus-edge--right"
-                  onFocus={() => setFocusReveal('right')}
-                  onMouseEnter={() => setFocusReveal('right')}
-                  type="button"
-                />
-              </>
-            )}
-            {showLeftPanel && (
-              <aside
-                aria-label="Cards do banco"
-                className="studio-player-browser"
-                onMouseLeave={() => {
-                  if (focusMode) setFocusReveal((current) => (current === 'left' ? null : current));
-                }}
-              >
-                <header>
-                  <div>
-                    <p className="eyebrow">Banco de cards</p>
-                    <h2>Escolha o ponto de partida</h2>
-                  </div>
-                  <button
-                    aria-label="Recolher banco de cards"
-                    onClick={() => {
-                      setLeftOpen(false);
-                      setFocusMode(false);
-                    }}
-                    type="button"
-                  >
-                    ‹
-                  </button>
-                </header>
-                <label className="studio-search">
-                  <span className="sr-only">Buscar card</span>
-                  <svg aria-hidden="true" viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="6" />
-                    <path d="m16 16 4 4" />
-                  </svg>
-                  <input
-                    autoComplete="off"
-                    ref={playerBrowserSearchRef}
-                    onChange={(event) => setPlayerQuery(event.target.value)}
-                    placeholder="Nome, time ou coleção"
-                    type="search"
-                    value={playerQuery}
-                  />
-                </label>
-                <div className="studio-browser-filters" role="tablist" aria-label="Filtro do banco">
-                  {(
-                    [
-                      ['all', 'Todos'],
-                      ['recent', 'Recentes'],
-                      ['favorites', 'Favoritos'],
-                    ] as const
-                  ).map(([id, label]) => (
-                    <button
-                      aria-selected={browserFilter === id}
-                      key={id}
-                      onClick={() => setBrowserFilter(id)}
-                      role="tab"
-                      type="button"
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <div aria-busy={playersLoading} className="studio-player-list">
-                  {playersLoading ? (
-                    <div className="studio-list-state">Buscando cards…</div>
-                  ) : visiblePlayers.length ? (
-                    visiblePlayers.map((card) => (
-                      <div className="studio-player-row" key={card.id}>
-                        <button
-                          aria-pressed={selectedCardId === card.id}
-                          className="studio-player-option"
-                          onClick={() => applyCard(card)}
-                          type="button"
-                        >
-                          <span className="studio-player-thumb">
-                            <img alt="" src={card.imageUrl} />
-                          </span>
-                          <span>
-                            <strong>{card.name}</strong>
-                            <small>
-                              {card.team.name} · {card.position}
-                            </small>
-                          </span>
-                          <b>{card.overall}</b>
-                        </button>
-                        <button
-                          aria-label={
-                            favoriteIds.includes(card.id)
-                              ? `Remover ${card.name} dos favoritos`
-                              : `Adicionar ${card.name} aos favoritos`
-                          }
-                          aria-pressed={favoriteIds.includes(card.id)}
-                          className="studio-favorite-button"
-                          onClick={() => toggleFavorite(card.id)}
-                          type="button"
-                        >
-                          {favoriteIds.includes(card.id) ? '★' : '☆'}
-                        </button>
+                        {snapshots.map((snapshot) => (
+                          <div className="studio-snapshot-row" key={snapshot.id}>
+                            <span>
+                              <strong>{snapshot.name}</strong>
+                              <small>{formatTime(snapshot.createdAt)}</small>
+                            </span>
+                            <button
+                              onClick={() => {
+                                setCompareDraft(snapshot.draft);
+                                setCompareLabel(snapshot.name);
+                                setHistoryOpen(false);
+                              }}
+                              type="button"
+                            >
+                              Comparar
+                            </button>
+                            <button
+                              onClick={() =>
+                                commitDraft(
+                                  snapshot.draft,
+                                  `Snapshot “${snapshot.name}” restaurado.`,
+                                )
+                              }
+                              type="button"
+                            >
+                              Restaurar
+                            </button>
+                          </div>
+                        ))}
+                        {!snapshots.length && (
+                          <p>Salve uma versão antes de experimentar outro tratamento.</p>
+                        )}
                       </div>
-                    ))
-                  ) : (
-                    <div className="studio-list-state">
-                      {browserFilter === 'favorites'
-                        ? 'Nenhum favorito nesta busca.'
-                        : 'Nenhum card encontrado.'}
                     </div>
                   )}
                 </div>
-                {selectedCollection && (
-                  <section
-                    className="studio-collection-context"
-                    style={
-                      {
-                        '--collection-primary': selectedCollection.primaryColor,
-                        '--collection-secondary': selectedCollection.secondaryColor,
-                      } as CSSProperties
-                    }
-                  >
-                    <div className="studio-collection-mark">
-                      {selectedCollection.imageUrl ? (
-                        <img alt="" src={selectedCollection.imageUrl} />
-                      ) : (
-                        <span>{selectedCollection.name.slice(0, 2).toUpperCase()}</span>
-                      )}
-                    </div>
-                    <div>
-                      <small>Coleção ativa</small>
-                      <strong>{selectedCollection.name}</strong>
-                      <span>Paleta e assets vinculados</span>
-                    </div>
-                    <Link to="/app/gerenciar/cards">Alterar</Link>
-                  </section>
-                )}
-              </aside>
-            )}
-
-            <main className={`studio-stage ${exporting ? 'is-exporting' : ''}`} style={stageStyle}>
-              <header className="studio-stage-bar">
-                <div className="studio-stage-left">
-                  {!showLeftPanel && (
-                    <button
-                      className="studio-panel-reveal"
-                      onClick={() => {
-                        if (focusMode) setFocusReveal('left');
-                        else setLeftOpen(true);
-                      }}
-                      type="button"
-                    >
-                      Banco ›
-                    </button>
-                  )}
-                  <span className="studio-live-dot" />
-                  <strong>{playground ? 'Playground ao vivo' : 'Prévia master'}</strong>
-                </div>
-                <fieldset className="studio-preview-modes">
-                  <legend className="sr-only">Modo de preview</legend>
-                  {previewModes.map((mode) => (
-                    <button
-                      aria-pressed={previewMode === mode.id}
-                      key={mode.id}
-                      onClick={() => setPreviewMode(mode.id)}
-                      type="button"
-                    >
-                      {mode.label}
-                    </button>
-                  ))}
-                </fieldset>
-                <div className="studio-stage-actions">
-                  <button
-                    aria-pressed={showGuides}
-                    onClick={() => setShowGuides((visible) => !visible)}
-                    type="button"
-                  >
-                    {showGuides ? 'Sem guias' : 'Guias'}
-                  </button>
-                  {!showRightPanel && (
-                    <button
-                      className="studio-panel-reveal"
-                      onClick={() => {
-                        if (focusMode) setFocusReveal('right');
-                        else setRightOpen(true);
-                      }}
-                      type="button"
-                    >
-                      ‹ Ajustes
-                    </button>
-                  )}
-                </div>
-              </header>
-
-              <div className={`studio-canvas-shell mode-${previewMode}`}>
-                {exporting && (
-                  <div aria-live="polite" className="studio-export-composition">
-                    <i />
-                    <strong>Compondo camadas</strong>
-                    <span>Background · Effects · Photo · Type</span>
-                  </div>
-                )}
-                {compareDraft ? (
-                  <div className="studio-compare-view">
-                    <header>
-                      <span>Comparação visual</span>
-                      <button onClick={() => setCompareDraft(null)} type="button">
-                        Fechar compare
-                      </button>
-                    </header>
-                    <div>
-                      <figure>
-                        <figcaption>{compareLabel}</figcaption>
-                        <StudioCardPreview
-                          activeLayer={null}
-                          draft={compareDraft}
-                          playground={false}
-                          showGuides={false}
-                          svgRef={undefined}
-                        />
-                      </figure>
-                      <figure>
-                        <figcaption>Atual</figcaption>
-                        {liveCard}
-                      </figure>
-                    </div>
-                  </div>
-                ) : (
-                  <PreviewSurface mode={previewMode} toolbar={selectionToolbar} zoom={zoom}>
-                    {liveCard}
-                  </PreviewSurface>
-                )}
               </div>
-
-              <section className="studio-card-dna" aria-label="Prontidão do card">
-                <div>
-                  <span>{cardReady ? 'Card pronto' : 'Quase lá'}</span>
-                  <strong>
-                    {draft.name} · {draft.collectionName}
-                  </strong>
-                  <small>
-                    {draft.overall} OVR · {draft.teamName} · {draft.position}
-                  </small>
-                </div>
-                <div className="studio-card-dna-checks">
-                  {cardDna.map((check) => (
-                    <button
-                      className={`is-${check.status}`}
-                      key={check.id}
-                      onClick={() => {
-                        setActiveLayer(null);
-                        setFocusMode(false);
-                        setPanel(check.panel);
-                        setRightOpen(true);
-                      }}
-                      type="button"
-                    >
-                      <i aria-hidden="true" />
-                      {check.label}
-                    </button>
-                  ))}
-                </div>
-              </section>
-
-              <div className="studio-stage-footer">
-                <div className="studio-zoom-control" aria-label="Zoom do preview">
-                  <button
-                    aria-label="Reduzir zoom"
-                    disabled={zoom <= 75}
-                    onClick={() => setZoom((current) => Math.max(75, current - 25))}
-                    type="button"
-                  >
-                    −
-                  </button>
-                  <output>{zoom}%</output>
-                  <button
-                    aria-label="Aumentar zoom"
-                    disabled={zoom >= 150}
-                    onClick={() => setZoom((current) => Math.min(150, current + 25))}
-                    type="button"
-                  >
-                    +
-                  </button>
-                </div>
-                <div aria-live="polite" className={`studio-quality-bar is-${cardReadinessStatus}`}>
-                  <i aria-hidden="true" />
-                  <span>
-                    <strong>
-                      {autosaveState === 'saving'
-                        ? 'Alterações não salvas'
-                        : cardReady
-                          ? 'Card pronto para exportar'
-                          : `Complete ${incompleteCardCheck?.label.toLocaleLowerCase()}`}
-                    </strong>
-                    <small>
-                      {cardReady
-                        ? 'Foto · Escudo · Dados · Visual'
-                        : 'Revise o indicador pendente antes de exportar'}
-                    </small>
-                  </span>
-                </div>
+              <div className="studio-mode-actions">
                 <button
-                  className="studio-export-button ops-button accent"
-                  disabled={exporting || savingCardImage || autosaveState === 'saving'}
-                  onClick={() => {
-                    if (!incompleteCardCheck) {
-                      setExportOpen(true);
-                      return;
-                    }
-                    setActiveLayer(null);
-                    setFocusMode(false);
-                    setPanel(incompleteCardCheck.panel);
-                    setRightOpen(true);
-                    setNotice(
-                      `Complete ${incompleteCardCheck.label.toLocaleLowerCase()} antes de exportar.`,
-                    );
-                  }}
+                  className="studio-command-palette-trigger"
+                  onClick={openCommandPalette}
                   type="button"
                 >
-                  {exportActionLabel}
+                  Ações <kbd>Ctrl K</kbd>
+                </button>
+                {playground && (
+                  <button
+                    className="studio-restore-button"
+                    onClick={restorePlaygroundBase}
+                    type="button"
+                  >
+                    Restaurar entrada
+                  </button>
+                )}
+                <button
+                  aria-pressed={playground}
+                  className={
+                    playground ? 'studio-playground-toggle is-active' : 'studio-playground-toggle'
+                  }
+                  onClick={togglePlayground}
+                  type="button"
+                >
+                  <i /> Playground
+                </button>
+                <button aria-pressed={focusMode} onClick={toggleFocusMode} type="button">
+                  {focusMode ? 'Sair do modo criação' : 'Modo criação'}
                 </button>
               </div>
-              {!teamLogoReady && (
-                <p className="studio-quality-warning">
-                  Saídas com card exigem escudo SVG.{' '}
-                  <Link to="/app/gerenciar/cards">Corrija em Gerenciamento</Link>; o recorte do
-                  jogador continua disponível.
-                </p>
-              )}
-              {notice && (
-                <p aria-live="polite" className="studio-notice">
-                  {notice}
-                </p>
-              )}
-            </main>
+            </div>
 
-            {showRightPanel && (
-              <aside
-                aria-label="Opções do card"
-                className="studio-inspector"
-                onMouseLeave={() => {
-                  if (focusMode)
-                    setFocusReveal((current) => (current === 'right' ? null : current));
-                }}
+            <div
+              className="studio-workbench"
+              data-focus={focusMode}
+              data-left="closed"
+              data-right={showRightPanel ? 'open' : 'closed'}
+            >
+              <main
+                className={`studio-stage ${exporting ? 'is-exporting' : ''}`}
+                style={stageStyle}
               >
-                <header>
-                  <div>
-                    <p className="eyebrow">
-                      {activeLayerDefinition
-                        ? `Contexto · ${activeLayerDefinition.label}`
-                        : 'Direção de produção'}
-                    </p>
-                    <h2>
-                      {activeLayerDefinition?.label ??
-                        (playground ? 'Edição livre' : 'Card em criação')}
-                    </h2>
+                {focusMode && (
+                  <button
+                    aria-label="Mostrar ajustes"
+                    className="studio-focus-edge studio-focus-edge--right"
+                    onFocus={() => setFocusReveal('right')}
+                    onMouseEnter={() => setFocusReveal('right')}
+                    type="button"
+                  />
+                )}
+                <header className="studio-stage-bar">
+                  <div className="studio-stage-left">
+                    <button
+                      className="studio-panel-reveal"
+                      onClick={openPlayerBrowser}
+                      type="button"
+                    >
+                      Trocar card
+                    </button>
+                    <span className="studio-live-dot" />
+                    <strong>{playground ? 'Playground ao vivo' : 'Prévia master'}</strong>
                   </div>
-                  <div className="studio-inspector-actions">
-                    {activeLayer && (
+                  <fieldset className="studio-preview-modes">
+                    <legend className="sr-only">Modo de preview</legend>
+                    {previewModes.map((mode) => (
                       <button
-                        aria-label="Mostrar configurações gerais do card"
+                        aria-pressed={previewMode === mode.id}
+                        key={mode.id}
+                        onClick={() => setPreviewMode(mode.id)}
+                        type="button"
+                      >
+                        {mode.label}
+                      </button>
+                    ))}
+                  </fieldset>
+                  <div className="studio-stage-actions">
+                    <button
+                      aria-pressed={showGuides}
+                      onClick={() => setShowGuides((visible) => !visible)}
+                      type="button"
+                    >
+                      {showGuides ? 'Sem guias' : 'Guias'}
+                    </button>
+                    {!showRightPanel && (
+                      <button
+                        className="studio-panel-reveal"
                         onClick={() => {
-                          setActiveLayer(null);
-                          setPanel('data');
+                          if (focusMode) setFocusReveal('right');
+                          else setRightOpen(true);
                         }}
                         type="button"
                       >
-                        Card
+                        ‹ Ajustes
                       </button>
                     )}
-                    <button
-                      aria-label="Recolher painel de ajustes"
-                      onClick={() => {
-                        setRightOpen(false);
-                        setFocusMode(false);
-                        setFocusReveal(null);
-                      }}
-                      type="button"
-                    >
-                      ›
-                    </button>
                   </div>
                 </header>
-                <div
-                  className="command-tabs studio-inspector-tabs"
-                  role="tablist"
-                  aria-label="Ajustes do Studio"
-                >
-                  {inspectorTabs.map((tab) => (
-                    <button
-                      className="command-tab"
-                      aria-selected={panel === tab.id}
-                      key={tab.id}
-                      onClick={() => {
-                        setActiveLayer(null);
-                        setPanel(tab.id);
-                      }}
-                      role="tab"
-                      type="button"
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
+
+                <div className={`studio-canvas-shell mode-${previewMode}`}>
+                  {exporting && (
+                    <div aria-live="polite" className="studio-export-composition">
+                      <i />
+                      <strong>Compondo camadas</strong>
+                      <span>Background · Effects · Photo · Type</span>
+                    </div>
+                  )}
+                  {compareDraft ? (
+                    <div className="studio-compare-view">
+                      <header>
+                        <span>Comparação visual</span>
+                        <button onClick={() => setCompareDraft(null)} type="button">
+                          Fechar compare
+                        </button>
+                      </header>
+                      <div>
+                        <figure>
+                          <figcaption>{compareLabel}</figcaption>
+                          <StudioCardPreview
+                            activeLayer={null}
+                            draft={compareDraft}
+                            playground={false}
+                            showGuides={false}
+                            svgRef={undefined}
+                          />
+                        </figure>
+                        <figure>
+                          <figcaption>Atual</figcaption>
+                          {liveCard}
+                        </figure>
+                      </div>
+                    </div>
+                  ) : (
+                    <PreviewSurface mode={previewMode} toolbar={selectionToolbar} zoom={zoom}>
+                      {liveCard}
+                    </PreviewSurface>
+                  )}
                 </div>
 
-                <div className="studio-inspector-body">
-                  {panel === 'data' && (
-                    <div className="studio-control-stack" role="tabpanel">
-                      {activeLayer === null && smartFillCount > 0 && (
-                        <div className="studio-smart-fill">
-                          <i />
-                          <div>
-                            <strong>Smart Fill concluído</strong>
-                            <p>
-                              {smartFillCount} campos encontrados no banco. Revise antes de
-                              publicar.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                      <section className="studio-data-section">
-                        <header>
-                          <span>Identidade</span>
-                        </header>
-                        {(activeLayer === null || activeLayer === 'identity') && (
-                          <label>
-                            Nome no card
-                            <input
-                              maxLength={24}
-                              onChange={(event) => updateDraft('name', event.target.value)}
-                              ref={nameInputRef}
-                              value={draft.name}
-                            />
-                            <small>{draft.name.length}/24 · ajuste automático após 20</small>
-                          </label>
-                        )}
-                        {(activeLayer === null || activeLayer === 'rating') && (
-                          <div className="studio-form-row">
-                            <label>
-                              Overall
-                              <input
-                                max={100}
-                                min={60}
-                                onChange={(event) =>
-                                  updateDraft(
-                                    'overall',
-                                    Math.min(100, Math.max(60, Number(event.target.value))),
-                                  )
-                                }
-                                ref={overallInputRef}
-                                type="number"
-                                value={draft.overall}
-                              />
-                            </label>
-                            <label>
-                              Posição
-                              <select
-                                onChange={(event) => updateDraft('position', event.target.value)}
-                                value={draft.position}
-                              >
-                                {positions.map((position) => (
-                                  <option key={position}>{position}</option>
-                                ))}
-                              </select>
-                            </label>
-                          </div>
-                        )}
-                      </section>
-                      <section className="studio-data-section">
-                        <header>
-                          <span>Atributos</span>
-                        </header>
-                        {(activeLayer === null || activeLayer === 'stats') && (
-                          <>
-                            <div className="studio-stats-heading">
-                              <span>Stats do card</span>
-                              <button onClick={applySuggestedStats} type="button">
-                                Sugerir por posição
-                              </button>
-                            </div>
-                            <fieldset className="studio-stats-fieldset">
-                              <legend className="sr-only">Stats do card</legend>
-                              <div>
-                                {statFields.map(([key, label, code], index) => (
-                                  <label key={key}>
-                                    <span>
-                                      {label} <b>{code}</b>
-                                    </span>
-                                    <input
-                                      max={100}
-                                      min={1}
-                                      onChange={(event) =>
-                                        updateDraft(
-                                          key,
-                                          Math.min(100, Math.max(1, Number(event.target.value))),
-                                        )
-                                      }
-                                      ref={index === 0 ? firstStatInputRef : undefined}
-                                      type="number"
-                                      value={draft[key]}
-                                    />
-                                  </label>
-                                ))}
-                              </div>
-                            </fieldset>
-                          </>
-                        )}
-                      </section>
-                      <section className="studio-data-section">
-                        <header>
-                          <span>Vínculos</span>
-                        </header>
-                        {(activeLayer === null || activeLayer === 'badges') && (
-                          <div className="studio-locked-links">
-                            <span>
-                              <small>Time</small>
-                              <strong>{draft.teamName}</strong>
-                            </span>
-                            <span>
-                              <small>Coleção</small>
-                              <strong>{draft.collectionName}</strong>
-                            </span>
-                            <em>Vínculos controlados pelo card de origem</em>
-                          </div>
-                        )}
-                      </section>
-                    </div>
-                  )}
+                {!teamLogoReady && (
+                  <p className="studio-quality-warning">
+                    Saídas com card exigem escudo SVG.{' '}
+                    <Link to="/app/gerenciar/cards">Corrija em Gerenciamento</Link>; o recorte do
+                    jogador continua disponível.
+                  </p>
+                )}
+                {notice && (
+                  <p aria-live="polite" className="studio-notice">
+                    {notice}
+                  </p>
+                )}
+              </main>
 
-                  {panel === 'photo' && (
-                    <div className="studio-control-stack" role="tabpanel">
-                      <div className="studio-control-intro">
-                        <strong>Foto do jogador</strong>
-                        <p>
-                          Busca recortes e renders PNG, além de fotos JPEG, no TheSportsDB. No
-                          Playground, arraste a foto direto no canvas.
-                        </p>
-                      </div>
-                      <label className="studio-photo-search">
-                        Buscar jogador
-                        <input
-                          autoComplete="off"
-                          onChange={(event) => setPhotoQuery(event.target.value)}
-                          placeholder="Ex.: Neymar"
-                          ref={photoSearchRef}
-                          type="search"
-                          value={photoQuery}
-                        />
-                      </label>
-                      <div aria-busy={photosLoading} className="studio-photo-results">
-                        {photosLoading ? (
-                          <div className="studio-list-state">Buscando fotos…</div>
-                        ) : photoSuggestions.length ? (
-                          photoSuggestions.map((suggestion) => (
-                            <button
-                              key={suggestion.id}
-                              onClick={() => choosePhoto(suggestion)}
-                              type="button"
-                            >
-                              <img alt="" src={suggestion.imageUrl} />
-                              <span>
-                                <strong>{suggestion.name}</strong>
-                                <small>
-                                  {suggestion.provider}
-                                  {suggestion.team && ` · ${suggestion.team}`}
-                                </small>
-                              </span>
-                            </button>
-                          ))
-                        ) : (
-                          <div className="studio-list-state">
-                            Busque pelo nome completo do jogador.
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        className="studio-replace-card-image"
-                        disabled={!selectedCardId || !qualityReady || savingCardImage}
-                        onClick={() => void saveCardImage()}
-                        type="button"
-                      >
-                        {savingCardImage ? 'Salvando imagem…' : 'Salvar imagem do card'}
-                      </button>
-                      <p className="studio-replace-card-image-hint">
-                        Salva o card renderizado em PNG no jogador selecionado.
+              {showRightPanel && (
+                <StudioSidebar
+                  aria-label="Opções do card"
+                  className="studio-inspector"
+                  onMouseLeave={() => {
+                    if (focusMode)
+                      setFocusReveal((current) => (current === 'right' ? null : current));
+                  }}
+                >
+                  <header>
+                    <div>
+                      <p className="eyebrow">
+                        {activeLayerDefinition
+                          ? `Contexto · ${activeLayerDefinition.label}`
+                          : 'Direção de produção'}
                       </p>
-                      <button
-                        className="studio-upload-button"
-                        onClick={() => setWorkspace('image')}
-                        type="button"
-                      >
-                        {playerPhotoSelected
-                          ? 'Ajustar recorte no laboratório'
-                          : 'Enviar e padronizar foto'}
-                      </button>
-                      <div className="studio-range-group">
-                        <label>
-                          <span>
-                            Escala <output>{draft.photoScale}%</output>
-                          </span>
-                          <input
-                            max={145}
-                            min={70}
-                            onChange={(event) =>
-                              updateDraft('photoScale', Number(event.target.value))
-                            }
-                            type="range"
-                            value={draft.photoScale}
-                          />
-                        </label>
-                        <label>
-                          <span>
-                            Horizontal <output>{Math.round(draft.photoX)}</output>
-                          </span>
-                          <input
-                            max={160}
-                            min={-160}
-                            onChange={(event) => updateDraft('photoX', Number(event.target.value))}
-                            type="range"
-                            value={draft.photoX}
-                          />
-                        </label>
-                        <label>
-                          <span>
-                            Vertical <output>{Math.round(draft.photoY)}</output>
-                          </span>
-                          <input
-                            max={160}
-                            min={-160}
-                            onChange={(event) => updateDraft('photoY', Number(event.target.value))}
-                            type="range"
-                            value={draft.photoY}
-                          />
-                        </label>
-                      </div>
-                      <div className="studio-source-credit">
-                        Fonte:{' '}
-                        <a href="https://www.thesportsdb.com" rel="noreferrer" target="_blank">
-                          TheSportsDB
-                        </a>
-                      </div>
+                      <h2>
+                        {activeLayerDefinition?.label ??
+                          (playground ? 'Edição livre' : 'Card em criação')}
+                      </h2>
                     </div>
-                  )}
-
-                  {panel === 'visual' && (
-                    <div className="studio-control-stack" role="tabpanel">
-                      <div className="studio-control-intro">
-                        <strong>Style Lab</strong>
-                        <p>
-                          Presets combinam paleta, raridade e acabamento. A grade mestre continua
-                          intacta.
-                        </p>
-                      </div>
-                      <fieldset className="studio-preset-grid">
-                        <legend>Background presets</legend>
-                        {stylePresets.map((preset) => (
-                          <label key={preset.id}>
-                            <input
-                              checked={
-                                draft.primaryColor === preset.primaryColor &&
-                                draft.secondaryColor === preset.secondaryColor
-                              }
-                              name="studioPreset"
-                              onChange={() => applyPreset(preset)}
-                              type="radio"
-                            />
-                            <span>
-                              <i
-                                style={{
-                                  background: `linear-gradient(135deg, ${preset.primaryColor}, ${preset.secondaryColor})`,
-                                }}
-                              />
-                              <strong>{preset.label}</strong>
-                              <small>{preset.description}</small>
-                            </span>
-                          </label>
-                        ))}
-                      </fieldset>
-                      <fieldset className="studio-chip-picker">
-                        <legend>Tratamento</legend>
-                        {(
-                          [
-                            ['elite', 'Elite Aqua'],
-                            ['signature', 'Assinatura'],
-                            ['midnight', 'Noturno'],
-                            ['velocity', 'Velocidade'],
-                          ] as const
-                        ).map(([id, label]) => (
-                          <label key={id}>
-                            <input
-                              checked={draft.style === id}
-                              name="cardStyle"
-                              onChange={() => updateDraft('style', id)}
-                              type="radio"
-                            />
-                            <span>{label}</span>
-                          </label>
-                        ))}
-                      </fieldset>
-                      <fieldset className="studio-chip-picker finish-picker">
-                        <legend>Acabamento</legend>
-                        {finishOptions.map((finish) => (
-                          <label key={finish.id}>
-                            <input
-                              checked={draft.finish === finish.id}
-                              name="cardFinish"
-                              onChange={() => updateDraft('finish', finish.id)}
-                              type="radio"
-                            />
-                            <span>{finish.label}</span>
-                          </label>
-                        ))}
-                      </fieldset>
-                      <fieldset className="studio-chip-picker rarity-picker">
-                        <legend>Raridade</legend>
-                        {rarityOptions.map((rarity) => (
-                          <label key={rarity.id}>
-                            <input
-                              checked={draft.rarity === rarity.id}
-                              name="cardRarity"
-                              onChange={() => updateDraft('rarity', rarity.id)}
-                              type="radio"
-                            />
-                            <span data-rarity={rarity.id}>{rarity.label}</span>
-                          </label>
-                        ))}
-                      </fieldset>
-                      <div className="studio-color-row">
-                        <label>
-                          Cor principal
-                          <input
-                            onChange={(event) => updateDraft('primaryColor', event.target.value)}
-                            type="color"
-                            value={draft.primaryColor}
-                          />
-                        </label>
-                        <label>
-                          Cor de contraste
-                          <input
-                            onChange={(event) => updateDraft('secondaryColor', event.target.value)}
-                            type="color"
-                            value={draft.secondaryColor}
-                          />
-                        </label>
-                      </div>
-                      <div className="studio-visual-actions">
-                        <button onClick={randomizeVisual} type="button">
-                          Randomizar visual
-                        </button>
-                        <button onClick={restoreCollectionDefaults} type="button">
-                          Padrão da coleção
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {panel === 'layers' && (
-                    <div className="studio-control-stack" role="tabpanel">
-                      <div className="studio-control-intro">
-                        <strong>Layers</strong>
-                        <p>
-                          Topo da lista aparece à frente no card. Ocultar e reordenar também afeta a
-                          exportação.
-                        </p>
-                      </div>
-                      <div className="studio-layer-list">
-                        <div className="studio-layer-root">
-                          <span aria-hidden="true">⌄</span>
-                          <strong>Card</strong>
-                          <small>Composição final</small>
-                        </div>
-                        {layerGroups.map((group) => {
-                          const layers = [...draft.layerOrder]
-                            .reverse()
-                            .filter((layer) => group.layers.includes(layer));
-                          return (
-                            <section className="studio-layer-group" key={group.label}>
-                              <p>
-                                <span aria-hidden="true">⌄</span>
-                                {group.label}
-                              </p>
-                              {layers.map((layer) => {
-                                const definition = layerDefinitions.find(
-                                  (entry) => entry.id === layer,
-                                );
-                                const orderIndex = draft.layerOrder.indexOf(layer);
-                                return (
-                                  <div
-                                    className={
-                                      activeLayer === layer
-                                        ? 'studio-layer-row is-active'
-                                        : 'studio-layer-row'
-                                    }
-                                    draggable
-                                    key={layer}
-                                    onDragEnd={() => setDraggedLayer(null)}
-                                    onDragOver={(event) => event.preventDefault()}
-                                    onDragStart={(event) => startLayerReorder(event, layer)}
-                                    onDrop={(event) => completeLayerReorder(event, layer)}
-                                  >
-                                    <span aria-hidden="true" className="studio-layer-drag">
-                                      ⋮⋮
-                                    </span>
-                                    <button
-                                      aria-label={
-                                        draft.layerVisibility[layer]
-                                          ? `Ocultar ${definition?.label}`
-                                          : `Mostrar ${definition?.label}`
-                                      }
-                                      aria-pressed={draft.layerVisibility[layer]}
-                                      className="studio-layer-visibility"
-                                      onClick={() => toggleLayerVisibility(layer)}
-                                      type="button"
-                                    >
-                                      {draft.layerVisibility[layer] ? 'Visível' : 'Oculta'}
-                                    </button>
-                                    <button
-                                      className="studio-layer-name"
-                                      onClick={() => selectLayer(layer)}
-                                      type="button"
-                                    >
-                                      <strong>{definition?.label}</strong>
-                                      <small>{definition?.description}</small>
-                                    </button>
-                                    <button
-                                      aria-label={
-                                        draft.layerLocks[layer]
-                                          ? `Desbloquear ${definition?.label}`
-                                          : `Bloquear ${definition?.label}`
-                                      }
-                                      aria-pressed={draft.layerLocks[layer]}
-                                      className="studio-layer-lock"
-                                      onClick={() => toggleLayerLock(layer)}
-                                      type="button"
-                                    >
-                                      {draft.layerLocks[layer] ? 'Lock' : 'Livre'}
-                                    </button>
-                                    <span className="studio-layer-order">
-                                      <button
-                                        aria-label={`Subir ${definition?.label}`}
-                                        disabled={orderIndex === draft.layerOrder.length - 1}
-                                        onClick={() => reorderLayer(layer, 1)}
-                                        type="button"
-                                      >
-                                        ↑
-                                      </button>
-                                      <button
-                                        aria-label={`Descer ${definition?.label}`}
-                                        disabled={orderIndex === 0}
-                                        onClick={() => reorderLayer(layer, -1)}
-                                        type="button"
-                                      >
-                                        ↓
-                                      </button>
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </section>
-                          );
-                        })}
-                      </div>
-                      {playground && (
+                    <div className="studio-inspector-actions">
+                      {activeLayer && (
                         <button
-                          className="studio-reset-palette"
-                          onClick={restoreCollectionDefaults}
+                          aria-label="Mostrar configurações gerais do card"
+                          onClick={() => {
+                            setActiveLayer(null);
+                            setPanel('data');
+                          }}
                           type="button"
                         >
-                          Restaurar grade e ordem da coleção
+                          Card
                         </button>
                       )}
+                      <button
+                        aria-label="Recolher painel de ajustes"
+                        onClick={() => {
+                          setRightOpen(false);
+                          setFocusMode(false);
+                          setFocusReveal(null);
+                        }}
+                        type="button"
+                      >
+                        ›
+                      </button>
                     </div>
-                  )}
-                </div>
-              </aside>
-            )}
-          </div>
+                  </header>
+                  <div
+                    className="command-tabs studio-inspector-tabs"
+                    role="tablist"
+                    aria-label="Ajustes do Studio"
+                  >
+                    {inspectorTabs.map((tab) => (
+                      <button
+                        className="command-tab"
+                        aria-selected={panel === tab.id}
+                        key={tab.id}
+                        onClick={() => {
+                          setActiveLayer(null);
+                          setPanel(tab.id);
+                        }}
+                        role="tab"
+                        type="button"
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="studio-inspector-body">
+                    {panel === 'data' && (
+                      <div className="studio-control-stack" role="tabpanel">
+                        {activeLayer === null && smartFillCount > 0 && (
+                          <div className="studio-smart-fill">
+                            <i />
+                            <div>
+                              <strong>Smart Fill concluído</strong>
+                              <p>
+                                {smartFillCount} campos encontrados no banco. Revise antes de
+                                publicar.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        <section className="studio-data-section">
+                          <header>
+                            <span>Identidade</span>
+                          </header>
+                          {(activeLayer === null || activeLayer === 'identity') && (
+                            <label>
+                              Nome no card
+                              <input
+                                maxLength={24}
+                                onChange={(event) => updateDraft('name', event.target.value)}
+                                ref={nameInputRef}
+                                value={draft.name}
+                              />
+                              <small>{draft.name.length}/24 · ajuste automático após 20</small>
+                            </label>
+                          )}
+                          {(activeLayer === null || activeLayer === 'rating') && (
+                            <div className="studio-form-row">
+                              <label>
+                                Overall
+                                <input
+                                  max={100}
+                                  min={60}
+                                  onChange={(event) =>
+                                    updateDraft(
+                                      'overall',
+                                      Math.min(100, Math.max(60, Number(event.target.value))),
+                                    )
+                                  }
+                                  ref={overallInputRef}
+                                  type="number"
+                                  value={draft.overall}
+                                />
+                              </label>
+                              <label>
+                                Posição
+                                <select
+                                  onChange={(event) => updateDraft('position', event.target.value)}
+                                  value={draft.position}
+                                >
+                                  {positions.map((position) => (
+                                    <option key={position}>{position}</option>
+                                  ))}
+                                </select>
+                              </label>
+                            </div>
+                          )}
+                        </section>
+                        <section className="studio-data-section">
+                          <header>
+                            <span>Atributos</span>
+                          </header>
+                          {(activeLayer === null || activeLayer === 'stats') && (
+                            <>
+                              <div className="studio-stats-heading">
+                                <span>Stats do card</span>
+                                <button onClick={applySuggestedStats} type="button">
+                                  Sugerir por posição
+                                </button>
+                              </div>
+                              <fieldset className="studio-stats-fieldset">
+                                <legend className="sr-only">Stats do card</legend>
+                                <div>
+                                  {statFields.map(([key, label, code], index) => (
+                                    <label key={key}>
+                                      <span>
+                                        {label} <b>{code}</b>
+                                      </span>
+                                      <input
+                                        max={100}
+                                        min={1}
+                                        onChange={(event) =>
+                                          updateDraft(
+                                            key,
+                                            Math.min(100, Math.max(1, Number(event.target.value))),
+                                          )
+                                        }
+                                        ref={index === 0 ? firstStatInputRef : undefined}
+                                        type="number"
+                                        value={draft[key]}
+                                      />
+                                    </label>
+                                  ))}
+                                </div>
+                              </fieldset>
+                            </>
+                          )}
+                        </section>
+                        <section className="studio-data-section">
+                          <header>
+                            <span>Vínculos</span>
+                          </header>
+                          {(activeLayer === null || activeLayer === 'badges') && (
+                            <div className="studio-locked-links">
+                              <span>
+                                <small>Time</small>
+                                <strong>{draft.teamName}</strong>
+                              </span>
+                              <span>
+                                <small>Coleção</small>
+                                <strong>{draft.collectionName}</strong>
+                              </span>
+                              <em>Vínculos controlados pelo card de origem</em>
+                            </div>
+                          )}
+                        </section>
+                      </div>
+                    )}
+
+                    {panel === 'photo' && (
+                      <div className="studio-control-stack" role="tabpanel">
+                        <div className="studio-control-intro">
+                          <strong>Foto do jogador</strong>
+                          <p>
+                            Busca recortes e renders PNG, além de fotos JPEG, no TheSportsDB. No
+                            Playground, arraste a foto direto no canvas.
+                          </p>
+                        </div>
+                        <label className="studio-photo-search">
+                          Buscar jogador
+                          <input
+                            autoComplete="off"
+                            onChange={(event) => setPhotoQuery(event.target.value)}
+                            placeholder="Ex.: Neymar"
+                            ref={photoSearchRef}
+                            type="search"
+                            value={photoQuery}
+                          />
+                        </label>
+                        <div aria-busy={photosLoading} className="studio-photo-results">
+                          {photosLoading ? (
+                            <div className="studio-list-state">Buscando fotos…</div>
+                          ) : photoSuggestions.length ? (
+                            photoSuggestions.map((suggestion) => (
+                              <button
+                                key={suggestion.id}
+                                onClick={() => choosePhoto(suggestion)}
+                                type="button"
+                              >
+                                <img alt="" src={suggestion.imageUrl} />
+                                <span>
+                                  <strong>{suggestion.name}</strong>
+                                  <small>
+                                    {suggestion.provider}
+                                    {suggestion.team && ` · ${suggestion.team}`}
+                                  </small>
+                                </span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="studio-list-state">
+                              Busque pelo nome completo do jogador.
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          className="studio-replace-card-image"
+                          disabled={!selectedCardId || !qualityReady || savingCardImage}
+                          onClick={() => void saveCardImage()}
+                          type="button"
+                        >
+                          {savingCardImage ? 'Salvando imagem…' : 'Salvar imagem do card'}
+                        </button>
+                        <p className="studio-replace-card-image-hint">
+                          Salva o card renderizado em PNG no jogador selecionado.
+                        </p>
+                        <button
+                          className="studio-upload-button"
+                          onClick={() => setWorkspace('image')}
+                          type="button"
+                        >
+                          {playerPhotoSelected
+                            ? 'Ajustar recorte no laboratório'
+                            : 'Enviar e padronizar foto'}
+                        </button>
+                        <div className="studio-range-group">
+                          <label>
+                            <span>
+                              Escala <output>{draft.photoScale}%</output>
+                            </span>
+                            <input
+                              max={145}
+                              min={70}
+                              onChange={(event) =>
+                                updateDraft('photoScale', Number(event.target.value))
+                              }
+                              type="range"
+                              value={draft.photoScale}
+                            />
+                          </label>
+                          <label>
+                            <span>
+                              Horizontal <output>{Math.round(draft.photoX)}</output>
+                            </span>
+                            <input
+                              max={160}
+                              min={-160}
+                              onChange={(event) =>
+                                updateDraft('photoX', Number(event.target.value))
+                              }
+                              type="range"
+                              value={draft.photoX}
+                            />
+                          </label>
+                          <label>
+                            <span>
+                              Vertical <output>{Math.round(draft.photoY)}</output>
+                            </span>
+                            <input
+                              max={160}
+                              min={-160}
+                              onChange={(event) =>
+                                updateDraft('photoY', Number(event.target.value))
+                              }
+                              type="range"
+                              value={draft.photoY}
+                            />
+                          </label>
+                        </div>
+                        <div className="studio-source-credit">
+                          Fonte:{' '}
+                          <a href="https://www.thesportsdb.com" rel="noreferrer" target="_blank">
+                            TheSportsDB
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {panel === 'visual' && (
+                      <div className="studio-control-stack" role="tabpanel">
+                        <div className="studio-control-intro">
+                          <strong>Design do card</strong>
+                          <p>
+                            Modele a base, escolha o metal e personalize os detalhes da sua edição.
+                          </p>
+                        </div>
+                        <CardDesignFields
+                          design={draft.design}
+                          onChange={(design) => updateDraft('design', design)}
+                        />
+                        <fieldset className="studio-preset-grid">
+                          <legend>Background presets</legend>
+                          {stylePresets.map((preset) => (
+                            <label key={preset.id}>
+                              <input
+                                checked={
+                                  draft.primaryColor === preset.primaryColor &&
+                                  draft.secondaryColor === preset.secondaryColor
+                                }
+                                name="studioPreset"
+                                onChange={() => applyPreset(preset)}
+                                type="radio"
+                              />
+                              <span>
+                                <i
+                                  style={{
+                                    background: `linear-gradient(135deg, ${preset.primaryColor}, ${preset.secondaryColor})`,
+                                  }}
+                                />
+                                <strong>{preset.label}</strong>
+                                <small>{preset.description}</small>
+                              </span>
+                            </label>
+                          ))}
+                        </fieldset>
+                        <fieldset className="studio-chip-picker">
+                          <legend>Tratamento</legend>
+                          {(
+                            [
+                              ['elite', 'Elite Aqua'],
+                              ['signature', 'Assinatura'],
+                              ['midnight', 'Noturno'],
+                              ['velocity', 'Velocidade'],
+                            ] as const
+                          ).map(([id, label]) => (
+                            <label key={id}>
+                              <input
+                                checked={draft.style === id}
+                                name="cardStyle"
+                                onChange={() => updateDraft('style', id)}
+                                type="radio"
+                              />
+                              <span>{label}</span>
+                            </label>
+                          ))}
+                        </fieldset>
+                        <fieldset className="studio-chip-picker finish-picker">
+                          <legend>Acabamento</legend>
+                          {finishOptions.map((finish) => (
+                            <label key={finish.id}>
+                              <input
+                                checked={draft.finish === finish.id}
+                                name="cardFinish"
+                                onChange={() => updateDraft('finish', finish.id)}
+                                type="radio"
+                              />
+                              <span>{finish.label}</span>
+                            </label>
+                          ))}
+                        </fieldset>
+                        <fieldset className="studio-chip-picker rarity-picker">
+                          <legend>Raridade</legend>
+                          {rarityOptions.map((rarity) => (
+                            <label key={rarity.id}>
+                              <input
+                                checked={draft.rarity === rarity.id}
+                                name="cardRarity"
+                                onChange={() => updateDraft('rarity', rarity.id)}
+                                type="radio"
+                              />
+                              <span data-rarity={rarity.id}>{rarity.label}</span>
+                            </label>
+                          ))}
+                        </fieldset>
+                        <div className="studio-color-row">
+                          <label>
+                            Cor principal
+                            <input
+                              onChange={(event) => updateDraft('primaryColor', event.target.value)}
+                              type="color"
+                              value={draft.primaryColor}
+                            />
+                          </label>
+                          <label>
+                            Cor de contraste
+                            <input
+                              onChange={(event) =>
+                                updateDraft('secondaryColor', event.target.value)
+                              }
+                              type="color"
+                              value={draft.secondaryColor}
+                            />
+                          </label>
+                        </div>
+                        <div className="studio-visual-actions">
+                          <button onClick={randomizeVisual} type="button">
+                            Randomizar visual
+                          </button>
+                          <button onClick={restoreCollectionDefaults} type="button">
+                            Padrão da coleção
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {panel === 'layers' && (
+                      <div className="studio-control-stack" role="tabpanel">
+                        <div className="studio-control-intro">
+                          <strong>Layers</strong>
+                          <p>
+                            Topo da lista aparece à frente no card. Ocultar e reordenar também afeta
+                            a exportação.
+                          </p>
+                        </div>
+                        <div className="studio-layer-list">
+                          <div className="studio-layer-root">
+                            <span aria-hidden="true">⌄</span>
+                            <strong>Card</strong>
+                            <small>Composição final</small>
+                          </div>
+                          {layerGroups.map((group) => {
+                            const layers = [...draft.layerOrder]
+                              .reverse()
+                              .filter((layer) => group.layers.includes(layer));
+                            return (
+                              <section className="studio-layer-group" key={group.label}>
+                                <p>
+                                  <span aria-hidden="true">⌄</span>
+                                  {group.label}
+                                </p>
+                                {layers.map((layer) => {
+                                  const definition = layerDefinitions.find(
+                                    (entry) => entry.id === layer,
+                                  );
+                                  const orderIndex = draft.layerOrder.indexOf(layer);
+                                  return (
+                                    <div
+                                      className={
+                                        activeLayer === layer
+                                          ? 'studio-layer-row is-active'
+                                          : 'studio-layer-row'
+                                      }
+                                      draggable
+                                      key={layer}
+                                      onDragEnd={() => setDraggedLayer(null)}
+                                      onDragOver={(event) => event.preventDefault()}
+                                      onDragStart={(event) => startLayerReorder(event, layer)}
+                                      onDrop={(event) => completeLayerReorder(event, layer)}
+                                    >
+                                      <span aria-hidden="true" className="studio-layer-drag">
+                                        ⋮⋮
+                                      </span>
+                                      <button
+                                        aria-label={
+                                          draft.layerVisibility[layer]
+                                            ? `Ocultar ${definition?.label}`
+                                            : `Mostrar ${definition?.label}`
+                                        }
+                                        aria-pressed={draft.layerVisibility[layer]}
+                                        className="studio-layer-visibility"
+                                        onClick={() => toggleLayerVisibility(layer)}
+                                        type="button"
+                                      >
+                                        {draft.layerVisibility[layer] ? 'Visível' : 'Oculta'}
+                                      </button>
+                                      <button
+                                        className="studio-layer-name"
+                                        onClick={() => selectLayer(layer)}
+                                        type="button"
+                                      >
+                                        <strong>{definition?.label}</strong>
+                                        <small>{definition?.description}</small>
+                                      </button>
+                                      <button
+                                        aria-label={
+                                          draft.layerLocks[layer]
+                                            ? `Desbloquear ${definition?.label}`
+                                            : `Bloquear ${definition?.label}`
+                                        }
+                                        aria-pressed={draft.layerLocks[layer]}
+                                        className="studio-layer-lock"
+                                        onClick={() => toggleLayerLock(layer)}
+                                        type="button"
+                                      >
+                                        {draft.layerLocks[layer] ? 'Lock' : 'Livre'}
+                                      </button>
+                                      <span className="studio-layer-order">
+                                        <button
+                                          aria-label={`Subir ${definition?.label}`}
+                                          disabled={orderIndex === draft.layerOrder.length - 1}
+                                          onClick={() => reorderLayer(layer, 1)}
+                                          type="button"
+                                        >
+                                          ↑
+                                        </button>
+                                        <button
+                                          aria-label={`Descer ${definition?.label}`}
+                                          disabled={orderIndex === 0}
+                                          onClick={() => reorderLayer(layer, -1)}
+                                          type="button"
+                                        >
+                                          ↓
+                                        </button>
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </section>
+                            );
+                          })}
+                        </div>
+                        {playground && (
+                          <button
+                            className="studio-reset-palette"
+                            onClick={restoreCollectionDefaults}
+                            type="button"
+                          >
+                            Restaurar grade e ordem da coleção
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </StudioSidebar>
+              )}
+            </div>
+          </StudioCanvas>
 
           {commandPaletteOpen && (
             <div className="studio-dialog-backdrop">
@@ -2335,7 +2198,7 @@ export function Studio() {
               </dialog>
             </div>
           )}
-        </div>
+        </StudioWorkspace>
       )}
     </section>
   );
@@ -2530,7 +2393,37 @@ function StudioCardPreview({
   showGuides: boolean;
   svgRef: RefObject<SVGSVGElement | null> | undefined;
 }>) {
+  const [rendered, setRendered] = useState<Readonly<{
+    draft: StudioDraft;
+    src: string;
+    model: boolean;
+  }> | null>(null);
+  const [renderError, setRenderError] = useState('');
+  const currentRender = rendered?.draft === draft ? rendered : null;
+  const modelImage = currentRender?.src ?? '';
   const instanceId = useId().replace(/:/g, '');
+  useEffect(() => {
+    const svg = svgRef?.current;
+    if (!svg) return;
+    let cancelled = false;
+    setRenderError('');
+    void loadStudioCard(svg, 'ea-fc-item', draft)
+      .then((canvas) => {
+        if (!cancelled)
+          setRendered({
+            draft,
+            src: cardImageDataUrl(canvas),
+            model: canvas instanceof HTMLCanvasElement,
+          });
+      })
+      .catch((error: unknown) => {
+        if (!cancelled)
+          setRenderError(error instanceof Error ? error.message : 'Falha ao renderizar a arte.');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [draft, svgRef]);
   const ids = {
     ambient: `${instanceId}-ambient`,
     body: `${instanceId}-body`,
@@ -2540,9 +2433,10 @@ function StudioCardPreview({
     finish: `${instanceId}-finish`,
     frameGlow: `${instanceId}-frame-glow`,
     playerGlow: `${instanceId}-player-glow`,
+    photoTone: `${instanceId}-photo-tone`,
+    texture: `${instanceId}-texture`,
   };
-  const framePath =
-    'M72 56H226L248 24H352L374 56H528L570 98V618Q570 706 492 754L300 792 108 754Q30 706 30 618V98Z';
+  const framePath = cardFramePaths[draft.design.frame];
   const elite = draft.style === 'elite';
   const darkCard = draft.style !== 'velocity';
   const copyColor = elite ? '#f6e6a8' : darkCard ? '#f8fafc' : '#10141d';
@@ -2553,16 +2447,14 @@ function StudioCardPreview({
     0,
     rarityOptions.findIndex((rarity) => rarity.id === draft.rarity),
   );
-  const frameMetal =
-    draft.rarity === 'icon'
-      ? '#f4df9a'
-      : draft.rarity === 'legendary'
-        ? '#e8c66b'
-        : draft.secondaryColor;
+  const frameMetal = draft.design.metalColor;
   const playerSize = 600 * (draft.photoScale / 100);
   const playerX = (600 - playerSize) / 2 + draft.photoX;
   const playerY = 38 + (600 - playerSize) / 2 + draft.photoY;
-  const nameFontSize = draft.name.length > 20 ? 30 : draft.name.length > 16 ? 35 : 43;
+  const nameText = draft.name.toLocaleUpperCase().slice(0, 24);
+  const nameFontSize =
+    ((draft.name.length > 20 ? 30 : draft.name.length > 16 ? 35 : 43) * draft.design.nameScale) /
+    100;
   const motifPath = {
     elite: 'M54 408C128 208 472 208 546 408',
     signature: 'M-46 418C148 120 412 156 650 56',
@@ -2598,13 +2490,14 @@ function StudioCardPreview({
           d={framePath}
           fill="none"
           opacity={draft.rarity === 'common' ? '0.5' : '0.74'}
-          stroke={draft.secondaryColor}
-          strokeWidth={draft.rarity === 'common' ? '4' : '7'}
+          stroke={frameMetal}
+          strokeWidth={draft.design.frameWidth}
         />
       </g>
     ),
     effects: (
       <g clipPath={`url(#${ids.clip})`}>
+        <CardTexture design={draft.design} id={ids.texture} color={frameMetal} />
         <path
           d={motifPath}
           fill="none"
@@ -2644,13 +2537,14 @@ function StudioCardPreview({
           cy="336"
           fill={draft.secondaryColor}
           filter={`url(#${ids.playerGlow})`}
-          opacity="0.2"
+          opacity={draft.design.glow / 100}
           rx="168"
           ry="214"
         />
         {draft.playerImageUrl ? (
           <image
             className="studio-player-art"
+            filter={`url(#${ids.photoTone})`}
             height={playerSize}
             href={draft.playerImageUrl}
             key={draft.playerImageUrl}
@@ -2716,7 +2610,7 @@ function StudioCardPreview({
           fill="none"
           opacity="0.76"
           stroke={`url(#${ids.edge})`}
-          strokeWidth="4"
+          strokeWidth={draft.design.frameWidth}
         />
         <path
           d={framePath}
@@ -2726,13 +2620,12 @@ function StudioCardPreview({
           strokeWidth="1.5"
           transform="translate(300 408) scale(.956 .958) translate(-300 -408)"
         />
-        {rarityTier >= 1 && (
-          <g fill="none" stroke={frameMetal} strokeWidth="5">
-            <path d="M30 152 58 126M30 214 52 194" />
-            <path d="m570 152-28-26m28 88-22-20" />
-          </g>
-        )}
-        {rarityTier >= 2 && (
+        <g fill="none" stroke={frameMetal} opacity=".65">
+          <path d="M62 370V430L82 452M538 370V430L518 452" strokeWidth="2" />
+          <path d="M70 385V426L88 444M530 385V426L512 444" />
+          <path d="m62 360 4-4-4-4-4 4Zm476 0 4-4-4-4-4 4Z" fill={frameMetal} />
+        </g>
+        {rarityTier >= 2 && draft.design.frame === 'crest' && (
           <path
             d="M222 56 248 24H352L378 56"
             fill="none"
@@ -2740,6 +2633,21 @@ function StudioCardPreview({
             strokeLinecap="square"
             strokeWidth="7"
           />
+        )}
+        {draft.collectionLogoUrl ? (
+          <image
+            href={draft.collectionLogoUrl}
+            x="284"
+            y="45"
+            width="32"
+            height="32"
+            preserveAspectRatio="xMidYMid meet"
+          />
+        ) : (
+          <g transform="translate(300 62)" fill="none" stroke={frameMetal}>
+            <path d="m0-15 13 8v14L0 15-13 7V-7Z" />
+            <path d="M-5 7V-7H6M-5-1H3" strokeWidth="2" />
+          </g>
         )}
         {rarityTier >= 3 && (
           <g fill="none" opacity="0.9" stroke={frameMetal} strokeWidth="5">
@@ -2795,17 +2703,24 @@ function StudioCardPreview({
     ),
     identity: (
       <g transform={`translate(${draft.identityX} ${draft.identityY})`}>
+        <CardNameplate design={draft.design} panel={deepPanel} />
         <text
           fill={copyColor}
-          fontFamily="Arial Narrow, Inter, sans-serif"
+          fontFamily={
+            draft.design.typography === 'classic'
+              ? 'Georgia, serif'
+              : 'Arial Narrow, Inter, sans-serif'
+          }
           fontSize={nameFontSize}
           fontWeight="800"
           letterSpacing="-1.5"
           textAnchor="middle"
+          textLength={nameText.length * nameFontSize * 0.66 > 432 ? 432 : undefined}
+          lengthAdjust="spacingAndGlyphs"
           x="300"
           y="526"
         >
-          {draft.name.toLocaleUpperCase().slice(0, 24)}
+          {nameText}
         </text>
         <text
           fill={mutedCopy}
@@ -2854,27 +2769,30 @@ function StudioCardPreview({
               >
                 {draft[key]}
               </text>
-              <rect
-                fill={copyColor}
-                height="5"
-                opacity="0.13"
-                rx="2.5"
-                width="120"
-                x={x}
-                y={y + 15}
-              />
-              <rect
-                fill={highlighted ? draft.secondaryColor : copyColor}
-                height="5"
-                opacity={highlighted ? '0.95' : '0.48'}
-                rx="2.5"
-                width={(draft[key] / 100) * 120}
-                x={x}
-                y={y + 15}
-              />
+              <g visibility={draft.design.showStatBars ? 'visible' : 'hidden'}>
+                <rect
+                  fill={copyColor}
+                  height="5"
+                  opacity="0.13"
+                  rx="2.5"
+                  width="120"
+                  x={x}
+                  y={y + 15}
+                />
+                <rect
+                  fill={highlighted ? draft.secondaryColor : copyColor}
+                  height="5"
+                  opacity={highlighted ? '0.95' : '0.48'}
+                  rx="2.5"
+                  width={(draft[key] / 100) * 120}
+                  x={x}
+                  y={y + 15}
+                />
+              </g>
             </g>
           );
         })}
+        <CardEdition design={draft.design} />
         <text
           fill={mutedCopy}
           fontFamily="JetBrains Mono, monospace"
@@ -2891,146 +2809,176 @@ function StudioCardPreview({
   };
 
   return (
-    <svg
-      aria-label={`Prévia do card de ${draft.name}`}
-      className="studio-card-master"
-      ref={svgRef}
-      role="img"
-      viewBox="0 0 600 800"
+    <div
+      className={modelImage ? 'studio-card-render is-rendered' : 'studio-card-render'}
+      data-render-state={
+        renderError ? 'error' : currentRender ? (currentRender.model ? '3d' : 'svg') : 'pending'
+      }
     >
-      <defs>
-        <linearGradient id={ids.body} x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0" stopColor={draft.primaryColor} />
-          <stop offset="0.58" stopColor={deepPanel} />
-          <stop offset="1" stopColor={darkCard ? '#02060c' : '#dbe3eb'} />
-        </linearGradient>
-        <radialGradient id={ids.ambient} cx="68%" cy="24%" r="74%">
-          <stop offset="0" stopColor={draft.secondaryColor} stopOpacity="0.38" />
-          <stop offset="0.5" stopColor={draft.primaryColor} stopOpacity="0.08" />
-          <stop offset="1" stopColor={deepPanel} stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id={ids.edge} x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0" stopColor={draft.secondaryColor} />
-          <stop offset="0.5" stopColor={frameMetal} />
-          <stop offset="1" stopColor={draft.secondaryColor} />
-        </linearGradient>
-        <linearGradient id={ids.fade} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor={deepPanel} stopOpacity="0" />
-          <stop offset="0.58" stopColor={deepPanel} stopOpacity="0.82" />
-          <stop offset="1" stopColor={deepPanel} stopOpacity="0.98" />
-        </linearGradient>
-        <linearGradient id={ids.finish} x1="0" x2="1" y1="1" y2="0">
-          <stop offset="0" stopColor={draft.secondaryColor} stopOpacity="0" />
-          <stop offset="0.46" stopColor="#ffffff" stopOpacity="0.7" />
-          <stop offset="0.66" stopColor={frameMetal} stopOpacity="0.1" />
-          <stop offset="1" stopColor={draft.secondaryColor} stopOpacity="0.45" />
-        </linearGradient>
-        <filter height="160%" id={ids.frameGlow} width="160%" x="-30%" y="-30%">
-          <feGaussianBlur stdDeviation={rarityTier >= 4 ? '12' : '8'} />
-        </filter>
-        <filter height="180%" id={ids.playerGlow} width="180%" x="-40%" y="-40%">
-          <feGaussianBlur stdDeviation="32" />
-        </filter>
-        <clipPath id={ids.clip}>
-          <path d={framePath} />
-        </clipPath>
-      </defs>
+      {svgRef && (
+        <output className="studio-card-render-status" aria-live="polite">
+          {renderError
+            ? `Prévia vetorial · ${renderError}`
+            : currentRender
+              ? currentRender.model
+                ? 'Modelo 3D atualizado'
+                : 'Modo vetorial · 3D indisponível'
+              : 'Atualizando modelo…'}
+        </output>
+      )}
+      {modelImage && <img alt="" className="studio-card-model" src={modelImage} />}
+      <svg
+        aria-label={`Prévia do card de ${draft.name}`}
+        className="studio-card-master"
+        ref={svgRef}
+        role="img"
+        viewBox="0 0 600 800"
+      >
+        <defs>
+          <linearGradient id={ids.body} x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stopColor={draft.primaryColor} />
+            <stop offset="0.58" stopColor={deepPanel} />
+            <stop offset="1" stopColor={darkCard ? '#02060c' : '#dbe3eb'} />
+          </linearGradient>
+          <radialGradient id={ids.ambient} cx="68%" cy="24%" r="74%">
+            <stop offset="0" stopColor={draft.secondaryColor} stopOpacity="0.38" />
+            <stop offset="0.5" stopColor={draft.primaryColor} stopOpacity="0.08" />
+            <stop offset="1" stopColor={deepPanel} stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id={ids.edge} x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stopColor="#fff4d6" />
+            <stop offset="0.22" stopColor={frameMetal} />
+            <stop offset="0.45" stopColor="#604521" />
+            <stop offset="0.52" stopColor="#fff4d6" />
+            <stop offset="0.76" stopColor={frameMetal} />
+            <stop offset="1" stopColor="#604521" />
+          </linearGradient>
+          <linearGradient id={ids.fade} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stopColor={deepPanel} stopOpacity="0" />
+            <stop offset="0.58" stopColor={deepPanel} stopOpacity="0.82" />
+            <stop offset="1" stopColor={deepPanel} stopOpacity="0.98" />
+          </linearGradient>
+          <linearGradient id={ids.finish} x1="0" x2="1" y1="1" y2="0">
+            <stop offset="0" stopColor={draft.secondaryColor} stopOpacity="0" />
+            <stop offset="0.46" stopColor="#ffffff" stopOpacity="0.7" />
+            <stop offset="0.66" stopColor={frameMetal} stopOpacity="0.1" />
+            <stop offset="1" stopColor={draft.secondaryColor} stopOpacity="0.45" />
+          </linearGradient>
+          <filter height="160%" id={ids.frameGlow} width="160%" x="-30%" y="-30%">
+            <feGaussianBlur stdDeviation={rarityTier >= 4 ? '12' : '8'} />
+          </filter>
+          <filter height="180%" id={ids.playerGlow} width="180%" x="-40%" y="-40%">
+            <feGaussianBlur stdDeviation="32" />
+          </filter>
+          <filter id={ids.photoTone} colorInterpolationFilters="sRGB">
+            <feColorMatrix type="saturate" values={String(draft.design.photoSaturation / 100)} />
+            <feComponentTransfer>
+              <feFuncR type="linear" slope={draft.design.photoBrightness / 100} />
+              <feFuncG type="linear" slope={draft.design.photoBrightness / 100} />
+              <feFuncB type="linear" slope={draft.design.photoBrightness / 100} />
+            </feComponentTransfer>
+          </filter>
+          <clipPath id={ids.clip}>
+            <path d={framePath} />
+          </clipPath>
+        </defs>
 
-      {draft.layerOrder.map((layer) =>
-        draft.layerVisibility[layer] ? (
-          <g data-card-layer={layer} key={layer}>
-            {layers[layer]}
+        {draft.layerOrder.map((layer) =>
+          draft.layerVisibility[layer] ? (
+            <g data-card-layer={layer} key={layer}>
+              {layers[layer]}
+            </g>
+          ) : null,
+        )}
+
+        {showGuides && (
+          <g data-export-ignore="true" fill="none" stroke="#70ddff" strokeDasharray="8 7">
+            <path d={framePath} />
+            <rect height="104" width="464" x="68" y="454" />
+            <path d="M68 572H532M230 582V728M392 582V728" />
           </g>
-        ) : null,
-      )}
+        )}
 
-      {showGuides && (
-        <g data-export-ignore="true" fill="none" stroke="#70ddff" strokeDasharray="8 7">
-          <path d={framePath} />
-          <rect height="104" width="464" x="68" y="454" />
-          <path d="M68 572H532M230 582V728M392 582V728" />
-        </g>
-      )}
-
-      {onSelectLayer && (
-        <g
-          data-export-ignore="true"
-          className={playground ? 'studio-hotspots is-playground' : 'studio-hotspots'}
-        >
-          <LayerHotspot
-            active={activeLayer === 'background'}
-            height={430}
-            label="Background"
-            layer="background"
-            locked={draft.layerLocks.background}
-            onSelect={onSelectLayer}
-            width={540}
-            x={30}
-            y={24}
-          />
-          <LayerHotspot
-            active={activeLayer === 'photo'}
-            height={500}
-            label="Player Photo"
-            layer="photo"
-            locked={draft.layerLocks.photo}
-            onPointerDown={(event) => onDragStart?.('photo', event)}
-            onPointerMove={onDragMove}
-            onPointerUp={onDragEnd}
-            onSelect={onSelectLayer}
-            playground={playground}
-            width={390}
-            x={150 + draft.photoX}
-            y={52 + draft.photoY}
-          />
-          <LayerHotspot
-            active={activeLayer === 'rating'}
-            height={210}
-            label="Overall"
-            layer="rating"
-            locked={draft.layerLocks.rating}
-            onPointerDown={(event) => onDragStart?.('rating', event)}
-            onPointerMove={onDragMove}
-            onPointerUp={onDragEnd}
-            onSelect={onSelectLayer}
-            playground={playground}
-            width={108}
-            x={66 + draft.ratingX}
-            y={82 + draft.ratingY}
-          />
-          <LayerHotspot
-            active={activeLayer === 'identity'}
-            height={104}
-            label="Name"
-            layer="identity"
-            locked={draft.layerLocks.identity}
-            onPointerDown={(event) => onDragStart?.('identity', event)}
-            onPointerMove={onDragMove}
-            onPointerUp={onDragEnd}
-            onSelect={onSelectLayer}
-            playground={playground}
-            width={464}
-            x={68 + draft.identityX}
-            y={454 + draft.identityY}
-          />
-          <LayerHotspot
-            active={activeLayer === 'stats'}
-            height={176}
-            label="Stats"
-            layer="stats"
-            locked={draft.layerLocks.stats}
-            onPointerDown={(event) => onDragStart?.('stats', event)}
-            onPointerMove={onDragMove}
-            onPointerUp={onDragEnd}
-            onSelect={onSelectLayer}
-            playground={playground}
-            width={464}
-            x={68 + draft.statsX}
-            y={572 + draft.statsY}
-          />
-        </g>
-      )}
-    </svg>
+        {onSelectLayer && (
+          <g
+            data-export-ignore="true"
+            className={playground ? 'studio-hotspots is-playground' : 'studio-hotspots'}
+          >
+            <LayerHotspot
+              active={activeLayer === 'background'}
+              height={430}
+              label="Background"
+              layer="background"
+              locked={draft.layerLocks.background}
+              onSelect={onSelectLayer}
+              width={540}
+              x={30}
+              y={24}
+            />
+            <LayerHotspot
+              active={activeLayer === 'photo'}
+              height={500}
+              label="Player Photo"
+              layer="photo"
+              locked={draft.layerLocks.photo}
+              onPointerDown={(event) => onDragStart?.('photo', event)}
+              onPointerMove={onDragMove}
+              onPointerUp={onDragEnd}
+              onSelect={onSelectLayer}
+              playground={playground}
+              width={390}
+              x={150 + draft.photoX}
+              y={52 + draft.photoY}
+            />
+            <LayerHotspot
+              active={activeLayer === 'rating'}
+              height={210}
+              label="Overall"
+              layer="rating"
+              locked={draft.layerLocks.rating}
+              onPointerDown={(event) => onDragStart?.('rating', event)}
+              onPointerMove={onDragMove}
+              onPointerUp={onDragEnd}
+              onSelect={onSelectLayer}
+              playground={playground}
+              width={108}
+              x={66 + draft.ratingX}
+              y={82 + draft.ratingY}
+            />
+            <LayerHotspot
+              active={activeLayer === 'identity'}
+              height={104}
+              label="Name"
+              layer="identity"
+              locked={draft.layerLocks.identity}
+              onPointerDown={(event) => onDragStart?.('identity', event)}
+              onPointerMove={onDragMove}
+              onPointerUp={onDragEnd}
+              onSelect={onSelectLayer}
+              playground={playground}
+              width={464}
+              x={68 + draft.identityX}
+              y={454 + draft.identityY}
+            />
+            <LayerHotspot
+              active={activeLayer === 'stats'}
+              height={176}
+              label="Stats"
+              layer="stats"
+              locked={draft.layerLocks.stats}
+              onPointerDown={(event) => onDragStart?.('stats', event)}
+              onPointerMove={onDragMove}
+              onPointerUp={onDragEnd}
+              onSelect={onSelectLayer}
+              playground={playground}
+              width={464}
+              x={68 + draft.statsX}
+              y={572 + draft.statsY}
+            />
+          </g>
+        )}
+      </svg>
+    </div>
   );
 }
 
@@ -3166,7 +3114,7 @@ function readStoredSession(): StoredSession {
   }
 }
 
-async function loadStudioCard(
+async function loadStudioCardArtwork(
   svg: SVGSVGElement,
   kind: StudioAssetKind,
 ): Promise<HTMLImageElement> {
@@ -3189,6 +3137,35 @@ async function loadStudioCard(
   } finally {
     URL.revokeObjectURL(svgUrl);
   }
+}
+
+async function loadStudioCard(
+  svg: SVGSVGElement,
+  kind: StudioAssetKind,
+  draft: StudioDraft,
+): Promise<HTMLCanvasElement | HTMLImageElement> {
+  const artwork = await loadStudioCardArtwork(svg, kind);
+  try {
+    return await cardModelImage(
+      artwork,
+      draft.design,
+      kind !== 'simple-card' && draft.layerVisibility.badges,
+    );
+  } catch (error) {
+    console.error('[StudioCardModel]', error);
+    return artwork;
+  }
+}
+
+function cardImageDataUrl(image: HTMLCanvasElement | HTMLImageElement): string {
+  if (image instanceof HTMLCanvasElement) return image.toDataURL('image/png');
+  const canvas = document.createElement('canvas');
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Canvas 2D indisponível para a prévia do card.');
+  context.drawImage(image, 0, 0);
+  return canvas.toDataURL('image/png');
 }
 
 async function inlineImages(svg: SVGSVGElement): Promise<void> {
@@ -3228,7 +3205,7 @@ async function loadRemoteImage(source: string): Promise<HTMLImageElement> {
 }
 
 type StudioAssetComposition = Readonly<{
-  cardImage: HTMLImageElement;
+  cardImage: CanvasImageSource;
   draft: StudioDraft;
   height: number;
   includeShadow: boolean;
@@ -3367,7 +3344,7 @@ function paintStudioBackground(
 
 function drawCardImage(
   context: CanvasRenderingContext2D,
-  image: HTMLImageElement,
+  image: CanvasImageSource,
   x: number,
   y: number,
   width: number,

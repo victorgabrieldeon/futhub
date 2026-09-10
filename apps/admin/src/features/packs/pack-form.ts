@@ -27,7 +27,7 @@ export function emptyPack(): PackInput {
 }
 
 export function packInput(pack: Pack): PackInput {
-  const { config, id: _, ...values } = pack;
-  const { id: __, ...configValues } = config;
+  const { config, id: _, presentation: _presentation, ...values } = pack;
+  const { id: _configId, ...configValues } = config;
   return { ...values, config: configValues };
 }

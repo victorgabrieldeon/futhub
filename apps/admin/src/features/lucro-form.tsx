@@ -1,55 +1,19 @@
-import {
-  DiscordBold,
-  DiscordEmbed,
-  DiscordEmbedDescription,
-  DiscordEmbedFooter,
-  DiscordMessage,
-  DiscordMessages,
-} from '@skyra/discord-components-react';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 
 import { ApiClientError, type LucroConfigInputDto, putV1AdminLucro } from '@futhub/api-client';
 import { adminApiOptions } from '../api/admin-client';
-import type {
-  LucroConfig,
-  LucroEmbed,
-  LucroEmbedSchema,
-  LucroReward,
-  LucroRewardMessages,
-} from '../lib/lucro';
+import type { LucroConfig, LucroReward, LucroRewardMessages } from '../lib/lucro';
 import { getLucroRewardTier } from '../lib/lucro-economy';
 import type { LucroEconomyInput } from '../lib/lucro-economy';
 
-type ActiveTab = 'cooldown' | 'rewards' | 'embed';
+type ActiveTab = 'cooldown' | 'rewards';
 type CooldownUnit = 'seconds' | 'minutes' | 'hours';
 type RewardDraft = { key: string; value: string; weight: string; messages: LucroRewardMessages };
 type RewardFormDraft = Omit<RewardDraft, 'key'>;
-type PreviewScenario = 'basic' | 'good' | 'great' | 'random';
-type PreviewTestState = 'idle' | 'thinking' | 'complete';
-type PreviewValues = Readonly<Record<string, string>>;
-
-const previewScenarioOptions: ReadonlyArray<Readonly<{ id: PreviewScenario; label: string }>> = [
-  { id: 'basic', label: 'Lucro básico' },
-  { id: 'good', label: 'Bom lucro' },
-  { id: 'great', label: 'Grande lucro' },
-  { id: 'random', label: 'Aleatório' },
-];
-const previewVariablePresentation: Readonly<
-  Record<string, Readonly<{ icon: string; label: string }>>
-> = {
-  '{message}': { icon: '✨', label: 'Mensagem' },
-  '{reward}': { icon: '💰', label: 'Recompensa' },
-  '{balance}': { icon: '👛', label: 'Saldo' },
-  '{xp}': { icon: '⭐', label: 'XP' },
-  '{level}': { icon: '📈', label: 'Nível' },
-  '{availableAt}': { icon: '⏱', label: 'Próximo resgate' },
-};
-const integerFormatter = new Intl.NumberFormat('pt-BR');
 
 const tabs: ReadonlyArray<Readonly<{ id: ActiveTab; label: string }>> = [
   { id: 'cooldown', label: 'Cooldown' },
   { id: 'rewards', label: 'Lucros' },
-  { id: 'embed', label: 'Embed Discord' },
 ];
 const cooldownUnitLabels: Record<CooldownUnit, string> = {
   seconds: 'segundos',
@@ -96,107 +60,13 @@ function formatDuration(seconds: number): string {
     .join(' ');
 }
 
-function validPreviewRewards(rewards: readonly RewardDraft[]): RewardDraft[] {
-  return rewards.filter(
-    (reward) => Number.isFinite(Number(reward.value)) && Number(reward.value) > 0,
-  );
-}
-
-function chooseRandomPreviewReward(rewards: readonly RewardDraft[]): RewardDraft | undefined {
-  const candidates = validPreviewRewards(rewards);
-  const totalWeight = candidates.reduce(
-    (total, reward) => total + Math.max(Number(reward.weight), 0),
-    0,
-  );
-  if (totalWeight <= 0) return candidates[0];
-
-  let position = Math.random() * totalWeight;
-  for (const reward of candidates) {
-    position -= Math.max(Number(reward.weight), 0);
-    if (position < 0) return reward;
-  }
-  return candidates.at(-1);
-}
-
-function previewRewardFor(
-  rewards: readonly RewardDraft[],
-  scenario: PreviewScenario,
-  randomRewardKey: string | null,
-): RewardDraft | undefined {
-  const sorted = validPreviewRewards(rewards).sort(
-    (left, right) => Number(left.value) - Number(right.value),
-  );
-  if (scenario === 'random')
-    return sorted.find((reward) => reward.key === randomRewardKey) ?? sorted[0];
-  if (scenario === 'basic') return sorted[0];
-  if (scenario === 'good') return sorted[Math.floor(sorted.length / 2)];
-  return sorted.at(-1);
-}
-
-function previewValuesFor(reward: RewardDraft | undefined, cooldownSeconds: number): PreviewValues {
-  const value = Number(reward?.value) || 500;
-  const duration = formatDuration(
-    Number.isFinite(cooldownSeconds) && cooldownSeconds > 0 ? cooldownSeconds : 600,
-  );
-  return {
-    message: reward?.messages.pt.trim() || `Lucro raro: +${value}`,
-    reward: String(value),
-    balance: integerFormatter.format(3750 + value),
-    xp: '10',
-    level: '12',
-    availableAt: `em ${duration}`,
-  };
-}
-
-function renderPreviewText(
-  text: string,
-  values: PreviewValues,
-  highlightedToken: string | null,
-  keyPrefix: string,
-) {
-  return text.split(/(\{[^}]+\})/g).map((part, index) => {
-    const value =
-      part.startsWith('{') && part.endsWith('}') ? values[part.slice(1, -1)] : undefined;
-    if (value === undefined) return part;
-    return (
-      <span
-        className={part === highlightedToken ? 'preview-token-highlight' : undefined}
-        key={`${keyPrefix}-${index}`}
-      >
-        {value}
-      </span>
-    );
-  });
-}
-
-function renderPreview(template: string, values: PreviewValues, highlightedToken: string | null) {
-  const occurrences = new Map<string, number>();
-
-  return template.split(/(\*\*[^*]+\*\*|\n)/g).map((part) => {
-    const occurrence = occurrences.get(part) ?? 0;
-    occurrences.set(part, occurrence + 1);
-    const key = `${part}-${occurrence}`;
-    if (part === '\n') return <br key={key} />;
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return (
-        <DiscordBold key={key}>
-          {renderPreviewText(part.slice(2, -2), values, highlightedToken, key)}
-        </DiscordBold>
-      );
-    }
-    return renderPreviewText(part, values, highlightedToken, key);
-  });
-}
-
 export function LucroForm({
   config,
-  embedSchema,
   onEconomyChange,
   onRewardsTabChange,
   onSaved,
 }: Readonly<{
   config: LucroConfig;
-  embedSchema: LucroEmbedSchema;
   onEconomyChange: (economy: LucroEconomyInput) => void;
   onRewardsTabChange: (rewardsSelected: boolean) => void;
   onSaved: (config: LucroConfig) => void;
@@ -210,8 +80,6 @@ export function LucroForm({
   const [rewards, setRewards] = useState<RewardDraft[]>(() =>
     config.rewards.map(({ id: _id, ...reward }) => draftFrom(reward)),
   );
-  const [embed, setEmbed] = useState<LucroEmbed>(config.embed);
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const rewardDialogRef = useRef<HTMLDialogElement>(null);
   const [rewardToEdit, setRewardToEdit] = useState<number | null>(null);
   const [rewardDraft, setRewardDraft] = useState<RewardFormDraft>(emptyRewardDraft);
@@ -219,20 +87,10 @@ export function LucroForm({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, setPending] = useState(false);
-  const [previewScenario, setPreviewScenario] = useState<PreviewScenario>('good');
-  const [randomPreviewRewardKey, setRandomPreviewRewardKey] = useState<string | null>(null);
-  const [previewTestState, setPreviewTestState] = useState<PreviewTestState>('idle');
-  const [previewPulse, setPreviewPulse] = useState(0);
-  const [highlightedToken, setHighlightedToken] = useState<string | null>(null);
-  const testTimerRef = useRef<number | null>(null);
-  const highlightTimerRef = useRef<number | null>(null);
   const [playerPreviewReady, setPlayerPreviewReady] = useState(false);
 
   const totalWeight = rewards.reduce((total, reward) => total + (Number(reward.weight) || 0), 0);
   const cooldownSeconds = Number(cooldownValue) * cooldownUnitSeconds[cooldownUnit];
-  const embedProperty = (field: keyof LucroEmbed) => embedSchema.properties[field];
-  const previewReward = previewRewardFor(rewards, previewScenario, randomPreviewRewardKey);
-  const previewValues = previewValuesFor(previewReward, cooldownSeconds);
   const estimatedAverageReward =
     totalWeight > 0
       ? rewards.reduce((total, reward) => total + Number(reward.value) * Number(reward.weight), 0) /
@@ -257,14 +115,6 @@ export function LucroForm({
     onRewardsTabChange(activeTab === 'rewards');
   }, [activeTab, onRewardsTabChange]);
 
-  useEffect(
-    () => () => {
-      if (testTimerRef.current !== null) window.clearTimeout(testTimerRef.current);
-      if (highlightTimerRef.current !== null) window.clearTimeout(highlightTimerRef.current);
-    },
-    [],
-  );
-
   function change(): void {
     setSaved(false);
     setError(null);
@@ -288,12 +138,6 @@ export function LucroForm({
       [next[index], next[target]] = [next[target], next[index]];
       return next;
     });
-  }
-
-  function updateEmbed(field: keyof LucroEmbed, value: string): void {
-    change();
-    setEmbed((current) => ({ ...current, [field]: value }));
-    flashPreview();
   }
 
   function openRewardDialog(index?: number): void {
@@ -340,57 +184,6 @@ export function LucroForm({
           ),
     );
     closeRewardDialog();
-  }
-
-  function insertVariable(token: string): void {
-    const input = descriptionRef.current;
-    const start = input?.selectionStart ?? embed.description.length;
-    const end = input?.selectionEnd ?? start;
-    const description = `${embed.description.slice(0, start)}${token}${embed.description.slice(end)}`;
-    updateEmbed('description', description);
-    flashPreview(token);
-    requestAnimationFrame(() => {
-      input?.focus();
-      input?.setSelectionRange(start + token.length, start + token.length);
-    });
-  }
-
-  function flashPreview(token: string | null = null): void {
-    setPreviewPulse((current) => current + 1);
-    setHighlightedToken(token);
-    if (highlightTimerRef.current !== null) {
-      window.clearTimeout(highlightTimerRef.current);
-      highlightTimerRef.current = null;
-    }
-    if (token) {
-      highlightTimerRef.current = window.setTimeout(() => {
-        setHighlightedToken(null);
-        highlightTimerRef.current = null;
-      }, 900);
-    }
-  }
-
-  function selectPreviewScenario(scenario: PreviewScenario): void {
-    setPreviewScenario(scenario);
-    if (scenario === 'random') {
-      setRandomPreviewRewardKey(chooseRandomPreviewReward(rewards)?.key ?? null);
-    }
-    flashPreview();
-  }
-
-  function testCommand(): void {
-    if (previewTestState === 'thinking') return;
-    if (previewScenario === 'random') {
-      setRandomPreviewRewardKey(chooseRandomPreviewReward(rewards)?.key ?? null);
-    }
-    if (testTimerRef.current !== null) window.clearTimeout(testTimerRef.current);
-    setPreviewTestState('thinking');
-    flashPreview();
-    testTimerRef.current = window.setTimeout(() => {
-      setPreviewTestState('complete');
-      testTimerRef.current = null;
-      flashPreview();
-    }, 800);
   }
 
   function changeCooldownUnit(nextUnit: CooldownUnit): void {
@@ -445,22 +238,12 @@ export function LucroForm({
       setError('Cada faixa precisa de valor, peso e mensagem válidos.');
       return;
     }
-    if (!embed.title.trim() || !embed.description.trim() || !/^#[\dA-Fa-f]{6}$/.test(embed.color)) {
-      setActiveTab('embed');
-      setError('Preencha título, descrição e uma cor hexadecimal válida para a embed.');
-      return;
-    }
-
     setPending(true);
     const payload: LucroConfigInputDto = {
       cooldownSeconds,
       rewards: parsedRewards,
-      embed: {
-        title: embed.title.trim(),
-        description: embed.description.trim(),
-        color: embed.color,
-        footer: embed.footer.trim(),
-      },
+      // ponytail: the economy API still requires embed; omit when that contract makes it optional.
+      embed: config.embed,
     };
     let savedConfig: LucroConfig;
     try {
@@ -475,7 +258,6 @@ export function LucroForm({
     setCooldownUnit(savedUnit);
     setCooldownValue(String(savedConfig.cooldownSeconds / cooldownUnitSeconds[savedUnit]));
     setRewards(savedConfig.rewards.map(({ id: _id, ...reward }) => draftFrom(reward)));
-    setEmbed(savedConfig.embed);
     onSaved(savedConfig);
     setSaved(true);
     setPending(false);
@@ -913,209 +695,6 @@ export function LucroForm({
           </div>
         </div>
       </dialog>
-
-      {activeTab === 'embed' ? (
-        <section
-          aria-labelledby="embed-tab"
-          className="form-section embed-section"
-          id="embed-panel"
-          role="tabpanel"
-        >
-          <div className="card-heading">
-            <div>
-              <p className="eyebrow">Discord</p>
-              <h2>Mensagem de sucesso</h2>
-            </div>
-            <span className="badge">JSON Schema</span>
-          </div>
-          <div className="embed-editor">
-            <div className="embed-fields">
-              <div className="embed-fields-intro">
-                <p className="eyebrow">Editor de mensagem</p>
-                <p>Monte a resposta que o jogador verá ao resgatar o lucro.</p>
-              </div>
-              <label htmlFor="embedTitle">
-                Título
-                <input
-                  id="embedTitle"
-                  maxLength={embedProperty('title').maxLength}
-                  onChange={(event) => updateEmbed('title', event.target.value)}
-                  placeholder={embedProperty('title').examples[0]}
-                  required
-                  value={embed.title}
-                />
-              </label>
-              <label htmlFor="embedDescription">
-                Mensagem
-                <textarea
-                  id="embedDescription"
-                  maxLength={embedProperty('description').maxLength}
-                  onChange={(event) => updateEmbed('description', event.target.value)}
-                  onDragOver={(event) => {
-                    event.dataTransfer.dropEffect = 'copy';
-                  }}
-                  onDrop={() => {
-                    requestAnimationFrame(() => {
-                      const description = descriptionRef.current?.value;
-                      if (description !== undefined) updateEmbed('description', description);
-                    });
-                  }}
-                  placeholder={embedProperty('description').examples[0]}
-                  ref={descriptionRef}
-                  required
-                  rows={7}
-                  value={embed.description}
-                />
-              </label>
-              <div className="variable-palette">
-                <div className="variable-palette-intro">
-                  <p className="eyebrow">Inserir dados na mensagem</p>
-                  <p>Clique para inserir no cursor ou arraste até a posição desejada.</p>
-                </div>
-                <div className="variable-list">
-                  {embedSchema.variables.map((variable) => {
-                    const presentation = previewVariablePresentation[variable.token];
-                    const label = presentation?.label ?? variable.description;
-                    return (
-                      <button
-                        aria-label={`Inserir ${label}: ${variable.token}`}
-                        className="variable-chip"
-                        draggable
-                        key={variable.token}
-                        onClick={() => insertVariable(variable.token)}
-                        onDragStart={(event) => {
-                          event.dataTransfer.effectAllowed = 'copy';
-                          event.dataTransfer.setData('text/plain', variable.token);
-                        }}
-                        title={`${variable.description} Exemplo: ${variable.example}`}
-                        type="button"
-                      >
-                        <span aria-hidden="true" className="variable-chip-icon">
-                          {presentation?.icon ?? '•'}
-                        </span>
-                        <span className="variable-chip-label">{label}</span>
-                        <code>{variable.token}</code>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="embed-meta-fields">
-                <label htmlFor="embedColor">
-                  Cor
-                  <input
-                    id="embedColor"
-                    onChange={(event) => updateEmbed('color', event.target.value)}
-                    type="color"
-                    value={embed.color}
-                  />
-                </label>
-                <label htmlFor="embedFooter">
-                  Rodapé
-                  <input
-                    id="embedFooter"
-                    maxLength={embedProperty('footer').maxLength}
-                    onChange={(event) => updateEmbed('footer', event.target.value)}
-                    placeholder={embedProperty('footer').examples[0]}
-                    value={embed.footer}
-                  />
-                </label>
-              </div>
-            </div>
-            <div className="embed-preview">
-              <div className="embed-preview-topbar">
-                <div>
-                  <span className="preview-label">Prévia ao vivo</span>
-                  <p>Resposta no Discord</p>
-                </div>
-                <button
-                  className="preview-test-button"
-                  disabled={previewTestState === 'thinking'}
-                  onClick={testCommand}
-                  type="button"
-                >
-                  <span aria-hidden="true">▶</span>
-                  {previewTestState === 'thinking'
-                    ? 'Testando…'
-                    : previewTestState === 'complete'
-                      ? 'Testar novamente'
-                      : 'Testar /lucro'}
-                </button>
-              </div>
-              <div className="preview-result-selector">
-                <span>Visualizar resultado</span>
-                <div
-                  aria-label="Resultado simulado"
-                  className="preview-result-options"
-                  role="group"
-                >
-                  {previewScenarioOptions.map((scenario) => (
-                    <button
-                      aria-pressed={previewScenario === scenario.id}
-                      className="preview-result-option"
-                      key={scenario.id}
-                      onClick={() => selectPreviewScenario(scenario.id)}
-                      type="button"
-                    >
-                      {scenario.id === 'random' ? '🎲 ' : null}
-                      {scenario.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="preview-stage">
-                <div className="preview-command-context">
-                  <span aria-hidden="true" className="preview-user-avatar">
-                    V
-                  </span>
-                  <p>
-                    <strong>Victor</strong> usou <code>/lucro</code>
-                  </p>
-                </div>
-                {previewTestState === 'thinking' ? (
-                  <div aria-live="polite" className="preview-thinking">
-                    <span aria-hidden="true" className="preview-bot-avatar">
-                      F
-                    </span>
-                    <p>
-                      FutHub está pensando
-                      <span aria-hidden="true" className="preview-typing-dots">
-                        <i />
-                        <i />
-                        <i />
-                      </span>
-                    </p>
-                  </div>
-                ) : (
-                  <div
-                    className="preview-message"
-                    key={`${previewPulse}-${previewReward?.key ?? 'fallback'}`}
-                  >
-                    <DiscordMessages>
-                      <DiscordMessage author="FutHub" bot>
-                        <DiscordEmbed color={embed.color} embedTitle={embed.title} slot="embeds">
-                          <DiscordEmbedDescription slot="description">
-                            {renderPreview(embed.description, previewValues, highlightedToken)}
-                          </DiscordEmbedDescription>
-                          {embed.footer ? (
-                            <DiscordEmbedFooter slot="footer">{embed.footer}</DiscordEmbedFooter>
-                          ) : null}
-                        </DiscordEmbed>
-                      </DiscordMessage>
-                    </DiscordMessages>
-                  </div>
-                )}
-              </div>
-              <p aria-live="polite" className="preview-hint">
-                {previewTestState === 'complete'
-                  ? 'Teste concluído com a faixa selecionada.'
-                  : 'A prévia acompanha suas edições em tempo real.'}
-              </p>
-            </div>
-          </div>
-          <p className="field-note">{embedSchema.description}</p>
-        </section>
-      ) : null}
 
       <div className="form-actions">
         <div aria-live="polite">

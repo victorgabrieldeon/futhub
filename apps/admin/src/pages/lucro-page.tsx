@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { AdminIcon } from '../components/admin-icon';
 
-import { ApiClientError, getV1AdminLucro, getV1AdminLucroSchema } from '@futhub/api-client';
+import { ApiClientError, getV1AdminLucro } from '@futhub/api-client';
 import { adminApiOptions } from '../api/admin-client';
 import { LucroForm } from '../features/lucro-form';
 import {
@@ -11,9 +12,9 @@ import {
   rollLucroReward,
 } from '../lib/lucro-economy';
 import type { LucroDistributionReward, LucroEconomyInput } from '../lib/lucro-economy';
-import type { LucroConfig, LucroEmbedSchema } from '../lib/lucro';
+import type { LucroConfig } from '../lib/lucro';
 
-type LucroData = Readonly<{ config: LucroConfig; embedSchema: LucroEmbedSchema }>;
+type LucroData = Readonly<{ config: LucroConfig }>;
 type SimulationResult = Readonly<{
   id: number;
   chance: number;
@@ -52,11 +53,11 @@ export function LucroPage() {
 
   useEffect(() => {
     let active = true;
-    void Promise.all([getV1AdminLucro(adminApiOptions()), getV1AdminLucroSchema(adminApiOptions())])
-      .then(([config, embedSchema]) => {
+    void getV1AdminLucro(adminApiOptions())
+      .then((config) => {
         if (!active) return;
         const lucroConfig = config as LucroConfig;
-        setData({ config: lucroConfig, embedSchema: embedSchema as LucroEmbedSchema });
+        setData({ config: lucroConfig });
         setEconomyInput(lucroConfig);
       })
       .catch((cause) => {
@@ -85,7 +86,7 @@ export function LucroPage() {
   if (error) return <p className="form-error">{error}</p>;
   if (!data) return null;
 
-  const { config, embedSchema } = data;
+  const { config } = data;
   const economy = analyzeLucroEconomy(economyInput ?? config);
   const highEconomyImpact = hasHighEconomyImpact(economy);
   const latestSimulation = simulationHistory[0];
@@ -124,39 +125,59 @@ export function LucroPage() {
       : `Média de ${formatCoins(economy.averageReward)} moedas com uso a cada ${formatDuration(economy.cooldownSeconds ?? 0)}.`;
 
   return (
-    <section className="command-page lucro-page" aria-labelledby="command-title">
-      <header className="command-header">
-        <div>
-          <p className="eyebrow">Economia · comando</p>
-          <h1 id="command-title">/lucro</h1>
-          <p>Construa a distribuição, teste a recompensa e acompanhe o impacto da economia.</p>
-        </div>
-        <div className="header-metrics" aria-label="Resumo da configuração">
+    <section className="lucro-command" aria-labelledby="command-title">
+      <header className="lucro-command__hero">
+        <div className="lucro-command__identity">
+          <AdminIcon className="page-title-icon" name="economy" />
           <div>
-            <span>Cooldown</span>
+            <p>Central de economia</p>
+            <h1 id="command-title">/lucro</h1>
+            <small>Ritmo e distribuição das recompensas do comando.</small>
+            <Link to="/app/respostas?resposta=lucro.success">Editar respostas do bot</Link>
+          </div>
+        </div>
+        <div className="lucro-command__telemetry" aria-label="Resumo da configuração">
+          <div>
+            <span>Cadência</span>
             <strong>{formatDuration(economy.cooldownSeconds ?? config.cooldownSeconds)}</strong>
           </div>
           <div>
-            <span>Faixas</span>
+            <span>Faixas ativas</span>
             <strong>{economy.distribution.length}</strong>
           </div>
+          <div>
+            <span>Média por uso</span>
+            <strong>{formatCoins(economy.averageReward)}</strong>
+          </div>
+        </div>
+        <div className="lucro-command__roll">
+          <span>{latestSimulation ? 'Último resultado' : 'Simulador de sorte'}</span>
+          <strong>
+            {latestSimulation ? `+${formatCoins(latestSimulation.value)}` : 'Pronto para rodar'}
+          </strong>
+          <button
+            disabled={rolling || economy.distribution.length === 0}
+            onClick={simulateReward}
+            type="button"
+          >
+            {rolling ? 'Sorteando…' : 'Simular'}
+          </button>
         </div>
       </header>
-      <div
-        className={`command-content-grid${rewardsSelected ? '' : ' command-content-grid--single'}`}
-      >
-        <LucroForm
-          config={config}
-          embedSchema={embedSchema}
-          onEconomyChange={updateEconomyPreview}
-          onRewardsTabChange={setRewardsSelected}
-          onSaved={(saved) => {
-            setData((current) => (current ? { ...current, config: saved } : current));
-            setEconomyInput(saved);
-          }}
-        />
+      <div className={`lucro-command__body${rewardsSelected ? ' is-monitoring' : ''}`}>
+        <main className="lucro-command__controls">
+          <LucroForm
+            config={config}
+            onEconomyChange={updateEconomyPreview}
+            onRewardsTabChange={setRewardsSelected}
+            onSaved={(saved) => {
+              setData((current) => (current ? { ...current, config: saved } : current));
+              setEconomyInput(saved);
+            }}
+          />
+        </main>
         {rewardsSelected ? (
-          <aside className="economy-panel" aria-label="Distribuição e impacto da economia">
+          <aside className="lucro-command__monitor economy-panel" aria-label="Distribuição e impacto da economia">
             <section className="economy-overview" aria-labelledby="distribution-title">
               <div>
                 <p className="eyebrow">Distribuição ao vivo</p>
@@ -241,14 +262,7 @@ export function LucroPage() {
                   <p className="eyebrow">Preview de sorte</p>
                   <h2 id="simulator-title">Simular recompensa</h2>
                 </div>
-                <button
-                  className="simulation-button"
-                  disabled={rolling || economy.distribution.length === 0}
-                  onClick={simulateReward}
-                  type="button"
-                >
-                  {rolling ? 'Sorteando…' : 'Rolar agora'}
-                </button>
+                <span className="simulator-heading__status">Monitor ativo</span>
               </div>
               <div
                 aria-live="polite"

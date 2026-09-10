@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useMemo, useRef } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import type { Card, Reference } from '../cards/actions';
 import type { PackInput } from './actions';
 import {
@@ -42,6 +42,7 @@ export function PackEditor({
   working,
 }: PackEditorProps) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [activeStep, setActiveStep] = useState(0);
   const isOverallRangeValid = form.config.minOverall <= form.config.maxOverall;
   const updateRule = useMemo<PackRuleChange>(
     () => (onlyKey, excludedKey, id, target) => {
@@ -72,6 +73,7 @@ export function PackEditor({
   useEffect(() => {
     const node = dialog.current;
     if (!open || !node) return;
+    setActiveStep(0);
     node.showModal();
     return () => node.close();
   }, [open]);
@@ -105,58 +107,141 @@ export function PackEditor({
             ×
           </button>
         </header>
-        <div className="ops-dialog-body pack-editor__body">
-          <IdentitySection form={form} onChange={onChange} />
-          <OfferSection form={form} onChange={onChange} />
-          <EligibilitySection
-            cards={catalog.cards}
-            collections={catalog.collections}
-            form={form}
-            onChange={onChange}
-            onRuleChange={updateRule}
-            onRuleTargetChange={updateRuleTarget}
-            teams={catalog.teams}
-            validRange={isOverallRangeValid}
-          />
-        </div>
-        <footer className="dialog-actions pack-editor__footer">
-          {onOpenStudio && (
-            <button
-              className="ops-button secondary"
-              disabled={working}
-              onClick={onOpenStudio}
-              type="button"
-            >
-              Abrir Studio
-            </button>
-          )}
-          {onPause && (
-            <button
-              className="ops-button danger"
-              disabled={working}
-              onClick={onPause}
-              type="button"
-            >
-              Pausar pack
-            </button>
-          )}
-          <button
-            className="ops-button secondary"
-            disabled={working}
-            onClick={onClose}
-            type="button"
-          >
-            Cancelar
-          </button>
-          <button
-            className="ops-button accent"
-            disabled={working || !isOverallRangeValid}
-            type="submit"
-          >
-            {working ? 'Salvando...' : editingName ? 'Salvar alterações' : 'Criar pack'}
-          </button>
-        </footer>
+        <PackEditorProgress activeStep={activeStep} />
+        {activeStep === 0 && (
+          <div className="ops-dialog-body pack-editor__body">
+            <IdentitySection form={form} onChange={onChange} />
+          </div>
+        )}
+        {activeStep === 1 && (
+          <div className="ops-dialog-body pack-editor__body">
+            <OfferSection form={form} onChange={onChange} />
+          </div>
+        )}
+        {activeStep === 2 && (
+          <div className="ops-dialog-body pack-editor__body">
+            <EligibilitySection
+              cards={catalog.cards}
+              collections={catalog.collections}
+              form={form}
+              onChange={onChange}
+              onRuleChange={updateRule}
+              onRuleTargetChange={updateRuleTarget}
+              teams={catalog.teams}
+              validRange={isOverallRangeValid}
+            />
+          </div>
+        )}
+        <PackEditorActions
+          activeStep={activeStep}
+          editingName={editingName}
+          identityComplete={Boolean(form.name.trim() && form.emoji.trim())}
+          isOverallRangeValid={isOverallRangeValid}
+          onClose={onClose}
+          onNext={() => setActiveStep((step) => Math.min(step + 1, 2))}
+          onOpenStudio={onOpenStudio}
+          onPause={onPause}
+          onPrevious={() => setActiveStep((step) => Math.max(step - 1, 0))}
+          working={working}
+        />
       </form>
     </dialog>
+  );
+}
+
+function PackEditorProgress({ activeStep }: Readonly<{ activeStep: number }>) {
+  const steps = ['Identidade', 'Oferta', 'Elegibilidade'];
+
+  return (
+    <ol aria-label="Etapas da criação do pack" className="pack-editor__steps">
+      {steps.map((step, index) => (
+        <li aria-current={activeStep === index ? 'step' : undefined} key={step}>
+          <span>{String(index + 1).padStart(2, '0')}</span>
+          {step}
+        </li>
+      ))}
+      <span className="sr-only">
+        Etapa {activeStep + 1} de {steps.length}
+      </span>
+    </ol>
+  );
+}
+
+function PackEditorActions({
+  activeStep,
+  editingName,
+  identityComplete,
+  isOverallRangeValid,
+  onClose,
+  onNext,
+  onOpenStudio,
+  onPause,
+  onPrevious,
+  working,
+}: Readonly<{
+  activeStep: number;
+  editingName: string | null;
+  identityComplete: boolean;
+  isOverallRangeValid: boolean;
+  onClose: () => void;
+  onNext: () => void;
+  onOpenStudio: (() => void) | null;
+  onPause: (() => void) | null;
+  onPrevious: () => void;
+  working: boolean;
+}>) {
+  const isFirstStep = activeStep === 0;
+  const isLastStep = activeStep === 2;
+  const canContinue = activeStep !== 0 || identityComplete;
+
+  return (
+    <footer className="dialog-actions pack-editor__footer">
+      {onOpenStudio && (
+        <button
+          className="ops-button secondary"
+          disabled={working}
+          onClick={onOpenStudio}
+          type="button"
+        >
+          Abrir Studio
+        </button>
+      )}
+      {onPause && (
+        <button className="ops-button danger" disabled={working} onClick={onPause} type="button">
+          Pausar pack
+        </button>
+      )}
+      <button className="ops-button secondary" disabled={working} onClick={onClose} type="button">
+        Cancelar
+      </button>
+      {!isFirstStep && (
+        <button
+          className="ops-button secondary"
+          disabled={working}
+          onClick={onPrevious}
+          type="button"
+        >
+          Voltar
+        </button>
+      )}
+      {isLastStep ? (
+        <button
+          className="ops-button accent"
+          disabled={working || !isOverallRangeValid}
+          type="submit"
+        >
+          {working ? 'Salvando...' : editingName ? 'Salvar alterações' : 'Criar pack'}
+        </button>
+      ) : (
+        <button
+          className="ops-button accent"
+          disabled={working || !canContinue}
+          onClick={onNext}
+          type="button"
+        >
+          Continuar
+        </button>
+      )}
+    </footer>
   );
 }

@@ -5,18 +5,30 @@ import {
   getV1AdminSession,
   postV1AdminSession,
 } from '@futhub/api-client';
-import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { type FormEvent, Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { NavLink, Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 import { adminApiOptions } from './api/admin-client';
+import { AdminIcon } from './components/admin-icon';
+import { LoginScene } from './components/login-stadium';
 import { Cards } from './features/cards/cards';
 import { Packs } from './features/packs/packs';
 import { PackStudio } from './features/studio/pack-studio';
 import { Studio } from './features/studio/studio';
-import type { LucroConfig, LucroReward } from './lib/lucro';
+import type { LucroConfig } from './lib/lucro';
 import { LucroPage } from './pages/lucro-page';
+import { AlbumPage } from './pages/album-page';
+import { ChapterNavigation } from './components/chapter-navigation';
+import { BotResponseDraftScope, BotResponsesPage } from './features/bot-responses/bot-responses-page';
 
 type Theme = 'light' | 'dark';
-
+const AiChatPage = lazy(() =>
+  import('./features/ai-chat/ai-chat-page').then((module) => ({ default: module.AiChatPage })),
+);
+const AiSettingsPage = lazy(() =>
+  import('./features/settings/ai-settings-page').then((module) => ({
+    default: module.AiSettingsPage,
+  })),
+);
 function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>(() =>
     document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
@@ -45,45 +57,42 @@ function ThemeToggle() {
     </button>
   );
 }
-function LoginScene() {
-  return (
-    <div className="login-scene" aria-hidden="true">
-      <i className="login-scene__spark login-scene__spark--one" />
-      <i className="login-scene__spark login-scene__spark--two" />
-      <div className="login-scene__summon">
-        <i className="login-scene__ring" />
-        <i className="login-scene__ring login-scene__ring--outer" />
-        <i className="login-scene__particle login-scene__particle--one" />
-        <i className="login-scene__particle login-scene__particle--two" />
-        <i className="login-scene__particle login-scene__particle--three" />
-      </div>
-      <div className="login-scene__stadium-card">F</div>
-      <div className="login-scene__stadium">
-        <i className="login-scene__stand login-scene__stand--north" />
-        <i className="login-scene__stand login-scene__stand--east" />
-        <i className="login-scene__stand login-scene__stand--south" />
-        <div className="login-scene__pitch" />
-      </div>
-    </div>
-  );
-}
-
 export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route element={<RequireSession />}>
         <Route element={<AdminLayout />}>
+          <Route path="/app" element={<AlbumPage />} />
           <Route path="/app/comandos" element={<CommandsPage />} />
           <Route path="/app/comandos/lucro" element={<LucroPage />} />
-          <Route path="/app/gerenciar/cards" element={<Cards />} />
+          <Route path="/app/respostas" element={<BotResponsesPage />} />
+          <Route path="/app/gerenciar/cards" element={<Cards view="players" />} />
+          <Route path="/app/gerenciar/times" element={<Cards view="teams" />} />
+          <Route path="/app/gerenciar/colecoes" element={<Cards view="collections" />} />
           <Route path="/app/gerenciar/packs" element={<Packs />} />
           <Route path="/app/gerenciar/jogadores" element={<Cards variant="vault" />} />
           <Route path="/app/studio" element={<Studio />} />
           <Route path="/app/studio/packs" element={<PackStudio />} />
+          <Route
+            path="/app/assistente"
+            element={
+              <Suspense fallback={<p role="status">Carregando assistente…</p>}>
+                <AiChatPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/app/configuracoes"
+            element={
+              <Suspense fallback={<p role="status">Carregando configurações…</p>}>
+                <AiSettingsPage />
+              </Suspense>
+            }
+          />
         </Route>
       </Route>
-      <Route path="/" element={<Navigate replace to="/app/comandos" />} />
+      <Route path="/" element={<Navigate replace to="/app" />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
@@ -107,7 +116,13 @@ function RequireSession() {
   }, []);
 
   if (authorized === null) return null;
-  return authorized ? <Outlet /> : <Navigate replace to="/login" />;
+  return authorized ? (
+    <BotResponseDraftScope>
+      <Outlet />
+    </BotResponseDraftScope>
+  ) : (
+    <Navigate replace to="/login" />
+  );
 }
 
 function LoginPage() {
@@ -128,7 +143,7 @@ function LoginPage() {
     }
     try {
       await postV1AdminSession({ apiKey }, adminApiOptions());
-      navigate('/app/comandos');
+      navigate('/app');
     } catch (cause) {
       setError(cause instanceof ApiClientError ? cause.message : 'Não foi possível autenticar.');
       setPending(false);
@@ -154,7 +169,10 @@ function LoginPage() {
       </section>
       <form className="login-card" onSubmit={submit}>
         <p className="eyebrow">Acesso restrito</p>
-        <h1>FutHub Admin</h1>
+        <h1 className="page-title">
+          <AdminIcon className="page-title-icon" name="cards" />
+          <span>FutHub Admin</span>
+        </h1>
         <p className="intro">Use API key para operar configurações do jogo.</p>
         <label htmlFor="apiKey">API key</label>
         <input
@@ -184,30 +202,36 @@ function AdminLayout() {
   }
 
   return (
-    <main className="admin-shell">
+    <main className="admin-shell futhub-editorial">
+      <a className="futhub-skip" href="#admin-content">
+        Pular para conteúdo
+      </a>
       <header className="top-nav">
-        <NavLink className="brand-lockup" to="/app/comandos">
-          <span className="brand-mark" aria-hidden="true" />
+        <NavLink className="brand-lockup" to="/app" aria-label="FutHub, visão geral">
+          <span className="futhub-monogram" aria-hidden="true">
+            f<span>h</span>
+          </span>
           <strong>FutHub</strong>
           <span className="brand-divider" />
           <span>Admin</span>
         </NavLink>
-        <nav className="admin-section-tabs" aria-label="Área administrativa">
-          <NavLink to="/app/comandos">Comandos</NavLink>
-          <NavLink to="/app/gerenciar/cards">Gerenciamento</NavLink>
-          <NavLink to="/app/gerenciar/packs">Packs</NavLink>
-          <NavLink to="/app/studio">Studio</NavLink>
-        </nav>
         <div className="nav-actions">
+          <NavLink className="settings-button" to="/app/configuracoes" aria-label="Configurações">
+            <AdminIcon name="settings" />
+            <span>Configurações</span>
+          </NavLink>
           <ThemeToggle />
-          <span className="session-state">API key ativa</span>
+          <span className="session-state">Admin conectado</span>
           <button className="logout-button" onClick={() => void logout()} type="button">
             Sair
           </button>
         </div>
       </header>
-      <div className="admin-workspace">
-        <Outlet />
+      <ChapterNavigation />
+      <div className="admin-layout">
+        <div className="admin-workspace" id="admin-content" tabIndex={-1}>
+          <Outlet />
+        </div>
       </div>
     </main>
   );
@@ -272,61 +296,15 @@ function commandDuration(seconds: number): string {
   return `${seconds} s`;
 }
 
-function chooseReward(rewards: readonly LucroReward[]): LucroReward | null {
-  const totalWeight = rewards.reduce((total, reward) => total + reward.weight, 0);
-  if (totalWeight <= 0) return rewards[0] ?? null;
-
-  let position = Math.random() * totalWeight;
-  for (const reward of rewards) {
-    position -= reward.weight;
-    if (position < 0) return reward;
-  }
-  return rewards.at(-1) ?? null;
-}
-
-function previewText(config: LucroConfig, reward: LucroReward): string {
-  const values: Record<string, string> = {
-    '{availableAt}': 'em 10 minutos',
-    '{balance}': '2.850',
-    '{level}': '12',
-    '{message}': reward.messages.pt,
-    '{nextLevelXp}': '400',
-    '{reward}': String(reward.value),
-    '{xp}': '120',
-  };
-  return Object.entries(values).reduce(
-    (text, [token, value]) => text.replaceAll(token, value),
-    config.embed.description,
-  );
-}
-function renderDiscordMarkdown(text: string) {
-  const occurrences = new Map<string, number>();
-  return text
-    .replaceAll('\\n', '\n')
-    .split(/(\*\*[^*]+\*\*|\n)/g)
-    .map((part) => {
-      const occurrence = occurrences.get(part) ?? 0;
-      occurrences.set(part, occurrence + 1);
-      const key = `${part}-${occurrence}`;
-      if (part === '\n') return <br key={key} />;
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={key}>{part.slice(2, -2)}</strong>;
-      }
-      return part;
-    });
-}
-
 function CommandsPage() {
   const navigate = useNavigate();
   const searchRef = useRef<HTMLInputElement>(null);
   const paletteDialogRef = useRef<HTMLDialogElement>(null);
-  const previewDialogRef = useRef<HTMLDialogElement>(null);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<CommandCategory>('Todos');
   const [config, setConfig] = useState<LucroConfig | null>(null);
   const [configState, setConfigState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [paletteQuery, setPaletteQuery] = useState('');
-  const [previewReward, setPreviewReward] = useState<LucroReward | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -367,21 +345,40 @@ function CommandsPage() {
   );
   const featuredCommand = visibleCommands.find((command) => command.status === 'active') ?? null;
   const exploratoryCommands = visibleCommands.filter((command) => command !== featuredCommand);
-  const currentReward = previewReward ?? config?.rewards[0] ?? null;
-  const renderedPreview = config && currentReward ? previewText(config, currentReward) : '';
   const featuredStatus = configState === 'error' ? 'error' : 'active';
-  const healthLabel =
-    configState === 'ready'
-      ? 'Tudo operacional'
-      : configState === 'error'
-        ? 'Configuração indisponível'
-        : 'Atualizando configuração';
-
-  function openPreview(): void {
-    if (!config) return;
-    setPreviewReward(chooseReward(config.rewards));
-    if (!previewDialogRef.current?.open) previewDialogRef.current?.showModal();
-  }
+  const activeCount = commandModules.filter((command) => command.status === 'active').length;
+  const plannedCount = commandModules.length - activeCount;
+  const overviewStats = [
+    {
+      detail: configState === 'ready' ? 'Configuração carregada' : 'Aguardando API',
+      label: 'Disponibilidade',
+      tone: configState,
+      value:
+        configState === 'ready'
+          ? 'Operacional'
+          : configState === 'error'
+            ? 'Indisponível'
+            : 'Sincronizando',
+    },
+    {
+      detail: 'Prontos para uso',
+      label: 'Comandos ativos',
+      tone: 'active',
+      value: String(activeCount),
+    },
+    {
+      detail: 'No diretório atual',
+      label: 'Em planejamento',
+      tone: 'planned',
+      value: String(plannedCount),
+    },
+    {
+      detail: config ? 'Distribuição configurada' : 'Carregando distribuição',
+      label: 'Recompensas /lucro',
+      tone: 'violet',
+      value: config ? String(config.rewards.length) : '—',
+    },
+  ] as const;
 
   function focusCommandSearch(): void {
     paletteDialogRef.current?.close();
@@ -391,17 +388,17 @@ function CommandsPage() {
   const paletteActions = [
     {
       category: 'Economia',
-      detail: 'Cooldown, lucros e embed',
+      detail: 'Cooldown e recompensas',
       label: 'Configurar /lucro',
       run: () => navigate('/app/comandos/lucro'),
     },
     {
-      category: 'Teste',
-      detail: 'Simular a resposta salva no Discord',
-      label: 'Testar /lucro',
+      category: 'Respostas',
+      detail: 'Editar mensagens e visualizar exemplos do Discord',
+      label: 'Respostas do bot /lucro',
       run: () => {
         paletteDialogRef.current?.close();
-        openPreview();
+        navigate('/app/respostas?resposta=lucro.success');
       },
     },
     {
@@ -427,22 +424,27 @@ function CommandsPage() {
       <header className="command-header command-center-header">
         <div className="command-center-heading">
           <p className="eyebrow">Administração do bot</p>
-          <h1 id="commands-title">Command Center</h1>
+          <h1 className="page-title" id="commands-title">
+            <AdminIcon className="page-title-icon" name="economy" />
+            <span>Command Center</span>
+          </h1>
           <p>Controle o comportamento do FutHub e teste cada resposta antes de publicar.</p>
-          <p className="command-center-summary" aria-live="polite">
-            <span className="command-center-health-state">
-              <i
-                className={`command-center-health command-center-health--${configState}`}
-                aria-hidden="true"
-              />
-              {healthLabel}
-            </span>
-            <span>{commandCategoryCount('Todos')} módulos no diretório</span>
-            <span>1 módulo ativo</span>
-            <span>3 em planejamento</span>
-          </p>
         </div>
       </header>
+
+      <section className="command-overview" aria-label="Resumo operacional" aria-live="polite">
+        {overviewStats.map((stat) => (
+          <article
+            className={`command-overview-stat command-overview-stat--${stat.tone}`}
+            key={stat.label}
+          >
+            <span className="command-overview-indicator" aria-hidden="true" />
+            <p>{stat.label}</p>
+            <strong>{stat.value}</strong>
+            <small>{stat.detail}</small>
+          </article>
+        ))}
+      </section>
 
       <div className="command-toolbar">
         <label className="command-search">
@@ -518,6 +520,11 @@ function CommandsPage() {
                   <h2 id="featured-command-title">{featuredCommand.name}</h2>
                   <p>{featuredCommand.description}</p>
                 </div>
+                <p className="command-featured-context">
+                  {config
+                    ? `${config.rewards.length} faixas de recompensa prontas para distribuição.`
+                    : 'Carregando regras e distribuição de recompensas.'}
+                </p>
                 <dl className="command-card-stats">
                   <div>
                     <dt>Cooldown</dt>
@@ -537,12 +544,12 @@ function CommandsPage() {
                     Configurar comando →
                   </NavLink>
                   <button
-                    className="button-secondary command-test-button"
+                    className="button-secondary"
                     disabled={!config}
-                    onClick={openPreview}
+                    onClick={() => navigate('/app/respostas?resposta=lucro.success')}
                     type="button"
                   >
-                    <span aria-hidden="true">▶</span> Testar
+                    Editar resposta
                   </button>
                 </div>
               </article>
@@ -601,83 +608,6 @@ function CommandsPage() {
         </div>
       )}
 
-      <dialog className="command-modal command-test-modal" ref={previewDialogRef}>
-        <div className="command-modal-header">
-          <div>
-            <p className="eyebrow">Ambiente seguro</p>
-            <h2>Testar /lucro</h2>
-            <p>Prévia baseada na configuração atualmente salva.</p>
-          </div>
-          <button
-            aria-label="Fechar teste"
-            className="dialog-close"
-            onClick={() => previewDialogRef.current?.close()}
-            type="button"
-          >
-            ×
-          </button>
-        </div>
-        <div className="command-test-layout">
-          <aside className="command-test-controls">
-            <span className="command-test-label">Cenário simulado</span>
-            <div className="command-test-reward">
-              <span>Recompensa sorteada</span>
-              <strong>{currentReward ? `+${currentReward.value}` : '—'}</strong>
-              <small>moedas</small>
-            </div>
-            <ul>
-              <li>Jogador: Admin FutHub</li>
-              <li>Saldo inicial: 2.350</li>
-              <li>Nível atual: 12</li>
-            </ul>
-            <button
-              className="button-secondary"
-              disabled={!config}
-              onClick={() => config && setPreviewReward(chooseReward(config.rewards))}
-              type="button"
-            >
-              Executar novamente
-            </button>
-          </aside>
-          <div className="discord-stage">
-            <div className="discord-stage-bar">
-              <span>Discord preview</span>
-              <i>Somente visualização</i>
-            </div>
-            <div className="discord-message-preview">
-              <div className="discord-bot-avatar" aria-hidden="true">
-                F
-              </div>
-              <div className="discord-message-body">
-                <div className="discord-message-author">
-                  <strong>FutHub</strong>
-                  <span>APP</span>
-                  <time>Hoje às 12:00</time>
-                </div>
-                <div
-                  className="discord-command-embed"
-                  style={{ borderLeftColor: config?.embed.color ?? '#2b2d31' }}
-                >
-                  <strong>{config?.embed.title ?? '/lucro'}</strong>
-                  <p>{renderDiscordMarkdown(renderedPreview)}</p>
-                  <footer>{config?.embed.footer.replace('{availableAt}', 'em 10 minutos')}</footer>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="command-modal-footer">
-          <span>Este teste não altera saldo nem envia mensagens.</span>
-          <NavLink
-            className="button-primary"
-            onClick={() => previewDialogRef.current?.close()}
-            to="/app/comandos/lucro"
-          >
-            Abrir configuração
-          </NavLink>
-        </div>
-      </dialog>
-
       <dialog className="command-modal command-palette" ref={paletteDialogRef}>
         <div className="command-palette-search">
           <span aria-hidden="true">›</span>
@@ -732,7 +662,10 @@ function NotFoundPage() {
     <main className="login-page">
       <section className="login-card">
         <p className="eyebrow">404</p>
-        <h1>Página não encontrada</h1>
+        <h1 className="page-title">
+          <AdminIcon className="page-title-icon" name="cards" />
+          <span>Página não encontrada</span>
+        </h1>
         <NavLink className="button-primary" to="/">
           Voltar ao painel
         </NavLink>

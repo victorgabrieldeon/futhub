@@ -323,151 +323,153 @@ export function ImageTreatment({
         </section>
 
         <aside className="image-treatment-controls" aria-label="Ajustes de imagem">
-          <label className="image-treatment-upload" htmlFor={inputId}>
-            <span>{hasImage ? 'Trocar imagem' : 'Enviar imagem'}</span>
-            <small>{fileName || 'PNG, JPEG ou WebP'}</small>
-            <input
-              accept="image/png,image/jpeg,image/webp"
-              id={inputId}
-              onChange={uploadImage}
-              type="file"
-            />
-          </label>
+          <div className="image-treatment-control-scroll">
+            <label className="image-treatment-upload" htmlFor={inputId}>
+              <span>{hasImage ? 'Trocar imagem' : 'Enviar imagem'}</span>
+              <small>{fileName || 'PNG, JPEG ou WebP'}</small>
+              <input
+                accept="image/png,image/jpeg,image/webp"
+                id={inputId}
+                onChange={uploadImage}
+                type="file"
+              />
+            </label>
 
-          <fieldset className="image-treatment-crop" disabled={!hasImage}>
-            <legend>Enquadramento</legend>
-            <p>
-              Saída obrigatória: {target.width} × {target.height} px em PNG. No zoom 100%, a imagem
-              inteira é preservada; aumente o zoom somente quando quiser recortar.
-            </p>
-            {sourceSize &&
-              (sourceSize.width < target.width || sourceSize.height < target.height) && (
-                <p className="image-treatment-crop-warning">
-                  Esta imagem será ampliada para atingir a resolução padrão. Prefira um original
-                  maior quando possível.
-                </p>
-              )}
-            <ImageRange
-              label="Zoom do recorte"
-              max={220}
-              min={100}
-              onChange={(value) => setCrop((current) => ({ ...current, scale: value }))}
-              value={crop.scale}
-            />
-            <ImageRange
-              label="Horizontal"
-              max={100}
-              min={-100}
-              onChange={(value) => setCrop((current) => ({ ...current, x: value }))}
-              suffix=""
-              value={crop.x}
-            />
-            <ImageRange
-              label="Vertical"
-              max={100}
-              min={-100}
-              onChange={(value) => setCrop((current) => ({ ...current, y: value }))}
-              suffix=""
-              value={crop.y}
-            />
-            <button
-              className="image-treatment-crop-reset"
-              disabled={crop.scale === defaultCrop.scale && crop.x === 0 && crop.y === 0}
-              onClick={() => setCrop(defaultCrop)}
-              type="button"
-            >
-              Centralizar recorte
-            </button>
-          </fieldset>
-
-          <fieldset className="image-treatment-presets" disabled={!hasImage}>
-            <legend>Filtros</legend>
-            <div>
-              {imageFilterPresets.map((preset) => (
-                <button
-                  aria-pressed={activePreset === preset.id}
-                  className={activePreset === preset.id ? 'is-active' : undefined}
-                  key={preset.id}
-                  onClick={() => applyPreset(preset)}
-                  type="button"
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-
-          <fieldset className="image-treatment-sliders" disabled={!hasImage}>
-            <legend>Ajustes finos</legend>
-            <ImageRange
-              label="Luz"
-              max={140}
-              min={60}
-              onChange={(value) => updateSetting('brightness', value)}
-              value={settings.brightness}
-            />
-            <ImageRange
-              label="Contraste"
-              max={160}
-              min={60}
-              onChange={(value) => updateSetting('contrast', value)}
-              value={settings.contrast}
-            />
-            <ImageRange
-              label="Saturação"
-              max={180}
-              min={0}
-              onChange={(value) => updateSetting('saturation', value)}
-              value={settings.saturation}
-            />
-            <ImageRange
-              label="Matiz"
-              max={45}
-              min={-45}
-              onChange={(value) => updateSetting('hue', value)}
-              suffix="°"
-              value={settings.hue}
-            />
-            <ImageRange
-              label="Realçar detalhes"
-              max={100}
-              min={0}
-              onChange={(value) => updateSetting('sharpen', value)}
-              suffix="%"
-              value={settings.sharpen}
-            />
-          </fieldset>
-
-          <fieldset className="image-treatment-background" disabled={!sourceFile}>
-            <legend>Recorte por IA</legend>
-            <p>
-              O modelo identifica a pessoa e preserva transparência nas bordas. O primeiro uso baixa
-              cerca de 80 MB e fica em cache neste navegador.
-            </p>
-            <div className="image-treatment-background-actions">
+            <fieldset className="image-treatment-crop" disabled={!hasImage}>
+              <legend>Enquadramento</legend>
+              <p>
+                Saída obrigatória: {target.width} × {target.height} px em PNG. No zoom 100%, a
+                imagem inteira é preservada; aumente o zoom somente quando quiser recortar.
+              </p>
+              {sourceSize &&
+                (sourceSize.width < target.width || sourceSize.height < target.height) && (
+                  <p className="image-treatment-crop-warning">
+                    Esta imagem será ampliada para atingir a resolução padrão. Prefira um original
+                    maior quando possível.
+                  </p>
+                )}
+              <ImageRange
+                label="Zoom do recorte"
+                max={220}
+                min={100}
+                onChange={(value) => setCrop((current) => ({ ...current, scale: value }))}
+                value={crop.scale}
+              />
+              <ImageRange
+                label="Horizontal"
+                max={100}
+                min={-100}
+                onChange={(value) => setCrop((current) => ({ ...current, x: value }))}
+                suffix=""
+                value={crop.x}
+              />
+              <ImageRange
+                label="Vertical"
+                max={100}
+                min={-100}
+                onChange={(value) => setCrop((current) => ({ ...current, y: value }))}
+                suffix=""
+                value={crop.y}
+              />
               <button
-                className="button-secondary"
-                disabled={!sourceFile || processing}
-                onClick={() => void removeBackgroundWithAi()}
+                className="image-treatment-crop-reset"
+                disabled={crop.scale === defaultCrop.scale && crop.x === 0 && crop.y === 0}
+                onClick={() => setCrop(defaultCrop)}
                 type="button"
               >
-                {processing
-                  ? 'Recortando…'
-                  : cutout
-                    ? 'Refazer recorte IA'
-                    : 'Remover fundo com IA'}
+                Centralizar recorte
               </button>
-              {cutout && (
+            </fieldset>
+
+            <fieldset className="image-treatment-presets" disabled={!hasImage}>
+              <legend>Filtros</legend>
+              <div>
+                {imageFilterPresets.map((preset) => (
+                  <button
+                    aria-pressed={activePreset === preset.id}
+                    className={activePreset === preset.id ? 'is-active' : undefined}
+                    key={preset.id}
+                    onClick={() => applyPreset(preset)}
+                    type="button"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="image-treatment-sliders" disabled={!hasImage}>
+              <legend>Ajustes finos</legend>
+              <ImageRange
+                label="Luz"
+                max={140}
+                min={60}
+                onChange={(value) => updateSetting('brightness', value)}
+                value={settings.brightness}
+              />
+              <ImageRange
+                label="Contraste"
+                max={160}
+                min={60}
+                onChange={(value) => updateSetting('contrast', value)}
+                value={settings.contrast}
+              />
+              <ImageRange
+                label="Saturação"
+                max={180}
+                min={0}
+                onChange={(value) => updateSetting('saturation', value)}
+                value={settings.saturation}
+              />
+              <ImageRange
+                label="Matiz"
+                max={45}
+                min={-45}
+                onChange={(value) => updateSetting('hue', value)}
+                suffix="°"
+                value={settings.hue}
+              />
+              <ImageRange
+                label="Realçar detalhes"
+                max={100}
+                min={0}
+                onChange={(value) => updateSetting('sharpen', value)}
+                suffix="%"
+                value={settings.sharpen}
+              />
+            </fieldset>
+
+            <fieldset className="image-treatment-background" disabled={!sourceFile}>
+              <legend>Recorte por IA</legend>
+              <p>
+                O modelo identifica a pessoa e preserva transparência nas bordas. O primeiro uso
+                baixa cerca de 80 MB e fica em cache neste navegador.
+              </p>
+              <div className="image-treatment-background-actions">
                 <button
-                  className="image-treatment-restore"
-                  onClick={restoreOriginalBackground}
+                  className="button-secondary"
+                  disabled={!sourceFile || processing}
+                  onClick={() => void removeBackgroundWithAi()}
                   type="button"
                 >
-                  Restaurar original
+                  {processing
+                    ? 'Recortando…'
+                    : cutout
+                      ? 'Refazer recorte IA'
+                      : 'Remover fundo com IA'}
                 </button>
-              )}
-            </div>
-          </fieldset>
+                {cutout && (
+                  <button
+                    className="image-treatment-restore"
+                    onClick={restoreOriginalBackground}
+                    type="button"
+                  >
+                    Restaurar original
+                  </button>
+                )}
+              </div>
+            </fieldset>
+          </div>
 
           <div className="image-treatment-actions">
             <button

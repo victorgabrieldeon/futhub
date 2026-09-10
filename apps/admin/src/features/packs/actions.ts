@@ -15,6 +15,23 @@ export type PackConfig = {
   onlyTeamIds: string[];
   excludedTeamIds: string[];
 };
+export type PackPresentation = {
+  schemaVersion: 1;
+  color: string;
+  accentColor: string;
+  textColor: string;
+  effect: 'foil' | 'holographic' | 'chrome';
+  texture: 'none' | 'aura' | 'fire' | 'lightning';
+  textureOpacity: number;
+  tintOpacity: number;
+  headline: string;
+  headlineSize: number;
+  headlineX: number;
+  headlineY: number;
+  kicker: string;
+  kickerX: number;
+  kickerY: number;
+};
 export type Pack = {
   id: string;
   name: string;
@@ -26,8 +43,12 @@ export type Pack = {
   canBuy: boolean;
   limitPerUser: number;
   config: PackConfig;
+  presentation: PackPresentation | null;
 };
-export type PackInput = Omit<Pack, 'id' | 'config'> & { config: Omit<PackConfig, 'id'> };
+export type PackInput = Omit<Pack, 'id' | 'config' | 'presentation'> & {
+  config: Omit<PackConfig, 'id'>;
+  presentation?: PackPresentation;
+};
 
 function call<T>(path: string, init?: RequestInit): Promise<T> {
   adminApiOptions();
