@@ -342,18 +342,18 @@
             <article class="prerequisite"><span class="step-icon">01</span><h3>Git</h3><p>Clone repositório com <a class="inline-link" href="https://git-scm.com/downloads">Git</a> instalado.</p></article>
             <article class="prerequisite"><span class="step-icon">02</span><h3>Node.js 22.18+</h3><p>Instale <a class="inline-link" href="https://nodejs.org/">Node.js</a>. Ele fornece Corepack para usar pnpm 10.6.5.</p></article>
             <article class="prerequisite"><span class="step-icon">03</span><h3>Docker Desktop</h3><p>Instale e deixe <a class="inline-link" href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> em execução.</p></article>
-            <article class="prerequisite"><span class="step-icon">04</span><h3>Tilt</h3><p>Instale <a class="inline-link" href="https://docs.tilt.dev/install.html">Tilt</a> para subir, observar e parar stack local.</p></article>
+            <article class="prerequisite"><span class="step-icon">04</span><h3>DevSpace</h3><p>Instale <a class="inline-link" href="https://www.devspace.sh/docs/getting-started/installation">DevSpace</a> para construir, sincronizar e observar stack Kubernetes local.</p></article>
           </div>
         </div>
       </section>
 
       <section id="comece" class="section-soft">
         <div class="shell">
-          <div class="section-head"><p class="eyebrow">Ambiente local</p><h2>Suba o jogo. Veja cada peça funcionar.</h2><p>Docker e Tilt cuidam da infraestrutura. Você muda código e acompanha API, banco e bot no mesmo ambiente.</p></div>
+          <div class="section-head"><p class="eyebrow">Ambiente local</p><h2>Suba o jogo. Veja cada peça funcionar.</h2><p>Docker, Kubernetes e DevSpace cuidam da infraestrutura. Você muda código e acompanha API, banco e bot no mesmo ambiente.</p></div>
           <div class="workflow">
             <div class="steps">
-              <article class="step"><span class="step-icon">1</span><div><h3>Prepare ambiente</h3><p>Instale Docker, Tilt, Node.js 22 e habilite Corepack.</p></div></article>
-              <article class="step"><span class="step-icon">2</span><div><h3>Inicie stack</h3><p>Tilt cria ambiente local, inicia PostgreSQL e aplica migrations.</p></div></article>
+              <article class="step"><span class="step-icon">1</span><div><h3>Prepare ambiente</h3><p>Instale Docker, habilite Kubernetes, instale DevSpace e habilite Corepack.</p></div></article>
+              <article class="step"><span class="step-icon">2</span><div><h3>Inicie stack</h3><p>DevSpace constrói imagem, aplica manifests e inicia PostgreSQL, MinIO e aplicações.</p></div></article>
               <article class="step"><span class="step-icon">3</span><div><h3>Jogue e contribua</h3><p>Preencha credenciais Discord, teste fluxo e envie melhoria pequena.</p></div></article>
             </div>
             <pre><span class="code-muted"># clone repositório</span>
@@ -362,13 +362,13 @@ cd futhub
 
 <span class="code-muted"># suba ambiente local</span>
 corepack enable
-<span class="code-command">pnpm dev:tilt</span>
+<span class="code-command">pnpm dev:devspace</span>
 
 <span class="code-muted"># abra serviços locais</span>
-http://admin.futhub.localhost
-http://api.futhub.localhost
-http://s3.futhub.localhost
-http://s3console.futhub.localhost
+http://admin.futhub.localhost:8080
+http://api.futhub.localhost:8080
+http://s3.futhub.localhost:8080
+http://s3console.futhub.localhost:8080
 
 <span class="code-muted"># valide antes do PR</span>
 <span class="code-command">pnpm check</span></pre>
@@ -378,7 +378,7 @@ http://s3console.futhub.localhost
 
       <section id="windows">
         <div class="shell">
-          <div class="section-head"><p class="eyebrow">Windows</p><h2>Rode FutHub no Windows com Docker Desktop.</h2><p>Use PowerShell. Este projeto usa Docker Compose pelo Tilt; não precisa habilitar Kubernetes no Docker Desktop.</p></div>
+          <div class="section-head"><p class="eyebrow">Windows</p><h2>Rode FutHub no Windows com Docker Desktop.</h2><p>Use PowerShell. Este projeto usa DevSpace sobre Kubernetes local; habilite Kubernetes no Docker Desktop.</p></div>
           <div class="windows-guide">
             <div>
               <span class="os-label">Windows 10 ou 11</span>
@@ -386,8 +386,9 @@ http://s3console.futhub.localhost
               <ol>
                 <li>Instale Git, Node.js 22.18+ e Docker Desktop pelos links acima.</li>
                 <li>Abra Docker Desktop e aguarde motor Docker ficar em execução.</li>
-                <li>Instale Tilt pelo <a class="inline-link" href="https://docs.tilt.dev/install.html">guia oficial</a>. Feche e reabra PowerShell para atualizar <code>PATH</code>.</li>
-                <li>Confirme que <code>git</code>, <code>node</code>, <code>docker</code> e <code>tilt</code> respondem no PowerShell.</li>
+                <li>Habilite Kubernetes no Docker Desktop e aguarde cluster ficar disponível.</li>
+                <li>Instale DevSpace pelo <a class="inline-link" href="https://www.devspace.sh/docs/getting-started/installation">guia oficial</a>. Feche e reabra PowerShell para atualizar <code>PATH</code>.</li>
+                <li>Confirme que <code>git</code>, <code>node</code>, <code>docker</code>, <code>kubectl</code> e <code>devspace</code> respondem no PowerShell.</li>
               </ol>
             </div>
             <pre><span class="code-muted"># PowerShell</span>
@@ -395,16 +396,16 @@ git clone https://github.com/victorgabrieldeon/futhub.git
 cd futhub
 
 corepack enable
-<span class="code-command">pnpm dev:tilt</span>
+<span class="code-command">pnpm dev:devspace</span>
 
 <span class="code-muted"># serviços locais</span>
-http://admin.futhub.localhost
-http://api.futhub.localhost
-http://s3.futhub.localhost
-http://s3console.futhub.localhost
+http://admin.futhub.localhost:8080
+http://api.futhub.localhost:8080
+http://s3.futhub.localhost:8080
+http://s3console.futhub.localhost:8080
 
 <span class="code-muted"># encerre ambiente</span>
-<span class="code-command">pnpm dev:tilt:down</span></pre>
+<span class="code-command">pnpm dev:devspace:down</span></pre>
           </div>
         </div>
       </section>

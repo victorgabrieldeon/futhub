@@ -1,0 +1,110 @@
+version: v2beta1
+name: futhub
+
+require:
+  devspace: '>= 6.3.21'
+
+localRegistry:
+  localbuild: true
+
+images:
+  futhub:
+    image: ghcr.io/victorgabrieldeon/futhub-dev
+    context: .
+    dockerfile: Dockerfile
+    target: workspace
+    rebuildStrategy: ignoreContextChanges
+
+deployments:
+  futhub:
+    kubectl:
+      kustomize: true
+      manifests:
+        - .
+
+pipelines:
+  dev: |-
+    node scripts/ensure-dev-env.mjs
+    run_dependencies --all
+    ensure_pull_secrets --all
+    build_images --all
+    create_deployments --all
+    start_dev --all
+  deploy: |-
+    node scripts/ensure-dev-env.mjs
+    run_dependencies --all
+    ensure_pull_secrets --all
+    build_images --all
+    create_deployments --all
+
+dev:
+  api:
+    labelSelector:
+      app.kubernetes.io/name: futhub
+      app.kubernetes.io/component: api
+    logs: {}
+    sync: &workspace-sync
+      - path: ./:/app
+        excludeFile: .devspaceignore
+        initialSync: preferLocal
+        onUpload:
+          exec:
+            - name: install-workspace-dependencies
+              command: corepack enable && pnpm install --offline --no-frozen-lockfile
+              onChange:
+                - package.json
+                - pnpm-lock.yaml
+                - pnpm-workspace.yaml
+                - apps/*/package.json
+                - packages/*/package.json
+            - name: build-database-package
+              command: pnpm --filter @futhub/database build
+              onChange:
+                - packages/database/src/**
+            - name: build-api-client-package
+              command: pnpm --filter @futhub/api-client build
+              onChange:
+                - packages/api-client/src/**
+            - name: regenerate-api-contract
+              command: pnpm --filter @futhub/api openapi:generate && pnpm --filter @futhub/api build
+              onChange:
+                - apps/api/src/**
+                - apps/api/nestia.config.ts
+                - packages/database/src/**
+  admin:
+    labelSelector:
+      app.kubernetes.io/name: futhub
+      app.kubernetes.io/component: admin
+    logs: {}
+    sync: *workspace-sync
+  player:
+    labelSelector:
+      app.kubernetes.io/name: futhub
+      app.kubernetes.io/component: player
+    logs: {}
+    sync: *workspace-sync
+  caddy:
+    labelSelector:
+      app.kubernetes.io/name: futhub
+      app.kubernetes.io/component: caddy
+    logs: {}
+    ports:
+      - port: '8080:80'
+
+profiles:
+  - name: discord
+    patches:
+      - op: add
+        path: deployments.discord-bot
+        value:
+          kubectl:
+            manifests:
+              - k8s/discord-bot.yaml
+      - op: add
+        path: dev.discord-bot
+        value:
+          labelSelector:
+            app.kubernetes.io/name: futhub
+            app.kubernetes.io/component: discord-bot
+          logs: {}
+          sync: *workspace-sync

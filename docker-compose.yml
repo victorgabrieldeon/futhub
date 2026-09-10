@@ -23,12 +23,36 @@ services:
     volumes:
       - minio-data:/data
 
+  pgadmin:
+    image: dpage/pgadmin4:9.10
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        cp /run/secrets/pgpass /tmp/pgpass
+        chmod 600 /tmp/pgpass
+        exec /entrypoint.sh
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@futhub.dev
+      PGADMIN_DEFAULT_PASSWORD: futhub
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: 'True'
+    volumes:
+      - './pgadmin/servers.json:/pgadmin4/servers.json:ro'
+      - './pgadmin/pgpass:/run/secrets/pgpass:ro'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   api:
-    build: .
+    build:
+      context: .
+      target: full
     command: sh -c 'pnpm --filter @futhub/database db:migrate && pnpm --filter @futhub/api start'
     environment:
       API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:?API_INTERNAL_TOKEN is required}
       ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?ADMIN_API_TOKEN is required}
+      BRAVE_SEARCH_API_KEY: ${BRAVE_SEARCH_API_KEY:-}
       API_PORT: 3000
       DATABASE_URL: postgresql://futhub:futhub@postgres:5432/futhub
       MINIO_ENDPOINT: minio
@@ -45,8 +69,10 @@ services:
         condition: service_started
 
   admin:
-    build: .
-    command: pnpm --filter @futhub/admin start
+    build:
+      context: .
+      target: admin
+    command: node server.mjs
     environment:
       ADMIN_API_URL: http://api:3000
       ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?ADMIN_API_TOKEN is required}
@@ -69,6 +95,8 @@ services:
     depends_on:
       minio:
         condition: service_started
+      pgadmin:
+        condition: service_started
       api:
         condition: service_started
       admin:
@@ -76,7 +104,9 @@ services:
 
   discord-bot:
     profiles: ['discord']
-    build: .
+    build:
+      context: .
+      target: full
     command: pnpm --filter @futhub/discord-bot start
     environment:
       API_BASE_URL: http://api:3000

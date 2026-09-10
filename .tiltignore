@@ -1,9 +1,0 @@
-apps/*/.next/
-apps/*/.turbo/
-apps/*/dist/
-apps/*/node_modules/
-apps/*/*.tsbuildinfo
-packages/*/.turbo/
-packages/*/dist/
-packages/*/node_modules/
-packages/*/*.tsbuildinfo
