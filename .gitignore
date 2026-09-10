@@ -25,8 +25,16 @@ apps/*/.wrangler/
 /nike/
 
 # Local media exports and 3D models
-/*.png
-/docs/*.mp4
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.mp4
+*.webm
+*.mp3
+*.wav
+*.glb
 /apps/admin/public/models/
 
 # Local database credentials and Terraform state
@@ -34,4 +42,5 @@ apps/*/.wrangler/
 *.tfstate
 *.tfstate.*
 *.tfplan
+tfplan
 crash.log
