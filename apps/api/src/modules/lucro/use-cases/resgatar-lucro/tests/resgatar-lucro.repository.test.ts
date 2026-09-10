@@ -5,6 +5,7 @@ import { GenericContainer, type StartedTestContainer, Wait } from 'testcontainer
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ResgatarLucroRepository } from '../resgatar-lucro.types.js';
+import { lucroCommand } from '../resgatar-lucro.types.js';
 import { ResgatarLucroUseCase } from '../resgatar-lucro.use-case.js';
 
 const execFileAsync = promisify(execFile);
@@ -87,6 +88,7 @@ describe('DrizzleResgatarLucroRepository', () => {
       balance: 50,
       progression: { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] },
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
+      embed: lucroCommand.embed,
     });
   });
 
@@ -120,6 +122,7 @@ describe('DrizzleResgatarLucroRepository', () => {
         nextLevelXp: 250,
         rewards: [{ itemId: item.id, type: 'balance', quantity: 25, resourceId: null }],
       },
+      embed: lucroCommand.embed,
     });
   });
 

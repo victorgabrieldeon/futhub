@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgadmin
+  labels:
+    app.kubernetes.io/name: futhub
+    app.kubernetes.io/component: pgadmin
+spec:
+  selector:
+    app.kubernetes.io/name: futhub
+    app.kubernetes.io/component: pgadmin
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgadmin
+  labels:
+    app.kubernetes.io/name: futhub
+    app.kubernetes.io/component: pgadmin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: futhub
+      app.kubernetes.io/component: pgadmin
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: futhub
+        app.kubernetes.io/component: pgadmin
+    spec:
+      initContainers:
+        - name: wait-postgres
+          image: busybox:1.37
+          command: [/bin/sh, -c, 'until nc -z postgres 5432; do sleep 1; done']
+      containers:
+        - name: pgadmin
+          image: dpage/pgadmin4:9.10
+          command: [/bin/sh, -c]
+          args:
+            - cp /run/config/pgpass /tmp/pgpass && chmod 600 /tmp/pgpass && exec /entrypoint.sh
+          env:
+            - name: PGADMIN_DEFAULT_EMAIL
+              value: admin@futhub.dev
+            - name: PGADMIN_DEFAULT_PASSWORD
+              value: futhub
+            - name: PGADMIN_CONFIG_SERVER_MODE
+              value: 'False'
+            - name: PGADMIN_REPLACE_SERVERS_ON_STARTUP
+              value: 'True'
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /misc/ping
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 24
+          volumeMounts:
+            - name: config
+              mountPath: /pgadmin4/servers.json
+              subPath: servers.json
+              readOnly: true
+            - name: config
+              mountPath: /run/config/pgpass
+              subPath: pgpass
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: futhub-pgadmin

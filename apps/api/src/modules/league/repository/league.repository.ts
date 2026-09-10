@@ -1,5 +1,6 @@
 import type * as DatabaseModule from '@futhub/database';
 
+import { fileUrl } from '../../files/files.service.js';
 import { advanceMissions } from '../../missions/missions.service.js';
 import { upsertDiscordUser } from '../../users/user.repository.js';
 import type {
@@ -34,7 +35,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
       );
       const user = await upsertDiscordUser(tx, schema, identity, now);
       const bronze = await tx.query.divisions.findFirst({
-        columns: { id: true, name: true, points: true, emoji: true, color: true, imageUrl: true },
+        columns: { id: true },
         where: eq(schema.divisions.name, 'Bronze'),
       });
       if (!bronze) throw new Error('Bronze division is missing.');
@@ -60,7 +61,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
       return { kind: 'matched', matchId: ownQueue.roomId };
 
     const division = await db.query.divisions.findFirst({
-      columns: { id: true, name: true, points: true, emoji: true, color: true, imageUrl: true },
+      columns: { id: true, name: true, points: true, emoji: true, color: true, imageFileId: true },
       where: eq(schema.divisions.id, current.standing.divisionId),
     });
     if (!division) throw new Error('Standing division is missing.');
@@ -106,7 +107,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
             minimumPoints: division.points,
             emoji: division.emoji,
             color: division.color,
-            imageUrl: division.imageUrl,
+            imageUrl: await this.imageUrl(database, division.imageFileId),
           },
         };
       }
@@ -182,7 +183,8 @@ export class DrizzleLeagueRepository implements LeagueRepository {
   }
 
   async status(discordUserId: string): Promise<QueueResponse | null> {
-    const { db, eq, schema } = await this.loadDatabase();
+    const database = await this.loadDatabase();
+    const { db, eq, schema } = database;
     const user = await db.query.users.findFirst({
       columns: { id: true },
       where: eq(schema.users.discordUserId, discordUserId),
@@ -206,13 +208,14 @@ export class DrizzleLeagueRepository implements LeagueRepository {
         minimumPoints: division.points,
         emoji: division.emoji,
         color: division.color,
-        imageUrl: division.imageUrl,
+        imageUrl: await this.imageUrl(database, division.imageFileId),
       },
     };
   }
 
   async standings(discordUserId: string): Promise<LeagueStatusResponse> {
-    const { db, eq, schema } = await this.loadDatabase();
+    const database = await this.loadDatabase();
+    const { db, eq, schema } = database;
     const user = await db.query.users.findFirst({
       columns: { id: true },
       where: eq(schema.users.discordUserId, discordUserId),
@@ -237,7 +240,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
         minimumPoints: division.points,
         emoji: division.emoji,
         color: division.color,
-        imageUrl: division.imageUrl,
+        imageUrl: await this.imageUrl(database, division.imageFileId),
       },
       queue: await this.status(discordUserId),
     };
@@ -387,5 +390,14 @@ export class DrizzleLeagueRepository implements LeagueRepository {
         updatedAt: now,
       })
       .where(database.eq(schema.userLeagueStandings.userId, userId));
+  }
+
+  private async imageUrl(database: Database, fileId: string | null): Promise<string | null> {
+    if (!fileId) return null;
+    const [file] = await database.db
+      .select({ objectKey: database.schema.files.objectKey })
+      .from(database.schema.files)
+      .where(database.eq(database.schema.files.id, fileId));
+    return file ? fileUrl(file.objectKey) : null;
   }
 }

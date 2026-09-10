@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discord-bot
+  labels:
+    app.kubernetes.io/name: futhub
+    app.kubernetes.io/component: discord-bot
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: futhub
+      app.kubernetes.io/component: discord-bot
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: futhub
+        app.kubernetes.io/component: discord-bot
+    spec:
+      initContainers:
+        - name: wait-api
+          image: busybox:1.37
+          command:
+            - /bin/sh
+            - -c
+            - until wget -qO- http://api:3000/health >/dev/null; do sleep 1; done
+      containers:
+        - name: discord-bot
+          image: ghcr.io/victorgabrieldeon/futhub-dev
+          imagePullPolicy: IfNotPresent
+          workingDir: /app
+          command: [pnpm, --filter, '@futhub/discord-bot', dev]
+          envFrom:
+            - secretRef:
+                name: futhub-env
+          env:
+            - name: API_BASE_URL
+              value: http://api:3000
+          volumeMounts:
+            - name: dotenv
+              mountPath: /app/.env
+              subPath: dotenv
+              readOnly: true
+      volumes:
+        - name: dotenv
+          secret:
+            secretName: futhub-dotenv

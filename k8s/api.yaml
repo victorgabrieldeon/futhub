@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  labels:
+    app.kubernetes.io/name: futhub
+    app.kubernetes.io/component: api
+spec:
+  selector:
+    app.kubernetes.io/name: futhub
+    app.kubernetes.io/component: api
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  labels:
+    app.kubernetes.io/name: futhub
+    app.kubernetes.io/component: api
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: futhub
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: futhub
+        app.kubernetes.io/component: api
+    spec:
+      initContainers:
+        - name: wait-postgres
+          image: busybox:1.37
+          command: [/bin/sh, -c, 'until nc -z postgres 5432; do sleep 1; done']
+        - name: wait-minio
+          image: busybox:1.37
+          command: [/bin/sh, -c, 'until nc -z minio 9000; do sleep 1; done']
+      containers:
+        - name: api
+          image: ghcr.io/victorgabrieldeon/futhub-dev
+          imagePullPolicy: IfNotPresent
+          workingDir: /app
+          command: [/bin/sh, -c]
+          args:
+            - pnpm --filter @futhub/database db:migrate && pnpm --filter @futhub/api dev
+          envFrom:
+            - secretRef:
+                name: futhub-env
+          env:
+            - name: API_PORT
+              value: '3000'
+            - name: DATABASE_URL
+              value: postgresql://futhub:futhub@postgres:5432/futhub
+            - name: MINIO_ENDPOINT
+              value: minio
+            - name: MINIO_PORT
+              value: '9000'
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: futhub-env
+                  key: MINIO_ROOT_USER
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: futhub-env
+                  key: MINIO_ROOT_PASSWORD
+            - name: MINIO_PUBLIC_URL
+              value: http://s3.futhub.localhost:8080
+            - name: MINIO_USE_SSL
+              value: 'false'
+          ports:
+            - name: http
+              containerPort: 3000
+          volumeMounts:
+            - name: dotenv
+              mountPath: /app/.env
+              subPath: dotenv
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 24
+      volumes:
+        - name: dotenv
+          secret:
+            secretName: futhub-dotenv

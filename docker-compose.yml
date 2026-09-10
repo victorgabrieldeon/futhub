@@ -13,20 +13,100 @@ services:
       timeout: 5s
       retries: 5
 
-  api:
-    build: .
-    command: sh -c 'pnpm --filter @futhub/database db:migrate && pnpm --filter @futhub/api start'
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address ':9001'
     environment:
-      API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:?API_INTERNAL_TOKEN is required}
-      API_PORT: 3000
-      DATABASE_URL: postgresql://futhub:futhub@postgres:5432/futhub
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+      MINIO_BROWSER_REDIRECT_URL: http://s3console.futhub.localhost
+    volumes:
+      - minio-data:/data
+
+  pgadmin:
+    image: dpage/pgadmin4:9.10
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        cp /run/secrets/pgpass /tmp/pgpass
+        chmod 600 /tmp/pgpass
+        exec /entrypoint.sh
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@futhub.dev
+      PGADMIN_DEFAULT_PASSWORD: futhub
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: 'True'
+    volumes:
+      - './pgadmin/servers.json:/pgadmin4/servers.json:ro'
+      - './pgadmin/pgpass:/run/secrets/pgpass:ro'
     depends_on:
       postgres:
         condition: service_healthy
 
+  api:
+    build:
+      context: .
+      target: full
+    command: sh -c 'pnpm --filter @futhub/database db:migrate && pnpm --filter @futhub/api start'
+    environment:
+      API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:?API_INTERNAL_TOKEN is required}
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?ADMIN_API_TOKEN is required}
+      BRAVE_SEARCH_API_KEY: ${BRAVE_SEARCH_API_KEY:-}
+      API_PORT: 3000
+      DATABASE_URL: postgresql://futhub:futhub@postgres:5432/futhub
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+      MINIO_BUCKET: futhub-card-images
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://s3.futhub.localhost}
+      MINIO_USE_SSL: 'false'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+  admin:
+    build:
+      context: .
+      target: admin
+    command: node server.mjs
+    environment:
+      ADMIN_API_URL: http://api:3000
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?ADMIN_API_TOKEN is required}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+      ADMIN_DISCORD_REDIRECT_URI: ${ADMIN_DISCORD_REDIRECT_URI:-}
+      ADMIN_DISCORD_USER_IDS: ${ADMIN_DISCORD_USER_IDS:-}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:-}
+      PORT: 3000
+    depends_on:
+      api:
+        condition: service_started
+
+  caddy:
+    image: caddy:2.8.4-alpine
+    volumes:
+      - './Caddyfile:/etc/caddy/Caddyfile:ro'
+    ports:
+      - '127.0.0.1:80:80'
+    depends_on:
+      minio:
+        condition: service_started
+      pgadmin:
+        condition: service_started
+      api:
+        condition: service_started
+      admin:
+        condition: service_started
+
   discord-bot:
     profiles: ['discord']
-    build: .
+    build:
+      context: .
+      target: full
     command: pnpm --filter @futhub/discord-bot start
     environment:
       API_BASE_URL: http://api:3000
@@ -39,3 +119,4 @@ services:
 
 volumes:
   postgres-data:
+  minio-data:

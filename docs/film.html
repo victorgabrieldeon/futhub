@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="FutHub: uma experiência cinematográfica para abrir packs, montar coleção e viver futebol no Discord."
+    />
+    <meta name="theme-color" content="#070908" />
+    <title>FutHub — Seu clube começa aqui</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --night: #070908;
+        --night-raised: #0c100d;
+        --pitch: #17643e;
+        --pitch-deep: #0c3c27;
+        --floodlight: #edf2e9;
+        --mist: #93a295;
+        --signal: #e4ff73;
+        --flare: #ff6b46;
+        --line: rgb(237 242 233 / 18%);
+        --ink: #f7faef;
+        --muted: #b6c2b5;
+        --display: "Barlow Condensed", Impact, sans-serif;
+        --body: Inter, system-ui, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html { background: var(--night); scroll-behavior: smooth; }
+      body {
+        min-width: 320px;
+        margin: 0;
+        overflow-x: hidden;
+        background: var(--night);
+        color: var(--ink);
+        font-family: var(--body);
+      }
+      button, a { -webkit-tap-highlight-color: transparent; }
+      button { font: inherit; }
+      button, a { outline-offset: 4px; }
+      button:focus-visible, a:focus-visible { outline: 2px solid var(--signal); }
+      h1, h2, h3, p { margin: 0; }
+      a { color: inherit; }
+      .skip-link {
+        position: fixed;
+        z-index: 50;
+        top: 1rem;
+        left: 1rem;
+        transform: translateY(-200%);
+        padding: .7rem .9rem;
+        background: var(--signal);
+        color: var(--night);
+        font-weight: 700;
+      }
+      .skip-link:focus { transform: translateY(0); }
+      .frame { width: min(100% - 3rem, 1280px); margin: 0 auto; }
+
+      .film-nav {
+        position: fixed;
+        z-index: 20;
+        top: 0;
+        left: 0;
+        display: flex;
+        width: 100%;
+        height: 76px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 clamp(1.25rem, 4vw, 4rem);
+        border-bottom: 1px solid transparent;
+        background: linear-gradient(to bottom, rgb(7 9 8 / 86%), transparent);
+        font-size: .75rem;
+        font-weight: 700;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+      }
+      .film-nav.is-solid { border-bottom-color: var(--line); background: rgb(7 9 8 / 92%); backdrop-filter: blur(16px); }
+      .lockup { display: inline-flex; align-items: center; gap: .7rem; color: var(--ink); text-decoration: none; }
+      .lockup-mark {
+        display: grid;
+        width: 25px;
+        height: 25px;
+        place-items: center;
+        border: 1px solid var(--signal);
+        color: var(--signal);
+        font: 700 .76rem/1 var(--display);
+      }
+      .nav-back { color: var(--muted); text-decoration: none; transition: color 180ms ease; }
+      .nav-back:hover { color: var(--signal); }
+
+      .hero {
+        position: relative;
+        display: grid;
+        min-height: 100svh;
+        overflow: hidden;
+        align-items: end;
+        padding: 7.75rem 0 clamp(3rem, 7vh, 5.8rem);
+        isolation: isolate;
+      }
+      .hero::before {
+        position: absolute;
+        z-index: -4;
+        inset: 0;
+        background:
+          radial-gradient(ellipse 20% 33% at 0% 38%, rgb(237 242 233 / 42%), transparent 68%),
+          radial-gradient(ellipse 26% 39% at 100% 34%, rgb(237 242 233 / 39%), transparent 68%),
+          linear-gradient(180deg, #050605 0%, #080b09 52%, #0a281c 100%);
+        content: "";
+      }
+      .hero::after {
+        position: absolute;
+        z-index: -1;
+        right: -10vw;
+        bottom: -8vw;
+        left: -10vw;
+        height: min(48vw, 560px);
+        border: 1px solid rgb(237 242 233 / 34%);
+        border-bottom: 0;
+        border-radius: 50% 50% 0 0 / 35% 35% 0 0;
+        background:
+          repeating-radial-gradient(ellipse at 50% 100%, transparent 0 28px, rgb(237 242 233 / 8%) 29px 30px, transparent 31px 58px),
+          linear-gradient(180deg, rgb(21 101 62 / 10%), rgb(18 103 63 / 78%));
+        box-shadow: 0 -20px 100px rgb(72 255 137 / 9%);
+        content: "";
+      }
+      .stadium-stands {
+        position: absolute;
+        z-index: -2;
+        bottom: 24%;
+        left: -4%;
+        width: 108%;
+        height: 34%;
+        transform: perspective(700px) rotateX(33deg);
+        background-image:
+          radial-gradient(circle, rgb(225 255 212 / 70%) 0 1px, transparent 1.7px),
+          linear-gradient(180deg, rgb(29 45 35 / 72%), transparent);
+        background-size: 7px 7px, auto;
+        mask-image: linear-gradient(to bottom, transparent, black 28%, black 86%, transparent);
+        opacity: .7;
+      }
+      .stadium-lights { position: absolute; z-index: -3; inset: 0; pointer-events: none; }
+      .stadium-lights::before, .stadium-lights::after {
+        position: absolute;
+        top: 22%;
+        width: min(32vw, 430px);
+        height: 5px;
+        background: var(--floodlight);
+        box-shadow: 0 0 8px 4px rgb(237 242 233 / 92%), 0 0 70px 18px rgb(237 242 233 / 54%);
+        content: "";
+      }
+      .stadium-lights::before { left: -3%; transform: rotate(13deg); }
+      .stadium-lights::after { right: -3%; transform: rotate(-13deg); }
+      .hero-copy { position: relative; max-width: 850px; }
+      .kicker, .scene-label {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        color: var(--signal);
+        font-size: .69rem;
+        font-weight: 700;
+        letter-spacing: .2em;
+        text-transform: uppercase;
+      }
+      .kicker::before, .scene-label::before { width: 28px; height: 1px; background: currentColor; content: ""; }
+      h1, h2 { font-family: var(--display); font-weight: 700; letter-spacing: -.04em; text-transform: uppercase; }
+      h1 {
+        max-width: 780px;
+        margin: .75rem 0 1.3rem;
+        font-size: clamp(5.2rem, 14vw, 11.7rem);
+        line-height: .75;
+      }
+      h1 em { color: var(--signal); font-style: italic; }
+      .hero-lead { max-width: 460px; color: var(--muted); font-size: clamp(.92rem, 1.4vw, 1.06rem); line-height: 1.65; }
+      .hero-bottom {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: clamp(2.5rem, 9vh, 6.25rem);
+      }
+      .match-stamp { display: grid; grid-template-columns: auto auto; gap: .35rem 1rem; font: 600 .68rem/1.1 var(--display); letter-spacing: .12em; text-transform: uppercase; }
+      .match-stamp strong { grid-row: span 2; color: var(--signal); font-size: 2.7rem; letter-spacing: -.04em; }
+      .scroll-cue { display: inline-flex; align-items: center; gap: .75rem; color: var(--muted); font-size: .68rem; font-weight: 700; letter-spacing: .16em; text-decoration: none; text-transform: uppercase; }
+      .scroll-cue::after { width: 1px; height: 34px; background: var(--signal); content: ""; animation: cue 1.8s ease-in-out infinite; }
+
+      .statement {
+        display: grid;
+        min-height: 72vh;
+        align-items: center;
+        padding: clamp(5.5rem, 12vw, 11rem) 0;
+        background: var(--night-raised);
+      }
+      .statement-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(230px, .65fr); gap: clamp(2rem, 9vw, 10rem); align-items: end; }
+      h2 { font-size: clamp(3.7rem, 9vw, 8.2rem); line-height: .8; }
+      .statement h2 span { display: block; color: var(--signal); }
+      .statement-copy { max-width: 330px; padding-bottom: .45rem; color: var(--muted); font-size: .95rem; line-height: 1.7; }
+
+      .pack-scene {
+        position: relative;
+        min-height: 110svh;
+        overflow: hidden;
+        padding: clamp(5rem, 9vw, 8rem) 0;
+        background:
+          linear-gradient(90deg, rgb(7 9 8 / 84%), transparent 45%, rgb(7 9 8 / 50%)),
+          radial-gradient(circle at 78% 48%, rgb(43 130 76 / 44%), transparent 28%),
+          var(--night);
+      }
+      .pack-scene::before {
+        position: absolute;
+        top: 0;
+        right: 8%;
+        width: 1px;
+        height: 100%;
+        background: linear-gradient(transparent, var(--line) 12%, var(--line) 85%, transparent);
+        content: "";
+      }
+      .pack-grid { display: grid; grid-template-columns: minmax(260px, .7fr) minmax(400px, 1.3fr); gap: clamp(2rem, 6vw, 6rem); align-items: center; min-height: 86vh; }
+      .pack-copy h2 { margin: .7rem 0 1.4rem; font-size: clamp(4rem, 8.8vw, 8rem); }
+      .pack-copy p { max-width: 340px; color: var(--muted); line-height: 1.65; }
+      .open-pack {
+        position: relative;
+        display: inline-flex;
+        margin-top: 2rem;
+        align-items: center;
+        gap: 1rem;
+        border: 0;
+        padding: 0;
+        color: var(--ink);
+        background: transparent;
+        font-size: .74rem;
+        font-weight: 700;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+      }
+      .open-pack::before {
+        display: grid;
+        width: 52px;
+        height: 52px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--signal);
+        color: var(--night);
+        content: "↗";
+        font: 700 1.7rem/1 var(--display);
+        transition: transform 200ms ease, background 200ms ease;
+      }
+      .open-pack:hover::before { transform: rotate(45deg) scale(1.08); background: var(--flare); }
+      .pack-stage {
+        position: relative;
+        display: grid;
+        min-height: 640px;
+        place-items: center;
+        perspective: 1400px;
+      }
+      .pack-glow {
+        position: absolute;
+        width: min(43vw, 480px);
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgb(228 255 115 / 35%), rgb(64 188 92 / 10%) 44%, transparent 70%);
+        filter: blur(4px);
+        transition: opacity 500ms ease, transform 500ms ease;
+      }
+      .pack-stage.is-open .pack-glow { opacity: .5; transform: scale(1.8); }
+      .pack {
+        position: absolute;
+        z-index: 4;
+        display: grid;
+        width: 236px;
+        aspect-ratio: .69;
+        place-items: center;
+        border: 1px solid rgb(228 255 115 / 72%);
+        background:
+          linear-gradient(135deg, transparent 0 48%, rgb(228 255 115 / 10%) 48.5% 50%, transparent 50.5%),
+          linear-gradient(25deg, #193e2b, #080d0a 58%);
+        box-shadow: 0 30px 100px rgb(0 0 0 / 65%);
+        color: var(--signal);
+        transition: opacity 400ms ease, transform 700ms cubic-bezier(.2, .9, .2, 1);
+      }
+      .pack::before, .pack::after { position: absolute; inset: 10px; border: 1px solid rgb(228 255 115 / 25%); content: ""; }
+      .pack::after { inset: 0; border: 0; background: repeating-linear-gradient(90deg, transparent 0 14px, rgb(228 255 115 / 4%) 15px 16px); }
+      .pack-logo { position: relative; z-index: 1; font: 800 4.6rem/.72 var(--display); letter-spacing: -.09em; text-align: center; }
+      .pack-logo small { display: block; margin-top: .9rem; font: 700 .62rem/1 var(--body); letter-spacing: .25em; }
+      .pack-stage.is-open .pack { opacity: 0; transform: translateY(-50px) scale(.5) rotateX(55deg); pointer-events: none; }
+      .player-card {
+        position: absolute;
+        display: grid;
+        width: 210px;
+        aspect-ratio: .67;
+        grid-template-rows: auto 1fr auto;
+        border: 1px solid rgb(247 250 239 / 48%);
+        padding: 13px;
+        overflow: hidden;
+        color: #fff;
+        opacity: 0;
+        cursor: pointer;
+        text-align: left;
+        transform: translateY(90px) rotateZ(var(--rest-rotate)) scale(.77);
+        transition: opacity 280ms ease, transform 650ms cubic-bezier(.18, .9, .25, 1), filter 250ms ease;
+      }
+      .player-card::before {
+        position: absolute;
+        z-index: -1;
+        inset: 0;
+        background: linear-gradient(160deg, rgb(255 255 255 / 16%), transparent 35%), var(--card-color);
+        content: "";
+      }
+      .player-card::after {
+        position: absolute;
+        z-index: -1;
+        inset: 6px;
+        border: 1px solid rgb(255 255 255 / 35%);
+        content: "";
+      }
+      .pack-stage.is-open .player-card { opacity: 1; transform: translateX(var(--open-x)) translateY(var(--open-y)) rotateZ(var(--open-rotate)); }
+      .player-card:hover, .player-card[aria-pressed="true"] { z-index: 8; filter: brightness(1.12); transform: translateX(var(--open-x)) translateY(calc(var(--open-y) - 20px)) rotateZ(var(--open-rotate)) scale(1.04); }
+      .card-top { display: flex; justify-content: space-between; font: 700 1.1rem/1 var(--display); letter-spacing: .06em; }
+      .card-silhouette { position: relative; align-self: end; width: 100%; height: 190px; margin-top: auto; }
+      .card-silhouette::before {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 112px;
+        height: 170px;
+        transform: translateX(-50%);
+        border-radius: 55px 55px 18px 18px;
+        background: linear-gradient(90deg, rgb(0 0 0 / 46%), transparent 50%, rgb(255 255 255 / 13%)), linear-gradient(#d8b39b 0 28%, #1b2026 28% 30%, var(--shirt-color) 30%);
+        box-shadow: 0 -54px 0 -24px #d8b39b;
+        content: "";
+      }
+      .card-name { align-self: end; font: 700 2.1rem/.74 var(--display); letter-spacing: -.02em; text-transform: uppercase; }
+      .card-team { display: block; margin-top: .45rem; color: rgb(255 255 255 / 72%); font: 700 .57rem/1 var(--body); letter-spacing: .15em; }
+      .player-card[data-player="0"] { --card-color: #102417; --shirt-color: #e23f3f; --rest-rotate: -8deg; --open-x: -126px; --open-y: 22px; --open-rotate: -13deg; }
+      .player-card[data-player="1"] { --card-color: #393013; --shirt-color: #d8bd50; --rest-rotate: 0deg; --open-x: 0px; --open-y: -22px; --open-rotate: 0deg; }
+      .player-card[data-player="2"] { --card-color: #152838; --shirt-color: #5bc2ee; --rest-rotate: 8deg; --open-x: 126px; --open-y: 22px; --open-rotate: 13deg; }
+      .choose-copy { position: absolute; bottom: 1rem; left: 50%; z-index: 10; width: 100%; transform: translateX(-50%); color: var(--mist); font-size: .64rem; font-weight: 700; letter-spacing: .16em; text-align: center; text-transform: uppercase; opacity: 0; transition: opacity 300ms ease 300ms; }
+      .pack-stage.is-open .choose-copy { opacity: 1; }
+
+      .player-focus { position: relative; overflow: hidden; padding: clamp(5rem, 10vw, 9rem) 0; background: #e7ecdf; color: #101510; }
+      .player-focus::before { position: absolute; top: -42vw; right: -14vw; width: 76vw; aspect-ratio: 1; border: 1px solid rgb(16 21 16 / 12%); border-radius: 50%; content: ""; }
+      .player-focus .scene-label { color: #326b44; }
+      .player-focus h2 { max-width: 700px; margin: .7rem 0 4rem; }
+      .profile { display: grid; grid-template-columns: minmax(0, .9fr) minmax(250px, 1.1fr); gap: clamp(2rem, 8vw, 8rem); align-items: end; }
+      .profile-card { position: relative; min-height: 450px; padding: 1.35rem; overflow: hidden; background: var(--profile-color, #172a1c); color: #fff; transition: background 350ms ease; }
+      .profile-card::before { position: absolute; right: 11%; bottom: -4%; width: 240px; height: 380px; border-radius: 120px 120px 28px 28px; background: linear-gradient(90deg, rgb(0 0 0 / 36%), transparent 50%, rgb(255 255 255 / 13%)), linear-gradient(#d8b39b 0 26%, #1b2026 26% 28%, var(--profile-shirt, #e23f3f) 28%); box-shadow: 0 -104px 0 -49px #d8b39b; content: ""; transition: background 350ms ease; }
+      .profile-card::after { position: absolute; inset: 12px; border: 1px solid rgb(255 255 255 / 35%); content: ""; }
+      .profile-rating { position: relative; z-index: 1; font: 700 8.5rem/.7 var(--display); letter-spacing: -.07em; }
+      .profile-position { position: relative; z-index: 1; margin-top: .8rem; font-size: .66rem; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; }
+      .profile-name { position: absolute; z-index: 2; right: 1.35rem; bottom: 1.1rem; left: 1.35rem; font: 700 clamp(4.6rem, 9vw, 8rem)/.7 var(--display); letter-spacing: -.05em; text-transform: uppercase; }
+      .profile-data { padding-bottom: .35rem; }
+      .profile-data .eyebrow { color: #326b44; font-size: .68rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+      .profile-data h3 { margin: .75rem 0 1rem; font: 700 clamp(3rem, 5vw, 4.5rem)/.82 var(--display); letter-spacing: -.03em; text-transform: uppercase; }
+      .profile-data > p { max-width: 440px; color: #455247; line-height: 1.65; }
+      .stats { display: grid; gap: .7rem; margin-top: 2rem; }
+      .stat { display: grid; grid-template-columns: 42px 1fr 26px; gap: .8rem; align-items: center; font-size: .7rem; font-weight: 700; letter-spacing: .07em; }
+      .stat-track { height: 5px; background: rgb(16 21 16 / 14%); }
+      .stat-fill { display: block; width: var(--value); height: 100%; background: var(--profile-accent, var(--flare)); transition: width 600ms cubic-bezier(.2, .9, .2, 1); }
+      .stat-value { text-align: right; }
+
+      .collection { padding: clamp(5.5rem, 12vw, 10rem) 0; background: var(--night); }
+      .section-head { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin-bottom: clamp(2.5rem, 6vw, 5rem); }
+      .section-head h2 { max-width: 740px; }
+      .section-head p { max-width: 280px; color: var(--muted); font-size: .88rem; line-height: 1.6; }
+      .collection-rail { display: grid; grid-template-columns: repeat(4, minmax(170px, 1fr)); gap: 1px; border: 1px solid var(--line); background: var(--line); }
+      .collection-item { min-height: 310px; padding: 1.2rem; background: var(--night-raised); }
+      .collection-item:nth-child(2) { background: #142719; }
+      .collection-item:nth-child(3) { background: #302913; }
+      .collection-item:nth-child(4) { background: #152938; }
+      .collection-type { color: var(--mist); font-size: .62rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+      .collection-number { margin-top: 3.2rem; color: var(--signal); font: 700 5rem/.75 var(--display); letter-spacing: -.05em; }
+      .collection-item h3 { margin: .5rem 0; font: 700 2.5rem/.8 var(--display); text-transform: uppercase; }
+      .collection-item p { color: var(--muted); font-size: .77rem; line-height: 1.5; }
+
+      .market {
+        position: relative;
+        overflow: hidden;
+        padding: clamp(5.5rem, 12vw, 10rem) 0;
+        background: var(--signal);
+        color: var(--night);
+      }
+      .market::after { position: absolute; right: -7vw; bottom: -16vw; width: min(54vw, 700px); aspect-ratio: 1; border: 1px solid rgb(7 9 8 / 28%); border-radius: 50%; content: ""; }
+      .market-grid { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(250px, .9fr); gap: clamp(2rem, 9vw, 10rem); align-items: end; }
+      .market h2 { font-size: clamp(5rem, 11vw, 9.8rem); }
+      .market-copy { max-width: 360px; font-weight: 500; line-height: 1.65; }
+      .market-ticket { display: flex; justify-content: space-between; gap: 1.5rem; margin-top: 2.3rem; border-top: 1px solid rgb(7 9 8 / 45%); border-bottom: 1px solid rgb(7 9 8 / 45%); padding: 1.1rem 0; font: 700 .75rem/1.2 var(--body); letter-spacing: .1em; text-transform: uppercase; }
+      .cta { display: inline-flex; align-items: center; gap: 1rem; margin-top: 2.5rem; color: var(--night); font-size: .75rem; font-weight: 800; letter-spacing: .14em; text-decoration: none; text-transform: uppercase; }
+      .cta::after { display: grid; width: 45px; height: 45px; place-items: center; border-radius: 50%; background: var(--night); color: var(--signal); content: "↗"; font: 700 1.5rem/1 var(--display); transition: transform 180ms ease; }
+      .cta:hover::after { transform: rotate(45deg); }
+      .market-score { display: grid; grid-template-columns: auto 1fr; gap: .3rem 1rem; align-items: center; border-left: 1px solid rgb(7 9 8 / 38%); padding-left: clamp(1.5rem, 5vw, 4rem); }
+      .market-score strong { grid-row: span 2; font: 700 clamp(8rem, 16vw, 15rem)/.65 var(--display); letter-spacing: -.08em; }
+      .market-score span { font-size: .68rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+      .market-score p { max-width: 190px; font-size: .83rem; line-height: 1.5; }
+
+      .credits { display: flex; justify-content: space-between; gap: 1rem; padding: 1.2rem 0 1.7rem; color: var(--mist); font-size: .64rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+      .credits a { color: var(--signal); text-decoration: none; }
+
+      @keyframes cue { 0%, 100% { transform: scaleY(.5); transform-origin: top; } 50% { transform: scaleY(1); transform-origin: top; } }
+      @media (max-width: 760px) {
+        .frame { width: min(100% - 2rem, 1280px); }
+        .film-nav { height: 62px; padding: 0 1rem; }
+        .nav-back { font-size: .62rem; }
+        .hero { padding-bottom: 2.5rem; }
+        .hero-bottom { align-items: end; }
+        .statement-grid, .pack-grid, .profile, .market-grid { grid-template-columns: 1fr; }
+        .statement { min-height: 0; }
+        .statement-copy { max-width: 420px; }
+        .pack-grid { min-height: auto; }
+        .pack-stage { min-height: 560px; }
+        .player-card { width: 168px; }
+        .player-card[data-player="0"] { --open-x: -88px; --open-y: 20px; }
+        .player-card[data-player="2"] { --open-x: 88px; --open-y: 20px; }
+        .profile-card { min-height: 390px; }
+        .profile-card::before { right: 3%; transform: scale(.88); transform-origin: bottom right; }
+        .section-head { display: block; }
+        .section-head p { margin-top: 1rem; }
+        .collection-rail { grid-template-columns: 1fr 1fr; }
+        .collection-item { min-height: 230px; }
+        .collection-number { margin-top: 2rem; }
+        .market-score { margin-top: 2rem; }
+        .credits { display: grid; }
+      }
+      @media (max-width: 390px) {
+        h1 { font-size: 4.5rem; }
+        .player-card { width: 145px; }
+        .player-card[data-player="0"] { --open-x: -69px; }
+        .player-card[data-player="2"] { --open-x: 69px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Pular para conteúdo</a>
+    <header class="film-nav" id="film-nav">
+      <a class="lockup" href="#inicio" aria-label="FutHub, início"><span class="lockup-mark">FH</span> FutHub</a>
+      <a class="nav-back" href="index.html">Site do projeto</a>
+    </header>
+
+    <main id="conteudo">
+      <section class="hero" id="inicio" aria-labelledby="hero-title">
+        <div class="stadium-lights" aria-hidden="true"></div>
+        <div class="stadium-stands" aria-hidden="true"></div>
+        <div class="frame">
+          <div class="hero-copy">
+            <p class="kicker">FutHub apresenta · Temporada zero</p>
+            <h1 id="hero-title">Seu clube<br />começa <em>aqui.</em></h1>
+            <p class="hero-lead">Monte elenco. Abra o próximo pack. Viva cada negociação como se a arquibancada estivesse cheia.</p>
+          </div>
+          <div class="hero-bottom">
+            <div class="match-stamp"><strong>90</strong><span>Minutos para<br />mudar tudo</span><span>FutHub · 2026</span></div>
+            <a class="scroll-cue" href="#pack">Entre no estádio</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="statement" aria-labelledby="statement-title">
+        <div class="frame statement-grid">
+          <h2 id="statement-title">Não assista.<span>Monte história.</span></h2>
+          <p class="statement-copy">FutHub transforma futebol em coleção, estratégia e conversa. O jogo acontece no mesmo lugar em que sua comunidade já vive.</p>
+        </div>
+      </section>
+
+      <section class="pack-scene" id="pack" aria-labelledby="pack-title">
+        <div class="frame pack-grid">
+          <div class="pack-copy">
+            <p class="scene-label">01 · A revelação</p>
+            <h2 id="pack-title">Toda lenda começou em um pack.</h2>
+            <p>Não existe preview. Só expectativa, luz e a chance de alguém mudar seu elenco inteiro.</p>
+            <button class="open-pack" id="open-pack" type="button" aria-controls="pack-stage" aria-expanded="false">Abrir pack agora</button>
+          </div>
+          <div class="pack-stage" id="pack-stage" aria-live="polite">
+            <div class="pack-glow" aria-hidden="true"></div>
+            <div class="pack" aria-hidden="true"><div class="pack-logo">FH<small>Elite pack</small></div></div>
+            <button class="player-card" data-player="0" type="button" aria-pressed="false" aria-label="Revelar card de Dante Silva, 91 de overall">
+              <span class="card-top"><span>91</span><span>ATA</span></span><span class="card-silhouette"></span><span class="card-name">Dante<span class="card-team">Aurora FC · Brasil</span></span>
+            </button>
+            <button class="player-card" data-player="1" type="button" aria-pressed="false" aria-label="Revelar card de Leon Varga, 88 de overall">
+              <span class="card-top"><span>88</span><span>MEI</span></span><span class="card-silhouette"></span><span class="card-name">Leon<span class="card-team">Kingsport · Espanha</span></span>
+            </button>
+            <button class="player-card" data-player="2" type="button" aria-pressed="false" aria-label="Revelar card de Caio Novaes, 86 de overall">
+              <span class="card-top"><span>86</span><span>GOL</span></span><span class="card-silhouette"></span><span class="card-name">Caio<span class="card-team">Oceano SC · Brasil</span></span>
+            </button>
+            <p class="choose-copy">Escolha um card para ver as stats</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="player-focus" id="jogador" aria-labelledby="player-heading">
+        <div class="frame">
+          <p class="scene-label">02 · Seu novo titular</p>
+          <h2 id="player-heading">Um card.<br />Outra dimensão.</h2>
+          <div class="profile">
+            <article class="profile-card" id="profile-card" aria-label="Card em destaque">
+              <p class="profile-rating" id="profile-rating">91</p>
+              <p class="profile-position" id="profile-position">ATA · RARO</p>
+              <p class="profile-name" id="profile-name">Dante</p>
+            </article>
+            <div class="profile-data">
+              <p class="eyebrow" id="profile-kicker">Aurora FC · Brasil · Elite pack</p>
+              <h3 id="profile-title">Dante Silva</h3>
+              <p id="profile-description">Arrancada brutal, finalização fria. O tipo de atacante que muda uma partida com um toque.</p>
+              <div class="stats" aria-label="Estatísticas do jogador">
+                <div class="stat"><span>VEL</span><span class="stat-track"><i class="stat-fill" id="stat-speed" style="--value: 96%"></i></span><span class="stat-value" id="speed-value">96</span></div>
+                <div class="stat"><span>FIN</span><span class="stat-track"><i class="stat-fill" id="stat-finish" style="--value: 94%"></i></span><span class="stat-value" id="finish-value">94</span></div>
+                <div class="stat"><span>PAS</span><span class="stat-track"><i class="stat-fill" id="stat-pass" style="--value: 82%"></i></span><span class="stat-value" id="pass-value">82</span></div>
+                <div class="stat"><span>DEF</span><span class="stat-track"><i class="stat-fill" id="stat-defense" style="--value: 42%"></i></span><span class="stat-value" id="defense-value">42</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="collection" aria-labelledby="collection-title">
+        <div class="frame">
+          <div class="section-head">
+            <div><p class="scene-label">03 · Coleção viva</p><h2 id="collection-title">Não guarde.<br />Construa elenco.</h2></div>
+            <p>Cada card abre uma escolha: banco, titularidade, troca ou a próxima peça da sua história.</p>
+          </div>
+          <div class="collection-rail" aria-label="Tipos de cards na coleção">
+            <article class="collection-item"><p class="collection-type">Titulares</p><p class="collection-number">11</p><h3>O time</h3><p>Quem carrega seu escudo todo jogo.</p></article>
+            <article class="collection-item"><p class="collection-type">Raros</p><p class="collection-number">07</p><h3>Achados</h3><p>Cards que não aparecem duas vezes.</p></article>
+            <article class="collection-item"><p class="collection-type">Lendas</p><p class="collection-number">02</p><h3>Ídolos</h3><p>Peças que viram história de servidor.</p></article>
+            <article class="collection-item"><p class="collection-type">Em foco</p><p class="collection-number">01</p><h3>Próximo</h3><p>O card que você ainda vai buscar.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="market" id="mercado" aria-labelledby="market-title">
+        <div class="frame market-grid">
+          <div><p class="scene-label">04 · Mercado aberto</p><h2 id="market-title">O jogo<br />circula.</h2></div>
+          <div>
+            <p class="market-copy">Seu card vale o que uma comunidade acredita nele. Negocie, complete coleção e crie seu próprio mercado.</p>
+            <div class="market-ticket"><span>Última oferta</span><strong>82.000 moedas</strong></div>
+            <a class="cta" href="https://github.com/victorgabrieldeon/futhub">Conhecer FutHub</a>
+          </div>
+        </div>
+        <div class="frame market-score"><strong>∞</strong><span>Seu próximo clube</span><p>O universo do futebol é seu.</p></div>
+      </section>
+    </main>
+
+    <footer class="frame credits">
+      <span>FutHub · Futebol feito para comunidade</span>
+      <a href="index.html">Voltar ao site do projeto</a>
+    </footer>
+
+    <script>
+      const players = [
+        { name: 'Dante', fullName: 'Dante Silva', rating: 91, position: 'ATA · RARO', kicker: 'Aurora FC · Brasil · Elite pack', description: 'Arrancada brutal, finalização fria. O tipo de atacante que muda uma partida com um toque.', color: '#172a1c', shirt: '#e23f3f', accent: '#e4ff73', stats: [96, 94, 82, 42] },
+        { name: 'Leon', fullName: 'Leon Varga', rating: 88, position: 'MEI · ÉPICO', kicker: 'Kingsport · Espanha · Elite pack', description: 'Controle de ritmo e passe impossível. Cada posse começa a parecer perigosa.', color: '#443913', shirt: '#d8bd50', accent: '#ffce58', stats: [84, 86, 95, 68] },
+        { name: 'Caio', fullName: 'Caio Novaes', rating: 86, position: 'GOL · RARO', kicker: 'Oceano SC · Brasil · Elite pack', description: 'Reflexo no limite, presença na área. A defesa ganha outra voz.', color: '#19374b', shirt: '#5bc2ee', accent: '#8ce5ff', stats: [78, 38, 76, 93] },
+      ];
+
+      const packButton = document.querySelector('#open-pack');
+      const packStage = document.querySelector('#pack-stage');
+      const cards = [...document.querySelectorAll('.player-card')];
+      const profile = {
+        card: document.querySelector('#profile-card'),
+        rating: document.querySelector('#profile-rating'),
+        position: document.querySelector('#profile-position'),
+        name: document.querySelector('#profile-name'),
+        kicker: document.querySelector('#profile-kicker'),
+        title: document.querySelector('#profile-title'),
+        description: document.querySelector('#profile-description'),
+        fills: ['#stat-speed', '#stat-finish', '#stat-pass', '#stat-defense'].map((id) => document.querySelector(id)),
+        values: ['#speed-value', '#finish-value', '#pass-value', '#defense-value'].map((id) => document.querySelector(id)),
+      };
+
+      function selectPlayer(index) {
+        const player = players[index];
+        cards.forEach((card, cardIndex) => card.setAttribute('aria-pressed', String(cardIndex === index)));
+        profile.card.style.setProperty('--profile-color', player.color);
+        profile.card.style.setProperty('--profile-shirt', player.shirt);
+        profile.card.style.setProperty('--profile-accent', player.accent);
+        profile.rating.textContent = player.rating;
+        profile.position.textContent = player.position;
+        profile.name.textContent = player.name;
+        profile.kicker.textContent = player.kicker;
+        profile.title.textContent = player.fullName;
+        profile.description.textContent = player.description;
+        player.stats.forEach((value, statIndex) => {
+          profile.fills[statIndex].style.setProperty('--value', `${value}%`);
+          profile.values[statIndex].textContent = value;
+        });
+        document.querySelector('#jogador').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      }
+
+      packButton.addEventListener('click', () => {
+        packStage.classList.add('is-open');
+        packButton.setAttribute('aria-expanded', 'true');
+        packButton.textContent = 'Escolha seu card';
+        cards[1].focus();
+      });
+      cards.forEach((card, index) => card.addEventListener('click', () => selectPlayer(index)));
+      document.addEventListener('scroll', () => document.querySelector('#film-nav').classList.toggle('is-solid', window.scrollY > 30), { passive: true });
+    </script>
+  </body>
+</html>

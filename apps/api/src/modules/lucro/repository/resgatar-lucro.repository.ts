@@ -7,6 +7,7 @@ import type {
   DiscordIdentity,
   ResgatarLucroRepository,
 } from '../use-cases/resgatar-lucro/resgatar-lucro.types.js';
+import { lucroCommand } from '../use-cases/resgatar-lucro/resgatar-lucro.types.js';
 
 type Database = typeof import('@futhub/database');
 type DatabaseLoader = () => Promise<Database>;
@@ -33,29 +34,52 @@ export class DrizzleResgatarLucroRepository implements ResgatarLucroRepository {
       );
       const [insertedConfig] = await tx
         .insert(schema.commandConfigs)
-        .values({ commandName: command.name, cooldownSeconds: command.cooldownSeconds })
+        .values({
+          commandName: command.name,
+          cooldownSeconds: command.cooldownSeconds,
+          embed: command.embed ?? lucroCommand.embed,
+        })
         .onConflictDoNothing({ target: schema.commandConfigs.commandName })
         .returning({
           id: schema.commandConfigs.id,
           cooldownSeconds: schema.commandConfigs.cooldownSeconds,
+          embed: schema.commandConfigs.embed,
         });
       const config =
         insertedConfig ??
         (await tx.query.commandConfigs.findFirst({
-          columns: { id: true, cooldownSeconds: true },
+          columns: { id: true, cooldownSeconds: true, embed: true },
           where: eq(schema.commandConfigs.commandName, command.name),
         }));
       if (!config) throw new Error(`Failed to load ${command.name} configuration.`);
       if (insertedConfig)
-        await tx
-          .insert(schema.commandRewards)
-          .values(command.rewards.map((reward) => ({ ...reward, commandConfigId: config.id })));
+        await tx.insert(schema.commandRewards).values(
+          command.rewards.map((reward) => ({
+            ...reward,
+            commandConfigId: config.id,
+            messages: { pt: reward.message, es: reward.message, en: reward.message },
+          })),
+        );
       const rewards = await tx.query.commandRewards.findMany({
-        columns: { value: true, weight: true, message: true },
+        columns: { value: true, weight: true, message: true, messages: true },
         where: eq(schema.commandRewards.commandConfigId, config.id),
       });
       if (rewards.length === 0) throw new Error(`Command ${command.name} has no rewards.`);
-      const persistedCommand = { ...command, cooldownSeconds: config.cooldownSeconds, rewards };
+      const locale = user.language.startsWith('es')
+        ? 'es'
+        : user.language.startsWith('en')
+          ? 'en'
+          : 'pt';
+      const persistedCommand = {
+        ...command,
+        cooldownSeconds: config.cooldownSeconds,
+        embed: config.embed,
+        rewards: rewards.map((reward) => ({
+          value: reward.value,
+          weight: reward.weight,
+          message: reward.messages[locale] || reward.message,
+        })),
+      };
 
       return operation(
         {

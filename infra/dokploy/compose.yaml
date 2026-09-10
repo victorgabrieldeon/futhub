@@ -1,0 +1,118 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - futhub-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: server /data --console-address ':9001'
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+      MINIO_BROWSER_REDIRECT_URL: https://${MINIO_CONSOLE_DOMAIN:?MINIO_CONSOLE_DOMAIN is required}
+    volumes:
+      - futhub-minio-data:/data
+
+  api:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: full
+    command: >-
+      sh -c 'pnpm --filter @futhub/database db:migrate && pnpm --filter @futhub/api start'
+    restart: unless-stopped
+    environment:
+      API_PORT: 3000
+      API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:?API_INTERNAL_TOKEN is required}
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?ADMIN_API_TOKEN is required}
+      BRAVE_SEARCH_API_KEY: ${BRAVE_SEARCH_API_KEY:-}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:?DISCORD_CLIENT_ID is required}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:?DISCORD_CLIENT_SECRET is required}
+      PLAYER_APP_URL: https://${PLAYER_DOMAIN:?PLAYER_DOMAIN is required}
+      PLAYER_DISCORD_REDIRECT_URI: https://${PLAYER_DOMAIN}/v1/auth/player/discord/callback
+      PLAYER_SESSION_SECRET: ${PLAYER_SESSION_SECRET:?PLAYER_SESSION_SECRET is required}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+      MINIO_BUCKET: ${MINIO_BUCKET:-futhub-card-images}
+      MINIO_PUBLIC_URL: https://${MINIO_DOMAIN:?MINIO_DOMAIN is required}
+      MINIO_USE_SSL: 'false'
+      THESPORTSDB_API_KEY: ${THESPORTSDB_API_KEY:-123}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000/health >/dev/null']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  admin:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: admin
+    command: node server.mjs
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      ADMIN_API_URL: http://api:3000
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?ADMIN_API_TOKEN is required}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:?DISCORD_CLIENT_ID is required}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:?DISCORD_CLIENT_SECRET is required}
+      ADMIN_DISCORD_REDIRECT_URI: https://${ADMIN_DOMAIN:?ADMIN_DOMAIN is required}/api/auth/discord/callback
+      ADMIN_DISCORD_USER_IDS: ${ADMIN_DISCORD_USER_IDS:?ADMIN_DISCORD_USER_IDS is required}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?ADMIN_SESSION_SECRET is required}
+    depends_on:
+      api:
+        condition: service_healthy
+
+  player:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: full
+    command: pnpm --filter @futhub/play start
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      PLAYER_API_URL: http://api:3000
+    depends_on:
+      api:
+        condition: service_healthy
+
+  discord-bot:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: full
+    command: pnpm --filter @futhub/discord-bot start
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://api:3000
+      API_INTERNAL_TOKEN: ${API_INTERNAL_TOKEN:?API_INTERNAL_TOKEN is required}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:?DISCORD_CLIENT_ID is required}
+      DISCORD_TOKEN: ${DISCORD_TOKEN:?DISCORD_TOKEN is required}
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  futhub-postgres-data:
+  futhub-minio-data:

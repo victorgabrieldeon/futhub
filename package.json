@@ -8,12 +8,13 @@
     "pnpm": ">=10.6.5"
   },
   "scripts": {
-    "build": "turbo run build",
+    "build": "pnpm generate:api && turbo run build",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
     "codegen:check": "pnpm generate:api && git diff --exit-code -- apps/api/openapi.json packages/api-client/src/generated.ts",
     "dev": "turbo run dev --parallel",
-    "dev:tilt": "tilt up",
-    "dev:tilt:down": "tilt down",
+    "dev:devspace": "devspace dev",
+    "dev:devspace:discord": "devspace dev -p discord",
+    "dev:devspace:down": "devspace purge -p discord",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "generate:api": "pnpm --filter @futhub/api openapi:generate && pnpm --filter @futhub/api-client generate",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
+    "@playwright/test": "^1.62.1",
     "turbo": "2.4.4",
     "typescript": "7.0.2"
   }

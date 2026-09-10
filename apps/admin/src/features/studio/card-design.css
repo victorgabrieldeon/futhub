@@ -1,0 +1,119 @@
+.card-design-fields {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+  color: var(--ink);
+}
+
+.card-design-fields fieldset {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 16px 0 0;
+  border: 0;
+  border-top: 1px solid var(--hairline-strong);
+}
+
+.card-design-fields legend {
+  padding: 0 8px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.card-design-fields label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.card-design-fields label > span {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-design-fields :is(input, select, button) {
+  box-sizing: border-box;
+  min-height: 44px;
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 8px;
+  padding: 8px;
+  background: var(--surface-card);
+  color: var(--ink);
+  font: inherit;
+  accent-color: var(--accent);
+}
+
+.card-design-fields :is(input, select, button):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.card-design-fields :is(button, select, input[type="color"], input[type="range"]) {
+  cursor: pointer;
+}
+
+.card-design-fields input[type="range"] {
+  padding: 0;
+  border: 0;
+}
+.card-design-fields :is(output, .card-design-value) {
+  color: var(--body);
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 12px;
+}
+
+.card-design-frames {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.card-design-frames button {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 8px;
+}
+.card-design-frames svg {
+  fill: var(--canvas);
+  stroke: currentColor;
+  stroke-width: 16;
+}
+.card-design-frames strong {
+  font-size: 12px;
+}
+.card-design-frames small {
+  color: var(--body);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.card-design-fields button:hover {
+  border-color: var(--accent);
+}
+.card-design-frames button[aria-pressed="true"] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  color: var(--accent);
+  background: var(--canvas);
+}
+
+.card-design-fields label.card-design-toggle {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.card-design-fields label.card-design-toggle input[type="checkbox"] {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0;
+}

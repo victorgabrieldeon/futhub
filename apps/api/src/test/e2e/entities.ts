@@ -18,6 +18,47 @@ const formationPositions = [
   'CA',
 ] as const;
 
+export async function createFileFixture(database: Database, objectKey: string) {
+  const [file] = await database.db
+    .insert(database.schema.files)
+    .values({ objectKey, contentType: 'image/png', sizeBytes: 1, source: 'upload', metadata: {} })
+    .returning();
+  if (!file) throw new Error('Failed to create test file.');
+  return file;
+}
+
+export async function createAdminCardFixture(
+  database: Database,
+  input: Readonly<{
+    slug: string;
+    name: string;
+    collectionId: string;
+    teamId: string;
+    overall: number;
+  }>,
+) {
+  const [statistics] = await database.db
+    .insert(database.schema.cardStats)
+    .values({ passing: 80, control: 80, marking: 80, pace: 80, dribbling: 80, finishing: 80 })
+    .returning({ id: database.schema.cardStats.id });
+  if (!statistics) throw new Error('Missing card statistics.');
+  const image = await createFileFixture(database, `cards/${input.slug}/image.png`);
+  const [card] = await database.db
+    .insert(database.schema.cards)
+    .values({
+      ...input,
+      position: 'CA',
+      statsId: statistics.id,
+      imageFileId: image.id,
+      defense: 80,
+      attack: 80,
+      creation: 80,
+    })
+    .returning({ id: database.schema.cards.id });
+  if (!card) throw new Error('Missing test card.');
+  return card;
+}
+
 export async function createUser(
   database: Database,
   identity: DiscordIdentity,
@@ -36,13 +77,12 @@ export async function createUser(
   return user;
 }
 
-async function createCardCatalog(
+export async function createCardCatalog(
   database: Database,
   name: string,
 ): Promise<{
   collectionId: string;
   teamId: string;
-  nationalityId: string;
 }> {
   const suffix = randomUUID();
   const [text] = await database.db
@@ -51,9 +91,15 @@ async function createCardCatalog(
     .returning({ id: database.schema.localizedTexts.id });
   const textId = text?.id;
   if (!textId) throw new Error('Failed to create test text.');
+  await database.db.insert(database.schema.localizedTextTranslations).values({
+    localizedTextId: textId,
+    locale: 'pt-BR',
+    content: `${name} collection ${suffix}`,
+  });
   const [collection] = await database.db
     .insert(database.schema.collections)
     .values({
+      slug: `${name}-collection-${suffix}`,
       nameTextId: textId,
       emoji: '⚽',
       primaryColor: '#000000',
@@ -62,19 +108,20 @@ async function createCardCatalog(
     .returning({ id: database.schema.collections.id });
   const [team] = await database.db
     .insert(database.schema.teams)
-    .values({ name: `${name} team ${suffix}`, emoji: '⚽', color: '#000000' })
+    .values({
+      slug: `${name}-team-${suffix}`,
+      name: `${name} team ${suffix}`,
+      emoji: '⚽',
+      color: '#000000',
+    })
     .returning({ id: database.schema.teams.id });
-  const [nationality] = await database.db
-    .insert(database.schema.nationalities)
-    .values({ name: `${name} nationality ${suffix}`, emoji: '🇧🇷', color: '#000000' })
-    .returning({ id: database.schema.nationalities.id });
-  if (!collection || !team || !nationality) throw new Error('Failed to create test card catalog.');
-  return { collectionId: collection.id, teamId: team.id, nationalityId: nationality.id };
+  if (!collection || !team) throw new Error('Failed to create test card catalog.');
+  return { collectionId: collection.id, teamId: team.id };
 }
 
 async function createCard(
   database: Database,
-  catalog: { collectionId: string; teamId: string; nationalityId: string },
+  catalog: { collectionId: string; teamId: string },
   name: string,
   position: (typeof formationPositions)[number],
 ): Promise<{ id: string }> {
@@ -86,10 +133,10 @@ async function createCard(
   const [card] = await database.db
     .insert(database.schema.cards)
     .values({
+      slug: `test-${randomUUID()}`,
       name,
       collectionId: catalog.collectionId,
       teamId: catalog.teamId,
-      nationalityId: catalog.nationalityId,
       statsId: stats.id,
       position,
       defense: 80,
@@ -100,6 +147,41 @@ async function createCard(
     .returning({ id: database.schema.cards.id });
   if (!card) throw new Error('Failed to create test card.');
   return card;
+}
+
+export async function createAdminPackFixture(database: Database): Promise<{
+  id: string;
+  configId: string;
+  userId: string;
+}> {
+  const user = await createUser(database, {
+    id: `pack-owner-${randomUUID()}`,
+    name: 'Pack owner',
+    avatarUrl: null,
+  });
+  const [config] = await database.db
+    .insert(database.schema.packConfigs)
+    .values({ name: 'Fixture config', minOverall: 70, maxOverall: 90 })
+    .returning({ id: database.schema.packConfigs.id });
+  if (!config) throw new Error('Failed to create pack config fixture.');
+  const [pack] = await database.db
+    .insert(database.schema.packs)
+    .values({
+      name: 'Fixture pack',
+      color: '#111111',
+      emoji: 'fixture',
+      cardsAmount: 3,
+      price: 10,
+      canBuy: true,
+      limitPerUser: 2,
+      configId: config.id,
+    })
+    .returning({ id: database.schema.packs.id });
+  if (!pack) throw new Error('Failed to create pack fixture.');
+  await database.db
+    .insert(database.schema.userPacks)
+    .values({ userId: user.id, packId: pack.id, quantity: 1 });
+  return { id: pack.id, configId: config.id, userId: user.id };
 }
 
 export async function createPackFixture(
@@ -193,4 +275,37 @@ export async function createLeaguePlayer(
     });
   }
   return user;
+}
+
+export async function createBotResponseMigrationFixture(database: Database) {
+  const embed = {
+    title: '  Original title  ',
+    description: 'Original **{message}**\n{reward} {balance}',
+    color: '#aAbBcC',
+    footer: '  {availableAt}  ',
+  };
+  await database.db
+    .insert(database.schema.commandConfigs)
+    .values({ commandName: 'lucro', cooldownSeconds: 123, embed });
+  await database.db
+    .delete(database.schema.botResponseTemplates)
+    .where(database.eq(database.schema.botResponseTemplates.key, 'lucro.success'));
+  return embed;
+}
+
+export async function createPackShopFixture(database: Database) {
+  const ids: string[] = [];
+  for (let index = 0; index < 7; index++) {
+    const pack = await createAdminPackFixture(database);
+    await database.db
+      .update(database.schema.packs)
+      .set({
+        name: `Shop ${index}`,
+        canBuy: index < 6,
+        imageUrl: index === 0 ? 'https://example.com/pack.png' : null,
+      })
+      .where(database.eq(database.schema.packs.id, pack.id));
+    ids.push(pack.id);
+  }
+  return ids;
 }
