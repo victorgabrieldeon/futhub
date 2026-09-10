@@ -4,7 +4,11 @@ import ExcelJS from 'exceljs';
 import { afterAll, beforeAll, expect, test, vi } from 'vitest';
 
 import { type E2eContext, adminToken, startE2eContext } from '../../../test/e2e/context.js';
-import { createPackFixture } from '../../../test/e2e/entities.js';
+import {
+  createAdminCardFixture,
+  createFileFixture,
+  createPackFixture,
+} from '../../../test/e2e/entities.js';
 import { FilesService } from '../../files/files.service.js';
 
 let context: E2eContext;
@@ -30,11 +34,17 @@ const importHeaders: Record<string, string> = {
 };
 
 beforeAll(async () => {
+  vi.stubEnv('MINIO_PUBLIC_URL', 'https://images.test');
+  vi.stubEnv('MINIO_BUCKET', 'e2e');
   context = await startE2eContext();
 }, 30_000);
 
 afterAll(async () => {
-  await context?.close();
+  try {
+    await context?.close();
+  } finally {
+    vi.unstubAllEnvs();
+  }
 });
 
 test('suggests matching FootyLogos badges', async () => {
@@ -502,35 +512,13 @@ test('imports cards atomically and updates them by slug', async () => {
   expect(cards[0]).toMatchObject({ name: 'Updated', overall: 89 });
   const storedCard = cards[0];
   if (!storedCard) throw new Error('Imported card was not persisted.');
-  const files = await context.database.db
-    .insert(context.database.schema.files)
-    .values([
-      {
-        objectKey: `cards/${storedCard.id}/image.png`,
-        contentType: 'image/png',
-        sizeBytes: 1,
-        source: 'upload',
-        metadata: {},
-      },
-      {
-        objectKey: `collections/${source.collectionId}/image.png`,
-        contentType: 'image/png',
-        sizeBytes: 1,
-        source: 'upload',
-        metadata: {},
-      },
-      {
-        objectKey: `teams/${source.teamId}/logo.png`,
-        contentType: 'image/png',
-        sizeBytes: 1,
-        source: 'upload',
-        metadata: {},
-      },
-    ])
-    .returning({
-      id: context.database.schema.files.id,
-      objectKey: context.database.schema.files.objectKey,
-    });
+  const files = await Promise.all(
+    [
+      `cards/${storedCard.id}/image.png`,
+      `collections/${source.collectionId}/image.png`,
+      `teams/${source.teamId}/logo.png`,
+    ].map((objectKey) => createFileFixture(context.database, objectKey)),
+  );
   const cardImage = files.find((file) => file.objectKey.startsWith('cards/'));
   const collectionImage = files.find((file) => file.objectKey.startsWith('collections/'));
   const teamImage = files.find((file) => file.objectKey.startsWith('teams/'));
@@ -634,31 +622,15 @@ test('filters and sorts cards', async () => {
     [
       { name: `Filter high ${suffix}`, overall: 99 },
       { name: `Filter low ${suffix}`, overall: 80 },
-    ].map(async (card) => {
-      const [statistics] = await context.database.db
-        .insert(context.database.schema.cardStats)
-        .values({ passing: 80, control: 80, marking: 80, pace: 80, dribbling: 80, finishing: 80 })
-        .returning({ id: context.database.schema.cardStats.id });
-      if (!statistics) throw new Error('Missing card statistics.');
-      const [created] = await context.database.db
-        .insert(context.database.schema.cards)
-        .values({
-          slug: `${card.overall}-${suffix}`,
-          name: card.name,
-          collectionId: source.collectionId,
-          teamId: source.teamId,
-          position: 'CA',
-          statsId: statistics.id,
-          imageUrl: 'https://images.test/player.png',
-          defense: 80,
-          attack: 80,
-          creation: 80,
-          overall: card.overall,
-        })
-        .returning({ id: context.database.schema.cards.id });
-      if (!created) throw new Error('Missing test card.');
-      return created;
-    }),
+    ].map((card) =>
+      createAdminCardFixture(context.database, {
+        slug: `${card.overall}-${suffix}`,
+        name: card.name,
+        collectionId: source.collectionId,
+        teamId: source.teamId,
+        overall: card.overall,
+      }),
+    ),
   );
   expect(cards).toHaveLength(2);
 
@@ -671,8 +643,16 @@ test('filters and sorts cards', async () => {
   expect(response.json()).toMatchObject({
     total: 2,
     items: [
-      { name: `Filter high ${suffix}`, overall: 99 },
-      { name: `Filter low ${suffix}`, overall: 80 },
+      {
+        name: `Filter high ${suffix}`,
+        overall: 99,
+        imageUrl: `https://images.test/e2e/cards/99-${suffix}/image.png`,
+      },
+      {
+        name: `Filter low ${suffix}`,
+        overall: 80,
+        imageUrl: `https://images.test/e2e/cards/80-${suffix}/image.png`,
+      },
     ],
   });
 });
