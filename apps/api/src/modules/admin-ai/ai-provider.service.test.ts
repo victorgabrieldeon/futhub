@@ -25,6 +25,7 @@ describe('AI provider adapter', () => {
       body: {
         choices: [
           {
+            index: 0,
             finish_reason: 'tool_calls',
             message: {
               role: 'assistant',
@@ -50,14 +51,22 @@ describe('AI provider adapter', () => {
       new URL('https://api.example.net/proxy/chat/completions'),
       {
         method: 'POST',
-        headers: { 'content-type': 'application/json', Authorization: 'Bearer test-secret' },
+        headers: {
+          'content-type': 'application/json',
+          authorization: 'Bearer test-secret',
+          'user-agent': expect.stringMatching(
+            /^ai\/\S+ ai-sdk\/provider-utils\/\S+ runtime\/node.js\/\d+$/,
+          ),
+        },
         body: JSON.stringify({
           model: 'test-model',
+          max_tokens: 4096,
           messages: [
             { role: 'system', content: 'Admin system' },
             { role: 'user', content: 'Hello' },
           ],
           tools: [{ type: 'function', function: input.tools[0] }],
+          tool_choice: 'auto',
         }),
       },
     );
@@ -68,7 +77,9 @@ describe('AI provider adapter', () => {
     const request = vi.spyOn(client, 'request').mockResolvedValue({
       status: 200,
       body: {
-        choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'Done' } }],
+        choices: [
+          { index: 0, finish_reason: 'stop', message: { role: 'assistant', content: 'Done' } },
+        ],
       },
     });
 
@@ -87,7 +98,10 @@ describe('AI provider adapter', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          Authorization: 'Bearer test-secret',
+          authorization: 'Bearer test-secret',
+          'user-agent': expect.stringMatching(
+            /^ai\/\S+ ai-sdk\/provider-utils\/\S+ runtime\/node.js\/\d+$/,
+          ),
           'x-opencode-session': 'session-1',
         },
         body: expect.stringContaining('"tools"'),
@@ -120,7 +134,9 @@ describe('AI provider adapter', () => {
     const request = vi.spyOn(client, 'request').mockResolvedValue({
       status: 200,
       body: {
-        choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'Done' } }],
+        choices: [
+          { index: 0, finish_reason: 'stop', message: { role: 'assistant', content: 'Done' } },
+        ],
       },
     });
     await new AiProviderService(client).complete({
@@ -164,6 +180,7 @@ describe('AI provider adapter', () => {
         body: {
           choices: [
             {
+              index: 0,
               finish_reason: 'tool_calls',
               message: {
                 role: 'assistant',

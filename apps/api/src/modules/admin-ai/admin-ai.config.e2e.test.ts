@@ -51,7 +51,9 @@ describe('Admin AI saved configuration', () => {
     vi.mocked(AiHttpClient.prototype.request).mockResolvedValueOnce({
       status: 200,
       body: {
-        choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'Resposta' } }],
+        choices: [
+          { index: 0, finish_reason: 'stop', message: { role: 'assistant', content: 'Resposta' } },
+        ],
       },
     });
     const response = await context.app.inject({

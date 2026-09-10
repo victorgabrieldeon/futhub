@@ -51,7 +51,9 @@ describe('Admin AI bulk card creation', () => {
     const completion = (message: object, finishReason: 'tool_calls' | 'stop') => ({
       status: 200,
       body: {
-        choices: [{ finish_reason: finishReason, message: { role: 'assistant', ...message } }],
+        choices: [
+          { index: 0, finish_reason: finishReason, message: { role: 'assistant', ...message } },
+        ],
       },
     });
     vi.spyOn(AiHttpClient.prototype, 'request')

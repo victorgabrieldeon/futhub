@@ -4,6 +4,7 @@ import { BadGatewayException, BadRequestException, HttpException } from '@nestjs
 import {
   APICallError,
   type AssistantContent,
+  type FinishReason,
   type LanguageModel,
   type ModelMessage,
   type ToolSet,
@@ -13,6 +14,7 @@ import {
   streamText,
   tool,
 } from 'ai';
+import { createCompletionStream } from './ai-completion-stream.js';
 import type { AiHttpClient } from './ai-http-client.js';
 import { normalizeAiBaseUrl } from './ai-http-client.js';
 import { argumentsObject, malformed, text, unreachable } from './ai-provider.types.js';
@@ -25,9 +27,29 @@ import type {
 
 type Completion = Readonly<{ content: string; toolCalls: AiToolCall[] }>;
 
-function model(input: AiCompletionInput, http: AiHttpClient): LanguageModel {
+function model(
+  input: AiCompletionInput,
+  http: AiHttpClient,
+  validation: ReturnType<typeof createCompletionStream> | undefined,
+): LanguageModel {
   const baseURL = normalizeAiBaseUrl(input.connection.baseUrl);
-  const fetch = http.fetch.bind(http);
+  const responses = input.connection.provider === 'opencode-go' && /^gpt-/i.test(input.model);
+  const fetch: typeof globalThis.fetch = async (url, init) => {
+    const response = await http.fetch(url, init);
+    if (!validation || !response.ok || !response.body) return response;
+    // The SDK accepts EOF without protocol completion; retain our wire validation.
+    return new Response(
+      response.body.pipeThrough(
+        new TransformStream<Uint8Array, Uint8Array>({
+          transform(chunk, controller) {
+            validation.push(chunk);
+            controller.enqueue(chunk);
+          },
+        }),
+      ),
+      { status: response.status, headers: response.headers },
+    );
+  };
   switch (input.connection.provider) {
     case 'openai':
       return createOpenAI({ baseURL, apiKey: input.connection.apiKey, fetch }).chat(input.model);
@@ -39,9 +61,7 @@ function model(input: AiCompletionInput, http: AiHttpClient): LanguageModel {
         headers: { 'x-opencode-session': input.sessionId },
         fetch,
       });
-      return /^gpt-/i.test(input.model)
-        ? provider.responses(input.model)
-        : provider.chat(input.model);
+      return responses ? provider.responses(input.model) : provider.chat(input.model);
     }
     case 'anthropic':
       return createAnthropic({ baseURL, apiKey: input.connection.apiKey, fetch }).messages(
@@ -117,11 +137,23 @@ function completion(
   content: string,
   calls: readonly TypedToolCall<ToolSet>[],
   definitions: readonly AiToolDefinition[],
+  finishReason: FinishReason,
 ): Completion {
+  if (
+    (finishReason !== 'stop' && finishReason !== 'tool-calls') ||
+    (finishReason === 'tool-calls' && !calls.length)
+  )
+    return malformed();
   const known = new Set(definitions.map(({ name }) => name));
   const toolCalls = calls.map((call) => {
     const args = JSON.stringify(call.input);
-    if (!known.has(call.toolName) || typeof args !== 'string') return malformed();
+    if (
+      !text(call.toolCallId) ||
+      !known.has(call.toolName) ||
+      typeof args !== 'string' ||
+      ('invalid' in call && call.invalid)
+    )
+      return malformed();
     argumentsObject(args);
     return { id: call.toolCallId, name: call.toolName, arguments: args };
   });
@@ -136,6 +168,8 @@ function completion(
 function failure(error: unknown): never {
   if (error instanceof HttpException) throw error;
   if (APICallError.isInstance(error)) {
+    if (error.statusCode !== undefined && error.statusCode >= 200 && error.statusCode < 300)
+      return malformed();
     if (error.statusCode === 401 || error.statusCode === 403)
       throw new BadGatewayException(
         'AI provider authentication or access failed. Check the API key and permissions.',
@@ -159,8 +193,15 @@ export async function completeWithAiSdk(
   if (!text(input.model)) throw new BadRequestException('AI model ID is required.');
   if (input.connection.provider === 'opencode-go' && !text(input.sessionId))
     throw new BadRequestException('OpenCode Go requires an AI session ID.');
+  const validation = input.onText
+    ? createCompletionStream(
+        input.connection.provider,
+        () => undefined,
+        input.connection.provider === 'opencode-go' && /^gpt-/i.test(input.model),
+      )
+    : undefined;
   const settings = {
-    model: model(input, http),
+    model: model(input, http, validation),
     system: input.system,
     messages: messages(input.messages),
     tools: tools(input.tools),
@@ -170,11 +211,21 @@ export async function completeWithAiSdk(
   try {
     if (!input.onText) {
       const result = await generateText(settings);
-      return completion(result.text, result.toolCalls, input.tools);
+      return completion(result.text, result.toolCalls, input.tools, result.finishReason);
     }
-    const result = streamText(settings);
-    for await (const delta of result.textStream) input.onText(delta);
-    return completion(await result.text, await result.toolCalls, input.tools);
+    // Handle errors below, without the SDK's default logging of provider payloads.
+    const result = streamText({ ...settings, onError: () => undefined });
+    for await (const part of result.fullStream) {
+      if (part.type === 'error') throw part.error;
+      if (part.type === 'text-delta') input.onText(part.text);
+    }
+    validation?.finish();
+    return completion(
+      await result.text,
+      await result.toolCalls,
+      input.tools,
+      await result.finishReason,
+    );
   } catch (error) {
     return failure(error);
   }

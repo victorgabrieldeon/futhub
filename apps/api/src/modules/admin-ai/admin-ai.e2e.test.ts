@@ -5,7 +5,9 @@ import { AiHttpClient } from './ai-http-client.js';
 
 const completed = {
   status: 200,
-  body: { choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'OK' } }] },
+  body: {
+    choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: 'OK' } }],
+  },
 };
 
 function teamProposal(slug: string, extra: object = {}) {
@@ -14,6 +16,7 @@ function teamProposal(slug: string, extra: object = {}) {
     body: {
       choices: [
         {
+          index: 0,
           finish_reason: 'tool_calls',
           message: {
             role: 'assistant',
@@ -137,6 +140,7 @@ describe('Admin AI tools HTTP boundary', () => {
       body: {
         choices: [
           {
+            index: 0,
             finish_reason: 'tool_calls',
             message: {
               role: 'assistant',
@@ -178,7 +182,9 @@ describe('Admin AI tools HTTP boundary', () => {
     wire.mockResolvedValueOnce({
       status: 200,
       body: {
-        choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: 'Concluído' } }],
+        choices: [
+          { index: 0, finish_reason: 'stop', message: { role: 'assistant', content: 'Concluído' } },
+        ],
       },
     });
     const actionUrl = `${url}/actions/${action?.id}`;

@@ -72,6 +72,7 @@ describe('Admin AI streaming HTTP', () => {
     let finished = false;
     vi.spyOn(AiHttpClient.prototype, 'requestStream').mockImplementation(async (_url, options) => {
       expect(JSON.parse(options.body ?? '{}')).toMatchObject({ stream: true });
+      options.onResponse?.(200, { 'content-type': 'text/event-stream' });
       options.onChunk(chunk({ role: 'assistant', content: 'Bom dia' }));
       await held;
       options.onChunk(chunk({ content: ', vamos conversar.' }));
@@ -137,11 +138,12 @@ describe('Admin AI streaming HTTP', () => {
     const url = await connect();
     vi.mocked(AiHttpClient.prototype.request).mockResolvedValue({
       status: 200,
-      body: '<a class="result__a" href="https://gremio.net/elenco">Clube oficial</a><a class="result__snippet">Elenco da temporada</a>',
+      body: '<div data-type="web"><a href="https://gremio.net/elenco"><div class="search-snippet-title">Clube oficial</div></a><div class="generic-snippet"><div class="content">Elenco da temporada</div></div></div>',
     });
     const wire = vi.spyOn(AiHttpClient.prototype, 'requestStream');
     wire
       .mockImplementationOnce(async (_url, options) => {
+        options.onResponse?.(200, { 'content-type': 'text/event-stream' });
         options.onChunk(chunk({ role: 'assistant' }));
         options.onChunk(
           chunk(
@@ -153,6 +155,7 @@ describe('Admin AI streaming HTTP', () => {
         return { status: 200, body: null };
       })
       .mockImplementationOnce(async (_url, options) => {
+        options.onResponse?.(200, { 'content-type': 'text/event-stream' });
         options.onChunk(chunk({ role: 'assistant' }));
         expect(options.body).toContain('https://gremio.net/elenco');
         options.onChunk(
@@ -176,12 +179,13 @@ describe('Admin AI streaming HTTP', () => {
     expect(await response.text()).toContain('"type":"done"');
     const proposed = await context.app.inject({ method: 'GET', url, headers });
     const action = proposed.json<AiChatState>().actions[0];
-    expect(action?.status).toBe('pending');
+    expect(action?.status, proposed.body).toBe('pending');
     const { db, schema, eq } = context.database;
     expect(
       await db.select().from(schema.teams).where(eq(schema.teams.slug, 'streaming-club')),
     ).toHaveLength(0);
     wire.mockImplementation(async (_url, options) => {
+      options.onResponse?.(200, { 'content-type': 'text/event-stream' });
       options.onChunk(chunk({ role: 'assistant', content: 'Time criado.' }, 'stop'));
       options.onChunk(end);
       return { status: 200, body: null };
@@ -207,6 +211,7 @@ describe('Admin AI streaming HTTP', () => {
     // Given: an interrupted provider response containing text and a partial tool call.
     const url = await connect();
     vi.spyOn(AiHttpClient.prototype, 'requestStream').mockImplementation(async (_url, options) => {
+      options.onResponse?.(200, { 'content-type': 'text/event-stream' });
       options.onChunk(chunk({ role: 'assistant', content: 'Preparando proposta' }));
       options.onChunk(chunk(toolCall('create_team', { name: 'Incomplete' })));
       return { status: 200, body: null };

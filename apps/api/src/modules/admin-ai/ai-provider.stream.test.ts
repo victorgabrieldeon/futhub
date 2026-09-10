@@ -65,7 +65,15 @@ const source = {
   },
   anthropic: {
     first:
-      anthropicEvent('message_start', { message: { role: 'assistant', content: [] } }) +
+      anthropicEvent('message_start', {
+        message: {
+          id: 'message-1',
+          model: 'test-model',
+          role: 'assistant',
+          content: [],
+          usage: { input_tokens: 1, output_tokens: 0 },
+        },
+      }) +
       anthropicEvent('content_block_start', {
         index: 0,
         content_block: { type: 'text', text: '' },
@@ -76,7 +84,10 @@ const source = {
       }),
     last:
       anthropicEvent('content_block_stop', { index: 0 }) +
-      anthropicEvent('message_delta', { delta: { stop_reason: 'end_turn' } }) +
+      anthropicEvent('message_delta', {
+        delta: { stop_reason: 'end_turn' },
+        usage: { output_tokens: 1 },
+      }) +
       anthropicEvent('message_stop'),
     endpoint: 'messages',
   },
@@ -145,7 +156,43 @@ describe('provider streaming through pinned HTTPS', () => {
     // When
     response.emit(
       'data',
-      Buffer.from(responsesEvent('response.output_text.delta', { delta: 'Olá 🌍' })),
+      Buffer.from(
+        responsesEvent('response.output_item.added', {
+          output_index: 0,
+          item: { type: 'message', id: 'message-1' },
+        }) +
+          responsesEvent('response.output_text.delta', { item_id: 'message-1', delta: 'Olá 🌍' }) +
+          responsesEvent('response.output_item.done', {
+            output_index: 0,
+            item: { type: 'message', id: 'message-1' },
+          }) +
+          responsesEvent('response.output_item.added', {
+            output_index: 1,
+            item: {
+              type: 'function_call',
+              id: 'function-1',
+              call_id: 'call-search',
+              name: 'search',
+              arguments: '',
+            },
+          }) +
+          responsesEvent('response.function_call_arguments.delta', {
+            item_id: 'function-1',
+            output_index: 1,
+            delta: '{}',
+          }) +
+          responsesEvent('response.output_item.done', {
+            output_index: 1,
+            item: {
+              type: 'function_call',
+              id: 'function-1',
+              call_id: 'call-search',
+              name: 'search',
+              arguments: '{}',
+              status: 'completed',
+            },
+          }),
+      ),
     );
     response.emit(
       'data',
@@ -153,6 +200,7 @@ describe('provider streaming through pinned HTTPS', () => {
         responsesEvent('response.completed', {
           response: {
             status: 'completed',
+            usage: { input_tokens: 1, output_tokens: 1 },
             output: [
               { type: 'function_call', call_id: 'call-search', name: 'search', arguments: '{}' },
             ],
@@ -170,8 +218,10 @@ describe('provider streaming through pinned HTTPS', () => {
     expect(network.request.mock.calls[0]?.[0].pathname).toBe('/v1/responses');
     expect(JSON.parse(outgoing.end.mock.calls[0]?.[0] ?? 'null')).toMatchObject({
       model: 'gpt-5.6-luna',
-      instructions: input.system,
-      input: [{ role: 'user', content: input.messages[0]?.content }],
+      input: [
+        { role: 'developer', content: input.system },
+        { role: 'user', content: [{ type: 'input_text', text: input.messages[0]?.content }] },
+      ],
       tools: [{ type: 'function', name: 'search' }],
       stream: true,
     });
@@ -198,19 +248,36 @@ describe('provider streaming through pinned HTTPS', () => {
     // When
     response.emit(
       'data',
-      Buffer.from(responsesEvent('response.output_text.delta', { delta: 'Pronto.' })),
+      Buffer.from(
+        responsesEvent('response.output_item.added', {
+          output_index: 0,
+          item: { type: 'message', id: 'message-1' },
+        }) +
+          responsesEvent('response.output_text.delta', { item_id: 'message-1', delta: 'Pronto.' }) +
+          responsesEvent('response.output_item.done', {
+            output_index: 0,
+            item: { type: 'message', id: 'message-1' },
+          }),
+      ),
     );
     response.emit(
       'data',
       Buffer.from(
-        responsesEvent('response.completed', { response: { status: 'completed', output: [] } }),
+        responsesEvent('response.completed', {
+          response: {
+            status: 'completed',
+            output: [],
+            usage: { input_tokens: 1, output_tokens: 1 },
+          },
+        }),
       ),
     );
     response.emit('end');
     // Then
     await expect(pending).resolves.toEqual({ content: 'Pronto.', toolCalls: [] });
     expect(JSON.parse(outgoing.end.mock.calls[0]?.[0] ?? 'null').input).toEqual([
-      { role: 'user', content: 'Pesquise o Grêmio.' },
+      { role: 'developer', content: input.system },
+      { role: 'user', content: [{ type: 'input_text', text: 'Pesquise o Grêmio.' }] },
       {
         type: 'function_call',
         call_id: 'call-search',
@@ -221,25 +288,35 @@ describe('provider streaming through pinned HTTPS', () => {
     ]);
   });
 
-  it.each<AiConnection['provider']>(['openai', 'opencode-go', 'anthropic'])(
-    'rejects truncated %s after visible text',
-    async (provider) => {
-      // Given
-      const onText = vi.fn();
-      const pending = new AiProviderService(new AiHttpClient()).complete({
-        ...input,
-        connection: { ...input.connection, provider },
-        onText,
-      });
-      const response = await respond();
-      // When
-      response.emit('data', Buffer.from(source[provider].first));
-      response.emit('end');
-      // Then
-      await expect(pending).rejects.toThrow(/malformed/);
-      expect(onText).toHaveBeenCalledWith('Olá 🌍');
-    },
-  );
+  it.each(
+    (['openai', 'opencode-go', 'anthropic'] as const).flatMap((provider) =>
+      ['before-finish', 'after-finish'].map((stage) => ({ provider, stage })),
+    ),
+  )('rejects truncated $provider $stage after visible text', async ({ provider, stage }) => {
+    // Given
+    const onText = vi.fn();
+    const pending = new AiProviderService(new AiHttpClient()).complete({
+      ...input,
+      connection: { ...input.connection, provider },
+      onText,
+    });
+    const response = await respond();
+    // When
+    response.emit('data', Buffer.from(source[provider].first));
+    if (stage === 'after-finish')
+      response.emit(
+        'data',
+        Buffer.from(
+          source[provider].last
+            .replace('data: [DONE]\n\n', '')
+            .replace(anthropicEvent('message_stop'), ''),
+        ),
+      );
+    response.emit('end');
+    // Then
+    await expect(pending).rejects.toThrow(/malformed/);
+    expect(onText).toHaveBeenCalledWith('Olá 🌍');
+  });
 
   it.each(['duplicate', 'unknown', 'malformed'])(
     'rejects %s tools despite DONE and tool_calls finish',

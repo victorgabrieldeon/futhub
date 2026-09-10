@@ -35,6 +35,10 @@ describe('Anthropic adapter', () => {
     const request = vi.spyOn(client, 'request').mockResolvedValue({
       status: 200,
       body: {
+        id: 'message-1',
+        model: 'test-model',
+        type: 'message',
+        usage: { input_tokens: 1, output_tokens: 1 },
         role: 'assistant',
         stop_reason: 'tool_use',
         content: [
@@ -55,11 +59,14 @@ describe('Anthropic adapter', () => {
       'content-type': 'application/json',
       'x-api-key': 'test-secret',
       'anthropic-version': '2023-06-01',
+      'user-agent': expect.stringMatching(
+        /^ai\/\S+ ai-sdk\/provider-utils\/\S+ runtime\/node.js\/\d+$/,
+      ),
     });
     const body: unknown = JSON.parse(call?.[1].body ?? 'null');
     expect(body).toEqual({
       model: 'test-model',
-      system: 'Admin system',
+      system: [{ type: 'text', text: 'Admin system' }],
       max_tokens: 4096,
       messages: [
         { role: 'user', content: [{ type: 'text', text: 'Search' }] },
@@ -79,6 +86,7 @@ describe('Anthropic adapter', () => {
         },
       ],
       tools: [{ name: 'search', description: 'Search cards', input_schema: { type: 'object' } }],
+      tool_choice: { type: 'auto' },
     });
   });
 
@@ -161,7 +169,16 @@ describe('Anthropic adapter', () => {
     { role: 'assistant', stop_reason: 'end_turn', content: [] },
   ])('rejects malformed or unsupported completion %j', async (body) => {
     const client = new AiHttpClient();
-    vi.spyOn(client, 'request').mockResolvedValue({ status: 200, body });
+    vi.spyOn(client, 'request').mockResolvedValue({
+      status: 200,
+      body: {
+        id: 'message-1',
+        model: 'test-model',
+        type: 'message',
+        usage: { input_tokens: 1, output_tokens: 1 },
+        ...body,
+      },
+    });
     await expect(new AiProviderService(client).complete(input)).rejects.toThrow(
       /malformed or unsupported tools/,
     );

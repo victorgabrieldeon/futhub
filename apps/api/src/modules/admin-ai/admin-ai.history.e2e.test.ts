@@ -63,7 +63,11 @@ describe('Admin AI durable history', () => {
       status: 200,
       body: {
         choices: [
-          { finish_reason: 'stop', message: { role: 'assistant', content: 'Resposta preservada' } },
+          {
+            index: 0,
+            finish_reason: 'stop',
+            message: { role: 'assistant', content: 'Resposta preservada' },
+          },
         ],
       },
     });

@@ -32,13 +32,21 @@ describe('AI provider wire schemas', () => {
         body:
           provider === 'anthropic'
             ? {
+                id: 'message-1',
+                model: 'test-model',
+                type: 'message',
+                usage: { input_tokens: 1, output_tokens: 1 },
                 role: 'assistant',
                 content: [{ type: 'text', text: 'Done' }],
                 stop_reason: 'end_turn',
               }
             : {
                 choices: [
-                  { finish_reason: 'stop', message: { role: 'assistant', content: 'Done' } },
+                  {
+                    index: 0,
+                    finish_reason: 'stop',
+                    message: { role: 'assistant', content: 'Done' },
+                  },
                 ],
               },
       });

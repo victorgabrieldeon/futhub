@@ -40,7 +40,7 @@ describe('Admin AI confirmed catalog creations', () => {
     const before = await counts();
     const completion = (message: object, finish_reason: 'tool_calls' | 'stop') => ({
       status: 200,
-      body: { choices: [{ finish_reason, message: { role: 'assistant', ...message } }] },
+      body: { choices: [{ index: 0, finish_reason, message: { role: 'assistant', ...message } }] },
     });
     vi.spyOn(AiHttpClient.prototype, 'request')
       .mockResolvedValueOnce({ status: 200, body: { data: [{ id: 'catalog-model' }] } })
