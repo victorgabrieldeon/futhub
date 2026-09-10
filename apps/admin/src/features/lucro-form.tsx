@@ -385,7 +385,7 @@ export function LucroForm({
             <ol className="cooldown-timeline">
               {[0, 1, 2, 3].map((interval) => (
                 <li key={interval}>
-                  <i aria-hidden="true" />
+                  <i tabIndex={-1} aria-hidden="true" />
                   <strong>
                     {interval === 0 ? 'Agora' : `+${formatDuration(cooldownSeconds * interval)}`}
                   </strong>
@@ -425,13 +425,13 @@ export function LucroForm({
           </section>
 
           {cooldownSeconds > 0 && cooldownSeconds <= 5 * 60 ? (
-            <p className="cooldown-warning" role="status">
+            <output className="cooldown-warning">
               <strong>Cooldown curto</strong>
               <span>
                 A distribuição atual pode liberar até {decimalFormatter.format(coinsPerHour)} moedas
                 por hora para cada jogador ativo.
               </span>
-            </p>
+            </output>
           ) : null}
 
           <section aria-labelledby="player-cooldown-title" className="player-cooldown-preview">
@@ -540,14 +540,14 @@ export function LucroForm({
                       <output>{chanceValue.toFixed(1)}%</output>
                       <span>de chance</span>
                     </div>
-                    <div
+                    <meter
                       aria-label={`${chanceValue.toFixed(1)}% de chance`}
-                      aria-valuemax={100}
-                      aria-valuemin={0}
-                      aria-valuenow={chanceValue}
-                      className="reward-probability-track"
-                      role="progressbar"
-                    >
+                      min={0}
+                      max={100}
+                      value={chanceValue}
+                      className="sr-only"
+                    />
+                    <div className="reward-probability-track" aria-hidden="true">
                       <i style={{ width: `${chanceValue}%` }} />
                     </div>
                   </div>

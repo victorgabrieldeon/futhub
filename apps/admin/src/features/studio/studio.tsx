@@ -1959,7 +1959,9 @@ export function Studio() {
                           <strong>{action.label}</strong>
                           <small>{action.detail}</small>
                         </span>
-                        <b aria-hidden="true">↵</b>
+                        <b tabIndex={-1} aria-hidden="true">
+                          ↵
+                        </b>
                       </button>
                     ))
                   ) : (

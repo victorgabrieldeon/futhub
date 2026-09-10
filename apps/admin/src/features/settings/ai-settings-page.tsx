@@ -1,13 +1,13 @@
 import { ApiClientError } from '@futhub/api-client';
 import { useEffect, useState } from 'react';
 import { AdminIcon } from '../../components/admin-icon';
-import { ConnectionForm } from '../ai-chat/connection-form';
 import {
   type Connection,
   type SavedConnection,
   saveConnection,
   savedConnection,
 } from '../ai-chat/api';
+import { ConnectionForm } from '../ai-chat/connection-form';
 import '../ai-chat/ai-chat.css';
 
 export function AiSettingsPage() {
@@ -97,7 +97,9 @@ export function AiSettingsPage() {
           )}
         </div>
         {loading ? (
-          <p role="status">Carregando configuração de IA…</p>
+          <p>
+            <output>Carregando configuração de IA…</output>
+          </p>
         ) : (
           <ConnectionForm busy={busy} save={save} saved={saved} />
         )}
@@ -108,8 +110,8 @@ export function AiSettingsPage() {
         </p>
       )}
       {success && (
-        <p className="settings-success" role="status">
-          {success}
+        <p className="settings-success">
+          <output>{success}</output>
         </p>
       )}
     </section>

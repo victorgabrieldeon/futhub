@@ -9,16 +9,19 @@ import { type FormEvent, Suspense, lazy, useEffect, useRef, useState } from 'rea
 import { NavLink, Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 import { adminApiOptions } from './api/admin-client';
 import { AdminIcon } from './components/admin-icon';
+import { ChapterNavigation } from './components/chapter-navigation';
 import { LoginScene } from './components/login-stadium';
+import {
+  BotResponseDraftScope,
+  BotResponsesPage,
+} from './features/bot-responses/bot-responses-page';
 import { Cards } from './features/cards/cards';
 import { Packs } from './features/packs/packs';
 import { PackStudio } from './features/studio/pack-studio';
 import { Studio } from './features/studio/studio';
 import type { LucroConfig } from './lib/lucro';
-import { LucroPage } from './pages/lucro-page';
 import { AlbumPage } from './pages/album-page';
-import { ChapterNavigation } from './components/chapter-navigation';
-import { BotResponseDraftScope, BotResponsesPage } from './features/bot-responses/bot-responses-page';
+import { LucroPage } from './pages/lucro-page';
 
 type Theme = 'light' | 'dark';
 const AiChatPage = lazy(() =>
@@ -77,7 +80,13 @@ export function App() {
           <Route
             path="/app/assistente"
             element={
-              <Suspense fallback={<p role="status">Carregando assistente…</p>}>
+              <Suspense
+                fallback={
+                  <p>
+                    <output>Carregando assistente…</output>
+                  </p>
+                }
+              >
                 <AiChatPage />
               </Suspense>
             }
@@ -85,7 +94,13 @@ export function App() {
           <Route
             path="/app/configuracoes"
             element={
-              <Suspense fallback={<p role="status">Carregando configurações…</p>}>
+              <Suspense
+                fallback={
+                  <p>
+                    <output>Carregando configurações…</output>
+                  </p>
+                }
+              >
                 <AiSettingsPage />
               </Suspense>
             }
@@ -616,7 +631,6 @@ function CommandsPage() {
           </label>
           <input
             autoComplete="off"
-            autoFocus
             id="command-palette-input"
             onChange={(event) => setPaletteQuery(event.target.value)}
             placeholder="O que você deseja fazer?"

@@ -68,7 +68,9 @@ try {
   await page.goto(process.env.CARD_STUDIO_URL ?? 'http://127.0.0.1:4174/app/studio');
   await ready();
   assert.equal(
-    await page.locator('.studio-workbench').evaluate((node) => getComputedStyle(node).backgroundColor),
+    await page
+      .locator('.studio-workbench')
+      .evaluate((node) => getComputedStyle(node).backgroundColor),
     'rgb(17, 17, 17)',
     'Studio must follow dark theme',
   );

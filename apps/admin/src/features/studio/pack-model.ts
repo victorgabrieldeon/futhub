@@ -2,8 +2,8 @@ import {
   AmbientLight,
   CanvasTexture,
   Color,
-  DoubleSide,
   DirectionalLight,
+  DoubleSide,
   type Material,
   Mesh,
   MeshStandardMaterial,
@@ -377,7 +377,11 @@ function setPackMaterial(material: MeshStandardMaterial, draft: PackStudioDraft)
   }
 }
 
-async function configurePack(scene: Scene, draft: PackStudioDraft, owned: Set<Material | CanvasTexture>) {
+async function configurePack(
+  scene: Scene,
+  draft: PackStudioDraft,
+  owned: Set<Material | CanvasTexture>,
+) {
   const clones = new Map<Material, Material>();
   const faces: Mesh[] = [];
   scene.traverse((node) => {

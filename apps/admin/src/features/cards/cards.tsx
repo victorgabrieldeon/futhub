@@ -1,6 +1,6 @@
 import {
-  type ChangeEvent,
   type CSSProperties,
+  type ChangeEvent,
   type FormEvent,
   type ReactNode,
   type RefObject,
@@ -14,10 +14,10 @@ import { AdminIcon, type AdminIconName } from '../../components/admin-icon';
 import {
   type Card,
   type CardFilters,
-  type CollectionFilters,
   type Catalog,
   type Collection,
   type CollectionArtworkSuggestion,
+  type CollectionFilters,
   type CollectionInput,
   type Page,
   type Preview,
@@ -339,6 +339,8 @@ export function Cards({
 
   useEffect(() => {
     syncDialog(catalogDialog.current, Boolean(catalogView));
+    if (catalogView)
+      catalogDialog.current?.querySelector<HTMLInputElement>('input[type="search"]')?.focus();
   }, [catalogView]);
 
   useEffect(() => {
@@ -711,7 +713,9 @@ export function Cards({
       canvas.height = cardImageSize.height;
       const context = canvas.getContext('2d');
       if (!context) throw new Error('Não foi possível preparar a imagem.');
-      const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight) * imageCrop.zoom;
+      const scale =
+        Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight) *
+        imageCrop.zoom;
       const width = image.naturalWidth * scale;
       const height = image.naturalHeight * scale;
       context.drawImage(
@@ -722,10 +726,18 @@ export function Cards({
         height,
       );
       const cropped = await new Promise<Blob>((resolve, reject) =>
-        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Não foi possível gerar a imagem.'))), 'image/png'),
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error('Não foi possível gerar a imagem.'))),
+          'image/png',
+        ),
       );
       const data = new FormData();
-      data.append('file', new File([cropped], `${cropSource.file.name.replace(/\.[^.]+$/, '')}-600x800.png`, { type: 'image/png' }));
+      data.append(
+        'file',
+        new File([cropped], `${cropSource.file.name.replace(/\.[^.]+$/, '')}-600x800.png`, {
+          type: 'image/png',
+        }),
+      );
       const card = await uploadCardImage(selected.id, data);
       setSelected(card);
       setForm(cardForm(card));
@@ -967,7 +979,11 @@ export function Cards({
   const playerCountLabel = `${playerCount} ${playerCount === 1 ? 'jogador' : 'jogadores'}`;
   const collectionCount = collections?.total ?? 0;
   const hasPlayerFilters = Boolean(
-    filters.query || filters.teamId || filters.collectionId || filters.position || filters.sort !== 'recent',
+    filters.query ||
+      filters.teamId ||
+      filters.collectionId ||
+      filters.position ||
+      filters.sort !== 'recent',
   );
   const hasCollectionFilters = Boolean(
     collectionFilters.query || collectionFilters.contractsBlocked !== undefined,
@@ -1379,6 +1395,9 @@ export function Cards({
             if (event.target === event.currentTarget) setCatalogView(null);
           }}
           onClose={() => setCatalogView(null)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setCatalogView(null);
+          }}
           ref={catalogDialog}
         >
           <div className="catalog-browser-shell">
@@ -1438,7 +1457,6 @@ export function Cards({
                     <span>Buscar</span>
                     <input
                       autoComplete="off"
-                      autoFocus
                       onChange={(event) =>
                         setCollectionFilters({ ...collectionFilters, query: event.target.value })
                       }
@@ -1498,7 +1516,6 @@ export function Cards({
                     <span>Buscar</span>
                     <input
                       autoComplete="off"
-                      autoFocus
                       onChange={(event) =>
                         setTeamFilters({ ...teamFilters, query: event.target.value })
                       }
@@ -1790,14 +1807,14 @@ export function Cards({
                             <span>{labels[stat.name]}</span>
                             <strong>{stat.value}</strong>
                           </div>
-                          <div
+                          <meter
                             aria-label={`${labels[stat.name]}: ${stat.value}`}
-                            aria-valuemax={100}
-                            aria-valuemin={1}
-                            aria-valuenow={stat.value}
-                            className="drawer-profile-track"
-                            role="progressbar"
-                          >
+                            min={1}
+                            max={100}
+                            value={stat.value}
+                            className="sr-only"
+                          />
+                          <div className="drawer-profile-track" aria-hidden="true">
                             <i style={{ width: `${stat.value}%` }} />
                           </div>
                         </div>
@@ -2671,8 +2688,8 @@ function PlayerVault({
           <span>Adicione mais jogadores para expandir sua coleção.</span>
         </div>
         <div className="player-vault-progress-marks" aria-hidden="true">
-          {Array.from({ length: 10 }, (_, index) => (
-            <i className={index < Math.min(playerCount, 10) ? 'is-filled' : ''} key={index} />
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((slot) => (
+            <i className={slot <= Math.min(playerCount, 10) ? 'is-filled' : ''} key={slot} />
           ))}
         </div>
       </aside>
@@ -2844,19 +2861,26 @@ function ImageCropDialog({
   if (!source) return null;
   const sourceRatio = sourceSize ? sourceSize.width / sourceSize.height : 3 / 4;
   const baseWidth = Math.max(1, sourceRatio / (cardImageSize.width / cardImageSize.height));
-  const baseHeight = Math.max(1, (cardImageSize.width / cardImageSize.height) / sourceRatio);
+  const baseHeight = Math.max(1, cardImageSize.width / cardImageSize.height / sourceRatio);
   const width = baseWidth * crop.zoom * 100;
   const height = baseHeight * crop.zoom * 100;
 
   return (
-    <dialog aria-labelledby="image-crop-title" className="image-crop-dialog" onClose={onClose} ref={dialogRef}>
+    <dialog
+      aria-labelledby="image-crop-title"
+      className="image-crop-dialog"
+      onClose={onClose}
+      ref={dialogRef}
+    >
       <article className="image-crop-card">
         <header>
           <div>
             <h2 id="image-crop-title">Editar imagem</h2>
             <p>Saída obrigatória: 600 × 800 px em PNG</p>
           </div>
-          <button aria-label="Fechar editor de imagem" onClick={onClose} type="button">×</button>
+          <button aria-label="Fechar editor de imagem" onClick={onClose} type="button">
+            ×
+          </button>
         </header>
         <div
           className="image-crop-viewport"
@@ -2881,7 +2905,10 @@ function ImageCropDialog({
             alt="Prévia do recorte"
             draggable={false}
             onLoad={(event) =>
-              setSourceSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })
+              setSourceSize({
+                width: event.currentTarget.naturalWidth,
+                height: event.currentTarget.naturalHeight,
+              })
             }
             src={source.url}
             style={{
@@ -2907,10 +2934,14 @@ function ImageCropDialog({
               value={crop.zoom}
             />
           </label>
-          <button onClick={() => onChange({ zoom: 1, x: 0, y: 0 })} type="button">Redefinir</button>
+          <button onClick={() => onChange({ zoom: 1, x: 0, y: 0 })} type="button">
+            Redefinir
+          </button>
         </div>
         <footer>
-          <button disabled={working} onClick={onClose} type="button">Cancelar</button>
+          <button disabled={working} onClick={onClose} type="button">
+            Cancelar
+          </button>
           <button className="is-primary" disabled={working} onClick={onApply} type="button">
             {working ? 'Aplicando…' : 'Aplicar'}
           </button>
@@ -4032,8 +4063,29 @@ function CatalogImportWorkspace({
               <span className="analysis-sheet-head">B</span>
               <span className="analysis-sheet-head">C</span>
               <span className="analysis-sheet-head">D</span>
-              {Array.from({ length: 20 }, (_, index) => (
-                <i key={index} />
+              {[
+                'A1',
+                'B1',
+                'C1',
+                'D1',
+                'A2',
+                'B2',
+                'C2',
+                'D2',
+                'A3',
+                'B3',
+                'C3',
+                'D3',
+                'A4',
+                'B4',
+                'C4',
+                'D4',
+                'A5',
+                'B5',
+                'C5',
+                'D5',
+              ].map((cell) => (
+                <i key={cell} />
               ))}
               <b className="analysis-scanner" />
             </div>
@@ -4160,14 +4212,14 @@ function CatalogImportWorkspace({
                   <span>Criações</span>
                   <b>{preview.createCount}</b>
                 </div>
-                <div
+                <meter
                   aria-label={`${preview.createCount} cards serão criados`}
-                  aria-valuemax={100}
-                  aria-valuemin={0}
-                  aria-valuenow={createShare}
-                  className="import-impact-track"
-                  role="progressbar"
-                >
+                  min={0}
+                  max={100}
+                  value={createShare}
+                  className="sr-only"
+                />
+                <div className="import-impact-track" aria-hidden="true">
                   <i style={{ width: `${createShare}%` }} />
                 </div>
               </li>
@@ -4176,14 +4228,14 @@ function CatalogImportWorkspace({
                   <span>Atualizações</span>
                   <b>{preview.updateCount}</b>
                 </div>
-                <div
+                <meter
                   aria-label={`${preview.updateCount} cards serão atualizados`}
-                  aria-valuemax={100}
-                  aria-valuemin={0}
-                  aria-valuenow={updateShare}
-                  className="import-impact-track"
-                  role="progressbar"
-                >
+                  min={0}
+                  max={100}
+                  value={updateShare}
+                  className="sr-only"
+                />
+                <div className="import-impact-track" aria-hidden="true">
                   <i style={{ width: `${updateShare}%` }} />
                 </div>
               </li>

@@ -5,6 +5,7 @@ import { AdminIcon } from '../components/admin-icon';
 import { ApiClientError, getV1AdminLucro } from '@futhub/api-client';
 import { adminApiOptions } from '../api/admin-client';
 import { LucroForm } from '../features/lucro-form';
+import type { LucroConfig } from '../lib/lucro';
 import {
   analyzeLucroEconomy,
   getLucroRewardTier,
@@ -12,7 +13,6 @@ import {
   rollLucroReward,
 } from '../lib/lucro-economy';
 import type { LucroDistributionReward, LucroEconomyInput } from '../lib/lucro-economy';
-import type { LucroConfig } from '../lib/lucro';
 
 type LucroData = Readonly<{ config: LucroConfig }>;
 type SimulationResult = Readonly<{
@@ -177,7 +177,10 @@ export function LucroPage() {
           />
         </main>
         {rewardsSelected ? (
-          <aside className="lucro-command__monitor economy-panel" aria-label="Distribuição e impacto da economia">
+          <aside
+            className="lucro-command__monitor economy-panel"
+            aria-label="Distribuição e impacto da economia"
+          >
             <section className="economy-overview" aria-labelledby="distribution-title">
               <div>
                 <p className="eyebrow">Distribuição ao vivo</p>
@@ -199,14 +202,14 @@ export function LucroPage() {
                           </span>
                           <b>{reward.chance.toFixed(1)}%</b>
                         </div>
-                        <div
+                        <meter
                           aria-label={distributionLabel(reward)}
-                          aria-valuemax={100}
-                          aria-valuemin={0}
-                          aria-valuenow={reward.chance}
-                          className="distribution-track"
-                          role="progressbar"
-                        >
+                          min={0}
+                          max={100}
+                          value={reward.chance}
+                          className="sr-only"
+                        />
+                        <div className="distribution-track" aria-hidden="true">
                           <i style={{ width: `${reward.chance}%` }} />
                         </div>
                       </li>
@@ -250,10 +253,10 @@ export function LucroPage() {
             </section>
 
             {highEconomyImpact ? (
-              <p className="economy-alert" role="status">
+              <output className="economy-alert">
                 <strong>Impacto alto na economia</strong>
                 <span>{riskExplanation}</span>
-              </p>
+              </output>
             ) : null}
 
             <section className="reward-simulator" aria-labelledby="simulator-title">

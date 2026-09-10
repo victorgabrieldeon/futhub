@@ -142,7 +142,8 @@ export function Packs() {
           <h1 className="page-title" id="packs-title">
             <AdminIcon className="page-title-icon" name="pack" />
             <span>
-              Packs <span className="collection-count">{String(packs.length).padStart(2, '0')}</span>
+              Packs{' '}
+              <span className="collection-count">{String(packs.length).padStart(2, '0')}</span>
             </span>
           </h1>
           <p>Monte ofertas, defina preço e controle quais cards entram em cada abertura.</p>

@@ -9907,7 +9907,7 @@ html[data-theme="dark"] .studio-page .studio-inspector .eyebrow {
 }
 .image-crop-card button:disabled {
   cursor: wait;
-  opacity: .6;
+  opacity: 0.6;
 }
 .player-detail-dialog {
   background: transparent;
@@ -15107,20 +15107,14 @@ html[data-theme="dark"] .lucro-command {
 /* Shared select treatment keeps native keyboard/form behavior with FutHub chrome. */
 select:not([multiple]):not([size]) {
   appearance: none;
-  background-image:
-    linear-gradient(45deg, transparent 50%, currentColor 50%),
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
     linear-gradient(135deg, currentColor 50%, transparent 50%);
-  background-position:
-    calc(100% - 15px) 50%,
-    calc(100% - 10px) 50%;
+  background-position: calc(100% - 15px) 50%, calc(100% - 10px) 50%;
   background-repeat: no-repeat;
   background-size: 5px 5px, 5px 5px;
   cursor: pointer;
   padding-right: 36px;
-  transition:
-    background-color 120ms ease,
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
 }
 
 select:not([multiple]):not([size]):hover:not(:disabled) {

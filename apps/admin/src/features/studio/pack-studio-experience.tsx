@@ -29,17 +29,15 @@ export function PackStudioExperience({ draft, onClose }: PackStudioExperiencePro
       open
       ref={dialogRef}
     >
-      <button
-        className="pack-studio-experience__close"
-        onClick={onClose}
-        type="button"
-      >
+      <button className="pack-studio-experience__close" onClick={onClose} type="button">
         Fechar preview
       </button>
       <div className="pack-studio-experience__copy">
         <p className="eyebrow">Preview experience</p>
         <h2 id="pack-experience-title">
-          {opened ? `${draft.cardsAmount} cartas reveladas` : `${draft.name || 'Seu pack'} está pronto`}
+          {opened
+            ? `${draft.cardsAmount} cartas reveladas`
+            : `${draft.name || 'Seu pack'} está pronto`}
         </h2>
         <p>
           {opened
@@ -54,16 +52,15 @@ export function PackStudioExperience({ draft, onClose }: PackStudioExperiencePro
       </div>
       <div className={`pack-studio-experience__pack${opened ? ' is-open' : ''}`}>
         <div aria-hidden="true" className="pack-studio-experience__reveal">
-          {Array.from({ length: Math.min(draft.cardsAmount, 5) }, (_, index) => (
-            <span key={index}>FH</span>
-          ))}
+          {[1, 2, 3, 4, 5]
+            .filter((slot) => slot <= draft.cardsAmount)
+            .map((slot) => (
+              <span key={slot}>FH</span>
+            ))}
         </div>
         <div className="pack-studio-experience__wrapper">
           <div className="pack-studio-experience__tear" aria-hidden="true" />
-          <PackCanvas
-            draft={draft}
-            onCanvasReady={() => undefined}
-          />
+          <PackCanvas draft={draft} onCanvasReady={() => undefined} />
         </div>
         <button
           className="pack-studio-experience__open"
