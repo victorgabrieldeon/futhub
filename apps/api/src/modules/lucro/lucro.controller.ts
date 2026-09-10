@@ -1,10 +1,12 @@
 import { SwaggerCustomizer, TypedBody, TypedRoute } from '@nestia/core';
 import { Controller, HttpCode, Inject, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
 import type { DiscordIdentityDto, LucroResponse } from './lucro.dto.js';
 import { ResgatarLucroUseCase } from './use-cases/resgatar-lucro/resgatar-lucro.use-case.js';
 
+@ApiTags('Comandos')
 @Controller('v1/commands')
 @UseGuards(InternalAuthGuard)
 export class LucroController {
@@ -16,7 +18,6 @@ export class LucroController {
   /**
    * Executa o comando lucro.
    *
-   * @tag commands
    * @param identity Identidade atual do usuário Discord.
    * @returns Recompensa concedida ou cooldown ativo.
    */

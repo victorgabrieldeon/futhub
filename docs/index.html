@@ -364,9 +364,11 @@ cd futhub
 corepack enable
 <span class="code-command">pnpm dev:tilt</span>
 
-<span class="code-muted"># descubra URL da API</span>
-docker compose -f docker-compose.yml \
-  -f docker-compose.tilt.yml port api 3000
+<span class="code-muted"># abra serviços locais</span>
+http://admin.futhub.localhost
+http://api.futhub.localhost
+http://s3.futhub.localhost
+http://s3console.futhub.localhost
 
 <span class="code-muted"># valide antes do PR</span>
 <span class="code-command">pnpm check</span></pre>
@@ -395,8 +397,11 @@ cd futhub
 corepack enable
 <span class="code-command">pnpm dev:tilt</span>
 
-<span class="code-muted"># API em porta livre no host</span>
-docker compose -f docker-compose.yml -f docker-compose.tilt.yml port api 3000
+<span class="code-muted"># serviços locais</span>
+http://admin.futhub.localhost
+http://api.futhub.localhost
+http://s3.futhub.localhost
+http://s3console.futhub.localhost
 
 <span class="code-muted"># encerre ambiente</span>
 <span class="code-command">pnpm dev:tilt:down</span></pre>

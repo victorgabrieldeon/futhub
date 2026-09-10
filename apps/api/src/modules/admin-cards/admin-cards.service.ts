@@ -7,6 +7,12 @@ import {
 } from '@nestjs/common';
 import ExcelJS from 'exceljs';
 
+import {
+  type FileDto,
+  FilesService,
+  type ImageContentType,
+  type ImageFile,
+} from '../files/files.service.js';
 import type {
   AdminCard,
   AdminCollection,
@@ -24,10 +30,9 @@ import type {
   ImportError,
   ImportPreview,
   TeamInput,
-  TeamPage,
   TeamListQuery,
+  TeamPage,
 } from './admin-cards.dto.js';
-import { CardImageStorage, type ImageFile } from './card-image-storage.service.js';
 import { FootyLogosService } from './footy-logos.service.js';
 import { FutGgRaritiesService } from './fut-gg-rarities.service.js';
 import { PlayerPhotosService } from './player-photos.service.js';
@@ -85,7 +90,7 @@ const templateRows = 250;
 @Injectable()
 export class AdminCardsService {
   constructor(
-    @Inject(CardImageStorage) private readonly images: CardImageStorage,
+    @Inject(FilesService) private readonly files: FilesService,
     @Inject(FootyLogosService) private readonly footyLogos: FootyLogosService,
     @Inject(FutGgRaritiesService) private readonly futGgRarities: FutGgRaritiesService,
     @Inject(PlayerPhotosService) private readonly playerPhotos: PlayerPhotosService,
@@ -152,9 +157,9 @@ export class AdminCardsService {
           emoji: database.schema.collections.emoji,
           primaryColor: database.schema.collections.primaryColor,
           secondaryColor: database.schema.collections.secondaryColor,
-          imageUrl: database.schema.collections.imageUrl,
-          overlayUrl: database.schema.collections.overlayUrl,
-          bannerUrl: database.schema.collections.bannerUrl,
+          imageFileId: database.schema.collections.imageFileId,
+          overlayFileId: database.schema.collections.overlayFileId,
+          bannerFileId: database.schema.collections.bannerFileId,
           contractsBlocked: database.schema.collections.contractsBlocked,
         })
         .from(database.schema.collections)
@@ -169,90 +174,136 @@ export class AdminCardsService {
         .innerJoin(database.schema.localizedTextTranslations, joinTranslation)
         .where(filter),
     ]);
-    return { items, total: count[0]?.count ?? 0, page, pageSize };
+    const urls = await this.files.urls(
+      items.flatMap((item) =>
+        [item.imageFileId, item.overlayFileId, item.bannerFileId].flatMap((fileId) =>
+          fileId ? [fileId] : [],
+        ),
+      ),
+    );
+    return {
+      items: items.map((item) => ({
+        ...item,
+        imageUrl: this.fileUrl(urls, item.imageFileId),
+        overlayUrl: this.fileUrl(urls, item.overlayFileId),
+        bannerUrl: this.fileUrl(urls, item.bannerFileId),
+      })),
+      total: count[0]?.count ?? 0,
+      page,
+      pageSize,
+    };
   }
 
   async createCollection(input: CollectionInput): Promise<AdminCollection> {
+    const [image, overlay, banner] = await Promise.all([
+      this.importImage(input.imageUrl),
+      this.importImage(input.overlayUrl),
+      this.importImage(input.bannerUrl),
+    ]);
     const database = await this.database();
-    return database.db.transaction(async (tx) => {
-      const [text] = await tx
-        .insert(database.schema.localizedTexts)
-        .values({})
-        .returning({ id: database.schema.localizedTexts.id });
-      if (!text) throw new Error('Failed to create collection name.');
-      await tx.insert(database.schema.localizedTextTranslations).values({
-        localizedTextId: text.id,
-        locale: 'pt-BR',
-        content: input.name,
+    try {
+      const collectionId = await database.db.transaction(async (tx) => {
+        const [text] = await tx
+          .insert(database.schema.localizedTexts)
+          .values({})
+          .returning({ id: database.schema.localizedTexts.id });
+        if (!text) throw new Error('Failed to create collection name.');
+        await tx.insert(database.schema.localizedTextTranslations).values({
+          localizedTextId: text.id,
+          locale: 'pt-BR',
+          content: input.name,
+        });
+        const [collection] = await tx
+          .insert(database.schema.collections)
+          .values({
+            slug: input.slug,
+            nameTextId: text.id,
+            emoji: input.emoji,
+            primaryColor: input.primaryColor,
+            secondaryColor: input.secondaryColor,
+            imageFileId: image?.id ?? null,
+            overlayFileId: overlay?.id ?? null,
+            bannerFileId: banner?.id ?? null,
+            contractsBlocked: input.contractsBlocked ?? false,
+          })
+          .returning({ id: database.schema.collections.id });
+        if (!collection) throw new Error('Failed to create collection.');
+        return collection.id;
       });
-      const [collection] = await tx
-        .insert(database.schema.collections)
-        .values({
-          slug: input.slug,
-          nameTextId: text.id,
-          emoji: input.emoji,
-          primaryColor: input.primaryColor,
-          secondaryColor: input.secondaryColor,
-          imageUrl: input.imageUrl ?? null,
-          overlayUrl: input.overlayUrl ?? null,
-          bannerUrl: input.bannerUrl ?? null,
-          contractsBlocked: input.contractsBlocked ?? false,
-        })
-        .returning({ id: database.schema.collections.id });
-      if (!collection) throw new Error('Failed to create collection.');
-      return {
-        id: collection.id,
-        ...input,
-        imageUrl: input.imageUrl ?? null,
-        overlayUrl: input.overlayUrl ?? null,
-        bannerUrl: input.bannerUrl ?? null,
-        contractsBlocked: input.contractsBlocked ?? false,
-      };
-    });
+      return this.collection(collectionId);
+    } catch (error) {
+      await this.removeFiles(image, overlay, banner);
+      throw error;
+    }
   }
 
   async updateCollection(collectionId: string, input: CollectionInput): Promise<AdminCollection> {
     const database = await this.database();
     const [collection] = await database.db
-      .select({ nameTextId: database.schema.collections.nameTextId })
+      .select({
+        nameTextId: database.schema.collections.nameTextId,
+        imageFileId: database.schema.collections.imageFileId,
+        overlayFileId: database.schema.collections.overlayFileId,
+        bannerFileId: database.schema.collections.bannerFileId,
+      })
       .from(database.schema.collections)
       .where(database.eq(database.schema.collections.id, collectionId));
     if (!collection) throw new NotFoundException('Collection not found.');
-    await database.db.transaction(async (tx) => {
-      await tx
-        .update(database.schema.localizedTextTranslations)
-        .set({ content: input.name, updatedAt: new Date() })
-        .where(
-          database.and(
-            database.eq(
-              database.schema.localizedTextTranslations.localizedTextId,
-              collection.nameTextId,
+    const [image, overlay, banner] = await Promise.all([
+      this.importImage(input.imageUrl),
+      this.importImage(input.overlayUrl),
+      this.importImage(input.bannerUrl),
+    ]);
+    try {
+      await database.db.transaction(async (tx) => {
+        await tx
+          .update(database.schema.localizedTextTranslations)
+          .set({ content: input.name, updatedAt: new Date() })
+          .where(
+            database.and(
+              database.eq(
+                database.schema.localizedTextTranslations.localizedTextId,
+                collection.nameTextId,
+              ),
+              database.eq(database.schema.localizedTextTranslations.locale, 'pt-BR'),
             ),
-            database.eq(database.schema.localizedTextTranslations.locale, 'pt-BR'),
-          ),
-        );
-      await tx
-        .update(database.schema.collections)
-        .set({
-          slug: input.slug,
-          emoji: input.emoji,
-          primaryColor: input.primaryColor,
-          secondaryColor: input.secondaryColor,
-          imageUrl: input.imageUrl ?? null,
-          overlayUrl: input.overlayUrl ?? null,
-          bannerUrl: input.bannerUrl ?? null,
-          contractsBlocked: input.contractsBlocked ?? false,
-          updatedAt: new Date(),
-        })
-        .where(database.eq(database.schema.collections.id, collectionId));
-    });
+          );
+        await tx
+          .update(database.schema.collections)
+          .set({
+            slug: input.slug,
+            emoji: input.emoji,
+            primaryColor: input.primaryColor,
+            secondaryColor: input.secondaryColor,
+            imageFileId: image?.id ?? null,
+            overlayFileId: overlay?.id ?? null,
+            bannerFileId: banner?.id ?? null,
+            contractsBlocked: input.contractsBlocked ?? false,
+            updatedAt: new Date(),
+          })
+          .where(database.eq(database.schema.collections.id, collectionId));
+      });
+    } catch (error) {
+      await this.removeFiles(image, overlay, banner);
+      throw error;
+    }
+    await this.removeFilesById(
+      collection.imageFileId,
+      collection.overlayFileId,
+      collection.bannerFileId,
+    );
     return this.collection(collectionId);
   }
 
   async removeCollection(collectionId: string): Promise<void> {
     const database = await this.database();
     const [collection] = await database.db
-      .select({ nameTextId: database.schema.collections.nameTextId })
+      .select({
+        nameTextId: database.schema.collections.nameTextId,
+        imageFileId: database.schema.collections.imageFileId,
+        overlayFileId: database.schema.collections.overlayFileId,
+        bannerFileId: database.schema.collections.bannerFileId,
+      })
       .from(database.schema.collections)
       .where(database.eq(database.schema.collections.id, collectionId));
     if (!collection) throw new NotFoundException('Collection not found.');
@@ -269,6 +320,11 @@ export class AdminCardsService {
       if (isForeignKeyViolation(error)) throw new ConflictException('Collection is in use.');
       throw error;
     }
+    await this.removeFilesById(
+      collection.imageFileId,
+      collection.overlayFileId,
+      collection.bannerFileId,
+    );
   }
 
   async teams(query: TeamListQuery): Promise<TeamPage> {
@@ -282,9 +338,9 @@ export class AdminCardsService {
         ? database.sql<boolean>`(${database.schema.teams.name} ILIKE ${pattern} OR ${database.schema.teams.slug} ILIKE ${pattern})`
         : undefined,
       query.image === 'custom'
-        ? database.sql<boolean>`${database.schema.teams.imageUrl} IS NOT NULL`
+        ? database.sql<boolean>`${database.schema.teams.logoFileId} IS NOT NULL`
         : query.image === 'default'
-          ? database.sql<boolean>`${database.schema.teams.imageUrl} IS NULL`
+          ? database.sql<boolean>`${database.schema.teams.logoFileId} IS NULL`
           : undefined,
     );
     const [items, count] = await Promise.all([
@@ -296,7 +352,7 @@ export class AdminCardsService {
           emoji: database.schema.teams.emoji,
           color: database.schema.teams.color,
           colors: database.schema.teams.colors,
-          imageUrl: database.schema.teams.imageUrl,
+          logoFileId: database.schema.teams.logoFileId,
         })
         .from(database.schema.teams)
         .where(filter)
@@ -308,19 +364,27 @@ export class AdminCardsService {
         .from(database.schema.teams)
         .where(filter),
     ]);
-    return { items, total: count[0]?.count ?? 0, page, pageSize };
+    const urls = await this.files.urls(
+      items.flatMap((item) => (item.logoFileId ? [item.logoFileId] : [])),
+    );
+    return {
+      items: items.map((item) => ({ ...item, imageUrl: this.fileUrl(urls, item.logoFileId) })),
+      total: count[0]?.count ?? 0,
+      page,
+      pageSize,
+    };
   }
 
   async createTeam(input: TeamInput): Promise<AdminTeam> {
-    assertSvgTeamLogo(input.imageUrl);
+    const image = await this.importImage(input.imageUrl, 'image/svg+xml');
     const database = await this.database();
     try {
       const [team] = await database.db
         .insert(database.schema.teams)
         .values({
-          ...input,
+          ...teamValues(input),
           colors: input.colors ?? [input.color],
-          imageUrl: input.imageUrl ?? null,
+          logoFileId: image?.id ?? null,
         })
         .returning({
           id: database.schema.teams.id,
@@ -329,11 +393,15 @@ export class AdminCardsService {
           emoji: database.schema.teams.emoji,
           color: database.schema.teams.color,
           colors: database.schema.teams.colors,
-          imageUrl: database.schema.teams.imageUrl,
+          logoFileId: database.schema.teams.logoFileId,
         });
       if (!team) throw new Error('Failed to create team.');
-      return team;
+      return {
+        ...team,
+        imageUrl: this.fileUrl(new Map(image ? [[image.id, image.url]] : []), team.logoFileId),
+      };
     } catch (error) {
+      await this.removeFiles(image);
       if (isUniqueViolation(error))
         throw new ConflictException('Team name or slug already exists.');
       throw error;
@@ -341,15 +409,20 @@ export class AdminCardsService {
   }
 
   async updateTeam(teamId: string, input: TeamInput): Promise<AdminTeam> {
-    assertSvgTeamLogo(input.imageUrl);
     const database = await this.database();
+    const [current] = await database.db
+      .select({ logoFileId: database.schema.teams.logoFileId })
+      .from(database.schema.teams)
+      .where(database.eq(database.schema.teams.id, teamId));
+    if (!current) throw new NotFoundException('Team not found.');
+    const image = await this.importImage(input.imageUrl, 'image/svg+xml');
     try {
       const [team] = await database.db
         .update(database.schema.teams)
         .set({
-          ...input,
+          ...teamValues(input),
           colors: input.colors ?? [input.color],
-          imageUrl: input.imageUrl ?? null,
+          logoFileId: image?.id ?? null,
           updatedAt: new Date(),
         })
         .where(database.eq(database.schema.teams.id, teamId))
@@ -360,11 +433,16 @@ export class AdminCardsService {
           emoji: database.schema.teams.emoji,
           color: database.schema.teams.color,
           colors: database.schema.teams.colors,
-          imageUrl: database.schema.teams.imageUrl,
+          logoFileId: database.schema.teams.logoFileId,
         });
       if (!team) throw new NotFoundException('Team not found.');
-      return team;
+      await this.removeFilesById(current.logoFileId);
+      return {
+        ...team,
+        imageUrl: this.fileUrl(new Map(image ? [[image.id, image.url]] : []), team.logoFileId),
+      };
     } catch (error) {
+      await this.removeFiles(image);
       if (isUniqueViolation(error))
         throw new ConflictException('Team name or slug already exists.');
       throw error;
@@ -373,16 +451,19 @@ export class AdminCardsService {
 
   async removeTeam(teamId: string): Promise<void> {
     const database = await this.database();
+    let logoFileId: string | null = null;
     try {
       const [team] = await database.db
         .delete(database.schema.teams)
         .where(database.eq(database.schema.teams.id, teamId))
-        .returning({ id: database.schema.teams.id });
+        .returning({ id: database.schema.teams.id, logoFileId: database.schema.teams.logoFileId });
       if (!team) throw new NotFoundException('Team not found.');
+      logoFileId = team.logoFileId;
     } catch (error) {
       if (isForeignKeyViolation(error)) throw new ConflictException('Team is in use.');
       throw error;
     }
+    await this.removeFilesById(logoFileId);
   }
 
   async template(): Promise<Buffer> {
@@ -602,7 +683,7 @@ export class AdminCardsService {
         (!query.position || card.position === query.position) &&
         (query.contractsBlocked === undefined ||
           card.contractsBlocked === query.contractsBlocked) &&
-        (!query.image || (query.image === 'custom' ? Boolean(card.imageUrl) : !card.imageUrl))
+        (!query.image || (query.image === 'custom' ? Boolean(card.imageFileId) : !card.imageFileId))
       );
     });
     filtered.sort((left, right) => {
@@ -614,12 +695,15 @@ export class AdminCardsService {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 25;
     const items = filtered.slice((page - 1) * pageSize, page * pageSize);
-    const defaultImageUrl = items.some((card) => !card.imageUrl)
-      ? await this.images.defaultImageUrl()
+    const urls = await this.files.urls(
+      items.flatMap((card) => (card.imageFileId ? [card.imageFileId] : [])),
+    );
+    const defaultImageUrl = items.some((card) => !card.imageFileId)
+      ? (await this.files.defaultCardImage()).url
       : '';
     return {
       items: items.map((card) =>
-        this.toCard(card, catalog, positionsByCard, statisticsById, defaultImageUrl),
+        this.toCard(card, catalog, positionsByCard, statisticsById, urls, defaultImageUrl),
       ),
       total: filtered.length,
       page,
@@ -633,8 +717,9 @@ export class AdminCardsService {
       this.positionsByCard([card.id]),
       this.statisticsById([card.statsId]),
     ]);
-    const defaultImageUrl = card.imageUrl ? '' : await this.images.defaultImageUrl();
-    return this.toCard(card, catalog, positionsByCard, statisticsById, defaultImageUrl);
+    const urls = await this.files.urls(card.imageFileId ? [card.imageFileId] : []);
+    const defaultImageUrl = card.imageFileId ? '' : (await this.files.defaultCardImage()).url;
+    return this.toCard(card, catalog, positionsByCard, statisticsById, urls, defaultImageUrl);
   }
 
   async create(input: CardInput): Promise<AdminCard> {
@@ -692,12 +777,12 @@ export class AdminCardsService {
   async uploadImage(cardId: string, image: ImageFile): Promise<AdminCard> {
     const database = await this.database();
     const card = await this.cardById(cardId);
-    const url = await this.images.upload(cardId, image);
+    const file = await this.files.upload(image);
     await database.db
       .update(database.schema.cards)
-      .set({ imageUrl: url })
+      .set({ imageFileId: file.id })
       .where(database.eq(database.schema.cards.id, card.id));
-    if (card.imageUrl && card.imageUrl !== url) await this.images.remove(card.imageUrl);
+    await this.removeFilesById(card.imageFileId);
     return this.get(cardId);
   }
 
@@ -706,9 +791,9 @@ export class AdminCardsService {
     const card = await this.cardById(cardId);
     await database.db
       .update(database.schema.cards)
-      .set({ imageUrl: null })
+      .set({ imageFileId: null })
       .where(database.eq(database.schema.cards.id, card.id));
-    await this.images.remove(card.imageUrl);
+    await this.removeFilesById(card.imageFileId);
     return this.get(cardId);
   }
 
@@ -729,7 +814,7 @@ export class AdminCardsService {
         .delete(database.schema.cardStats)
         .where(database.eq(database.schema.cardStats.id, card.statsId));
     });
-    await this.images.remove(card.imageUrl);
+    await this.removeFilesById(card.imageFileId);
   }
 
   private async parseWorkbook(
@@ -913,7 +998,7 @@ export class AdminCardsService {
           slug: database.schema.collections.slug,
           name: database.schema.localizedTextTranslations.content,
           emoji: database.schema.collections.emoji,
-          imageUrl: database.schema.collections.imageUrl,
+          imageFileId: database.schema.collections.imageFileId,
         })
         .from(database.schema.collections)
         .innerJoin(
@@ -932,22 +1017,33 @@ export class AdminCardsService {
           slug: database.schema.teams.slug,
           name: database.schema.teams.name,
           emoji: database.schema.teams.emoji,
-          imageUrl: database.schema.teams.imageUrl,
+          logoFileId: database.schema.teams.logoFileId,
         })
         .from(database.schema.teams),
+    ]);
+    const urls = await this.files.urls([
+      ...collectionRows.flatMap((row) => (row.imageFileId ? [row.imageFileId] : [])),
+      ...teams.flatMap((row) => (row.logoFileId ? [row.logoFileId] : [])),
     ]);
     const collections = collectionRows.map((row) => ({
       id: row.id,
       slug: row.slug,
       name: row.name,
       emoji: row.emoji,
-      imageUrl: row.imageUrl,
+      imageUrl: this.fileUrl(urls, row.imageFileId),
+    }));
+    const mappedTeams = teams.map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      emoji: row.emoji,
+      imageUrl: this.fileUrl(urls, row.logoFileId),
     }));
     return {
       collections,
-      teams,
+      teams: mappedTeams,
       collectionNames: nameMap(collections),
-      teamNames: nameMap(teams),
+      teamNames: nameMap(mappedTeams),
     };
   }
 
@@ -961,9 +1057,9 @@ export class AdminCardsService {
         primaryColor: database.schema.collections.primaryColor,
         secondaryColor: database.schema.collections.secondaryColor,
         slug: database.schema.collections.slug,
-        imageUrl: database.schema.collections.imageUrl,
-        overlayUrl: database.schema.collections.overlayUrl,
-        bannerUrl: database.schema.collections.bannerUrl,
+        imageFileId: database.schema.collections.imageFileId,
+        overlayFileId: database.schema.collections.overlayFileId,
+        bannerFileId: database.schema.collections.bannerFileId,
         contractsBlocked: database.schema.collections.contractsBlocked,
       })
       .from(database.schema.collections)
@@ -979,7 +1075,17 @@ export class AdminCardsService {
       )
       .where(database.eq(database.schema.collections.id, collectionId));
     if (!collection) throw new NotFoundException('Collection not found.');
-    return collection;
+    const urls = await this.files.urls(
+      [collection.imageFileId, collection.overlayFileId, collection.bannerFileId].flatMap(
+        (fileId) => (fileId ? [fileId] : []),
+      ),
+    );
+    return {
+      ...collection,
+      imageUrl: this.fileUrl(urls, collection.imageFileId),
+      overlayUrl: this.fileUrl(urls, collection.overlayFileId),
+      bannerUrl: this.fileUrl(urls, collection.bannerFileId),
+    };
   }
 
   private async cardById(cardId: string) {
@@ -1041,6 +1147,7 @@ export class AdminCardsService {
         finishing: number;
       }
     >,
+    urls: ReadonlyMap<string, string>,
     defaultImageUrl: string,
   ): AdminCard {
     const collection = catalog.collections.find((entry) => entry.id === card.collectionId);
@@ -1067,8 +1174,27 @@ export class AdminCardsService {
       pace: statistics.pace,
       dribbling: statistics.dribbling,
       finishing: statistics.finishing,
-      imageUrl: card.imageUrl ?? defaultImageUrl,
+      imageUrl: this.fileUrl(urls, card.imageFileId) ?? defaultImageUrl,
     };
+  }
+
+  private importImage(
+    sourceUrl: string | null | undefined,
+    contentType?: ImageContentType,
+  ): Promise<FileDto | null> {
+    return sourceUrl ? this.files.importImage(sourceUrl, contentType) : Promise.resolve(null);
+  }
+
+  private fileUrl(urls: ReadonlyMap<string, string>, fileId: string | null): string | null {
+    return fileId ? (urls.get(fileId) ?? null) : null;
+  }
+
+  private async removeFiles(...files: readonly (FileDto | null)[]): Promise<void> {
+    await this.removeFilesById(...files.flatMap((file) => (file ? [file.id] : [])));
+  }
+
+  private async removeFilesById(...fileIds: readonly (string | null)[]): Promise<void> {
+    await Promise.all(fileIds.map((fileId) => this.files.removeIfUnused(fileId)));
   }
 
   private async database(): Promise<Database> {
@@ -1103,6 +1229,15 @@ function cardValues(input: Omit<CardInput, 'slug'>) {
   };
 }
 
+function teamValues(input: TeamInput) {
+  return {
+    slug: input.slug,
+    name: input.name,
+    emoji: input.emoji,
+    color: input.color,
+  };
+}
+
 function normalize(value: string): string {
   return value.trim().toLocaleLowerCase('pt-BR');
 }
@@ -1127,19 +1262,4 @@ function isUniqueViolation(error: unknown): boolean {
 
 function isForeignKeyViolation(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === '23503';
-}
-
-function assertSvgTeamLogo(imageUrl: string | null | undefined): void {
-  if (!imageUrl) return;
-  try {
-    const url = new URL(imageUrl);
-    if (
-      (url.protocol === 'http:' || url.protocol === 'https:') &&
-      url.pathname.toLowerCase().endsWith('.svg')
-    )
-      return;
-  } catch {
-    // Handled by the common validation error below.
-  }
-  throw new BadRequestException('Team image must be an HTTP(S) SVG URL.');
 }

@@ -1,10 +1,12 @@
 import { SwaggerCustomizer, TypedBody, TypedRoute } from '@nestia/core';
 import { Controller, HttpCode, Inject, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
 import type { MissionsRequest, MissionsResponse } from './missions.dto.js';
 import { MissionsService } from './missions.service.js';
 
+@ApiTags('Missões')
 @Controller('v1/missions')
 @UseGuards(InternalAuthGuard)
 export class MissionsController {

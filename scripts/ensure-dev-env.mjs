@@ -17,9 +17,7 @@ const requiredVariables = [
   ['ADMIN_API_TOKEN', () => randomBytes(32).toString('hex')],
   ['MINIO_ROOT_USER', () => 'minioadmin'],
   ['MINIO_ROOT_PASSWORD', () => randomBytes(32).toString('hex')],
-  ['MINIO_PORT', () => '9002'],
-  ['MINIO_CONSOLE_PORT', () => '9003'],
-  ['MINIO_PUBLIC_URL', () => 'http://localhost:9002'],
+  ['MINIO_PUBLIC_URL', () => 'http://s3.futhub.localhost'],
 ];
 let nextContents = contents;
 
@@ -33,6 +31,11 @@ for (const [name, createValue] of requiredVariables) {
     ? nextContents.replace(line, `${name}=${value}`)
     : `${nextContents}${nextContents.endsWith('\n') ? '' : '\n'}${name}=${value}\n`;
 }
+
+nextContents = nextContents.replace(
+  /^MINIO_PUBLIC_URL=http:\/\/localhost:9002$/m,
+  'MINIO_PUBLIC_URL=http://s3.futhub.localhost',
+);
 
 if (nextContents === contents) process.exit(0);
 

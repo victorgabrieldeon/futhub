@@ -17,7 +17,15 @@ export class CardImageStorage {
 
   async upload(cardId: string, image: ImageFile): Promise<string> {
     await this.ensureDefault();
-    const key = `cards/${cardId}/image.${image.extension}`;
+    return this.uploadAt(`cards/${cardId}/image.${image.extension}`, image);
+  }
+
+  async uploadPack(packId: string, image: ImageFile): Promise<string> {
+    await this.ensureBucket();
+    return this.uploadAt(`packs/${packId}/image.${image.extension}`, image);
+  }
+
+  private async uploadAt(key: string, image: ImageFile): Promise<string> {
     await this.client().putObject(this.bucket(), key, image.buffer, image.buffer.length, {
       'Content-Type': image.contentType,
     });
@@ -30,10 +38,9 @@ export class CardImageStorage {
   }
 
   private async ensureDefault(): Promise<void> {
+    await this.ensureBucket();
     const client = this.client();
     const bucket = this.bucket();
-    if (!(await client.bucketExists(bucket))) await client.makeBucket(bucket);
-    await client.setBucketPolicy(bucket, JSON.stringify(publicReadPolicy(bucket)));
     try {
       await client.statObject(bucket, DEFAULT_KEY);
     } catch {
@@ -44,6 +51,13 @@ export class CardImageStorage {
         'Content-Type': DEFAULT_CONTENT_TYPE,
       });
     }
+  }
+
+  private async ensureBucket(): Promise<void> {
+    const client = this.client();
+    const bucket = this.bucket();
+    if (!(await client.bucketExists(bucket))) await client.makeBucket(bucket);
+    await client.setBucketPolicy(bucket, JSON.stringify(publicReadPolicy(bucket)));
   }
 
   private url(key: string): string {

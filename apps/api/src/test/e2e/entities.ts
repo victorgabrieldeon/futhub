@@ -108,6 +108,41 @@ async function createCard(
   return card;
 }
 
+export async function createAdminPackFixture(database: Database): Promise<{
+  id: string;
+  configId: string;
+  userId: string;
+}> {
+  const user = await createUser(database, {
+    id: `pack-owner-${randomUUID()}`,
+    name: 'Pack owner',
+    avatarUrl: null,
+  });
+  const [config] = await database.db
+    .insert(database.schema.packConfigs)
+    .values({ name: 'Fixture config', minOverall: 70, maxOverall: 90 })
+    .returning({ id: database.schema.packConfigs.id });
+  if (!config) throw new Error('Failed to create pack config fixture.');
+  const [pack] = await database.db
+    .insert(database.schema.packs)
+    .values({
+      name: 'Fixture pack',
+      color: '#111111',
+      emoji: 'fixture',
+      cardsAmount: 3,
+      price: 10,
+      canBuy: true,
+      limitPerUser: 2,
+      configId: config.id,
+    })
+    .returning({ id: database.schema.packs.id });
+  if (!pack) throw new Error('Failed to create pack fixture.');
+  await database.db
+    .insert(database.schema.userPacks)
+    .values({ userId: user.id, packId: pack.id, quantity: 1 });
+  return { id: pack.id, configId: config.id, userId: user.id };
+}
+
 export async function createPackFixture(
   database: Database,
 ): Promise<{ packId: string; cardId: string }> {

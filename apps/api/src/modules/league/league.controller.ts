@@ -1,3 +1,4 @@
+import { SwaggerCustomizer, TypedBody, TypedRoute } from '@nestia/core';
 import {
   BadRequestException,
   Controller,
@@ -8,8 +9,8 @@ import {
   Sse,
   UseGuards,
 } from '@nestjs/common';
-import { SwaggerCustomizer, TypedBody, TypedRoute } from '@nestia/core';
-import { from, type Observable } from 'rxjs';
+import { ApiTags } from '@nestjs/swagger';
+import { type Observable, from } from 'rxjs';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
 import type {
@@ -19,9 +20,10 @@ import type {
   MatchResponse,
   QueueResponse,
 } from './league.dto.js';
-import { LeagueInputError, LeagueNotFoundError } from './use-cases/league/league.use-case.types.js';
 import { LeagueUseCase } from './use-cases/league/league.use-case.js';
+import { LeagueInputError, LeagueNotFoundError } from './use-cases/league/league.use-case.types.js';
 
+@ApiTags('Liga')
 @Controller('v1')
 @UseGuards(InternalAuthGuard)
 export class LeagueController {

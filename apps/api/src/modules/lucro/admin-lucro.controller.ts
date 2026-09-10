@@ -1,5 +1,6 @@
-import { Controller, Inject, UseGuards } from '@nestjs/common';
 import { TypedBody, TypedRoute } from '@nestia/core';
+import { Controller, Inject, UseGuards } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 
 import { AdminAuthGuard } from '../auth/admin-auth.guard.js';
 import type {
@@ -9,6 +10,7 @@ import type {
 } from './admin-lucro.dto.js';
 import { AdminLucroService } from './admin-lucro.service.js';
 
+@ApiTags('Administração / Lucro')
 @Controller('v1/admin/lucro')
 @UseGuards(AdminAuthGuard)
 export class AdminLucroController {

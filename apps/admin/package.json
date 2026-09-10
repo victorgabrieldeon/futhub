@@ -15,6 +15,7 @@
     "@futhub/api-client": "workspace:*",
     "@imgly/background-removal": "^1.7.0",
     "@skyra/discord-components-react": "^4.0.2",
+    "fabric": "^7.4.0",
     "fastify": "5.2.1",
     "onnxruntime-web": "1.21.0",
     "react": "19.0.0",

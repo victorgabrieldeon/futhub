@@ -9,9 +9,11 @@ import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { NavLink, Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 import { adminApiOptions } from './api/admin-client';
 import { Cards } from './features/cards/cards';
+import { Packs } from './features/packs/packs';
+import { PackStudio } from './features/studio/pack-studio';
 import { Studio } from './features/studio/studio';
-import { LucroPage } from './pages/lucro-page';
 import type { LucroConfig, LucroReward } from './lib/lucro';
+import { LucroPage } from './pages/lucro-page';
 
 type Theme = 'light' | 'dark';
 
@@ -43,6 +45,28 @@ function ThemeToggle() {
     </button>
   );
 }
+function LoginScene() {
+  return (
+    <div className="login-scene" aria-hidden="true">
+      <i className="login-scene__spark login-scene__spark--one" />
+      <i className="login-scene__spark login-scene__spark--two" />
+      <div className="login-scene__summon">
+        <i className="login-scene__ring" />
+        <i className="login-scene__ring login-scene__ring--outer" />
+        <i className="login-scene__particle login-scene__particle--one" />
+        <i className="login-scene__particle login-scene__particle--two" />
+        <i className="login-scene__particle login-scene__particle--three" />
+      </div>
+      <div className="login-scene__stadium-card">F</div>
+      <div className="login-scene__stadium">
+        <i className="login-scene__stand login-scene__stand--north" />
+        <i className="login-scene__stand login-scene__stand--east" />
+        <i className="login-scene__stand login-scene__stand--south" />
+        <div className="login-scene__pitch" />
+      </div>
+    </div>
+  );
+}
 
 export function App() {
   return (
@@ -53,10 +77,13 @@ export function App() {
           <Route path="/app/comandos" element={<CommandsPage />} />
           <Route path="/app/comandos/lucro" element={<LucroPage />} />
           <Route path="/app/gerenciar/cards" element={<Cards />} />
+          <Route path="/app/gerenciar/packs" element={<Packs />} />
+          <Route path="/app/gerenciar/jogadores" element={<Cards variant="vault" />} />
           <Route path="/app/studio" element={<Studio />} />
+          <Route path="/app/studio/packs" element={<PackStudio />} />
         </Route>
       </Route>
-      <Route path="/" element={<Navigate replace to="/app/comandos/lucro" />} />
+      <Route path="/" element={<Navigate replace to="/app/comandos" />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
@@ -118,7 +145,8 @@ function LoginPage() {
           </div>
           <ThemeToggle />
         </div>
-        <div>
+        <LoginScene />
+        <div className="login-copy">
           <p className="eyebrow">Controle operacional</p>
           <h2 id="login-title">Economia precisa de decisões claras.</h2>
           <p>Configure recompensas, chance e intervalo do comando de lucro sem expor credencial.</p>
@@ -167,6 +195,7 @@ function AdminLayout() {
         <nav className="admin-section-tabs" aria-label="Área administrativa">
           <NavLink to="/app/comandos">Comandos</NavLink>
           <NavLink to="/app/gerenciar/cards">Gerenciamento</NavLink>
+          <NavLink to="/app/gerenciar/packs">Packs</NavLink>
           <NavLink to="/app/studio">Studio</NavLink>
         </nav>
         <div className="nav-actions">
@@ -190,7 +219,7 @@ type CommandModule = Readonly<{
   description: string;
   glyph: string;
   name: string;
-  status: 'active' | 'disabled';
+  status: 'active' | 'planned';
 }>;
 
 const commandCategories: readonly CommandCategory[] = [
@@ -213,23 +242,29 @@ const commandModules: readonly CommandModule[] = [
     description: 'Consulta de elenco, formação e identidade do time do jogador.',
     glyph: '⚽',
     name: '/time',
-    status: 'disabled',
+    status: 'planned',
   },
   {
     category: 'Cards',
     description: 'Coleção, progresso e apresentação dos cards conquistados.',
     glyph: '◆',
     name: '/coleção',
-    status: 'disabled',
+    status: 'planned',
   },
   {
     category: 'Administração',
     description: 'Ajustes rápidos do servidor e permissões operacionais do bot.',
     glyph: '⌘',
     name: '/config',
-    status: 'disabled',
+    status: 'planned',
   },
 ];
+
+function commandCategoryCount(category: CommandCategory): number {
+  return category === 'Todos'
+    ? commandModules.length
+    : commandModules.filter((command) => command.category === category).length;
+}
 
 function commandDuration(seconds: number): string {
   if (seconds >= 3600 && seconds % 3600 === 0) return `${seconds / 3600} h`;
@@ -330,8 +365,17 @@ function CommandsPage() {
           .toLocaleLowerCase('pt-BR')
           .includes(normalizedQuery)),
   );
+  const featuredCommand = visibleCommands.find((command) => command.status === 'active') ?? null;
+  const exploratoryCommands = visibleCommands.filter((command) => command !== featuredCommand);
   const currentReward = previewReward ?? config?.rewards[0] ?? null;
   const renderedPreview = config && currentReward ? previewText(config, currentReward) : '';
+  const featuredStatus = configState === 'error' ? 'error' : 'active';
+  const healthLabel =
+    configState === 'ready'
+      ? 'Tudo operacional'
+      : configState === 'error'
+        ? 'Configuração indisponível'
+        : 'Atualizando configuração';
 
   function openPreview(): void {
     if (!config) return;
@@ -385,37 +429,19 @@ function CommandsPage() {
           <p className="eyebrow">Administração do bot</p>
           <h1 id="commands-title">Command Center</h1>
           <p>Controle o comportamento do FutHub e teste cada resposta antes de publicar.</p>
+          <p className="command-center-summary" aria-live="polite">
+            <span className="command-center-health-state">
+              <i
+                className={`command-center-health command-center-health--${configState}`}
+                aria-hidden="true"
+              />
+              {healthLabel}
+            </span>
+            <span>{commandCategoryCount('Todos')} módulos no diretório</span>
+            <span>1 módulo ativo</span>
+            <span>3 em planejamento</span>
+          </p>
         </div>
-        <aside className="bot-status-panel" aria-label="Status do bot">
-          <div className="bot-status-heading">
-            <span className={`bot-health bot-health--${configState}`} aria-hidden="true" />
-            <div>
-              <span>Status do bot</span>
-              <strong>
-                {configState === 'ready'
-                  ? 'Bot configurado'
-                  : configState === 'error'
-                    ? 'Configuração indisponível'
-                    : 'Consultando bot…'}
-              </strong>
-            </div>
-            <small>{configState === 'ready' ? 'Tudo salvo' : 'API Admin'}</small>
-          </div>
-          <dl className="bot-status-metrics">
-            <div>
-              <dt>Ativos</dt>
-              <dd>1</dd>
-            </div>
-            <div>
-              <dt>Rascunhos</dt>
-              <dd>0</dd>
-            </div>
-            <div>
-              <dt>Configurados</dt>
-              <dd>{configState === 'ready' ? '100%' : '—'}</dd>
-            </div>
-          </dl>
-        </aside>
       </header>
 
       <div className="command-toolbar">
@@ -457,7 +483,7 @@ function CommandsPage() {
               onClick={() => setCategory(item)}
               type="button"
             >
-              {item}
+              {item} ({commandCategoryCount(item)})
             </button>
           ))}
         </div>
@@ -467,78 +493,96 @@ function CommandsPage() {
       </div>
 
       {visibleCommands.length ? (
-        <div className="command-module-grid">
-          {visibleCommands.map((command) => {
-            const active = command.status === 'active';
-            const displayStatus = active && configState === 'error' ? 'error' : command.status;
-            return (
+        <>
+          {featuredCommand ? (
+            <section
+              className="command-directory-section command-directory-section--featured"
+              aria-labelledby="featured-command-title"
+            >
+              <p className="eyebrow">Em destaque</p>
               <article
-                className={`command-module-card${active ? ' command-module-card--featured' : ''}`}
-                data-category={command.category}
-                key={command.name}
+                className="command-module-card command-module-card--featured"
+                data-category={featuredCommand.category}
               >
                 <div className="command-card-topline">
                   <span className="command-glyph" aria-hidden="true">
-                    {command.glyph}
+                    {featuredCommand.glyph}
                   </span>
-                  <span className={`command-status command-status--${displayStatus}`}>
+                  <span className={`command-status command-status--${featuredStatus}`}>
                     <i />
-                    {displayStatus === 'active'
-                      ? 'Ativo'
-                      : displayStatus === 'error'
-                        ? 'Com erro'
-                        : 'Desativado'}
+                    {featuredStatus === 'active' ? 'Ativo' : 'Com erro'}
                   </span>
                 </div>
                 <div className="command-card-copy">
-                  <p className="eyebrow">{command.category}</p>
-                  <h2>{command.name}</h2>
-                  <p>{command.description}</p>
+                  <p className="eyebrow">{featuredCommand.category}</p>
+                  <h2 id="featured-command-title">{featuredCommand.name}</h2>
+                  <p>{featuredCommand.description}</p>
                 </div>
-                {active ? (
-                  <>
-                    <dl className="command-card-stats">
-                      <div>
-                        <dt>Cooldown</dt>
-                        <dd>{config ? commandDuration(config.cooldownSeconds) : '—'}</dd>
-                      </div>
-                      <div>
-                        <dt>Recompensas</dt>
-                        <dd>{config ? config.rewards.length : '—'}</dd>
-                      </div>
-                      <div>
-                        <dt>Resposta</dt>
-                        <dd>Embed</dd>
-                      </div>
-                    </dl>
-                    <div className="command-card-actions">
-                      <NavLink className="button-primary" to="/app/comandos/lucro">
-                        Configurar
-                      </NavLink>
-                      <button
-                        className="button-secondary command-test-button"
-                        disabled={!config}
-                        onClick={openPreview}
-                        type="button"
-                      >
-                        <span aria-hidden="true">▶</span> Testar comando
-                      </button>
-                      <span className="command-saved-state">
-                        <i />{' '}
-                        {configState === 'ready' ? 'Configuração carregada' : 'Carregando dados'}
+                <dl className="command-card-stats">
+                  <div>
+                    <dt>Cooldown</dt>
+                    <dd>{config ? commandDuration(config.cooldownSeconds) : '—'}</dd>
+                  </div>
+                  <div>
+                    <dt>Recompensas</dt>
+                    <dd>{config ? config.rewards.length : '—'}</dd>
+                  </div>
+                  <div>
+                    <dt>Resposta</dt>
+                    <dd>Embed</dd>
+                  </div>
+                </dl>
+                <div className="command-card-actions">
+                  <NavLink className="button-primary" to="/app/comandos/lucro">
+                    Configurar comando →
+                  </NavLink>
+                  <button
+                    className="button-secondary command-test-button"
+                    disabled={!config}
+                    onClick={openPreview}
+                    type="button"
+                  >
+                    <span aria-hidden="true">▶</span> Testar
+                  </button>
+                </div>
+              </article>
+            </section>
+          ) : null}
+
+          {exploratoryCommands.length ? (
+            <section className="command-directory-section" aria-labelledby="explore-commands-title">
+              <div className="command-directory-heading">
+                <p className="eyebrow">Continue explorando</p>
+                <h2 id="explore-commands-title">Módulos do FutHub</h2>
+              </div>
+              <div className="command-explore-grid">
+                {exploratoryCommands.map((command) => (
+                  <article
+                    className="command-module-card"
+                    data-category={command.category}
+                    key={command.name}
+                  >
+                    <div className="command-card-topline">
+                      <span className="command-glyph" aria-hidden="true">
+                        {command.glyph}
+                      </span>
+                      <span className="command-status command-status--planned">
+                        <i />
+                        Em breve
                       </span>
                     </div>
-                  </>
-                ) : (
-                  <div className="command-coming-soon">
-                    <span>Em breve</span>
-                    <small>Módulo reservado no roadmap</small>
-                  </div>
-                )}
-              </article>
-            );
-          })}
-        </div>
+                    <div className="command-card-copy">
+                      <p className="eyebrow">{command.category}</p>
+                      <h2>{command.name}</h2>
+                      <p>{command.description}</p>
+                    </div>
+                    <p className="command-module-note">Módulo em planejamento</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </>
       ) : (
         <div className="command-empty-state">
           <span aria-hidden="true">/</span>
@@ -556,22 +600,6 @@ function CommandsPage() {
           </button>
         </div>
       )}
-
-      <section className="command-roadmap" aria-labelledby="roadmap-title">
-        <div>
-          <p className="eyebrow">Próximos módulos</p>
-          <h2 id="roadmap-title">O painel cresce junto com o FutHub.</h2>
-        </div>
-        <p>
-          Futebol, coleção e administração já têm lugar definido sem competir com os comandos
-          ativos.
-        </p>
-        <div className="command-roadmap-track" aria-label="Progresso dos módulos">
-          <i />
-          <span>1 ativo</span>
-          <span>3 planejados</span>
-        </div>
-      </section>
 
       <dialog className="command-modal command-test-modal" ref={previewDialogRef}>
         <div className="command-modal-header">
