@@ -4,7 +4,7 @@ import { db, eq, schema } from '@futhub/database';
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { AdminApiConfig } from '../auth/admin-auth.guard.js';
 import type { AiSavedConfig, AiSessionInput } from './admin-ai.dto.js';
-import type { AiConnection } from './ai-provider.types.js';
+import { type AiConnection, canonicalAiProvider } from './ai-provider.types.js';
 
 type StoredConfig = Readonly<{
   provider: AiConnection['provider'];
@@ -148,25 +148,5 @@ export class AiConfigService {
       .where(eq(schema.adminAiConfigs.owner, owner));
     if (!row) return null;
     return { ...row, provider: canonicalAiProvider(row.provider, row.baseUrl) };
-  }
-}
-
-export function canonicalAiProvider(value: string, baseUrl: string): AiConnection['provider'] {
-  if (value === 'openai' && isOpenCodeGoBaseUrl(baseUrl)) return 'opencode-go';
-  if (value === 'openai' || value === 'opencode-go' || value === 'anthropic') return value;
-  throw new BadRequestException('Configuração de IA inválida. Salve novamente.');
-}
-
-function isOpenCodeGoBaseUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return (
-      url.origin === 'https://opencode.ai' &&
-      url.pathname
-        .replace(/\/(?:chat\/completions|responses|messages)\/?$/i, '')
-        .replace(/\/+$/, '') === '/zen/go/v1'
-    );
-  } catch {
-    return false;
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalAiProvider } from './ai-config.service.js';
+import { canonicalAiProvider } from './ai-provider.types.js';
 
 describe('canonicalAiProvider', () => {
   it('upgrades legacy OpenAI-compatible configuration using OpenCode Go URL', () => {

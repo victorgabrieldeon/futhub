@@ -7,6 +7,26 @@ export type AiConnection = {
   readonly apiKey: string;
 };
 
+export function canonicalAiProvider(value: string, baseUrl: string): AiConnection['provider'] {
+  if (value === 'openai' && isOpenCodeGoBaseUrl(baseUrl)) return 'opencode-go';
+  if (value === 'openai' || value === 'opencode-go' || value === 'anthropic') return value;
+  throw new BadRequestException('Configuração de IA inválida. Salve novamente.');
+}
+
+function isOpenCodeGoBaseUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (
+      url.origin === 'https://opencode.ai' &&
+      url.pathname
+        .replace(/\/(?:chat\/completions|responses|messages)\/?$/i, '')
+        .replace(/\/+$/, '') === '/zen/go/v1'
+    );
+  } catch {
+    return false;
+  }
+}
+
 export type AiToolCall = {
   readonly id: string;
   readonly name: string;

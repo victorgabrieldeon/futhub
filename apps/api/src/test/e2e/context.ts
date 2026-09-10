@@ -1,8 +1,8 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
-import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import type * as DatabaseModule from '@futhub/database';
+import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { GenericContainer, type StartedTestContainer, Wait } from 'testcontainers';
 
 const execFileAsync = promisify(execFile);
@@ -40,7 +40,7 @@ export async function startE2eContext(): Promise<E2eContext> {
       })
       .withExposedPorts(5432)
       .withHealthCheck({
-        test: ['CMD-SHELL', 'pg_isready -U futhub -d futhub_e2e'],
+        test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U futhub -d futhub_e2e'],
         interval: 1_000,
         timeout: 5_000,
         retries: 10,
