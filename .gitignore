@@ -13,3 +13,5 @@ apps/*/.wrangler/
 .herdr-plus/
 .omo/
 .devspace/
+.stitch/
+.superpowers/
