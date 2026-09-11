@@ -11,3 +11,5 @@ apps/*/.wrangler/
 .openclaude/settings.local.json
 .openclaude/worktrees/
 .herdr-plus/
+.omo/
+.devspace/
