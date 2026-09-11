@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 import multipart from '@fastify/multipart';
-import type { NestApplicationOptions } from '@nestjs/common';
+import { type NestApplicationOptions, StandardSchemaValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import type { OpenAPIObject } from '@nestjs/swagger';
@@ -36,6 +36,7 @@ export async function buildApp(options?: NestApplicationOptions): Promise<NestFa
     new FastifyAdapter(),
     options,
   );
+  app.useGlobalPipes(new StandardSchemaValidationPipe());
   await app.register(multipart as never, { limits: { files: 1, fileSize: 10 * 1024 * 1024 } });
   await configureApiReference(app);
   await app.init();

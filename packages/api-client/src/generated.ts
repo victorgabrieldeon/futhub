@@ -554,11 +554,6 @@ export interface AdminSessionResponse {
   ok: boolean;
 }
 
-export interface AdminSessionInput {
-  /** Credencial administrativa fornecida pelo operador. */
-  apiKey: string;
-}
-
 export type AdminPackConfigOnlyPositionsItem =
   (typeof AdminPackConfigOnlyPositionsItem)[keyof typeof AdminPackConfigOnlyPositionsItem];
 
@@ -1314,6 +1309,10 @@ export interface CardUpdate {
   finishing: number;
 }
 
+export type PostV1AdminSessionBody = {
+  apiKey: string;
+};
+
 export type GetV1AdminCardsTeamLogoSuggestionsParams = {
   q: string;
 };
@@ -1631,14 +1630,14 @@ export const getPostV1AdminSessionUrl = () => {
 };
 
 export const postV1AdminSession = async (
-  adminSessionInput: AdminSessionInput,
+  postV1AdminSessionBody: PostV1AdminSessionBody,
   options?: Parameters<typeof request>[1],
 ): Promise<AdminSessionResponse> => {
   return request<AdminSessionResponse>(getPostV1AdminSessionUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(adminSessionInput),
+    body: JSON.stringify(postV1AdminSessionBody),
   });
 };
 
@@ -1661,8 +1660,8 @@ export const getDeleteV1AdminSessionUrl = () => {
 
 export const deleteV1AdminSession = async (
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getDeleteV1AdminSessionUrl(), {
+): Promise<void> => {
+  return request<void>(getDeleteV1AdminSessionUrl(), {
     ...options,
     method: "DELETE",
   });
@@ -1824,8 +1823,8 @@ export const getGetV1AdminCardsTeamLogosFilenameUrl = (filename: string) => {
 export const getV1AdminCardsTeamLogosFilename = async (
   filename: string,
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getGetV1AdminCardsTeamLogosFilenameUrl(filename), {
+): Promise<void> => {
+  return request<void>(getGetV1AdminCardsTeamLogosFilenameUrl(filename), {
     ...options,
     method: "GET",
   });
@@ -1900,8 +1899,8 @@ export const getGetV1AdminCardsPlayerPhotosFilenameUrl = (filename: string) => {
 export const getV1AdminCardsPlayerPhotosFilename = async (
   filename: string,
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getGetV1AdminCardsPlayerPhotosFilenameUrl(filename), {
+): Promise<void> => {
+  return request<void>(getGetV1AdminCardsPlayerPhotosFilenameUrl(filename), {
     ...options,
     method: "GET",
   });
@@ -1918,8 +1917,8 @@ export const getV1AdminCardsPlayerPhotosKindFilename = async (
   kind: string,
   filename: string,
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(
+): Promise<void> => {
+  return request<void>(
     getGetV1AdminCardsPlayerPhotosKindFilenameUrl(kind, filename),
     {
       ...options,
@@ -2003,8 +2002,8 @@ export const getDeleteV1AdminCardsCollectionsCollectionIdUrl = (
 export const deleteV1AdminCardsCollectionsCollectionId = async (
   collectionId: string,
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(
+): Promise<void> => {
+  return request<void>(
     getDeleteV1AdminCardsCollectionsCollectionIdUrl(collectionId),
     {
       ...options,
@@ -2081,8 +2080,8 @@ export const getDeleteV1AdminCardsTeamsTeamIdUrl = (teamId: string) => {
 export const deleteV1AdminCardsTeamsTeamId = async (
   teamId: string,
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getDeleteV1AdminCardsTeamsTeamIdUrl(teamId), {
+): Promise<void> => {
+  return request<void>(getDeleteV1AdminCardsTeamsTeamIdUrl(teamId), {
     ...options,
     method: "DELETE",
   });
@@ -2207,8 +2206,8 @@ export const getDeleteV1AdminCardsCardIdUrl = (cardId: string) => {
 export const deleteV1AdminCardsCardId = async (
   cardId: string,
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getDeleteV1AdminCardsCardIdUrl(cardId), {
+): Promise<void> => {
+  return request<void>(getDeleteV1AdminCardsCardIdUrl(cardId), {
     ...options,
     method: "DELETE",
   });

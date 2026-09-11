@@ -27,6 +27,17 @@ export const swaggerConfig = {
 } satisfies Omit<INestiaConfig.ISwaggerConfig, 'output'>;
 
 export default {
-  input: 'src/**/*.controller.ts',
+  input: [
+    'src/modules/packs/packs.controller.ts',
+    'src/modules/missions/missions.controller.ts',
+    'src/modules/lucro/lucro.controller.ts',
+    'src/modules/lucro/admin-lucro.controller.ts',
+    'src/modules/league/league.controller.ts',
+    'src/modules/health/health.controller.ts',
+    'src/modules/card-market/card-market.controller.ts',
+    'src/modules/auth/admin-session.controller.ts',
+    'src/modules/admin-packs/admin-packs.controller.ts',
+    'src/modules/admin-cards/admin-cards.controller.ts',
+  ],
   swagger: { ...swaggerConfig, output: 'openapi.json' },
 } satisfies INestiaConfig;

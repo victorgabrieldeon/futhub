@@ -406,18 +406,18 @@
           },
           "rewards": {
             "items": {
-              "$ref": "#/components/schemas/LucroRewardDto.o1"
+              "$ref": "#/components/schemas/LucroRewardDto-o1"
             },
             "type": "array"
           },
           "embed": {
-            "$ref": "#/components/schemas/LucroEmbedDto.o1"
+            "$ref": "#/components/schemas/LucroEmbedDto-o1"
           }
         },
         "required": ["cooldownSeconds", "rewards", "embed"],
         "type": "object"
       },
-      "LucroEmbedDto.o1": {
+      "LucroEmbedDto-o1": {
         "additionalProperties": false,
         "properties": {
           "title": {
@@ -464,7 +464,7 @@
         "required": ["pt", "es", "en"],
         "type": "object"
       },
-      "LucroRewardDto.o1": {
+      "LucroRewardDto-o1": {
         "additionalProperties": false,
         "properties": {
           "value": {
@@ -601,7 +601,7 @@
             "type": "array"
           },
           "embed": {
-            "$ref": "#/components/schemas/LucroEmbedDto.o1"
+            "$ref": "#/components/schemas/LucroEmbedDto-o1"
           }
         },
         "required": ["cooldownSeconds", "rewards", "embed"],
@@ -686,7 +686,7 @@
         "required": ["kind", "division"],
         "type": "object"
       },
-      "DiscordIdentityDto.o1": {
+      "DiscordIdentityDto-o1": {
         "additionalProperties": false,
         "properties": {
           "id": {
@@ -973,18 +973,6 @@
           }
         },
         "required": ["ok"],
-        "type": "object"
-      },
-      "AdminSessionInput": {
-        "additionalProperties": false,
-        "properties": {
-          "apiKey": {
-            "description": "Credencial administrativa fornecida pelo operador.",
-            "title": "API key",
-            "type": "string"
-          }
-        },
-        "required": ["apiKey"],
         "type": "object"
       },
       "AdminPack": {
@@ -2442,7 +2430,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DiscordIdentityDto.o1"
+                "$ref": "#/components/schemas/DiscordIdentityDto-o1"
               }
             }
           },
@@ -2687,7 +2675,14 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AdminSessionInput"
+                "additionalProperties": false,
+                "properties": {
+                  "apiKey": {
+                    "type": "string"
+                  }
+                },
+                "required": ["apiKey"],
+                "type": "object"
               }
             }
           },
@@ -2731,10 +2726,7 @@
         "parameters": [],
         "responses": {
           "204": {
-            "description": "",
-            "content": {
-              "application/json": {}
-            }
+            "description": ""
           }
         },
         "x-samchon-accessor": ["v1", "admin", "session", "destroy"],
@@ -2989,10 +2981,7 @@
         ],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {}
-            }
+            "description": ""
           }
         },
         "x-samchon-accessor": ["v1", "admin", "cards", "team_logos", "teamLogo"],
@@ -3090,10 +3079,7 @@
         ],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {}
-            }
+            "description": ""
           }
         },
         "x-samchon-accessor": ["v1", "admin", "cards", "player_photos", "playerPhoto"],
@@ -3123,10 +3109,7 @@
         ],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {}
-            }
+            "description": ""
           }
         },
         "x-samchon-accessor": ["v1", "admin", "cards", "player_photos", "playerPhotoVariant"],
@@ -3266,10 +3249,7 @@
         ],
         "responses": {
           "204": {
-            "description": "",
-            "content": {
-              "application/json": {}
-            }
+            "description": ""
           }
         },
         "x-samchon-accessor": ["v1", "admin", "cards", "collections", "removeCollection"],
@@ -3410,10 +3390,7 @@
         ],
         "responses": {
           "204": {
-            "description": "",
-            "content": {
-              "application/json": {}
-            }
+            "description": ""
           }
         },
         "x-samchon-accessor": ["v1", "admin", "cards", "teams", "removeTeam"],
@@ -3683,10 +3660,7 @@
         ],
         "responses": {
           "204": {
-            "description": "",
-            "content": {
-              "application/json": {}
-            }
+            "description": ""
           }
         },
         "x-samchon-accessor": ["v1", "admin", "cards", "remove"],
