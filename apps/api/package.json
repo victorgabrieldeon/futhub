@@ -6,7 +6,7 @@
   "scripts": {
     "build": "ttsc -p tsconfig.build.json",
     "dev": "pnpm openapi:generate && ttsc -p tsconfig.build.json && concurrently -k \"ttsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"node --env-file=../../.env --watch dist/server.js\"",
-    "openapi:generate": "nestia swagger && biome format --write openapi.json",
+    "openapi:generate": "nestia swagger && node scripts/normalize-openapi.mjs && biome format --write openapi.json",
     "generate:module": "node scripts/generate-module.mjs",
     "generate:usecase": "node scripts/generate-usecase.mjs",
     "files:backfill": "ttsc -p tsconfig.build.json && node --env-file=../../.env dist/scripts/backfill-file-references.js",

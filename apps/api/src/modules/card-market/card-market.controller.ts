@@ -1,13 +1,15 @@
-import { SwaggerCustomizer, TypedBody, TypedRoute } from '@nestia/core';
-import { Controller, HttpCode, Inject, Param, UseGuards } from '@nestjs/common';
+import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
+import { Body, Controller, HttpCode, Inject, Param, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
-import type {
-  PurchaseCardRequest,
-  PurchaseCardResponse,
-  SellCardsRequest,
-  SellCardsResponse,
+import {
+  type PurchaseCardRequest,
+  PurchaseCardRequestSchema,
+  type PurchaseCardResponse,
+  type SellCardsRequest,
+  SellCardsRequestSchema,
+  type SellCardsResponse,
 } from './card-market.dto.js';
 import { PurchaseCardUseCase, SellCardsUseCase } from './use-cases/card-market.use-case.js';
 
@@ -28,7 +30,7 @@ export class CardMarketController {
   })
   purchaseCard(
     @Param('cardId') cardId: string,
-    @TypedBody() request: PurchaseCardRequest,
+    @Body({ schema: PurchaseCardRequestSchema }) request: PurchaseCardRequest,
   ): Promise<PurchaseCardResponse> {
     return this.purchase.execute(request.identity, cardId);
   }
@@ -39,7 +41,9 @@ export class CardMarketController {
     route.operationId = 'sellCards';
     route.security = [{ bearer: [] }];
   })
-  async sellCards(@TypedBody() request: SellCardsRequest): Promise<SellCardsResponse> {
+  async sellCards(
+    @Body({ schema: SellCardsRequestSchema }) request: SellCardsRequest,
+  ): Promise<SellCardsResponse> {
     const result = await this.sell.execute(request.identity, request.userCardIds);
     return { ...result, userCardIds: [...result.userCardIds] };
   }

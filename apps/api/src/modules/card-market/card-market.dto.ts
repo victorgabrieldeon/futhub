@@ -1,28 +1,31 @@
-import type { tags } from 'typia';
+import { z } from 'zod';
 
-export interface CardMarketIdentity {
-  id: string & tags.MinLength<1> & tags.MaxLength<80>;
-  name: string & tags.MinLength<1> & tags.MaxLength<80>;
-  avatarUrl: (string & tags.Format<'url'> & tags.MaxLength<2048>) | null;
-}
+export const CardMarketIdentitySchema = z.object({
+  id: z.string().min(1).max(80),
+  name: z.string().min(1).max(80),
+  avatarUrl: z.url().max(2048).nullable(),
+});
+export type CardMarketIdentity = z.infer<typeof CardMarketIdentitySchema>;
 
-export interface PurchaseCardRequest {
-  identity: CardMarketIdentity;
-}
+export const PurchaseCardRequestSchema = z.object({ identity: CardMarketIdentitySchema });
+export type PurchaseCardRequest = z.infer<typeof PurchaseCardRequestSchema>;
 
-export interface PurchaseCardResponse {
-  userCardId: string;
-  balance: number;
-  price: number;
-}
+export const PurchaseCardResponseSchema = z.object({
+  userCardId: z.string(),
+  balance: z.number(),
+  price: z.number(),
+});
+export type PurchaseCardResponse = z.infer<typeof PurchaseCardResponseSchema>;
 
-export interface SellCardsRequest {
-  identity: CardMarketIdentity;
-  userCardIds: (string & tags.Format<'uuid'>)[] & tags.MinItems<1>;
-}
+export const SellCardsRequestSchema = z.object({
+  identity: CardMarketIdentitySchema,
+  userCardIds: z.array(z.uuid()).min(1),
+});
+export type SellCardsRequest = z.infer<typeof SellCardsRequestSchema>;
 
-export interface SellCardsResponse {
-  userCardIds: string[];
-  balance: number;
-  amount: number;
-}
+export const SellCardsResponseSchema = z.object({
+  userCardIds: z.array(z.string()),
+  balance: z.number(),
+  amount: z.number(),
+});
+export type SellCardsResponse = z.infer<typeof SellCardsResponseSchema>;

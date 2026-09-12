@@ -10,29 +10,16 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { z } from 'zod';
 
 import { AdminApiConfig, adminApiKeyFromHeaders, isValidAdminApiKey } from './admin-auth.guard.js';
+import {
+  type AdminSessionInput,
+  AdminSessionInputSchema,
+  type AdminSessionResponse,
+} from './admin-session.dto.js';
 
 const sessionCookieName = 'admin_api_key';
 const sessionMaxAgeSeconds = 60 * 60 * 8;
-const adminSessionInputSchema = z.object({
-  apiKey: z
-    .string()
-    .trim()
-    .min(1, 'Informe API key.')
-    .meta({ title: 'API key', description: 'Credencial administrativa fornecida pelo operador.' }),
-});
-type AdminSessionInput = z.infer<typeof adminSessionInputSchema>;
-
-interface AdminSessionResponse {
-  /**
-   * Indica que a sessão administrativa está ativa.
-   *
-   * @title Sessão ativa
-   */
-  ok: boolean;
-}
 
 @ApiTags('Administração / Sessão')
 @Controller('v1/admin/session')
@@ -41,7 +28,7 @@ export class AdminSessionController {
 
   @TypedRoute.Post()
   create(
-    @Body({ schema: adminSessionInputSchema }) body: AdminSessionInput,
+    @Body({ schema: AdminSessionInputSchema }) body: AdminSessionInput,
     @Res({ passthrough: true }) reply: FastifyReply,
   ): AdminSessionResponse {
     const { apiKey } = body;

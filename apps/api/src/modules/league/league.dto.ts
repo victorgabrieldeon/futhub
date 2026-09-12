@@ -1,66 +1,69 @@
-import type { tags } from 'typia';
+import { z } from 'zod';
 
-export interface DiscordIdentityDto {
-  id: string & tags.MinLength<1> & tags.MaxLength<80>;
-  name: string & tags.MinLength<1> & tags.MaxLength<80>;
-  avatarUrl: (string & tags.Format<'url'> & tags.MaxLength<2048>) | null;
-}
+export const DiscordIdentityDtoSchema = z.object({
+  id: z.string().min(1).max(80),
+  name: z.string().min(1).max(80),
+  avatarUrl: z.url().max(2048).nullable(),
+});
+export type DiscordIdentityDto = z.infer<typeof DiscordIdentityDtoSchema>;
 
-export type QueueResponse = QueueWaitingResponse | QueueMatchedResponse;
+export const LeagueDivisionDtoSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  minimumPoints: z.number(),
+  emoji: z.string(),
+  color: z.string().nullable(),
+  imageUrl: z.string().nullable(),
+});
+export type LeagueDivisionDto = z.infer<typeof LeagueDivisionDtoSchema>;
 
-export interface QueueWaitingResponse {
-  /**
-   * @title Estado da fila
-   * @description Jogador aguardando adversário.
-   */
-  kind: 'waiting';
-  division: LeagueDivisionDto;
-}
+export const QueueWaitingResponseSchema = z.object({
+  kind: z.enum(['waiting']),
+  division: LeagueDivisionDtoSchema,
+});
+export type QueueWaitingResponse = z.infer<typeof QueueWaitingResponseSchema>;
 
-export interface QueueMatchedResponse {
-  /**
-   * @title Estado da fila
-   * @description Partida criada para jogador.
-   */
-  kind: 'matched';
-  matchId: string & tags.Format<'uuid'>;
-}
+export const QueueMatchedResponseSchema = z.object({
+  kind: z.enum(['matched']),
+  matchId: z.uuid(),
+});
+export type QueueMatchedResponse = z.infer<typeof QueueMatchedResponseSchema>;
 
-export interface LeagueDivisionDto {
-  id: string & tags.Format<'uuid'>;
-  name: string;
-  minimumPoints: number;
-  emoji: string;
-  color: string | null;
-  imageUrl: string | null;
-}
+export const QueueResponseSchema = z.discriminatedUnion('kind', [
+  QueueWaitingResponseSchema,
+  QueueMatchedResponseSchema,
+]);
+export type QueueResponse = z.infer<typeof QueueResponseSchema>;
 
-export interface LeagueStatusResponse {
-  points: number;
-  wins: number;
-  draws: number;
-  losses: number;
-  division: LeagueDivisionDto;
-  queue: QueueResponse | null;
-}
+export const LeagueStatusResponseSchema = z.object({
+  points: z.number(),
+  wins: z.number(),
+  draws: z.number(),
+  losses: z.number(),
+  division: LeagueDivisionDtoSchema,
+  queue: QueueResponseSchema.nullable(),
+});
+export type LeagueStatusResponse = z.infer<typeof LeagueStatusResponseSchema>;
 
-export interface MatchEventDto {
-  sequence: number;
-  minute: number;
-  type: 'kickoff' | 'goal' | 'yellow_card' | 'red_card' | 'fulltime';
-  playerUserCardId: (string & tags.Format<'uuid'>) | null;
-  assistUserCardId: (string & tags.Format<'uuid'>) | null;
-  description: string;
-  homeGoals: number;
-  awayGoals: number;
-}
+export const MatchEventDtoSchema = z.object({
+  sequence: z.number(),
+  minute: z.number(),
+  type: z.enum(['kickoff', 'goal', 'yellow_card', 'red_card', 'fulltime']),
+  playerUserCardId: z.uuid().nullable(),
+  assistUserCardId: z.uuid().nullable(),
+  description: z.string(),
+  homeGoals: z.number(),
+  awayGoals: z.number(),
+});
+export type MatchEventDto = z.infer<typeof MatchEventDtoSchema>;
 
-export interface MatchResponse {
-  id: string & tags.Format<'uuid'>;
-  homeUserId: string & tags.Format<'uuid'>;
-  awayUserId: string & tags.Format<'uuid'>;
-  homeGoals: number;
-  awayGoals: number;
-  completedAt: string & tags.Format<'date-time'>;
-  events: MatchEventDto[];
-}
+export const MatchResponseSchema = z.object({
+  id: z.uuid(),
+  homeUserId: z.uuid(),
+  awayUserId: z.uuid(),
+  homeGoals: z.number(),
+  awayGoals: z.number(),
+  completedAt: z.iso.datetime(),
+  events: z.array(MatchEventDtoSchema),
+});
+export type MatchResponse = z.infer<typeof MatchResponseSchema>;

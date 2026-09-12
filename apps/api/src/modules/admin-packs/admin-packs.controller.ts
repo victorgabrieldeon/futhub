@@ -1,7 +1,8 @@
 import '@fastify/multipart';
-import { TypedBody, TypedRoute } from '@nestia/core';
+import { TypedRoute } from '@nestia/core';
 import {
   BadRequestException,
+  Body,
   Controller,
   Inject,
   Param,
@@ -14,7 +15,7 @@ import type { FastifyRequest } from 'fastify';
 
 import { AdminAuthGuard } from '../auth/admin-auth.guard.js';
 import { imageFile } from '../files/files.service.js';
-import type { AdminPack, AdminPackInput } from './admin-packs.dto.js';
+import { type AdminPack, type AdminPackInput, AdminPackInputSchema } from './admin-packs.dto.js';
 import { AdminPacksService } from './admin-packs.service.js';
 
 @ApiTags('Administração / Packs')
@@ -29,12 +30,15 @@ export class AdminPacksController {
   }
 
   @TypedRoute.Post()
-  create(@TypedBody() input: AdminPackInput): Promise<AdminPack> {
+  create(@Body({ schema: AdminPackInputSchema }) input: AdminPackInput): Promise<AdminPack> {
     return this.packs.create(input);
   }
 
   @TypedRoute.Put(':id')
-  update(@Param('id') id: string, @TypedBody() input: AdminPackInput): Promise<AdminPack> {
+  update(
+    @Param('id') id: string,
+    @Body({ schema: AdminPackInputSchema }) input: AdminPackInput,
+  ): Promise<AdminPack> {
     return this.packs.update(id, input);
   }
 

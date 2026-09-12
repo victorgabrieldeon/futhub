@@ -1,32 +1,34 @@
-import type { tags } from 'typia';
+import { z } from 'zod';
 
-export interface MissionsRequest {
-  id: string & tags.MinLength<1> & tags.MaxLength<80>;
-  name: string & tags.MinLength<1> & tags.MaxLength<80>;
-  avatarUrl: (string & tags.Format<'url'> & tags.MaxLength<2048>) | null;
-}
+export const MissionsRequestSchema = z.object({
+  id: z.string().min(1).max(80),
+  name: z.string().min(1).max(80),
+  avatarUrl: z.url().max(2048).nullable(),
+});
+export type MissionsRequest = z.infer<typeof MissionsRequestSchema>;
 
-export interface MissionsResponse {
-  missions: MissionDto[];
-}
+export const MissionRewardDtoSchema = z.object({
+  itemId: z.uuid(),
+  type: z.enum(['card', 'pack', 'balance', 'field', 'premium']),
+  quantity: z.number().min(1),
+  resourceId: z.uuid().nullable(),
+});
+export type MissionRewardDto = z.infer<typeof MissionRewardDtoSchema>;
 
-export interface MissionDto {
-  id: string & tags.Format<'uuid'>;
-  title: string;
-  type: 'open_pack' | 'sell_player' | 'claim_profit' | 'play_match';
-  cadence: 'daily' | 'weekly' | 'monthly';
-  tier: number & tags.Minimum<1>;
-  goal: number & tags.Minimum<1>;
-  progress: number & tags.Minimum<0>;
-  completed: boolean;
-  claimed: boolean;
-  expiresAt: string & tags.Format<'date-time'>;
-  reward: MissionRewardDto | null;
-}
+export const MissionDtoSchema = z.object({
+  id: z.uuid(),
+  title: z.string(),
+  type: z.enum(['open_pack', 'sell_player', 'claim_profit', 'play_match']),
+  cadence: z.enum(['daily', 'weekly', 'monthly']),
+  tier: z.number().min(1),
+  goal: z.number().min(1),
+  progress: z.number().min(0),
+  completed: z.boolean(),
+  claimed: z.boolean(),
+  expiresAt: z.iso.datetime(),
+  reward: MissionRewardDtoSchema.nullable(),
+});
+export type MissionDto = z.infer<typeof MissionDtoSchema>;
 
-export interface MissionRewardDto {
-  itemId: string & tags.Format<'uuid'>;
-  type: 'card' | 'pack' | 'balance' | 'field' | 'premium';
-  quantity: number & tags.Minimum<1>;
-  resourceId: (string & tags.Format<'uuid'>) | null;
-}
+export const MissionsResponseSchema = z.object({ missions: z.array(MissionDtoSchema) });
+export type MissionsResponse = z.infer<typeof MissionsResponseSchema>;

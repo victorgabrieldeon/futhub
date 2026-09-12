@@ -1,9 +1,13 @@
-import { SwaggerCustomizer, TypedBody, TypedRoute } from '@nestia/core';
-import { Controller, HttpCode, Inject, UseGuards } from '@nestjs/common';
+import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
+import { Body, Controller, HttpCode, Inject, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
-import type { MissionsRequest, MissionsResponse } from './missions.dto.js';
+import {
+  type MissionsRequest,
+  MissionsRequestSchema,
+  type MissionsResponse,
+} from './missions.dto.js';
 import { MissionsService } from './missions.service.js';
 
 @ApiTags('Missões')
@@ -18,7 +22,9 @@ export class MissionsController {
     route.operationId = 'listMissions';
     route.security = [{ bearer: [] }];
   })
-  async list(@TypedBody() identity: MissionsRequest): Promise<MissionsResponse> {
+  async list(
+    @Body({ schema: MissionsRequestSchema }) identity: MissionsRequest,
+  ): Promise<MissionsResponse> {
     const missions = await this.missions.list(identity);
     return {
       missions: missions.map((mission) => ({
