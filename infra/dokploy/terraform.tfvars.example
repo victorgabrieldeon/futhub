@@ -1,0 +1,23 @@
+dokploy_api_url = "https://dokploy.example.com/api"
+repository_url  = "git@github.com:your-org/futhub.git"
+repository_branch = "main"
+# dokploy_git_ssh_key_id = "existing-dokploy-ssh-key-id"
+
+admin_domain         = "admin.example.com"
+player_domain        = "app.example.com"
+api_domain           = "api.example.com"
+minio_domain         = "s3.example.com"
+
+postgres_password    = "replace-with-a-24-character-minimum-secret"
+minio_root_user      = "futhub-minio"
+minio_root_password  = "replace-with-a-24-character-minimum-secret"
+api_internal_token   = "replace-with-a-32-character-minimum-secret"
+admin_api_token      = "replace-with-a-32-character-minimum-secret"
+admin_session_secret = "replace-with-a-32-character-minimum-secret"
+player_session_secret = "replace-with-a-32-character-minimum-secret"
+
+discord_client_id       = ""
+discord_client_secret   = ""
+admin_discord_user_ids  = ""
+# brave_search_api_key = ""
+# thesportsdb_api_key  = ""

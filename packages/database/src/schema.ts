@@ -39,6 +39,11 @@ export const users = pgTable(
   ],
 );
 
+export const botResponseTemplates = pgTable('bot_response_templates', {
+  key: varchar('key', { length: 80 }).primaryKey(),
+  template: jsonb('template').$type<unknown>().notNull(),
+});
+
 export const commandConfigs = pgTable(
   'command_config',
   {
@@ -477,6 +482,44 @@ export const packs = pgTable(
       'packs_values_valid',
       sql`${table.cardsAmount} > 0 and ${table.price} >= 0 and ${table.limitPerUser} >= 0`,
     ),
+  ],
+);
+
+export const packPresentations = pgTable(
+  'pack_presentations',
+  {
+    packId: uuid('pack_id')
+      .primaryKey()
+      .references(() => packs.id, { onDelete: 'cascade' }),
+    schemaVersion: integer('schema_version').notNull().default(1),
+    color: varchar('color', { length: 7 }).notNull(),
+    accentColor: varchar('accent_color', { length: 7 }).notNull(),
+    textColor: varchar('text_color', { length: 7 }).notNull(),
+    effect: varchar('effect', { length: 24 }).$type<'foil' | 'holographic' | 'chrome'>().notNull(),
+    texture: varchar('texture', { length: 24 })
+      .$type<'none' | 'aura' | 'fire' | 'lightning'>()
+      .notNull(),
+    textureOpacity: integer('texture_opacity').notNull(),
+    tintOpacity: integer('tint_opacity').notNull(),
+    headline: varchar('headline', { length: 18 }).notNull(),
+    headlineSize: integer('headline_size').notNull(),
+    headlineX: integer('headline_x').notNull(),
+    headlineY: integer('headline_y').notNull(),
+    kicker: varchar('kicker', { length: 60 }).notNull(),
+    kickerX: integer('kicker_x').notNull(),
+    kickerY: integer('kicker_y').notNull(),
+  },
+  (table) => [
+    check('pack_presentations_schema_version_valid', sql`${table.schemaVersion} = 1`),
+    check(
+      'pack_presentations_opacity_valid',
+      sql`${table.textureOpacity} between 0 and 65 and ${table.tintOpacity} between 0 and 42`,
+    ),
+    check('pack_presentations_headline_size_valid', sql`${table.headlineSize} between 24 and 100`),
+    check('pack_presentations_headline_x_valid', sql`${table.headlineX} between 80 and 520`),
+    check('pack_presentations_headline_y_valid', sql`${table.headlineY} between 190 and 470`),
+    check('pack_presentations_kicker_x_valid', sql`${table.kickerX} between 80 and 520`),
+    check('pack_presentations_kicker_y_valid', sql`${table.kickerY} between 120 and 300`),
   ],
 );
 

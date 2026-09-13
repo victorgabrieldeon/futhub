@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { FilesModule } from '../files/files.module.js';
+import { PackShopService } from './pack-shop.service.js';
 
 import { PacksController } from './packs.controller.js';
 import { DrizzlePackRepository } from './repository/packs.repository.js';
@@ -7,8 +9,10 @@ import { PackRepository } from './use-cases/pack.types.js';
 import { PurchasePackUseCase } from './use-cases/purchase-pack/purchase-pack.use-case.js';
 
 @Module({
+  imports: [FilesModule],
   controllers: [PacksController],
   providers: [
+    PackShopService,
     {
       provide: PackRepository,
       useFactory: () => {

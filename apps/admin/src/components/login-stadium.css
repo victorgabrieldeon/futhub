@@ -1,0 +1,92 @@
+.login-hero:has(.login-stadium) {
+  gap: 24px;
+}
+
+.login-stadium {
+  align-self: center;
+  aspect-ratio: 1.42;
+  flex: 0 0 auto;
+  width: calc(100% + 96px);
+  max-width: 640px;
+  position: relative;
+  pointer-events: none;
+}
+
+.login-stadium canvas {
+  display: block;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+.login-stadium:not([data-render-status="ready"]) canvas {
+  visibility: hidden;
+}
+
+.login-stadium[data-render-status="ready"] .login-stadium__fallback {
+  display: none;
+}
+
+.login-stadium__fallback {
+  position: absolute;
+  inset: 18% 12%;
+  background: #89969e;
+  border: 16px ridge #6878a8;
+  border-radius: 12px;
+  transform: perspective(800px) rotateX(42deg) rotateZ(-22deg);
+  box-shadow: -8px 14px 0 #25343e, -16px 30px 32px #25343e33;
+  padding: 12px;
+}
+
+.login-stadium__field {
+  height: 100%;
+  position: relative;
+  border: 2px solid #edf3e9;
+  background: repeating-linear-gradient(90deg, #377747 0 10%, #418650 10% 20%);
+}
+
+.login-stadium__field::before,
+.login-stadium__field::after,
+.login-stadium__field i,
+.login-stadium__field b {
+  content: "";
+  position: absolute;
+  border: 1px solid #edf3e9;
+}
+
+.login-stadium__field::before {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+}
+
+.login-stadium__field::after {
+  height: 26%;
+  aspect-ratio: 1;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.login-stadium__field i,
+.login-stadium__field b {
+  height: 60%;
+  width: 16%;
+  top: 20%;
+}
+
+.login-stadium__field i {
+  left: -1px;
+}
+.login-stadium__field b {
+  right: -1px;
+}
+
+@media (max-width: 800px) {
+  .login-stadium {
+    width: 100%;
+    max-width: 540px;
+  }
+}

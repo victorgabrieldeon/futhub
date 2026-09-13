@@ -11,17 +11,17 @@ FutHub é construído em público. Bugs, ideias, documentação e código são c
 
 ## Ambiente local
 
-Pré-requisitos: Docker, Tilt, Node.js 22 e Corepack.
+Pré-requisitos: Docker, cluster Kubernetes local, DevSpace 6.3.21+, Node.js 22 e Corepack.
 
 ```bash
 corepack enable
-pnpm dev:tilt
+pnpm dev:devspace
 ```
 
-Tilt inicia PostgreSQL, aplica migrations e inicia API. Para encerrar:
+DevSpace constrói imagem local, aplica manifests Kubernetes, inicia PostgreSQL e MinIO, aplica migrations e conecta sync/logs dos pods. Para encerrar:
 
 ```bash
-pnpm dev:tilt:down
+pnpm dev:devspace:down
 ```
 
 ## Mudanças de código

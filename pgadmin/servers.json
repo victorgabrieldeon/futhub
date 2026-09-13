@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "FutHub",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "futhub",
+      "Username": "futhub",
+      "PassFile": "/tmp/pgpass",
+      "SSLMode": "prefer"
+    }
+  }
+}

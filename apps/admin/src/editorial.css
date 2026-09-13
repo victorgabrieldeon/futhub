@@ -1,0 +1,1170 @@
+:root {
+  --fh-display: "Nike Futura ND", "Barlow Condensed", Impact, "Arial Narrow", sans-serif;
+  --fh-mono: "Helvetica Now Text", Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --fh-signal: #111111;
+  --fh-signal-ink: #ffffff;
+  --fh-paper: #ffffff;
+  --fh-night: #111111;
+}
+
+/* Nike system: retail precision over existing FutHub information architecture. */
+.futhub-editorial .theme-toggle,
+.futhub-editorial .logout-button,
+.futhub-editorial .button-primary,
+.futhub-editorial .button-secondary,
+.futhub-editorial .ops-button,
+.album-action {
+  border-radius: 9999px;
+}
+
+.futhub-monogram {
+  border-radius: 9999px;
+  height: 24px;
+  letter-spacing: -3px;
+  padding-right: 3px;
+  width: 38px;
+}
+
+.futhub-monogram span {
+  transform: translateY(1px);
+}
+
+.album-manifesto h1,
+.album-athlete-caption h2,
+.album-cover-state h2 {
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.album-action {
+  font-family: "Helvetica Now Text", Inter, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  padding-inline: 24px;
+}
+
+.album-search {
+  background: var(--canvas-soft);
+  border: 0;
+  border-radius: 24px;
+  padding: 8px 16px;
+}
+
+.album-search input {
+  border: 0;
+}
+
+html[data-theme="light"] {
+  --canvas: #ffffff;
+  --canvas-soft: #f5f5f5;
+  --surface-card: #ffffff;
+  --surface-strong: #e5e5e5;
+  --ink: #111111;
+  --body: #4b4b4d;
+  --muted: #707072;
+  --hairline: #e5e5e5;
+  --hairline-strong: #cacacb;
+  --accent: #111111;
+  --text-link: #111111;
+}
+
+html[data-theme="dark"] {
+  --canvas: #111111;
+  --canvas-soft: #1f1f21;
+  --surface-card: #28282a;
+  --surface-strong: #39393b;
+  --surface-dark: #111111;
+  --surface-dark-elevated: #1f1f21;
+  --ink: #ffffff;
+  --body: #cacacb;
+  --body-strong: #ffffff;
+  --muted: #9e9ea0;
+  --hairline: #39393b;
+  --hairline-soft: #28282a;
+  --hairline-strong: #4b4b4d;
+  --accent: #ffffff;
+  --text-link: #ffffff;
+  --text-link-secondary: #cacacb;
+  --success: #1eaa52;
+}
+
+html[data-theme] .futhub-editorial :is(.cards-page, .command-center-page) {
+  --futhub-violet: var(--accent);
+  --futhub-violet-dark: var(--accent);
+  --futhub-violet-line: var(--hairline-strong);
+  --futhub-violet-soft: var(--surface-strong);
+}
+.futhub-editorial {
+  max-width: 1680px;
+  padding: 0 clamp(20px, 3.8vw, 64px) 24px;
+}
+.futhub-editorial .top-nav {
+  height: 88px;
+  position: relative;
+  background: transparent;
+  border: 0;
+}
+.futhub-editorial .brand-lockup {
+  gap: 12px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.futhub-editorial .brand-lockup > strong {
+  font-size: 26px;
+  letter-spacing: -1.4px;
+}
+.futhub-monogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: var(--fh-signal);
+  color: var(--fh-night);
+  font: 800 34px / 0.7 var(--fh-display);
+  letter-spacing: -6px;
+  padding-right: 5px;
+  transform: skew(-8deg);
+}
+.futhub-monogram span {
+  transform: translateY(3px);
+}
+.futhub-editorial .brand-divider {
+  height: 16px;
+}
+.futhub-editorial .brand-lockup > span:last-child {
+  font: 10px var(--fh-mono);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+.futhub-editorial .session-state {
+  font: 10px var(--fh-mono);
+}
+.futhub-editorial .session-state::before {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  background: var(--success);
+  margin-right: 7px;
+  border-radius: 50%;
+}
+.futhub-editorial .theme-toggle,
+.futhub-editorial .logout-button,
+.futhub-editorial .settings-button {
+  min-height: 36px;
+  font-size: 11px;
+  border-radius: 2px;
+}
+.futhub-editorial .settings-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid var(--hairline-strong);
+  color: var(--body);
+  text-decoration: none;
+}
+.futhub-editorial .settings-button:hover,
+.futhub-editorial .settings-button[aria-current="page"] {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.futhub-editorial .settings-button svg {
+  width: 16px;
+  height: 16px;
+}
+.futhub-chapters {
+  display: flex;
+  align-items: stretch;
+  border-block: 1px solid var(--hairline-strong);
+  gap: 32px;
+}
+.futhub-chapters > a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  position: relative;
+  padding: 19px 0;
+  color: var(--body);
+  text-decoration: none;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.futhub-chapters > a > span {
+  color: var(--muted);
+  font: 9px var(--fh-mono);
+}
+.futhub-chapters > a.is-current {
+  color: var(--ink);
+}
+.futhub-chapters > a.is-current::after {
+  content: "";
+  position: absolute;
+  height: 3px;
+  background: var(--accent);
+  inset: auto 0 -1px;
+}
+.futhub-chapters > a:hover {
+  color: var(--accent);
+}
+.futhub-edition {
+  margin-left: auto;
+  align-self: center;
+  color: var(--muted);
+  font: 9px var(--fh-mono);
+  letter-spacing: 1.5px;
+}
+.futhub-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.futhub-subnav a {
+  color: var(--body);
+  font-size: 12px;
+  text-decoration: none;
+  padding: 6px 0;
+}
+.futhub-subnav a[aria-current="page"] {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 7px;
+}
+.futhub-editorial .admin-layout {
+  display: block;
+}
+.futhub-editorial .admin-workspace {
+  min-width: 0;
+  min-height: calc(100vh - 190px);
+}
+.futhub-editorial .command-page {
+  padding-top: 40px;
+}
+.futhub-editorial .command-header {
+  padding-bottom: 30px;
+}
+.futhub-editorial .command-header h1 {
+  font-family: var(--fh-display);
+  font-size: clamp(38px, 4.5vw, 62px);
+  font-weight: 600;
+  letter-spacing: -.02em;
+}
+.futhub-editorial .page-title-icon {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--accent);
+  padding: 3px;
+}
+.futhub-editorial .cards-page .ops-button.accent,
+.futhub-editorial .packs-page .ops-button.accent {
+  background: var(--fh-signal);
+  color: var(--fh-signal-ink);
+  border-color: var(--fh-signal);
+  border-radius: 2px;
+}
+.futhub-editorial .cards-page .ops-button.accent:hover:not(:disabled),
+.futhub-editorial .packs-page .ops-button.accent:hover:not(:disabled) {
+  background: #e1f8a1;
+  color: var(--fh-signal-ink);
+}
+.futhub-editorial :where(a, button, input, select, summary):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 5px;
+}
+.futhub-skip {
+  position: fixed;
+  top: 12px;
+  left: 20px;
+  transform: translateY(-160%);
+  z-index: 100;
+  background: var(--fh-signal);
+  color: var(--fh-signal-ink);
+  padding: 14px;
+}
+.futhub-skip:focus {
+  transform: none;
+}
+
+.album-page {
+  padding-top: 25px;
+}
+.album-page a {
+  text-decoration: none;
+}
+.album-label,
+.album-kicker,
+.album-volume,
+.album-lineup-label,
+.album-athlete-edition,
+.album-footer > span {
+  font: 10px / 1.6 var(--fh-mono);
+  letter-spacing: 1.25px;
+}
+.album-label {
+  color: var(--body);
+  margin: 0;
+}
+.album-kicker {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  margin-bottom: 20px;
+}
+.album-cover {
+  display: grid;
+  grid-template-columns: 1fr 1.12fr;
+  min-height: 510px;
+  border-bottom: 1px solid var(--hairline-strong);
+}
+.album-manifesto {
+  position: relative;
+  z-index: 1;
+  padding: 36px 0 28px;
+}
+.album-live-dot {
+  display: inline-block;
+  height: 5px;
+  width: 5px;
+  background: var(--accent);
+  vertical-align: middle;
+  margin-right: 8px;
+}
+.album-manifesto h1 {
+  font: 700 clamp(64px, 6.8vw, 112px) / 0.98 var(--fh-display);
+  letter-spacing: -.025em;
+  margin: 24px 0;
+  max-width: 700px;
+}
+.album-manifesto h1 em {
+  color: var(--accent);
+  font-style: normal;
+}
+.album-intro {
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--body);
+  margin: 0 0 28px;
+}
+.album-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  min-height: 48px;
+  padding: 14px 20px;
+  background: var(--fh-signal);
+  color: var(--fh-signal-ink);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font: 600 12px / 1.4 Inter, sans-serif;
+  cursor: pointer;
+  transition: background .2s, gap .2s;
+}
+.album-action:hover {
+  background: var(--hairline-soft);
+  gap: 48px;
+}
+.album-action > span {
+  font-size: 20px;
+}
+.album-catalog-note {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 50px;
+}
+.album-catalog-note p {
+  font-size: 10px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin: 0;
+}
+.album-note-mark {
+  color: var(--muted);
+  font: 600 26px var(--fh-display);
+  border-right: 1px solid var(--hairline-strong);
+  padding-right: 14px;
+}
+.album-athlete,
+.album-cover-state {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  min-height: 510px;
+  background: radial-gradient(ellipse at 55% 53%, var(--surface-strong), transparent 65%);
+}
+.album-pitch {
+  position: absolute;
+  inset: 54px 56px 54px 70px;
+  border: 1px solid color-mix(in srgb, var(--ink) 9%, transparent);
+  border-radius: 50% 50% 0 0;
+  z-index: -1;
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+.album-pitch::before {
+  content: "";
+  width: 72%;
+  height: 60%;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  border-radius: 50%;
+  position: absolute;
+  left: 14%;
+  top: 20%;
+}
+.album-pitch::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  inset-block: -28px;
+  border-left: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.album-overall {
+  position: absolute;
+  z-index: 2;
+  top: 28px;
+  left: 24px;
+  display: grid;
+  color: var(--accent);
+}
+.album-overall strong {
+  font: 600 84px / 0.9 var(--fh-display);
+  letter-spacing: -2px;
+}
+.album-overall > span {
+  margin-top: 10px;
+  font: 10px var(--fh-mono);
+}
+.album-athlete-edition {
+  position: absolute;
+  right: 2px;
+  top: 24px;
+  writing-mode: vertical-rl;
+  color: var(--muted);
+  text-transform: uppercase;
+  max-height: 260px;
+  overflow: hidden;
+}
+.album-portrait {
+  position: absolute;
+  inset: 0 5% 0 14%;
+  width: 81%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: drop-shadow(0 20px 24px #0005);
+}
+.album-athlete-caption {
+  position: absolute;
+  z-index: 3;
+  inset: auto 0 0;
+  padding: 65px 28px 28px;
+  background: linear-gradient(transparent, var(--canvas) 50%);
+}
+.album-athlete-caption .album-label {
+  color: var(--accent);
+}
+.album-athlete-caption .album-label > span {
+  color: var(--body);
+  letter-spacing: .5px;
+}
+.album-athlete-caption h2 {
+  font: 600 clamp(42px, 5.3vw, 80px) / 1 var(--fh-display);
+  text-transform: uppercase;
+  margin: 8px 0 18px;
+  letter-spacing: -.015em;
+  overflow-wrap: anywhere;
+}
+.album-athlete-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+.album-athlete-bottom dl {
+  display: flex;
+  gap: 28px;
+  margin: 0;
+}
+.album-athlete-bottom dl > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.album-athlete-bottom dt {
+  color: var(--muted);
+  font: 9px var(--fh-mono);
+}
+.album-athlete-bottom dd {
+  margin: 0;
+  font: 600 22px var(--fh-display);
+}
+.album-athlete-bottom a {
+  color: var(--ink);
+  font-size: 11px;
+  border-bottom: 1px solid var(--hairline-strong);
+  padding-block: 8px;
+  white-space: nowrap;
+}
+.album-athlete-bottom a > span {
+  margin-left: 18px;
+}
+.album-cover-state {
+  display: flex;
+  align-items: flex-end;
+  padding: 36px;
+}
+.album-cover-state h2 {
+  font: 600 clamp(36px, 3.5vw, 54px) / 1.05 var(--fh-display);
+  margin: 0 0 16px;
+}
+.album-cover-state p {
+  color: var(--body);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.album-empty-number {
+  position: absolute;
+  z-index: -1;
+  top: 15px;
+  right: 15%;
+  color: color-mix(in srgb, var(--ink) 5%, transparent);
+  font: 800 290px / 1 var(--fh-display);
+}
+.album-lineup {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+  display: flex;
+  border-bottom: 1px solid var(--hairline-strong);
+}
+.album-lineup-label {
+  flex: 0 0 125px;
+  align-content: center;
+  color: var(--ink);
+}
+.album-lineup-label > span {
+  display: block;
+  color: var(--muted);
+  font-size: 8px;
+  letter-spacing: .3px;
+}
+.album-lineup button {
+  background: none;
+  color: var(--body);
+  border: 0;
+  border-left: 1px solid var(--hairline);
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 13px;
+  padding: 23px 18px;
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+  transition: background .2s;
+}
+.album-lineup button[aria-pressed="true"] {
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+.album-lineup button[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  inset-inline: 0;
+  height: 2px;
+  background: var(--accent);
+}
+.album-lineup button:hover {
+  background: var(--surface-card);
+}
+.album-lineup-index {
+  font: 9px var(--fh-mono);
+  color: var(--muted);
+}
+.album-lineup button > span:nth-child(2) {
+  min-width: 0;
+}
+.album-lineup strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.album-lineup small {
+  display: block;
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.album-lineup b {
+  font: 600 27px var(--fh-display);
+  margin-left: auto;
+  color: var(--accent);
+}
+.album-volume {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  color: var(--muted);
+  margin: 28px 0 50px;
+  font-size: 9px;
+}
+.album-volume > span:first-child {
+  color: var(--accent);
+}
+.album-index {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: clamp(30px, 6vw, 100px);
+}
+.album-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 26px;
+}
+.album-section-heading h2 {
+  font: 600 clamp(30px, 3.4vw, 46px) / 1.05 var(--fh-display);
+  margin: 10px 0 0;
+  letter-spacing: -.5px;
+}
+.album-section-heading > a {
+  color: var(--body);
+  font-size: 10px;
+  white-space: nowrap;
+  padding-bottom: 5px;
+}
+.album-search {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid var(--hairline-strong);
+  padding-bottom: 14px;
+}
+.album-search > span {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.album-search input {
+  min-width: 0;
+  width: 100%;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink);
+  padding: 9px 0;
+  font-size: 12px;
+}
+.album-search input::placeholder {
+  color: var(--muted);
+}
+.album-recent-player {
+  display: grid;
+  grid-template-columns: 132px 1fr 24px;
+  gap: 22px;
+  align-items: center;
+  min-height: 146px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink);
+}
+.album-recent-art {
+  position: relative;
+  isolation: isolate;
+  height: 146px;
+  overflow: hidden;
+  background: linear-gradient(145deg, var(--surface-strong), transparent);
+}
+.album-recent-art > span {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  color: var(--muted);
+  font: 600 40px var(--fh-display);
+}
+.album-recent-art img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom;
+  transition: transform .25s;
+}
+.album-recent-player h3 {
+  font: 600 30px / 1 var(--fh-display);
+  margin: 8px 0;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.album-recent-player p {
+  color: var(--body);
+  font-size: 11px;
+  margin: 0;
+}
+.album-recent-player .album-label {
+  font-size: 8px;
+}
+.album-recent-arrow {
+  color: var(--muted);
+}
+.album-recent-player:hover .album-recent-art img {
+  transform: scale(1.05);
+}
+.album-recent-player:hover .album-recent-arrow {
+  color: var(--accent);
+}
+.album-recent-list > output {
+  color: var(--body);
+  font-size: 13px;
+  padding-block: 20px;
+  line-height: 1.8;
+}
+.album-recent-list > output > button {
+  color: var(--accent);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 8px;
+}
+.album-collections {
+  padding-left: 28px;
+  border-left: 1px solid var(--hairline);
+}
+.album-collections h2 {
+  font: 600 clamp(32px, 3.5vw, 48px) / 1.05 var(--fh-display);
+  margin: 12px 0 30px;
+}
+.album-collections h2 em {
+  color: var(--accent);
+  font-style: normal;
+}
+.album-collection-list > a {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--ink);
+  padding: 20px 0;
+  border-top: 1px solid var(--hairline);
+}
+.album-collection-list > a > span {
+  color: var(--muted);
+  font: 10px var(--fh-mono);
+}
+.album-collection-list > a > span:last-child {
+  margin-left: auto;
+}
+.album-collection-list strong {
+  font-size: 12px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.album-text-link {
+  display: inline-flex;
+  gap: 25px;
+  color: var(--accent);
+  margin-top: 18px;
+  font-size: 11px;
+  padding-block: 8px;
+}
+.album-studio-note {
+  margin-top: 45px;
+  background: var(--surface-strong);
+  padding: 26px;
+  border-left: 2px solid var(--accent);
+}
+.album-studio-note h3 {
+  font: 600 36px / 1.05 var(--fh-display);
+  margin: 14px 0 26px;
+}
+.album-studio-note a {
+  display: flex;
+  justify-content: space-between;
+  color: var(--ink);
+  font-size: 12px;
+}
+.album-pack-note {
+  display: grid;
+  grid-template-columns: .5fr 1.4fr 1fr;
+  align-items: center;
+  gap: 30px;
+  margin-top: 70px;
+  padding: 40px 0;
+  border-block: 1px solid var(--hairline-strong);
+}
+.album-pack-note h2 {
+  font: 600 clamp(32px, 3.5vw, 50px) / 1.05 var(--fh-display);
+  margin: 0;
+}
+.album-pack-note p {
+  color: var(--body);
+  line-height: 1.8;
+  font-size: 12px;
+  margin: 0 0 20px;
+}
+.album-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 32px;
+}
+.album-footer > strong {
+  letter-spacing: -1px;
+  font-size: 22px;
+}
+.album-footer > span {
+  color: var(--muted);
+  font-size: 9px;
+}
+.album-footer > a {
+  color: var(--body);
+  font-size: 11px;
+}
+.album-muted {
+  color: var(--body);
+  line-height: 1.8;
+}
+
+.futhub-editorial .player-spotlight .collection-spotlight-layout {
+  grid-template-columns: minmax(240px, .8fr) minmax(0, 1fr);
+  gap: 8%;
+  padding: 24px 4%;
+}
+.futhub-editorial .player-spotlight .player-card {
+  width: min(100%, 400px);
+  justify-self: center;
+}
+.futhub-editorial .player-spotlight .collection-spotlight-copy h2 {
+  font: 600 clamp(44px, 6vw, 84px) / 1 var(--fh-display);
+  text-transform: uppercase;
+  letter-spacing: -.02em;
+}
+.futhub-editorial .player-vault-progress {
+  background: none;
+  border-inline: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding-inline: 0;
+}
+.futhub-editorial .player-vault-progress-marks {
+  display: none;
+}
+.futhub-editorial .player-vault-featured-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px;
+}
+.futhub-editorial .player-vault-featured h2,
+.futhub-editorial .player-vault-gallery h2 {
+  font: 600 32px / 1.1 var(--fh-display);
+}
+.futhub-editorial .player-card-details strong {
+  font-family: var(--fh-display);
+  font-size: 25px;
+  font-weight: 600;
+}
+.futhub-editorial .player-vault .player-card::before {
+  inset-inline: 0;
+}
+.futhub-editorial .player-vault .player-card::after {
+  inset-inline: 0;
+}
+.futhub-editorial .pack-tile .collection-tile-overlay,
+.futhub-editorial .pack-tile .collection-tile-actions {
+  flex-wrap: wrap;
+}
+.futhub-editorial .player-vault-search,
+.futhub-editorial .player-vault-filter-row label {
+  border-radius: 2px;
+}
+
+@media (min-width: 1100px) {
+  .album-athlete {
+    animation: album-arrive .4s ease-out both;
+  }
+}
+@keyframes album-arrive {
+  from {
+    opacity: 0.5;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 1100px) {
+  .futhub-editorial .player-vault-featured-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .futhub-edition {
+    display: none;
+  }
+  .futhub-chapters {
+    justify-content: space-between;
+    gap: 18px;
+  }
+  .album-cover {
+    min-height: 500px;
+    grid-template-columns: 1fr 1fr;
+  }
+  .album-manifesto h1 {
+    font-size: 76px;
+  }
+  .album-athlete-caption {
+    padding-inline: 16px;
+  }
+  .album-overall {
+    left: 10px;
+  }
+  .album-athlete-bottom dl {
+    gap: 15px;
+  }
+  .album-lineup-label {
+    display: none;
+  }
+  .album-lineup button:first-of-type {
+    border-left: 0;
+  }
+  .album-lineup button {
+    padding: 20px 12px;
+    gap: 9px;
+  }
+  .album-lineup-index {
+    display: none;
+  }
+  .album-index {
+    gap: 30px;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+  .album-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .album-recent-player {
+    grid-template-columns: 100px 1fr 18px;
+    gap: 15px;
+  }
+  .album-search {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .album-pack-note {
+    grid-template-columns: 1fr 1fr;
+  }
+  .album-pack-note > .album-label {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 767px) {
+  .futhub-editorial {
+    padding-inline: 20px;
+  }
+  .futhub-editorial .top-nav {
+    height: 76px;
+  }
+  .futhub-editorial .session-state,
+  .futhub-editorial .brand-divider,
+  .futhub-editorial .brand-lockup > span:last-child {
+    display: none;
+  }
+  .futhub-editorial .nav-actions {
+    gap: 8px;
+  }
+  .futhub-editorial .theme-toggle,
+  .futhub-editorial .logout-button,
+  .futhub-editorial .settings-button {
+    min-height: 40px;
+    padding: 8px;
+  }
+  .futhub-editorial .settings-button span {
+    display: none;
+  }
+  .futhub-chapters {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    column-gap: 22px;
+    row-gap: 0;
+  }
+  .futhub-chapters > a {
+    padding: 13px 0;
+    font-size: 12px;
+    gap: 5px;
+  }
+  .futhub-chapters > a > span {
+    font-size: 8px;
+  }
+  .futhub-subnav {
+    gap: 8px 20px;
+  }
+  .futhub-editorial .command-page {
+    padding-top: 26px;
+  }
+  .futhub-editorial .command-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .futhub-editorial .cards-header-side {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  .album-kicker {
+    font-size: 8px;
+    gap: 20px;
+    letter-spacing: .7px;
+  }
+  .album-cover {
+    grid-template-columns: 1fr;
+  }
+  .album-manifesto {
+    padding: 16px 0 30px;
+  }
+  .album-manifesto > .album-label {
+    font-size: 8px;
+  }
+  .album-manifesto h1 {
+    font-size: clamp(66px, 13vw, 90px);
+    margin-block: 20px;
+  }
+  .album-intro {
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  .album-catalog-note {
+    display: none;
+  }
+  .album-athlete,
+  .album-cover-state {
+    min-height: 460px;
+  }
+  .album-portrait {
+    inset-inline: 8% 4%;
+    width: 88%;
+  }
+  .album-athlete-caption {
+    padding-inline: 10px;
+  }
+  .album-athlete-caption h2 {
+    font-size: 55px;
+  }
+  .album-overall {
+    top: 25px;
+  }
+  .album-overall strong {
+    font-size: 70px;
+  }
+  .album-lineup {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .album-lineup button {
+    border-bottom: 1px solid var(--hairline);
+    min-height: 80px;
+  }
+  .album-lineup button:nth-of-type(odd) {
+    border-left: 0;
+  }
+  .album-volume {
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-block: 22px 38px;
+    font-size: 8px;
+    letter-spacing: .5px;
+  }
+  .album-volume > span:last-child {
+    display: none;
+  }
+  .album-index {
+    grid-template-columns: 1fr;
+    gap: 45px;
+  }
+  .album-section-heading {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 14px;
+  }
+  .album-section-heading h2 {
+    font-size: 35px;
+  }
+  .album-section-heading > a {
+    white-space: normal;
+    min-width: 75px;
+  }
+  .album-recent-player {
+    grid-template-columns: 100px minmax(0, 1fr) 16px;
+  }
+  .album-recent-player h3 {
+    font-size: 28px;
+  }
+  .album-recent-art {
+    height: 135px;
+  }
+  .album-collections {
+    padding: 28px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--hairline-strong);
+  }
+  .album-collections h2 {
+    font-size: 42px;
+  }
+  .album-studio-note {
+    margin-top: 28px;
+  }
+  .album-pack-note {
+    margin-top: 42px;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .album-pack-note h2 {
+    font-size: 40px;
+  }
+  .album-footer {
+    flex-wrap: wrap;
+    gap: 22px;
+  }
+  .album-footer > span {
+    font-size: 8px;
+  }
+  .album-footer > a {
+    width: 100%;
+  }
+  .futhub-editorial .player-spotlight .collection-spotlight-layout {
+    grid-template-columns: 1fr;
+    padding-inline: 0;
+    gap: 30px;
+  }
+  .futhub-editorial .player-vault-featured-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .album-page *,
+  .album-page *::before,
+  .album-page *::after {
+    animation: none;
+    transition: none;
+    scroll-behavior: auto;
+  }
+  .album-recent-player:hover .album-recent-art img {
+    transform: none;
+  }
+}

@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@futhub/api-client": "workspace:*",
-    "discord.js": "14.18.0"
+    "discord.js": "14.25.1"
   },
   "devDependencies": {
     "@futhub/config": "workspace:*",

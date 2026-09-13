@@ -1,7 +1,10 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 
-import * as schema from './schema.js';
+import * as catalogSchema from './schema.js';
+import * as aiHistorySchema from './ai-history.schema.js';
+
+const schema = { ...catalogSchema, ...aiHistorySchema };
 
 const databaseUrl = process.env.DATABASE_URL;
 
