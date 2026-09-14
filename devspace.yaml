@@ -12,7 +12,6 @@ images:
     image: ghcr.io/victorgabrieldeon/futhub-dev
     context: .
     dockerfile: Dockerfile
-    target: workspace
     rebuildStrategy: ignoreContextChanges
 
 deployments:

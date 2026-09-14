@@ -5,17 +5,19 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "node --env-file=../../.env --import tsx --watch src/index.ts",
+    "dev": "SEYFERT_BASE=src node --env-file=../../.env --import tsx --watch src/index.ts",
     "start": "node --env-file=../../.env dist/index.js",
-    "test": "tsx --test src/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "test": "tsx --test 'tests/**/*.test.ts'",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json"
   },
   "dependencies": {
     "@futhub/api-client": "workspace:*",
-    "discord.js": "14.25.1"
+    "discord.js": "14.25.1",
+    "seyfert": "5.1.0"
   },
   "devDependencies": {
     "@futhub/config": "workspace:*",
+    "@slipher/testing": "1.0.0",
     "@types/node": "22.13.4",
     "tsx": "4.19.3"
   }

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, test } from 'vitest';
 
-import { internalToken, type E2eContext, startE2eContext } from '../../../test/e2e/context.js';
+import { type E2eContext, internalToken, startE2eContext } from '../../../test/e2e/context.js';
 import { createPackFixture, createUser } from '../../../test/e2e/entities.js';
 
 const identity = { id: 'e2e-pack-user', name: 'Pack player', avatarUrl: null };
@@ -55,4 +55,34 @@ test('compra e abre pack persistindo carta e progressão', async () => {
   });
   expect(cards).toHaveLength(1);
   expect(cards[0]?.cardId).toBe(cardId);
+});
+
+test('lista na loja apenas packs disponíveis para compra', async () => {
+  if (!context) throw new Error('E2E context was not initialized.');
+  const { app, database } = context;
+  const { packId } = await createPackFixture(database);
+  const { packId: hiddenPackId } = await createPackFixture(database);
+  await database.db
+    .update(database.schema.packs)
+    .set({ canBuy: false })
+    .where(database.eq(database.schema.packs.id, hiddenPackId));
+
+  const response = await app.inject({
+    method: 'GET',
+    url: '/v1/packs',
+    headers: { authorization: `Bearer ${internalToken}` },
+  });
+
+  expect(response.statusCode).toBe(200);
+  expect(response.json()).toContainEqual(
+    expect.objectContaining({
+      id: packId,
+      name: 'E2E pack',
+      emoji: '📦',
+      cardsAmount: 1,
+      price: 20,
+      limitPerUser: 10,
+    }),
+  );
+  expect(response.json()).not.toContainEqual(expect.objectContaining({ id: hiddenPackId }));
 });

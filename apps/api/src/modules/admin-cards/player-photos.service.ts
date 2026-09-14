@@ -1,6 +1,7 @@
 import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
 
 import type { PlayerPhotoSuggestion } from './admin-cards.dto.js';
+import { searchSportsDbTeamPlayers } from './sports-db-team-players.js';
 
 const sportsDbOrigin = 'https://www.thesportsdb.com';
 const sportsDbImageOrigin = 'https://r2.thesportsdb.com';
@@ -62,6 +63,10 @@ type SportsDbPlayerDetails = SportsDbPlayer &
 
 @Injectable()
 export class PlayerPhotosService {
+  async teamPlayers(query: string) {
+    return searchSportsDbTeamPlayers(query);
+  }
+
   async search(query: string): Promise<PlayerPhotoSuggestion[]> {
     const name = query.trim();
     if (name.length < 2) return [];

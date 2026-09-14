@@ -1,8 +1,9 @@
-import type { Canvas } from 'fabric';
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { type Pack, createPack, listPacks, updatePack, uploadPackImage } from '../packs/actions';
-import { PackCanvas, packCanvasPng } from './pack-canvas';
+import { PackCanvas } from './pack-canvas';
+import { packModelPng } from './pack-model';
+import { PackModelPreview } from './pack-model-preview';
 import {
   type PackStudioDraft,
   defaultPackStudioDraft,
@@ -32,7 +33,6 @@ function choice<T extends readonly { id: string }[]>(
 export function PackStudio() {
   const location = useLocation();
   const navigate = useNavigate();
-  const canvasRef = useRef<Canvas | null>(null);
   const linkedPack = (location.state as { pack?: Pack } | null)?.pack ?? null;
   const initialSelectedId = useRef(linkedPack?.id ?? '');
   const [packs, setPacks] = useState<Pack[]>([]);
@@ -82,13 +82,13 @@ export function PackStudio() {
   }
 
   async function saveArtwork() {
-    if (!canvasRef.current || !canSave) return;
+    if (!canSave) return;
     setSaving(true);
     try {
       const saved = pack
         ? await updatePack(pack.id, packStudioInput(draft, pack))
         : await createPack(packStudioInput(draft));
-      const artwork = await packCanvasPng(canvasRef.current);
+      const artwork = await packModelPng(draft);
       const form = new FormData();
       form.set(
         'image',
@@ -236,7 +236,7 @@ export function PackStudio() {
                 value={draft.headlineSize}
               />
             </label>
-            <p className="form-note">Arraste e redimensione título direto no pack.</p>
+            <p className="form-note">Use “Ajustar arte 2D” para arrastar o título.</p>
           </fieldset>
 
           <fieldset className="pack-studio-fields">
@@ -346,16 +346,20 @@ export function PackStudio() {
               {draft.limitPerUser}
             </p>
           </header>
-          <PackCanvas
-            draft={draft}
-            onCanvasReady={(canvas) => {
-              canvasRef.current = canvas;
-            }}
-            onTextChange={(headline) => updateDraft('headline', headline)}
-            onTextTransform={(headlineX, headlineY) =>
-              setDraft((current) => ({ ...current, headlineX, headlineY }))
-            }
-          />
+          <div className="pack-studio-model-stage">
+            <PackModelPreview draft={draft} />
+            <details className="pack-studio-artwork-editor">
+              <summary>Ajustar arte 2D</summary>
+              <PackCanvas
+                draft={draft}
+                onCanvasReady={() => undefined}
+                onTextChange={(headline) => updateDraft('headline', headline)}
+                onTextTransform={(headlineX, headlineY) =>
+                  setDraft((current) => ({ ...current, headlineX, headlineY }))
+                }
+              />
+            </details>
+          </div>
         </section>
       </div>
     </section>

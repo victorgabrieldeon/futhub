@@ -13,9 +13,525 @@
         "scheme": "bearer"
       }
     },
-    "schemas": {}
+    "schemas": {
+      "ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "cardsPerPack": {
+            "type": "number"
+          }
+        },
+        "required": ["id", "name", "price", "imageUrl", "cardsPerPack"],
+        "type": "object"
+      },
+      "ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber": {
+        "additionalProperties": false,
+        "properties": {
+          "packs": {
+            "items": {
+              "$ref": "#/components/schemas/ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber"
+            },
+            "type": "array"
+          },
+          "page": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": ["packs", "page", "totalPages"],
+        "type": "object"
+      },
+      "BotResponseButtonDto": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 80,
+            "minLength": 1,
+            "type": "string"
+          },
+          "style": {
+            "type": "string",
+            "enum": ["danger", "link", "primary", "secondary", "success"]
+          },
+          "url": {
+            "maxLength": 512,
+            "type": "string"
+          },
+          "disabled": {
+            "type": "boolean"
+          }
+        },
+        "required": ["action", "label", "style", "url", "disabled"],
+        "type": "object"
+      },
+      "BotResponseContainerDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["container"],
+            "title": "Tipo do componente",
+            "description": "Grupo de componentes."
+          },
+          "color": {
+            "pattern": "^(#[0-9A-Fa-f]{6})?$",
+            "type": "string"
+          },
+          "components": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/BotResponseMediaDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseRowDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseSeparatorDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseTextDto"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "media": "#/components/schemas/BotResponseMediaDto",
+                  "row": "#/components/schemas/BotResponseRowDto",
+                  "separator": "#/components/schemas/BotResponseSeparatorDto",
+                  "text": "#/components/schemas/BotResponseTextDto"
+                }
+              }
+            },
+            "maxItems": 39,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": ["type", "color", "components"],
+        "type": "object"
+      },
+      "BotResponseDefinitionDto": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "variables": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "token": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "example": {
+                  "type": "string"
+                }
+              },
+              "required": ["token", "description", "example"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "actions": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "label", "description"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "defaultTemplate": {
+            "$ref": "#/components/schemas/BotResponseTemplateDto"
+          }
+        },
+        "required": [
+          "key",
+          "command",
+          "label",
+          "description",
+          "variables",
+          "actions",
+          "defaultTemplate"
+        ],
+        "type": "object"
+      },
+      "BotResponseEmbedDto": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "maxLength": 256,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 4096,
+            "type": "string"
+          },
+          "color": {
+            "pattern": "^(#[0-9A-Fa-f]{6})?$",
+            "type": "string"
+          },
+          "footer": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "authorName": {
+            "maxLength": 256,
+            "type": "string"
+          },
+          "authorUrl": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "authorIconUrl": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "imageUrl": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "fields": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "value": {
+                  "maxLength": 1024,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "inline": {
+                  "type": "boolean"
+                }
+              },
+              "required": ["name", "value", "inline"],
+              "type": "object"
+            },
+            "maxItems": 25,
+            "type": "array"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "color",
+          "footer",
+          "imageUrl",
+          "thumbnailUrl",
+          "fields"
+        ],
+        "type": "object"
+      },
+      "BotResponseMediaDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["media"],
+            "title": "Tipo do componente",
+            "description": "Imagem da mensagem."
+          },
+          "url": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 1024,
+            "type": "string"
+          }
+        },
+        "required": ["type", "url", "description"],
+        "type": "object"
+      },
+      "BotResponseRowDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["row"],
+            "title": "Tipo do componente",
+            "description": "Linha de controles."
+          },
+          "buttons": {
+            "items": {
+              "$ref": "#/components/schemas/BotResponseButtonDto"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": ["type", "buttons"],
+        "type": "object"
+      },
+      "BotResponseSeparatorDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["separator"],
+            "title": "Tipo do componente",
+            "description": "Separador visual."
+          },
+          "spacing": {
+            "type": "number",
+            "enum": [1, 2]
+          },
+          "divider": {
+            "type": "boolean"
+          }
+        },
+        "required": ["type", "spacing", "divider"],
+        "type": "object"
+      },
+      "BotResponseTemplateDto": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["components_v2", "legacy"]
+          },
+          "content": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "embeds": {
+            "items": {
+              "$ref": "#/components/schemas/BotResponseEmbedDto"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "components": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/BotResponseContainerDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseMediaDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseRowDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseSeparatorDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseTextDto"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "container": "#/components/schemas/BotResponseContainerDto",
+                  "media": "#/components/schemas/BotResponseMediaDto",
+                  "row": "#/components/schemas/BotResponseRowDto",
+                  "separator": "#/components/schemas/BotResponseSeparatorDto",
+                  "text": "#/components/schemas/BotResponseTextDto"
+                }
+              }
+            },
+            "maxItems": 40,
+            "type": "array"
+          }
+        },
+        "required": ["mode", "content", "embeds", "components"],
+        "type": "object"
+      },
+      "BotResponseTextDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["text"],
+            "title": "Tipo do componente",
+            "description": "Texto da mensagem."
+          },
+          "content": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": ["type", "content"],
+        "type": "object"
+      }
+    }
   },
   "paths": {
+    "/v1/packs": {
+      "get": {
+        "tags": ["Packs"],
+        "operationId": "listPackCatalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "emoji": {
+                        "type": "string"
+                      },
+                      "cardsAmount": {
+                        "type": "number"
+                      },
+                      "price": {
+                        "type": "number"
+                      },
+                      "limitPerUser": {
+                        "type": "number"
+                      }
+                    },
+                    "required": ["id", "name", "emoji", "cardsAmount", "price", "limitPerUser"],
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "x-readonly-array": true
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "packs", "listPacks"],
+        "x-samchon-controller": "PacksController"
+      }
+    },
+    "/v1/packs/shop": {
+      "get": {
+        "tags": ["Packs"],
+        "operationId": "getPackShop",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "packs", "shop", "getPackShop"],
+        "x-samchon-controller": "PacksController"
+      }
+    },
+    "/v1/packs/{packId}": {
+      "get": {
+        "tags": ["Packs"],
+        "operationId": "inspectPack",
+        "parameters": [
+          {
+            "name": "packId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "packs", "inspectPack"],
+        "x-samchon-controller": "PacksController"
+      }
+    },
     "/v1/packs/{packId}/purchase": {
       "post": {
         "tags": ["Packs"],
@@ -1570,6 +2086,148 @@
         },
         "x-samchon-accessor": ["v1", "admin", "session", "destroy"],
         "x-samchon-controller": "AdminSessionController"
+      }
+    },
+    "/v1/admin/bot-responses/schema": {
+      "get": {
+        "tags": ["Admin bot responses"],
+        "operationId": "getBotResponseSchema",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BotResponseDefinitionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "admin", "bot_responses", "schema"],
+        "x-samchon-controller": "AdminBotResponsesController"
+      }
+    },
+    "/v1/admin/bot-responses/{key}": {
+      "get": {
+        "tags": ["Admin bot responses"],
+        "operationId": "getAdminBotResponse",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotResponseTemplateDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "admin", "bot_responses", "get"],
+        "x-samchon-controller": "AdminBotResponsesController"
+      },
+      "put": {
+        "tags": ["Admin bot responses"],
+        "operationId": "updateBotResponse",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BotResponseTemplateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotResponseTemplateDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "admin", "bot_responses", "update"],
+        "x-samchon-controller": "AdminBotResponsesController"
+      }
+    },
+    "/v1/bot-responses/{key}": {
+      "get": {
+        "tags": ["Bot responses"],
+        "operationId": "getBotResponse",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotResponseTemplateDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "bot_responses", "get"],
+        "x-samchon-controller": "BotResponsesController"
       }
     },
     "/v1/admin/packs": {
@@ -5018,6 +5676,10 @@
       "description": "Sessão autenticada da área administrativa."
     },
     {
+      "name": "Respostas do bot",
+      "description": "Templates configuráveis de resposta do bot Discord."
+    },
+    {
       "name": "Comandos",
       "description": "Comandos executados por jogadores."
     },
@@ -5040,6 +5702,12 @@
     {
       "name": "Saúde",
       "description": "Estado do serviço."
+    },
+    {
+      "name": "Admin bot responses"
+    },
+    {
+      "name": "Bot responses"
     }
   ]
 }

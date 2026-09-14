@@ -12558,6 +12558,34 @@ html[data-theme="dark"] .pack-rule {
 .pack-canvas {
   filter: drop-shadow(0 28px 32px color-mix(in srgb, #000 48%, transparent));
 }
+.pack-studio-model-stage {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  min-width: 0;
+}
+.pack-model-preview {
+  display: block;
+  filter: drop-shadow(0 28px 32px color-mix(in srgb, #000 48%, transparent));
+  max-height: 610px;
+  max-width: 458px;
+  object-fit: contain;
+  width: 100%;
+}
+.pack-studio-artwork-editor {
+  color: color-mix(in srgb, #fff 76%, transparent);
+  max-width: 458px;
+  width: 100%;
+}
+.pack-studio-artwork-editor summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.pack-studio-artwork-editor[open] summary {
+  margin-bottom: 14px;
+}
 @media (max-width: 900px) {
   .pack-studio-layout {
     grid-template-columns: 1fr;

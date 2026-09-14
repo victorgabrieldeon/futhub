@@ -1,4 +1,5 @@
 import type { ProgressionSummary } from '../../progression/progression.js';
+import type { PackCatalogItem } from '../packs.dto.js';
 
 export type DiscordIdentity = Readonly<{ id: string; name: string; avatarUrl: string | null }>;
 export type PackCard = Readonly<{ id: string; overall: number }>;
@@ -29,6 +30,10 @@ export type OpenTransaction = Readonly<{
   commit(cards: readonly PackCard[]): Promise<readonly UserCard[]>;
   grantProgression(): Promise<ProgressionSummary>;
 }>;
+
+export abstract class PackCatalogRepository {
+  abstract listAvailable(): Promise<readonly PackCatalogItem[]>;
+}
 
 export abstract class PackRepository {
   abstract runPurchase<T>(

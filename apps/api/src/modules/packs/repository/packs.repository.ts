@@ -3,9 +3,11 @@ import type * as DatabaseModule from '@futhub/database';
 import { advanceMissions } from '../../missions/missions.service.js';
 import { grantCommandXp } from '../../progression/progression.js';
 import { cardInventoryCapacity, upsertDiscordUser } from '../../users/user.repository.js';
+import type { PackCatalogItem } from '../packs.dto.js';
 import type {
   DiscordIdentity,
   OpenTransaction,
+  PackCatalogRepository,
   PackRepository,
   PurchaseTransaction,
 } from '../use-cases/pack.types.js';
@@ -13,8 +15,24 @@ import type {
 type Database = typeof DatabaseModule;
 type DatabaseLoader = () => Promise<Database>;
 
-export class DrizzlePackRepository implements PackRepository {
+export class DrizzlePackRepository implements PackCatalogRepository, PackRepository {
   constructor(private readonly loadDatabase: DatabaseLoader) {}
+
+  async listAvailable(): Promise<readonly PackCatalogItem[]> {
+    const { asc, db, eq, schema } = await this.loadDatabase();
+    return db
+      .select({
+        id: schema.packs.id,
+        name: schema.packs.name,
+        emoji: schema.packs.emoji,
+        cardsAmount: schema.packs.cardsAmount,
+        price: schema.packs.price,
+        limitPerUser: schema.packs.limitPerUser,
+      })
+      .from(schema.packs)
+      .where(eq(schema.packs.canBuy, true))
+      .orderBy(asc(schema.packs.name));
+  }
 
   async runPurchase<T>(
     identity: DiscordIdentity,

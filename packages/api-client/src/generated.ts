@@ -6,6 +6,252 @@
  * OpenAPI spec version: 1.0
  */
 import { request } from "./request.js";
+export interface ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber {
+  id: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  cardsPerPack: number;
+}
+
+export interface ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber {
+  packs: ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber[];
+  page: number;
+  totalPages: number;
+}
+
+export type BotResponseButtonDtoStyle =
+  (typeof BotResponseButtonDtoStyle)[keyof typeof BotResponseButtonDtoStyle];
+
+export const BotResponseButtonDtoStyle = {
+  danger: "danger",
+  link: "link",
+  primary: "primary",
+  secondary: "secondary",
+  success: "success",
+} as const;
+
+export interface BotResponseButtonDto {
+  /** @maxLength 80 */
+  action: string;
+  /**
+   * @minLength 1
+   * @maxLength 80
+   */
+  label: string;
+  style: BotResponseButtonDtoStyle;
+  /** @maxLength 512 */
+  url: string;
+  disabled: boolean;
+}
+
+/**
+ * Grupo de componentes.
+ */
+export type BotResponseContainerDtoType =
+  (typeof BotResponseContainerDtoType)[keyof typeof BotResponseContainerDtoType];
+
+export const BotResponseContainerDtoType = {
+  container: "container",
+} as const;
+
+/**
+ * Imagem da mensagem.
+ */
+export type BotResponseMediaDtoType =
+  (typeof BotResponseMediaDtoType)[keyof typeof BotResponseMediaDtoType];
+
+export const BotResponseMediaDtoType = {
+  media: "media",
+} as const;
+
+export interface BotResponseMediaDto {
+  /** Imagem da mensagem. */
+  type: BotResponseMediaDtoType;
+  /** @maxLength 2048 */
+  url: string;
+  /** @maxLength 1024 */
+  description: string;
+}
+
+/**
+ * Linha de controles.
+ */
+export type BotResponseRowDtoType =
+  (typeof BotResponseRowDtoType)[keyof typeof BotResponseRowDtoType];
+
+export const BotResponseRowDtoType = {
+  row: "row",
+} as const;
+
+export interface BotResponseRowDto {
+  /** Linha de controles. */
+  type: BotResponseRowDtoType;
+  /**
+   * @minItems 1
+   * @maxItems 5
+   */
+  buttons: BotResponseButtonDto[];
+}
+
+/**
+ * Separador visual.
+ */
+export type BotResponseSeparatorDtoType =
+  (typeof BotResponseSeparatorDtoType)[keyof typeof BotResponseSeparatorDtoType];
+
+export const BotResponseSeparatorDtoType = {
+  separator: "separator",
+} as const;
+
+export type BotResponseSeparatorDtoSpacing =
+  (typeof BotResponseSeparatorDtoSpacing)[keyof typeof BotResponseSeparatorDtoSpacing];
+
+export const BotResponseSeparatorDtoSpacing = {
+  NUMBER_1: 1,
+  NUMBER_2: 2,
+} as const;
+
+export interface BotResponseSeparatorDto {
+  /** Separador visual. */
+  type: BotResponseSeparatorDtoType;
+  spacing: BotResponseSeparatorDtoSpacing;
+  divider: boolean;
+}
+
+/**
+ * Texto da mensagem.
+ */
+export type BotResponseTextDtoType =
+  (typeof BotResponseTextDtoType)[keyof typeof BotResponseTextDtoType];
+
+export const BotResponseTextDtoType = {
+  text: "text",
+} as const;
+
+export interface BotResponseTextDto {
+  /** Texto da mensagem. */
+  type: BotResponseTextDtoType;
+  /**
+   * @minLength 1
+   * @maxLength 4000
+   */
+  content: string;
+}
+
+export interface BotResponseContainerDto {
+  /** Grupo de componentes. */
+  type: BotResponseContainerDtoType;
+  /** @pattern ^(#[0-9A-Fa-f]{6})?$ */
+  color: string;
+  /**
+   * @minItems 1
+   * @maxItems 39
+   */
+  components: (
+    | BotResponseMediaDto
+    | BotResponseRowDto
+    | BotResponseSeparatorDto
+    | BotResponseTextDto
+  )[];
+}
+
+export type BotResponseDefinitionDtoVariablesItem = {
+  token: string;
+  description: string;
+  example: string;
+};
+
+export type BotResponseDefinitionDtoActionsItem = {
+  id: string;
+  label: string;
+  description: string;
+};
+
+export type BotResponseTemplateDtoMode =
+  (typeof BotResponseTemplateDtoMode)[keyof typeof BotResponseTemplateDtoMode];
+
+export const BotResponseTemplateDtoMode = {
+  components_v2: "components_v2",
+  legacy: "legacy",
+} as const;
+
+export type BotResponseEmbedDtoFieldsItem = {
+  /**
+   * @minLength 1
+   * @maxLength 256
+   */
+  name: string;
+  /**
+   * @minLength 1
+   * @maxLength 1024
+   */
+  value: string;
+  inline: boolean;
+};
+
+export interface BotResponseEmbedDto {
+  /** @maxLength 256 */
+  title: string;
+  /** @maxLength 4096 */
+  description: string;
+  /** @pattern ^(#[0-9A-Fa-f]{6})?$ */
+  color: string;
+  /** @maxLength 2048 */
+  footer: string;
+  /** @maxLength 256 */
+  authorName?: string;
+  /** @maxLength 2048 */
+  authorUrl?: string;
+  /** @maxLength 2048 */
+  authorIconUrl?: string;
+  /** @maxLength 2048 */
+  imageUrl: string;
+  /** @maxLength 2048 */
+  thumbnailUrl: string;
+  /** @maxItems 25 */
+  fields: BotResponseEmbedDtoFieldsItem[];
+}
+
+export interface BotResponseTemplateDto {
+  mode: BotResponseTemplateDtoMode;
+  /** @maxLength 2000 */
+  content: string;
+  /** @maxItems 10 */
+  embeds: BotResponseEmbedDto[];
+  /** @maxItems 40 */
+  components: (
+    | BotResponseContainerDto
+    | BotResponseMediaDto
+    | BotResponseRowDto
+    | BotResponseSeparatorDto
+    | BotResponseTextDto
+  )[];
+}
+
+export interface BotResponseDefinitionDto {
+  key: string;
+  command: string;
+  label: string;
+  description: string;
+  variables: BotResponseDefinitionDtoVariablesItem[];
+  actions: BotResponseDefinitionDtoActionsItem[];
+  defaultTemplate: BotResponseTemplateDto;
+}
+
+export type ListPackCatalog200Item = {
+  id: string;
+  name: string;
+  emoji: string;
+  cardsAmount: number;
+  price: number;
+  limitPerUser: number;
+};
+
+export type GetPackShopParams = {
+  page?: number;
+};
+
 export type PurchasePackBodyIdentity = {
   id: string;
   name: string;
@@ -1771,6 +2017,65 @@ export type DeleteV1AdminCardsCardIdImage200 = {
   imageUrl: string;
 };
 
+export const getListPackCatalogUrl = () => {
+  return `/v1/packs`;
+};
+
+export const listPackCatalog = async (
+  options?: Parameters<typeof request>[1],
+): Promise<ListPackCatalog200Item[]> => {
+  return request<ListPackCatalog200Item[]>(getListPackCatalogUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPackShopUrl = (params?: GetPackShopParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/packs/shop?${stringifiedParams}`
+    : `/v1/packs/shop`;
+};
+
+export const getPackShop = async (
+  params?: GetPackShopParams,
+  options?: Parameters<typeof request>[1],
+): Promise<ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber> => {
+  return request<ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber>(
+    getGetPackShopUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getInspectPackUrl = (packId: string) => {
+  return `/v1/packs/${packId}`;
+};
+
+export const inspectPack = async (
+  packId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber> => {
+  return request<ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber>(
+    getInspectPackUrl(packId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
 export const getPurchasePackUrl = (packId: string) => {
   return `/v1/packs/${packId}/purchase`;
 };
@@ -2032,6 +2337,64 @@ export const deleteV1AdminSession = async (
   return request<void>(getDeleteV1AdminSessionUrl(), {
     ...options,
     method: "DELETE",
+  });
+};
+
+export const getGetBotResponseSchemaUrl = () => {
+  return `/v1/admin/bot-responses/schema`;
+};
+
+export const getBotResponseSchema = async (
+  options?: Parameters<typeof request>[1],
+): Promise<BotResponseDefinitionDto[]> => {
+  return request<BotResponseDefinitionDto[]>(getGetBotResponseSchemaUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAdminBotResponseUrl = (key: string) => {
+  return `/v1/admin/bot-responses/${key}`;
+};
+
+export const getAdminBotResponse = async (
+  key: string,
+  options?: Parameters<typeof request>[1],
+): Promise<BotResponseTemplateDto> => {
+  return request<BotResponseTemplateDto>(getGetAdminBotResponseUrl(key), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getUpdateBotResponseUrl = (key: string) => {
+  return `/v1/admin/bot-responses/${key}`;
+};
+
+export const updateBotResponse = async (
+  key: string,
+  botResponseTemplateDto: BotResponseTemplateDto,
+  options?: Parameters<typeof request>[1],
+): Promise<BotResponseTemplateDto> => {
+  return request<BotResponseTemplateDto>(getUpdateBotResponseUrl(key), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(botResponseTemplateDto),
+  });
+};
+
+export const getGetBotResponseUrl = (key: string) => {
+  return `/v1/bot-responses/${key}`;
+};
+
+export const getBotResponse = async (
+  key: string,
+  options?: Parameters<typeof request>[1],
+): Promise<BotResponseTemplateDto> => {
+  return request<BotResponseTemplateDto>(getGetBotResponseUrl(key), {
+    ...options,
+    method: "GET",
   });
 };
 

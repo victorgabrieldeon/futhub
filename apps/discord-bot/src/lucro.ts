@@ -1,5 +1,7 @@
 import type { LucroResponse } from '@futhub/api-client';
-import type { InteractionReplyOptions } from 'discord.js';
+import type { CommandContext } from 'seyfert';
+
+type InteractionCreateBodyRequest = Parameters<CommandContext['write']>[0];
 
 function render(template: string, values: Record<string, string>): string {
   return Object.entries(values).reduce(
@@ -8,7 +10,10 @@ function render(template: string, values: Record<string, string>): string {
   );
 }
 
-export function formatCommandResult(result: LucroResponse, now: Date): InteractionReplyOptions {
+export function formatCommandResult(
+  result: LucroResponse,
+  now: Date,
+): InteractionCreateBodyRequest {
   const availableAt = new Date(result.availableAt);
   if (!Number.isFinite(availableAt.getTime())) throw new Error('API returned an invalid date.');
   const available = `<t:${Math.floor(availableAt.getTime() / 1000)}:F>`;

@@ -1,9 +1,11 @@
 import {
   AmbientLight,
+  type BufferGeometry,
   CanvasTexture,
   Color,
   DirectionalLight,
   DoubleSide,
+  Float32BufferAttribute,
   type Material,
   Mesh,
   MeshStandardMaterial,
@@ -29,35 +31,42 @@ function rgba(color: string, opacity: number): string {
 
 function backgroundDecoration(context: CanvasRenderingContext2D, draft: PackStudioDraft) {
   const opacity = Math.min(draft.textureOpacity, 36);
+  context.strokeStyle = rgba(draft.accentColor, opacity);
+  context.lineWidth = 4;
   context.lineCap = 'round';
-  if (draft.texture === 'aura') return;
-  if (draft.texture === 'fire') {
-    const flame = context.createRadialGradient(512, 1050, 30, 512, 1050, 410);
-    flame.addColorStop(0, rgba(draft.accentColor, opacity));
-    flame.addColorStop(0.48, rgba(draft.accentColor, Math.round(opacity / 3)));
-    flame.addColorStop(1, rgba(draft.accentColor, 0));
-    context.fillStyle = flame;
-    context.fillRect(80, 610, 864, 670);
-  }
-  if (draft.texture === 'lightning') {
-    context.strokeStyle = rgba(draft.accentColor, opacity);
-    context.lineWidth = 5;
-    for (const [x, y] of [
-      [145, 610],
-      [850, 700],
-    ] as const) {
+  if (draft.texture === 'mesh') {
+    for (let x = 80; x < 1024; x += 96) {
       context.beginPath();
-      context.moveTo(x, y);
-      context.lineTo(x + 72, y + 44);
-      context.lineTo(x + 38, y + 145);
-      context.lineTo(x + 128, y + 84);
+      context.moveTo(x, 210);
+      context.lineTo(x, 1320);
       context.stroke();
     }
+    return;
+  }
+  if (draft.texture === 'rings') {
+    for (const radius of [180, 310, 440]) {
+      context.beginPath();
+      context.arc(512, 820, radius, 0, Math.PI * 2);
+      context.stroke();
+    }
+    return;
+  }
+  for (const [x, y] of [
+    [90, 360],
+    [610, 850],
+    [260, 1120],
+  ] as const) {
+    context.beginPath();
+    context.moveTo(x, y);
+    context.lineTo(x + 210, y - 90);
+    context.lineTo(x + 340, y + 100);
+    context.closePath();
+    context.stroke();
   }
 }
 
 function drawTitleBanner(context: CanvasRenderingContext2D, draft: PackStudioDraft) {
-  const kickerY = (draft.kickerY / 800) * 1536;
+  const kickerY = (331 / 800) * 1536;
   const headlineY = (draft.headlineY / 800) * 1536;
   const center = (kickerY + headlineY) / 2;
   const top = Math.max(148, center - 160);
@@ -127,15 +136,6 @@ function drawFootballStamp(context: CanvasRenderingContext2D, draft: PackStudioD
     context.stroke();
   }
   context.restore();
-}
-
-function loadFrontImage(source: string): Promise<HTMLImageElement> {
-  const { promise, reject, resolve } = Promise.withResolvers<HTMLImageElement>();
-  const image = new Image();
-  image.onload = () => resolve(image);
-  image.onerror = () => reject(new Error('Imagem frontal do pack indisponível.'));
-  image.src = source;
-  return promise;
 }
 
 function drawCartoonTitle(
@@ -210,7 +210,7 @@ function drawStadiumDepth(context: CanvasRenderingContext2D, accentColor: string
   context.restore();
 }
 
-async function packFaceArtwork(draft: PackStudioDraft): Promise<CanvasTexture> {
+function packFaceArtwork(draft: PackStudioDraft): CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.height = 1536;
   canvas.width = 1024;
@@ -224,44 +224,30 @@ async function packFaceArtwork(draft: PackStudioDraft): Promise<CanvasTexture> {
   body.addColorStop(1, '#010207');
   context.fillStyle = body;
   context.fillRect(0, 0, canvas.width, canvas.height);
-  if (draft.frontImage) {
-    const image = await loadFrontImage(draft.frontImage);
-    context.save();
-    context.globalAlpha = 0.84;
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-    const photoWash = context.createLinearGradient(0, 0, 0, canvas.height);
-    photoWash.addColorStop(0, 'rgb(1 3 12 / 54%)');
-    photoWash.addColorStop(0.42, 'rgb(1 3 12 / 12%)');
-    photoWash.addColorStop(1, 'rgb(1 3 12 / 66%)');
-    context.fillStyle = photoWash;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.restore();
-  }
   drawStadiumDepth(context, draft.accentColor);
   context.save();
-  context.lineCap = 'round';
-  const ribbon = context.createLinearGradient(0, 0, canvas.width, canvas.height);
-  ribbon.addColorStop(0, 'rgb(0 0 0 / 0%)');
-  ribbon.addColorStop(0.24, rgba(draft.accentColor, 34));
-  ribbon.addColorStop(0.5, rgba(draft.accentColor, 92));
-  ribbon.addColorStop(0.7, 'rgb(255 248 213 / 56%)');
-  ribbon.addColorStop(1, 'rgb(0 0 0 / 0%)');
-  context.strokeStyle = ribbon;
-  context.lineWidth = 92;
-  context.beginPath();
-  context.moveTo(-120, 308);
-  context.bezierCurveTo(192, 168, 666, 524, 1150, 238);
-  context.stroke();
-  context.lineWidth = 54;
-  context.beginPath();
-  context.moveTo(-90, 1234);
-  context.bezierCurveTo(196, 1042, 666, 1452, 1170, 1124);
-  context.stroke();
+  context.strokeStyle = rgba(draft.accentColor, 44);
   context.lineWidth = 5;
-  context.strokeStyle = 'rgb(255 252 230 / 58%)';
   context.beginPath();
-  context.moveTo(-96, 289);
-  context.bezierCurveTo(210, 194, 666, 510, 1148, 222);
+  context.moveTo(112, 300);
+  context.lineTo(256, 224);
+  context.lineTo(768, 224);
+  context.lineTo(912, 300);
+  context.stroke();
+  context.beginPath();
+  context.moveTo(112, 1204);
+  context.lineTo(256, 1280);
+  context.lineTo(768, 1280);
+  context.lineTo(912, 1204);
+  context.stroke();
+  context.globalAlpha = 0.5;
+  context.strokeRect(126, 174, 772, 1168);
+  context.beginPath();
+  context.moveTo(512, 264);
+  context.lineTo(576, 328);
+  context.lineTo(512, 392);
+  context.lineTo(448, 328);
+  context.closePath();
   context.stroke();
   context.restore();
   const glow = context.createRadialGradient(512, 980, 30, 512, 980, 520);
@@ -323,23 +309,16 @@ async function packFaceArtwork(draft: PackStudioDraft): Promise<CanvasTexture> {
     }
   }
 
-  const kickerX = (draft.kickerX / 600) * canvas.width;
-  const kickerY = (draft.kickerY / 800) * canvas.height;
+  const kickerX = canvas.width / 2;
+  const kickerY = (331 / 800) * canvas.height;
   const headlineX = (draft.headlineX / 600) * canvas.width;
   const headlineY = (draft.headlineY / 800) * canvas.height;
+  const packName = draft.kicker.toUpperCase().replace(/(\S)PACK$/, '$1 PACK');
   drawFootballStamp(context, draft);
   drawTitleBanner(context, draft);
-  context.font = '700 30px Arial, sans-serif';
-  context.letterSpacing = '14px';
-  context.textAlign = 'center';
-  context.shadowBlur = 8;
-  context.shadowColor = 'rgb(0 0 0 / 72%)';
-  context.fillStyle = rgba(draft.accentColor, 68);
-  context.fillText(draft.kicker.toUpperCase(), kickerX, kickerY);
-  context.shadowBlur = 0;
   drawCartoonTitle(
     context,
-    draft.headline.toUpperCase(),
+    packName,
     headlineX,
     headlineY,
     792,
@@ -347,9 +326,19 @@ async function packFaceArtwork(draft: PackStudioDraft): Promise<CanvasTexture> {
     draft.accentColor,
     draft.textColor,
   );
+  context.font = '800 34px Arial, sans-serif';
+  context.letterSpacing = '10px';
+  context.textAlign = 'center';
+  context.shadowBlur = 6;
+  context.shadowColor = 'rgb(0 0 0 / 72%)';
+  context.fillStyle = rgba(draft.accentColor, 82);
+  context.fillText(draft.headline.toUpperCase(), kickerX, kickerY);
+  context.shadowBlur = 0;
+  context.font = '700 18px Arial, sans-serif';
+  context.letterSpacing = '8px';
+  context.fillStyle = 'rgb(255 255 255 / 54%)';
+  context.fillText('FUTURE FOOTBALL COLLECTION', canvas.width / 2, 1160);
   const texture = new CanvasTexture(canvas);
-  texture.repeat.y = -1;
-  texture.offset.y = 1;
   texture.colorSpace = SRGBColorSpace;
   return texture;
 }
@@ -377,10 +366,29 @@ function setPackMaterial(material: MeshStandardMaterial, draft: PackStudioDraft)
   }
 }
 
+function applyPlanarArtworkUv(node: Mesh, owned: Set<Material | CanvasTexture | BufferGeometry>) {
+  const geometry = node.geometry.clone();
+  geometry.computeBoundingBox();
+  const bounds = geometry.boundingBox;
+  if (!bounds) return;
+
+  const position = geometry.getAttribute('position');
+  const width = bounds.max.x - bounds.min.x;
+  const height = bounds.max.y - bounds.min.y;
+  const uv = new Float32Array(position.count * 2);
+  for (let index = 0; index < position.count; index += 1) {
+    uv[index * 2] = (position.getX(index) - bounds.min.x) / width;
+    uv[index * 2 + 1] = (position.getY(index) - bounds.min.y) / height;
+  }
+  geometry.setAttribute('uv', new Float32BufferAttribute(uv, 2));
+  node.geometry = geometry;
+  owned.add(geometry);
+}
+
 async function configurePack(
   scene: Scene,
   draft: PackStudioDraft,
-  owned: Set<Material | CanvasTexture>,
+  owned: Set<Material | CanvasTexture | BufferGeometry>,
 ) {
   const clones = new Map<Material, Material>();
   const faces: Mesh[] = [];
@@ -397,10 +405,13 @@ async function configurePack(
       return material;
     };
     node.material = Array.isArray(node.material) ? node.material.map(clone) : clone(node.material);
-    if (node.name === 'StudioPack_ReferenceFace') faces.push(node);
+    if (node.name === 'StudioPack_ReferenceFace') {
+      applyPlanarArtworkUv(node, owned);
+      faces.push(node);
+    }
   });
   for (const node of faces) {
-    const map = await packFaceArtwork(draft);
+    const map = packFaceArtwork(draft);
     owned.add(map);
     const material = new MeshStandardMaterial({
       metalness: 0.42,
@@ -418,13 +429,13 @@ export async function packModelImage(draft: PackStudioDraft): Promise<HTMLCanvas
   const scene = new Scene();
   const pack = gltf.scene.clone(true);
   scene.add(pack);
-  const owned = new Set<Material | CanvasTexture>();
+  const owned = new Set<Material | CanvasTexture | BufferGeometry>();
   let renderer: WebGLRenderer | undefined;
   try {
     await configurePack(scene, draft, owned);
 
     const camera = new PerspectiveCamera(32, 600 / 800, 0.1, 100);
-    camera.position.set(0.22, 0.12, 15.5);
+    camera.position.set(0.12, 0.08, 8.7);
     camera.lookAt(0, 0, 0);
     scene.add(new AmbientLight(new Color('#b8c8ff'), 2.1));
     const key = new DirectionalLight(new Color('#ffffff'), 3.5);
@@ -451,4 +462,10 @@ export async function packModelImage(draft: PackStudioDraft): Promise<HTMLCanvas
     renderer?.dispose();
     renderer?.forceContextLoss();
   }
+}
+
+export async function packModelPng(draft: PackStudioDraft): Promise<Blob> {
+  const canvas = await packModelImage(draft);
+  const response = await fetch(canvas.toDataURL('image/png'));
+  return response.blob();
 }
