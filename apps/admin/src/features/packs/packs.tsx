@@ -1,5 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AdminIcon } from '../../components/admin-icon';
 import { listCards, listCollections, listTeams } from '../cards/actions';
 import {
   type Pack,
@@ -138,8 +139,12 @@ export function Packs() {
       <header className="command-header">
         <div>
           <p className="eyebrow">Gestão comercial</p>
-          <h1 id="packs-title">
-            Packs <span className="collection-count">{String(packs.length).padStart(2, '0')}</span>
+          <h1 className="page-title" id="packs-title">
+            <AdminIcon className="page-title-icon" name="pack" />
+            <span>
+              Packs{' '}
+              <span className="collection-count">{String(packs.length).padStart(2, '0')}</span>
+            </span>
           </h1>
           <p>Monte ofertas, defina preço e controle quais cards entram em cada abertura.</p>
         </div>

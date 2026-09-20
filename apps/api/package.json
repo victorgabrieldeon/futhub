@@ -21,6 +21,7 @@
     "@fastify/multipart": "^10.1.1",
     "@fastify/static": "10.1.2",
     "@futhub/database": "workspace:*",
+    "@napi-rs/canvas": "0.1.95",
     "@nestia/core": "13.0.2",
     "@nestia/fetcher": "13.0.2",
     "@nestia/sdk": "13.0.2",
@@ -41,12 +42,12 @@
   "devDependencies": {
     "@futhub/config": "workspace:*",
     "@nestjs/testing": "12",
-    "@ttsc/unplugin": "0.27.0",
+    "@ttsc/unplugin": "0.30.4",
     "@types/node": "22.13.4",
     "concurrently": "10.0.5",
     "nestia": "13.0.2",
     "testcontainers": "11",
-    "ttsc": "0.27.0",
+    "ttsc": "0.30.4",
     "vitest": "3.0.5"
   }
 }

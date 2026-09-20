@@ -64,13 +64,13 @@ variable "postgres_password" {
 }
 
 variable "minio_root_user" {
-  description = "Usuário administrador do MinIO."
+  description = "Access key administrativa do RustFS."
   type        = string
   sensitive   = true
 }
 
 variable "minio_root_password" {
-  description = "Senha do MinIO."
+  description = "Secret key administrativa do RustFS."
   type        = string
   sensitive   = true
 

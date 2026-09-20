@@ -1,6 +1,6 @@
 import {
-  type ChangeEvent,
   type CSSProperties,
+  type ChangeEvent,
   type FormEvent,
   type ReactNode,
   type RefObject,
@@ -9,14 +9,15 @@ import {
   useState,
 } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { AdminIcon, type AdminIconName } from '../../components/admin-icon';
 
 import {
   type Card,
   type CardFilters,
-  type CollectionFilters,
   type Catalog,
   type Collection,
   type CollectionArtworkSuggestion,
+  type CollectionFilters,
   type CollectionInput,
   type Page,
   type Preview,
@@ -50,6 +51,7 @@ import {
 
 type FormValues = Record<string, string | boolean>;
 type ActiveView = 'players' | 'collections' | 'teams' | 'import';
+type CardsManagerView = Exclude<ActiveView, 'import'>;
 type DetailMode = 'view' | 'edit';
 type ReferenceDetail = { kind: 'collection'; data: Collection } | { kind: 'team'; data: Team };
 type NoticeTone = 'success' | 'info' | 'error';
@@ -64,6 +66,10 @@ type ImportPhase =
   | 'publishing';
 type ValidationStageStatus = 'active' | 'complete' | 'error' | 'waiting';
 type AssetSuggestionsStatus = 'idle' | 'loading' | 'ready' | 'error';
+type ImageCrop = { zoom: number; x: number; y: number };
+type CropSource = { file: File; url: string };
+
+const cardImageSize = { width: 600, height: 800 };
 
 const validationStages = [
   { id: 'structure', label: 'Estrutura da planilha', detail: 'Abas e formato do arquivo' },
@@ -142,6 +148,14 @@ const statCodes: Record<string, string> = {
   dribbling: 'DRI',
   finishing: 'FIN',
 };
+
+function rarityTier(overall: number) {
+  if (overall >= 90) return 'legendary';
+  if (overall >= 82) return 'epic';
+  if (overall >= 74) return 'rare';
+  return 'common';
+}
+
 const statIconPaths: Record<StatName, readonly string[]> = {
   overall: [
     'm12 3 2.75 5.57 6.15.9-4.45 4.33 1.05 6.12L12 17.77 6.5 20.6l1.05-6.12L3.1 10.15l6.15-.9L12 3Z',
@@ -181,10 +195,13 @@ const statIconPaths: Record<StatName, readonly string[]> = {
   finishing: ['M4 19V6h16v13', 'M4 10h16', 'M12 10v9', 'M16 15a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z'],
 };
 
-export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 'vault' }>) {
+export function Cards({
+  variant = 'manager',
+  view,
+}: Readonly<{ variant?: 'manager' | 'vault'; view?: CardsManagerView }>) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeView, setActiveView] = useState<ActiveView>('players');
+  const [activeView, setActiveView] = useState<ActiveView>(view ?? 'players');
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [page, setPage] = useState<Page<Card> | null>(null);
   const [collections, setCollections] = useState<Page<Collection> | null>(null);
@@ -243,6 +260,8 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
   const [teamLogoSuggestionsStatus, setTeamLogoSuggestionsStatus] =
     useState<AssetSuggestionsStatus>('idle');
   const [teamLogoImporting, setTeamLogoImporting] = useState('');
+  const [cropSource, setCropSource] = useState<CropSource | null>(null);
+  const [imageCrop, setImageCrop] = useState<ImageCrop>({ zoom: 1, x: 0, y: 0 });
   const [teamPreview, setTeamPreview] = useState({
     color: '#171717',
     colors: ['#171717'],
@@ -257,6 +276,7 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
   const catalogDialog = useRef<HTMLDialogElement>(null);
   const detailDialog = useRef<HTMLDialogElement>(null);
   const referenceDetailDialog = useRef<HTMLDialogElement>(null);
+  const cropDialog = useRef<HTMLDialogElement>(null);
   const playersRail = useRef<HTMLDivElement>(null);
   const collectionsRail = useRef<HTMLDivElement>(null);
   const teamsRail = useRef<HTMLDivElement>(null);
@@ -264,6 +284,9 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
   useEffect(() => {
     void load();
   }, []);
+  useEffect(() => {
+    if (view) setActiveView(view);
+  }, [view]);
   useEffect(() => {
     return () => validationAbort.current?.abort();
   }, []);
@@ -311,7 +334,13 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
   }, [referenceDetail]);
 
   useEffect(() => {
+    syncDialog(cropDialog.current, Boolean(cropSource));
+  }, [cropSource]);
+
+  useEffect(() => {
     syncDialog(catalogDialog.current, Boolean(catalogView));
+    if (catalogView)
+      catalogDialog.current?.querySelector<HTMLInputElement>('input[type="search"]')?.focus();
   }, [catalogView]);
 
   useEffect(() => {
@@ -661,18 +690,60 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
     }
   }
 
-  async function sendImage(event: ChangeEvent<HTMLInputElement>) {
+  function sendImage(event: ChangeEvent<HTMLInputElement>) {
     const image = event.target.files?.[0];
+    event.target.value = '';
     if (!selected || !image) return;
+    setImageCrop({ zoom: 1, x: 0, y: 0 });
+    setCropSource({ file: image, url: URL.createObjectURL(image) });
+  }
+
+  function closeCrop() {
+    if (cropSource) URL.revokeObjectURL(cropSource.url);
+    setCropSource(null);
+  }
+
+  async function applyCrop() {
+    if (!selected || !cropSource) return;
     setWorking(true);
     try {
+      const image = await loadImage(cropSource.url);
+      const canvas = document.createElement('canvas');
+      canvas.width = cardImageSize.width;
+      canvas.height = cardImageSize.height;
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Não foi possível preparar a imagem.');
+      const scale =
+        Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight) *
+        imageCrop.zoom;
+      const width = image.naturalWidth * scale;
+      const height = image.naturalHeight * scale;
+      context.drawImage(
+        image,
+        (canvas.width - width) / 2 + ((width - canvas.width) * imageCrop.x) / 2,
+        (canvas.height - height) / 2 + ((height - canvas.height) * imageCrop.y) / 2,
+        width,
+        height,
+      );
+      const cropped = await new Promise<Blob>((resolve, reject) =>
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error('Não foi possível gerar a imagem.'))),
+          'image/png',
+        ),
+      );
       const data = new FormData();
-      data.append('file', image);
+      data.append(
+        'file',
+        new File([cropped], `${cropSource.file.name.replace(/\.[^.]+$/, '')}-600x800.png`, {
+          type: 'image/png',
+        }),
+      );
       const card = await uploadCardImage(selected.id, data);
       setSelected(card);
       setForm(cardForm(card));
       setDetailCard(card);
       await load();
+      closeCrop();
       showNotice('Imagem atualizada.');
     } catch (error) {
       showNotice(errorMessage(error), 'error');
@@ -908,7 +979,11 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
   const playerCountLabel = `${playerCount} ${playerCount === 1 ? 'jogador' : 'jogadores'}`;
   const collectionCount = collections?.total ?? 0;
   const hasPlayerFilters = Boolean(
-    filters.query || filters.teamId || filters.position || filters.sort !== 'recent',
+    filters.query ||
+      filters.teamId ||
+      filters.collectionId ||
+      filters.position ||
+      filters.sort !== 'recent',
   );
   const hasCollectionFilters = Boolean(
     collectionFilters.query || collectionFilters.contractsBlocked !== undefined,
@@ -922,6 +997,14 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
     playerFoundation.reduce((total, stat) => total + stat.value, 0) / playerFoundation.length,
   );
   const playerOverall = Math.min(100, Math.max(1, Number(form.overall) || 0));
+  const headerIcon: AdminIconName =
+    variant === 'vault'
+      ? 'players'
+      : activeView === 'collections'
+        ? 'collection'
+        : activeView === 'teams'
+          ? 'team'
+          : 'cards';
 
   return (
     <section
@@ -937,17 +1020,22 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
                 ? 'Edições do jogo'
                 : heading.eyebrow}
           </p>
-          <h1 id="card-ops-title">
-            {variant === 'vault' ? (
-              'Banco de jogadores'
-            ) : activeView === 'collections' ? (
-              <>
-                Coleções{' '}
-                <span className="collection-count">{String(collectionCount).padStart(2, '0')}</span>
-              </>
-            ) : (
-              heading.title
-            )}
+          <h1 className="page-title" id="card-ops-title">
+            <AdminIcon className="page-title-icon" name={headerIcon} />
+            <span>
+              {variant === 'vault' ? (
+                'Banco de jogadores'
+              ) : activeView === 'collections' ? (
+                <>
+                  Coleções{' '}
+                  <span className="collection-count">
+                    {String(collectionCount).padStart(2, '0')}
+                  </span>
+                </>
+              ) : (
+                heading.title
+              )}
+            </span>
           </h1>
           <p>
             {variant === 'vault'
@@ -970,7 +1058,7 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
           <div className="cards-header-actions">
             {activeView === 'players' && (
               <button className="ops-button accent" onClick={startNewCard} type="button">
-                Adicionar jogador
+                Novo card
               </button>
             )}
             {activeView === 'collections' && (
@@ -1039,32 +1127,36 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
           />
         ) : (
           <>
-            <div aria-label="Gerenciamento de cards" className="command-tabs" role="tablist">
-              {views.map((view, index) => (
-                <button
-                  aria-controls={`${view.id}-view`}
-                  aria-selected={activeView === view.id}
-                  className="command-tab"
-                  id={`${view.id}-tab`}
-                  key={view.id}
-                  onClick={() => setActiveView(view.id)}
-                  onKeyDown={(event) => {
-                    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key))
-                      return;
-                    const direction =
-                      event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1;
-                    const next = views[(index + direction + views.length) % views.length];
-                    setActiveView(next.id);
-                    requestAnimationFrame(() => document.getElementById(`${next.id}-tab`)?.focus());
-                  }}
-                  role="tab"
-                  tabIndex={activeView === view.id ? 0 : -1}
-                  type="button"
-                >
-                  {view.label}
-                </button>
-              ))}
-            </div>
+            {!view && (
+              <div aria-label="Gerenciamento de cards" className="command-tabs" role="tablist">
+                {views.map((tab, index) => (
+                  <button
+                    aria-controls={`${tab.id}-view`}
+                    aria-selected={activeView === tab.id}
+                    className="command-tab"
+                    id={`${tab.id}-tab`}
+                    key={tab.id}
+                    onClick={() => setActiveView(tab.id)}
+                    onKeyDown={(event) => {
+                      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key))
+                        return;
+                      const direction =
+                        event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1;
+                      const next = views[(index + direction + views.length) % views.length];
+                      setActiveView(next.id);
+                      requestAnimationFrame(() =>
+                        document.getElementById(`${next.id}-tab`)?.focus(),
+                      );
+                    }}
+                    role="tab"
+                    tabIndex={activeView === tab.id ? 0 : -1}
+                    type="button"
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {notice && (
               <div
@@ -1303,6 +1395,9 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
             if (event.target === event.currentTarget) setCatalogView(null);
           }}
           onClose={() => setCatalogView(null)}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setCatalogView(null);
+          }}
           ref={catalogDialog}
         >
           <div className="catalog-browser-shell">
@@ -1362,7 +1457,6 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
                     <span>Buscar</span>
                     <input
                       autoComplete="off"
-                      autoFocus
                       onChange={(event) =>
                         setCollectionFilters({ ...collectionFilters, query: event.target.value })
                       }
@@ -1422,7 +1516,6 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
                     <span>Buscar</span>
                     <input
                       autoComplete="off"
-                      autoFocus
                       onChange={(event) =>
                         setTeamFilters({ ...teamFilters, query: event.target.value })
                       }
@@ -1569,6 +1662,16 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
           working={working}
         />
 
+        <ImageCropDialog
+          crop={imageCrop}
+          dialogRef={cropDialog}
+          onApply={() => void applyCrop()}
+          onChange={setImageCrop}
+          onClose={closeCrop}
+          source={cropSource}
+          working={working}
+        />
+
         <ReferenceDetailDialog
           detail={referenceDetail}
           dialogRef={referenceDetailDialog}
@@ -1704,14 +1807,14 @@ export function Cards({ variant = 'manager' }: Readonly<{ variant?: 'manager' | 
                             <span>{labels[stat.name]}</span>
                             <strong>{stat.value}</strong>
                           </div>
-                          <div
+                          <meter
                             aria-label={`${labels[stat.name]}: ${stat.value}`}
-                            aria-valuemax={100}
-                            aria-valuemin={1}
-                            aria-valuenow={stat.value}
-                            className="drawer-profile-track"
-                            role="progressbar"
-                          >
+                            min={1}
+                            max={100}
+                            value={stat.value}
+                            className="sr-only"
+                          />
+                          <div className="drawer-profile-track" aria-hidden="true">
                             <i style={{ width: `${stat.value}%` }} />
                           </div>
                         </div>
@@ -2585,8 +2688,8 @@ function PlayerVault({
           <span>Adicione mais jogadores para expandir sua coleção.</span>
         </div>
         <div className="player-vault-progress-marks" aria-hidden="true">
-          {Array.from({ length: 10 }, (_, index) => (
-            <i className={index < Math.min(playerCount, 10) ? 'is-filled' : ''} key={index} />
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((slot) => (
+            <i className={slot <= Math.min(playerCount, 10) ? 'is-filled' : ''} key={slot} />
           ))}
         </div>
       </aside>
@@ -2707,7 +2810,9 @@ function PlayerCardTile({
   showEditAction?: boolean;
 }>) {
   return (
-    <article className={`player-card${selected ? ' is-selected' : ''}`}>
+    <article
+      className={`player-card player-card--${rarityTier(card.overall)}${selected ? ' is-selected' : ''}`}
+    >
       <button
         aria-label={`${selected ? 'Jogador selecionado:' : 'Selecionar'} ${card.name}`}
         aria-pressed={selected}
@@ -2715,40 +2820,7 @@ function PlayerCardTile({
         onClick={() => onInspect(card)}
         type="button"
       >
-        <span className="player-tile-art">
-          <img alt="" height={250} src={card.imageUrl} width={184} />
-          <span className="player-tile-meta">
-            <span className="player-tile-position">{card.position}</span>
-            <span className="player-tile-references">
-              <span aria-label={`Time: ${card.team.name}`}>
-                {card.team.imageUrl ? (
-                  <img alt="" height={30} src={card.team.imageUrl} width={30} />
-                ) : (
-                  '?'
-                )}
-              </span>
-              <span aria-label={`Coleção: ${card.collection.name}`}>
-                {card.collection.imageUrl ? (
-                  <img alt="" height={30} src={card.collection.imageUrl} width={30} />
-                ) : (
-                  '?'
-                )}
-              </span>
-            </span>
-          </span>
-          <span className="player-tile-overall">
-            <small>OVR</small>
-            {card.overall}
-          </span>
-        </span>
-        <span className="player-tile-stats">
-          {technicalStats.map((stat) => (
-            <span aria-label={`${labels[stat]}: ${card[stat]}`} key={stat}>
-              <small>{statCodes[stat]}</small>
-              <b>{card[stat]}</b>
-            </span>
-          ))}
-        </span>
+        <img alt="" height={250} src={card.imageUrl} width={184} />
       </button>
       <div className="player-card-details">
         <span>
@@ -2765,6 +2837,127 @@ function PlayerCardTile({
       </div>
     </article>
   );
+}
+
+function ImageCropDialog({
+  crop,
+  dialogRef,
+  onApply,
+  onChange,
+  onClose,
+  source,
+  working,
+}: Readonly<{
+  crop: ImageCrop;
+  dialogRef: RefObject<HTMLDialogElement | null>;
+  onApply: () => void;
+  onChange: (crop: ImageCrop) => void;
+  onClose: () => void;
+  source: CropSource | null;
+  working: boolean;
+}>) {
+  const dragStart = useRef<{ x: number; y: number; crop: ImageCrop } | null>(null);
+  const [sourceSize, setSourceSize] = useState<{ width: number; height: number } | null>(null);
+  if (!source) return null;
+  const sourceRatio = sourceSize ? sourceSize.width / sourceSize.height : 3 / 4;
+  const baseWidth = Math.max(1, sourceRatio / (cardImageSize.width / cardImageSize.height));
+  const baseHeight = Math.max(1, cardImageSize.width / cardImageSize.height / sourceRatio);
+  const width = baseWidth * crop.zoom * 100;
+  const height = baseHeight * crop.zoom * 100;
+
+  return (
+    <dialog
+      aria-labelledby="image-crop-title"
+      className="image-crop-dialog"
+      onClose={onClose}
+      ref={dialogRef}
+    >
+      <article className="image-crop-card">
+        <header>
+          <div>
+            <h2 id="image-crop-title">Editar imagem</h2>
+            <p>Saída obrigatória: 600 × 800 px em PNG</p>
+          </div>
+          <button aria-label="Fechar editor de imagem" onClick={onClose} type="button">
+            ×
+          </button>
+        </header>
+        <div
+          className="image-crop-viewport"
+          onPointerDown={(event) => {
+            dragStart.current = { x: event.clientX, y: event.clientY, crop };
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={(event) => {
+            const start = dragStart.current;
+            if (!start) return;
+            onChange({
+              ...start.crop,
+              x: Math.max(-1, Math.min(1, start.crop.x + (event.clientX - start.x) / 180)),
+              y: Math.max(-1, Math.min(1, start.crop.y + (event.clientY - start.y) / 240)),
+            });
+          }}
+          onPointerUp={() => {
+            dragStart.current = null;
+          }}
+        >
+          <img
+            alt="Prévia do recorte"
+            draggable={false}
+            onLoad={(event) =>
+              setSourceSize({
+                width: event.currentTarget.naturalWidth,
+                height: event.currentTarget.naturalHeight,
+              })
+            }
+            src={source.url}
+            style={{
+              height: `${height}%`,
+              left: `${50 + (crop.x * (width - 100)) / 2}%`,
+              top: `${50 + (crop.y * (height - 100)) / 2}%`,
+              transform: 'translate(-50%, -50%)',
+              width: `${width}%`,
+            }}
+          />
+          <div aria-hidden="true" className="image-crop-frame" />
+        </div>
+        <p className="image-crop-hint">Arraste imagem para posicionar dentro da área do card.</p>
+        <div className="image-crop-controls">
+          <label>
+            Zoom
+            <input
+              max="3"
+              min="1"
+              onChange={(event) => onChange({ ...crop, zoom: Number(event.target.value) })}
+              step="0.01"
+              type="range"
+              value={crop.zoom}
+            />
+          </label>
+          <button onClick={() => onChange({ zoom: 1, x: 0, y: 0 })} type="button">
+            Redefinir
+          </button>
+        </div>
+        <footer>
+          <button disabled={working} onClick={onClose} type="button">
+            Cancelar
+          </button>
+          <button className="is-primary" disabled={working} onClick={onApply} type="button">
+            {working ? 'Aplicando…' : 'Aplicar'}
+          </button>
+        </footer>
+      </article>
+    </dialog>
+  );
+}
+
+function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Arquivo de imagem inválido.'));
+    image.src = url;
+  });
 }
 
 function PlayerDetailDialog({
@@ -3870,8 +4063,29 @@ function CatalogImportWorkspace({
               <span className="analysis-sheet-head">B</span>
               <span className="analysis-sheet-head">C</span>
               <span className="analysis-sheet-head">D</span>
-              {Array.from({ length: 20 }, (_, index) => (
-                <i key={index} />
+              {[
+                'A1',
+                'B1',
+                'C1',
+                'D1',
+                'A2',
+                'B2',
+                'C2',
+                'D2',
+                'A3',
+                'B3',
+                'C3',
+                'D3',
+                'A4',
+                'B4',
+                'C4',
+                'D4',
+                'A5',
+                'B5',
+                'C5',
+                'D5',
+              ].map((cell) => (
+                <i key={cell} />
               ))}
               <b className="analysis-scanner" />
             </div>
@@ -3998,14 +4212,14 @@ function CatalogImportWorkspace({
                   <span>Criações</span>
                   <b>{preview.createCount}</b>
                 </div>
-                <div
+                <meter
                   aria-label={`${preview.createCount} cards serão criados`}
-                  aria-valuemax={100}
-                  aria-valuemin={0}
-                  aria-valuenow={createShare}
-                  className="import-impact-track"
-                  role="progressbar"
-                >
+                  min={0}
+                  max={100}
+                  value={createShare}
+                  className="sr-only"
+                />
+                <div className="import-impact-track" aria-hidden="true">
                   <i style={{ width: `${createShare}%` }} />
                 </div>
               </li>
@@ -4014,14 +4228,14 @@ function CatalogImportWorkspace({
                   <span>Atualizações</span>
                   <b>{preview.updateCount}</b>
                 </div>
-                <div
+                <meter
                   aria-label={`${preview.updateCount} cards serão atualizados`}
-                  aria-valuemax={100}
-                  aria-valuemin={0}
-                  aria-valuenow={updateShare}
-                  className="import-impact-track"
-                  role="progressbar"
-                >
+                  min={0}
+                  max={100}
+                  value={updateShare}
+                  className="sr-only"
+                />
+                <div className="import-impact-track" aria-hidden="true">
                   <i style={{ width: `${updateShare}%` }} />
                 </div>
               </li>

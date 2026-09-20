@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { cardFrames } from '../src/features/studio/card-design.ts';
 import {
   defaultLayerOrder,
   emptyDraft,
@@ -22,6 +23,41 @@ assert.deepEqual(raisedPhoto.slice(2, 4), ['rating', 'photo']);
 assert.equal(moveLayer(defaultLayerOrder, 'background', -1), defaultLayerOrder);
 
 assert.equal(parseStoredDraft(emptyDraft)?.name, emptyDraft.name);
+assert.equal(emptyDraft.design?.frame, 'crest');
+const { design: _design, ...legacyDraft } = emptyDraft;
+assert.deepEqual(parseStoredDraft(legacyDraft)?.design, emptyDraft.design);
+assert.equal(
+  parseStoredDraft({ ...emptyDraft, design: { ...emptyDraft.design, frame: 'invalid' } }),
+  null,
+);
+assert.equal(
+  parseStoredDraft({ ...emptyDraft, design: { ...emptyDraft.design, textureOpacity: 101 } }),
+  null,
+);
+assert.equal(
+  parseStoredDraft({ ...emptyDraft, design: { ...emptyDraft.design, metalColor: 'url(unsafe)' } }),
+  null,
+);
+assert.deepEqual(
+  cardFrames.map((frame) => frame.id),
+  ['crest', 'arena', 'ticket', 'diamond', 'hexagon', 'crown', 'wing', 'pavilion'],
+);
+for (const frame of cardFrames) {
+  assert.equal(
+    parseStoredDraft({ ...emptyDraft, design: { ...emptyDraft.design, frame: frame.id } })?.design
+      .frame,
+    frame.id,
+  );
+}
+const customDesign = {
+  ...emptyDraft.design,
+  frame: 'ticket',
+  texture: 'rays',
+  nameScale: 85,
+  edition: 'FUNDADORES 2026',
+  showStatBars: false,
+};
+assert.deepEqual(parseStoredDraft({ ...emptyDraft, design: customDesign })?.design, customDesign);
 assert.equal(stylePresets[0]?.id, 'elite-aqua');
 assert.equal(stylePresets[0]?.style, 'elite');
 assert.equal(parseStoredDraft({ name: 'inválido' }), null);

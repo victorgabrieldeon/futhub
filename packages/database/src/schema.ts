@@ -39,6 +39,19 @@ export const users = pgTable(
   ],
 );
 
+export const userClubs = pgTable(
+  'user_clubs',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    stadiumLevel: integer('stadium_level').notNull().default(1),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [check('user_clubs_stadium_level_range', sql`${table.stadiumLevel} between 1 and 5`)],
+);
+
 export const botResponseTemplates = pgTable('bot_response_templates', {
   key: varchar('key', { length: 80 }).primaryKey(),
   template: jsonb('template').$type<unknown>().notNull(),
@@ -115,6 +128,8 @@ export const cardClaimOrigin = pgEnum('card_claim_origin', [
 ]);
 
 export const rankedQueueStatus = pgEnum('ranked_queue_status', ['waiting', 'matched']);
+
+export const teamTactic = pgEnum('team_tactic', ['defensive', 'balanced', 'offensive']);
 
 export const matchEventType = pgEnum('match_event_type', [
   'kickoff',
@@ -380,6 +395,7 @@ export const userFormations = pgTable('user_formations', {
   formationId: uuid('formation_id')
     .notNull()
     .references(() => formations.id, { onDelete: 'restrict' }),
+  tactic: teamTactic('tactic').notNull().default('balanced'),
 });
 
 export const userLeagueStandings = pgTable(

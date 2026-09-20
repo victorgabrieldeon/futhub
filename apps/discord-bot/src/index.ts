@@ -12,6 +12,20 @@ configureApiClient({
   token: required('API_INTERNAL_TOKEN'),
 });
 
+const RETRY_DELAY_MS = 5_000;
+
+async function retry(operation: () => Promise<unknown>, description: string): Promise<void> {
+  for (;;) {
+    try {
+      await operation();
+      return;
+    } catch (error) {
+      console.error(`${description} Retrying in ${RETRY_DELAY_MS / 1_000}s.`, error);
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+    }
+  }
+}
+
 const client = new Client({ commands: { prefix: () => ['!'] } });
-await client.start();
-await client.uploadCommands();
+await retry(() => client.start(), 'Failed to connect to Discord.');
+await retry(() => client.uploadCommands(), 'Failed to upload Discord commands.');

@@ -1,4 +1,9 @@
-import type { LineupCard, SimulatedMatch, SimulatedMatchEvent } from './league.types.js';
+import type {
+  LineupCard,
+  SimulatedMatch,
+  SimulatedMatchEvent,
+  TeamTactic,
+} from './league.types.js';
 
 function seededRandom(seed: number): () => number {
   let state = seed >>> 0;
@@ -55,6 +60,8 @@ export function simulateMatch(
   home: readonly LineupCard[],
   away: readonly LineupCard[],
   seed: number,
+  homeTactic: TeamTactic = 'balanced',
+  awayTactic: TeamTactic = 'balanced',
 ): SimulatedMatch {
   if (!Number.isSafeInteger(seed) || seed <= 0)
     throw new Error('Match seed must be a positive integer.');
@@ -68,10 +75,17 @@ export function simulateMatch(
   const awayCards = [...away].sort((left, right) =>
     left.userCardId.localeCompare(right.userCardId),
   );
-  const homeAttack = sum(homeCards, 'attack') + sum(homeCards, 'creation');
-  const awayAttack = sum(awayCards, 'attack') + sum(awayCards, 'creation');
-  const homeDefense = sum(homeCards, 'defense');
-  const awayDefense = sum(awayCards, 'defense');
+  const modifier = {
+    defensive: { attack: 0.9, defense: 1.1 },
+    balanced: { attack: 1, defense: 1 },
+    offensive: { attack: 1.1, defense: 0.9 },
+  } as const;
+  const homeAttack =
+    (sum(homeCards, 'attack') + sum(homeCards, 'creation')) * modifier[homeTactic].attack;
+  const awayAttack =
+    (sum(awayCards, 'attack') + sum(awayCards, 'creation')) * modifier[awayTactic].attack;
+  const homeDefense = sum(homeCards, 'defense') * modifier[homeTactic].defense;
+  const awayDefense = sum(awayCards, 'defense') * modifier[awayTactic].defense;
   const events: SimulatedMatchEvent[] = [
     {
       minute: 0,

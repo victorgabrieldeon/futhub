@@ -1,9 +1,13 @@
 import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
-import { Body, Controller, HttpCode, Inject, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, Inject, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
 import {
+  type CardMarketCatalog,
+  type CardMarketListQuery,
+  CardMarketListQuerySchema,
+  type CardMarketPage,
   type PurchaseCardRequest,
   PurchaseCardRequestSchema,
   type PurchaseCardResponse,
@@ -11,16 +15,43 @@ import {
   SellCardsRequestSchema,
   type SellCardsResponse,
 } from './card-market.dto.js';
-import { PurchaseCardUseCase, SellCardsUseCase } from './use-cases/card-market.use-case.js';
+import {
+  ListCardCatalogUseCase,
+  ListCardsUseCase,
+  PurchaseCardUseCase,
+  SellCardsUseCase,
+} from './use-cases/card-market.use-case.js';
 
 @ApiTags('Mercado de cards')
 @Controller('v1/cards')
 @UseGuards(InternalAuthGuard)
 export class CardMarketController {
   constructor(
+    @Inject(ListCardsUseCase) private readonly list: ListCardsUseCase,
+    @Inject(ListCardCatalogUseCase) private readonly catalog: ListCardCatalogUseCase,
     @Inject(PurchaseCardUseCase) private readonly purchase: PurchaseCardUseCase,
     @Inject(SellCardsUseCase) private readonly sell: SellCardsUseCase,
   ) {}
+
+  @TypedRoute.Get()
+  @SwaggerCustomizer(({ route }) => {
+    route.operationId = 'listCardMarket';
+    route.security = [{ bearer: [] }];
+  })
+  listCards(
+    @Query({ schema: CardMarketListQuerySchema }) query: CardMarketListQuery,
+  ): Promise<CardMarketPage> {
+    return this.list.execute(query);
+  }
+
+  @TypedRoute.Get('catalog')
+  @SwaggerCustomizer(({ route }) => {
+    route.operationId = 'listCardMarketCatalog';
+    route.security = [{ bearer: [] }];
+  })
+  listCatalog(): Promise<CardMarketCatalog> {
+    return this.catalog.execute();
+  }
 
   @TypedRoute.Post(':cardId/purchase')
   @HttpCode(200)

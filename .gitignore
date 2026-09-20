@@ -2,10 +2,16 @@ node_modules/
 .turbo/
 dist/
 coverage/
+.vitest/
 .env
 .env.*
 !.env.example
 *.tsbuildinfo
+
+# Terraform local state and secrets
+infra/dokploy/terraform.tfvars
+infra/dokploy/terraform.tfstate*
+infra/dokploy/tfplan*
 apps/*/.wrangler/
 .next/
 .openclaude/settings.local.json

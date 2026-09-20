@@ -20,6 +20,154 @@ export interface ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstrin
   totalPages: number;
 }
 
+export type TeamCardPosition =
+  (typeof TeamCardPosition)[keyof typeof TeamCardPosition];
+
+export const TeamCardPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type TeamCardSecondaryPositionsItem =
+  (typeof TeamCardSecondaryPositionsItem)[keyof typeof TeamCardSecondaryPositionsItem];
+
+export const TeamCardSecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+/**
+ * @nullable
+ */
+export type TeamCardHolderPosition =
+  (typeof TeamCardHolderPosition)[keyof typeof TeamCardHolderPosition] | null;
+
+export const TeamCardHolderPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export interface TeamCollection {
+  id: string;
+  name: string;
+  emoji: string;
+}
+
+export interface TeamCard {
+  userCardId: string;
+  name: string;
+  /** @nullable */
+  imageUrl: string | null;
+  overall: number;
+  position: TeamCardPosition;
+  secondaryPositions: TeamCardSecondaryPositionsItem[];
+  collection: TeamCollection;
+  favorite: boolean;
+  holder: boolean;
+  /** @nullable */
+  holderPosition: TeamCardHolderPosition;
+  captain: boolean;
+  sellPrice: number;
+  claimedAt: string;
+}
+
+export type TeamFormationSlotPosition =
+  (typeof TeamFormationSlotPosition)[keyof typeof TeamFormationSlotPosition];
+
+export const TeamFormationSlotPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export interface TeamFormationSlot {
+  id: string;
+  position: TeamFormationSlotPosition;
+  x: number;
+  y: number;
+}
+
+export interface TeamFormation {
+  id: string;
+  name: string;
+  slots: TeamFormationSlot[];
+}
+
+export type TeamInventoryPageSize =
+  (typeof TeamInventoryPageSize)[keyof typeof TeamInventoryPageSize];
+
+export const TeamInventoryPageSize = {
+  NUMBER_10: 10,
+} as const;
+
+export interface TeamInventory {
+  items: TeamCard[];
+  total: number;
+  page: number;
+  pageSize: TeamInventoryPageSize;
+  totalPages: number;
+}
+
+export interface TeamPack {
+  id: string;
+  name: string;
+  emoji: string;
+  quantity: number;
+}
+
+export type TeamResponseTactic =
+  (typeof TeamResponseTactic)[keyof typeof TeamResponseTactic];
+
+export const TeamResponseTactic = {
+  balanced: "balanced",
+  defensive: "defensive",
+  offensive: "offensive",
+} as const;
+
+export interface TeamResponse {
+  balance: number;
+  strength: number;
+  inventoryCount: number;
+  tactic: TeamResponseTactic;
+  formation: TeamFormation;
+  formations: TeamFormation[];
+  lineup: TeamCard[];
+  inventory: TeamInventory;
+  packs: TeamPack[];
+  collections: TeamCollection[];
+}
+
 export type BotResponseButtonDtoStyle =
   (typeof BotResponseButtonDtoStyle)[keyof typeof BotResponseButtonDtoStyle];
 
@@ -423,6 +571,14 @@ export type ExecuteLucro200 =
         color: string;
         footer: string;
       };
+      report: {
+        ticketRevenue: number;
+        commercialRevenue: number;
+        sponsorRevenue: number;
+        maintenance: number;
+        payroll: number;
+        net: number;
+      };
     }
   | {
       kind: "cooldown";
@@ -676,6 +832,138 @@ export type HealthControllerHealth200 = {
   status: HealthControllerHealth200Status;
 };
 
+export type ListCardMarketParams = {
+  page: number;
+  positions?: ListCardMarketPositionsItem[];
+  minOverall: number;
+  maxOverall: number;
+  teamId?: string;
+  collectionId?: string;
+  sort: ListCardMarketSort;
+};
+
+export type ListCardMarketPositionsItem =
+  (typeof ListCardMarketPositionsItem)[keyof typeof ListCardMarketPositionsItem];
+
+export const ListCardMarketPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type ListCardMarketSort =
+  (typeof ListCardMarketSort)[keyof typeof ListCardMarketSort];
+
+export const ListCardMarketSort = {
+  name: "name",
+  overall: "overall",
+  recent: "recent",
+} as const;
+
+export type ListCardMarket200ItemsItemPosition =
+  (typeof ListCardMarket200ItemsItemPosition)[keyof typeof ListCardMarket200ItemsItemPosition];
+
+export const ListCardMarket200ItemsItemPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type ListCardMarket200ItemsItemSecondaryPositionsItem =
+  (typeof ListCardMarket200ItemsItemSecondaryPositionsItem)[keyof typeof ListCardMarket200ItemsItemSecondaryPositionsItem];
+
+export const ListCardMarket200ItemsItemSecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type ListCardMarket200ItemsItemTeam = {
+  id: string;
+  name: string;
+  emoji: string;
+};
+
+export type ListCardMarket200ItemsItemCollection = {
+  id: string;
+  name: string;
+  emoji: string;
+};
+
+export type ListCardMarket200ItemsItem = {
+  id: string;
+  name: string;
+  imageUrl: string;
+  overall: number;
+  position: ListCardMarket200ItemsItemPosition;
+  secondaryPositions: ListCardMarket200ItemsItemSecondaryPositionsItem[];
+  defense: number;
+  attack: number;
+  creation: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  price: number;
+  team: ListCardMarket200ItemsItemTeam;
+  collection: ListCardMarket200ItemsItemCollection;
+};
+
+export type ListCardMarket200PageSize =
+  (typeof ListCardMarket200PageSize)[keyof typeof ListCardMarket200PageSize];
+
+export const ListCardMarket200PageSize = {
+  NUMBER_10: 10,
+} as const;
+
+export type ListCardMarket200 = {
+  items: ListCardMarket200ItemsItem[];
+  total: number;
+  page: number;
+  pageSize: ListCardMarket200PageSize;
+  totalPages: number;
+};
+
+export type ListCardMarketCatalog200TeamsItem = {
+  id: string;
+  name: string;
+  emoji: string;
+};
+
+export type ListCardMarketCatalog200CollectionsItem = {
+  id: string;
+  name: string;
+  emoji: string;
+};
+
+export type ListCardMarketCatalog200 = {
+  teams: ListCardMarketCatalog200TeamsItem[];
+  collections: ListCardMarketCatalog200CollectionsItem[];
+};
+
 export type PurchaseCardBodyIdentity = {
   id: string;
   name: string;
@@ -709,6 +997,148 @@ export type SellCards200 = {
   userCardIds: string[];
   balance: number;
   amount: number;
+};
+
+export type GetTeamBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+/**
+ * @nullable
+ */
+export type GetTeamBodyPosition =
+  (typeof GetTeamBodyPosition)[keyof typeof GetTeamBodyPosition] | null;
+
+export const GetTeamBodyPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type GetTeamBodySort =
+  (typeof GetTeamBodySort)[keyof typeof GetTeamBodySort];
+
+export const GetTeamBodySort = {
+  name: "name",
+  overall: "overall",
+  recent: "recent",
+} as const;
+
+export type GetTeamBody = {
+  identity: GetTeamBodyIdentity;
+  page: number;
+  name: string;
+  /** @nullable */
+  position: GetTeamBodyPosition;
+  /** @nullable */
+  collectionId: string | null;
+  sort: GetTeamBodySort;
+};
+
+export type SetTeamFormationBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type SetTeamFormationBody = {
+  identity: SetTeamFormationBodyIdentity;
+  formationId: string;
+};
+
+export type SetTeamTacticBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type SetTeamTacticBodyTactic =
+  (typeof SetTeamTacticBodyTactic)[keyof typeof SetTeamTacticBodyTactic];
+
+export const SetTeamTacticBodyTactic = {
+  balanced: "balanced",
+  defensive: "defensive",
+  offensive: "offensive",
+} as const;
+
+export type SetTeamTacticBody = {
+  identity: SetTeamTacticBodyIdentity;
+  tactic: SetTeamTacticBodyTactic;
+};
+
+export type AutoSelectTeamLineupBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type AutoSelectTeamLineupBody = {
+  identity: AutoSelectTeamLineupBodyIdentity;
+};
+
+export type SetTeamLineupCardBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type SetTeamLineupCardBodyPosition =
+  (typeof SetTeamLineupCardBodyPosition)[keyof typeof SetTeamLineupCardBodyPosition];
+
+export const SetTeamLineupCardBodyPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type SetTeamLineupCardBody = {
+  identity: SetTeamLineupCardBodyIdentity;
+  userCardId: string;
+  position: SetTeamLineupCardBodyPosition;
+};
+
+export type SetTeamCaptainBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type SetTeamCaptainBody = {
+  identity: SetTeamCaptainBodyIdentity;
+  userCardId: string;
+};
+
+export type ToggleTeamCardFavoriteBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type ToggleTeamCardFavoriteBody = {
+  identity: ToggleTeamCardFavoriteBodyIdentity;
 };
 
 export type PostV1AdminSessionBody = {
@@ -2017,6 +2447,70 @@ export type DeleteV1AdminCardsCardIdImage200 = {
   imageUrl: string;
 };
 
+export type GetClubBody = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type GetClub200Stadium = {
+  level: number;
+  maxLevel: number;
+  /** @nullable */
+  nextUpgradeCost: number | null;
+  ticketRevenue: number;
+  maintenance: number;
+};
+
+export type GetClub200Sponsor = {
+  name: string;
+  weeklyMatches: number;
+  weeklyGoal: number;
+  payout: number;
+  completed: boolean;
+};
+
+export type GetClub200 = {
+  balance: number;
+  stadium: GetClub200Stadium;
+  sponsor: GetClub200Sponsor;
+  payroll: number;
+  projectedNet: number;
+};
+
+export type UpgradeStadiumBody = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type UpgradeStadium200Stadium = {
+  level: number;
+  maxLevel: number;
+  /** @nullable */
+  nextUpgradeCost: number | null;
+  ticketRevenue: number;
+  maintenance: number;
+};
+
+export type UpgradeStadium200Sponsor = {
+  name: string;
+  weeklyMatches: number;
+  weeklyGoal: number;
+  payout: number;
+  completed: boolean;
+};
+
+export type UpgradeStadium200 = {
+  balance: number;
+  stadium: UpgradeStadium200Stadium;
+  sponsor: UpgradeStadium200Sponsor;
+  payroll: number;
+  projectedNet: number;
+};
+
 export const getListPackCatalogUrl = () => {
   return `/v1/packs`;
 };
@@ -2265,6 +2759,54 @@ export const healthControllerHealth = async (
   });
 };
 
+export const getListCardMarketUrl = (params: ListCardMarketParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["positions"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? "null" : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/cards?${stringifiedParams}`
+    : `/v1/cards`;
+};
+
+export const listCardMarket = async (
+  params: ListCardMarketParams,
+  options?: Parameters<typeof request>[1],
+): Promise<ListCardMarket200> => {
+  return request<ListCardMarket200>(getListCardMarketUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListCardMarketCatalogUrl = () => {
+  return `/v1/cards/catalog`;
+};
+
+export const listCardMarketCatalog = async (
+  options?: Parameters<typeof request>[1],
+): Promise<ListCardMarketCatalog200> => {
+  return request<ListCardMarketCatalog200>(getListCardMarketCatalogUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export const getPurchaseCardUrl = (cardId: string) => {
   return `/v1/cards/${cardId}/purchase`;
 };
@@ -2295,6 +2837,119 @@ export const sellCards = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(sellCardsBody),
+  });
+};
+
+export const getGetTeamUrl = () => {
+  return `/v1/team`;
+};
+
+export const getTeam = async (
+  getTeamBody: GetTeamBody,
+  options?: Parameters<typeof request>[1],
+): Promise<TeamResponse> => {
+  return request<TeamResponse>(getGetTeamUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(getTeamBody),
+  });
+};
+
+export const getSetTeamFormationUrl = () => {
+  return `/v1/team/formation`;
+};
+
+export const setTeamFormation = async (
+  setTeamFormationBody: SetTeamFormationBody,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getSetTeamFormationUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setTeamFormationBody),
+  });
+};
+
+export const getSetTeamTacticUrl = () => {
+  return `/v1/team/tactic`;
+};
+
+export const setTeamTactic = async (
+  setTeamTacticBody: SetTeamTacticBody,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getSetTeamTacticUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setTeamTacticBody),
+  });
+};
+
+export const getAutoSelectTeamLineupUrl = () => {
+  return `/v1/team/lineup/auto`;
+};
+
+export const autoSelectTeamLineup = async (
+  autoSelectTeamLineupBody: AutoSelectTeamLineupBody,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getAutoSelectTeamLineupUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(autoSelectTeamLineupBody),
+  });
+};
+
+export const getSetTeamLineupCardUrl = () => {
+  return `/v1/team/lineup`;
+};
+
+export const setTeamLineupCard = async (
+  setTeamLineupCardBody: SetTeamLineupCardBody,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getSetTeamLineupCardUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setTeamLineupCardBody),
+  });
+};
+
+export const getSetTeamCaptainUrl = () => {
+  return `/v1/team/captain`;
+};
+
+export const setTeamCaptain = async (
+  setTeamCaptainBody: SetTeamCaptainBody,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getSetTeamCaptainUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setTeamCaptainBody),
+  });
+};
+
+export const getToggleTeamCardFavoriteUrl = (userCardId: string) => {
+  return `/v1/team/cards/${userCardId}/favorite`;
+};
+
+export const toggleTeamCardFavorite = async (
+  userCardId: string,
+  toggleTeamCardFavoriteBody: ToggleTeamCardFavoriteBody,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getToggleTeamCardFavoriteUrl(userCardId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(toggleTeamCardFavoriteBody),
   });
 };
 
@@ -2991,4 +3646,36 @@ export const deleteV1AdminCardsCardIdImage = async (
       method: "DELETE",
     },
   );
+};
+
+export const getGetClubUrl = () => {
+  return `/v1/club`;
+};
+
+export const getClub = async (
+  getClubBody: GetClubBody,
+  options?: Parameters<typeof request>[1],
+): Promise<GetClub200> => {
+  return request<GetClub200>(getGetClubUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(getClubBody),
+  });
+};
+
+export const getUpgradeStadiumUrl = () => {
+  return `/v1/club/stadium/upgrade`;
+};
+
+export const upgradeStadium = async (
+  upgradeStadiumBody: UpgradeStadiumBody,
+  options?: Parameters<typeof request>[1],
+): Promise<UpgradeStadium200> => {
+  return request<UpgradeStadium200>(getUpgradeStadiumUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(upgradeStadiumBody),
+  });
 };

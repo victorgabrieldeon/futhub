@@ -55,6 +55,235 @@
         "required": ["packs", "page", "totalPages"],
         "type": "object"
       },
+      "TeamCard": {
+        "additionalProperties": false,
+        "properties": {
+          "userCardId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "overall": {
+            "type": "number"
+          },
+          "position": {
+            "type": "string",
+            "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+          },
+          "secondaryPositions": {
+            "items": {
+              "type": "string",
+              "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+            },
+            "type": "array"
+          },
+          "collection": {
+            "$ref": "#/components/schemas/TeamCollection"
+          },
+          "favorite": {
+            "type": "boolean"
+          },
+          "holder": {
+            "type": "boolean"
+          },
+          "holderPosition": {
+            "type": "string",
+            "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"],
+            "nullable": true
+          },
+          "captain": {
+            "type": "boolean"
+          },
+          "sellPrice": {
+            "type": "number"
+          },
+          "claimedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userCardId",
+          "name",
+          "imageUrl",
+          "overall",
+          "position",
+          "secondaryPositions",
+          "collection",
+          "favorite",
+          "holder",
+          "holderPosition",
+          "captain",
+          "sellPrice",
+          "claimedAt"
+        ],
+        "type": "object"
+      },
+      "TeamCollection": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name", "emoji"],
+        "type": "object"
+      },
+      "TeamFormation": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slots": {
+            "items": {
+              "$ref": "#/components/schemas/TeamFormationSlot"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["id", "name", "slots"],
+        "type": "object"
+      },
+      "TeamFormationSlot": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string",
+            "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        },
+        "required": ["id", "position", "x", "y"],
+        "type": "object"
+      },
+      "TeamInventory": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TeamCard"
+            },
+            "type": "array"
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "pageSize": {
+            "type": "number",
+            "enum": [10]
+          },
+          "totalPages": {
+            "type": "number"
+          }
+        },
+        "required": ["items", "total", "page", "pageSize", "totalPages"],
+        "type": "object"
+      },
+      "TeamPack": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        },
+        "required": ["id", "name", "emoji", "quantity"],
+        "type": "object"
+      },
+      "TeamResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "balance": {
+            "type": "number"
+          },
+          "strength": {
+            "type": "number"
+          },
+          "inventoryCount": {
+            "type": "number"
+          },
+          "tactic": {
+            "type": "string",
+            "enum": ["balanced", "defensive", "offensive"]
+          },
+          "formation": {
+            "$ref": "#/components/schemas/TeamFormation"
+          },
+          "formations": {
+            "items": {
+              "$ref": "#/components/schemas/TeamFormation"
+            },
+            "type": "array"
+          },
+          "lineup": {
+            "items": {
+              "$ref": "#/components/schemas/TeamCard"
+            },
+            "type": "array"
+          },
+          "inventory": {
+            "$ref": "#/components/schemas/TeamInventory"
+          },
+          "packs": {
+            "items": {
+              "$ref": "#/components/schemas/TeamPack"
+            },
+            "type": "array"
+          },
+          "collections": {
+            "items": {
+              "$ref": "#/components/schemas/TeamCollection"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "balance",
+          "strength",
+          "inventoryCount",
+          "tactic",
+          "formation",
+          "formations",
+          "lineup",
+          "inventory",
+          "packs",
+          "collections"
+        ],
+        "type": "object"
+      },
       "BotResponseButtonDto": {
         "additionalProperties": false,
         "properties": {
@@ -1006,11 +1235,44 @@
                           },
                           "required": ["title", "description", "color", "footer"],
                           "type": "object"
+                        },
+                        "report": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "ticketRevenue": {
+                              "type": "number"
+                            },
+                            "commercialRevenue": {
+                              "type": "number"
+                            },
+                            "sponsorRevenue": {
+                              "type": "number"
+                            },
+                            "maintenance": {
+                              "type": "number"
+                            },
+                            "payroll": {
+                              "type": "number"
+                            },
+                            "net": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "ticketRevenue",
+                            "commercialRevenue",
+                            "sponsorRevenue",
+                            "maintenance",
+                            "payroll",
+                            "net"
+                          ],
+                          "type": "object"
                         }
                       },
                       "required": [
                         "kind",
                         "reward",
+                        "report",
                         "balance",
                         "availableAt",
                         "progression",
@@ -1850,6 +2112,304 @@
         "x-samchon-controller": "HealthController"
       }
     },
+    "/v1/cards": {
+      "get": {
+        "tags": ["Mercado de cards"],
+        "operationId": "listCardMarket",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": true
+          },
+          {
+            "name": "positions",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+              }
+            },
+            "required": false
+          },
+          {
+            "name": "minOverall",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": true
+          },
+          {
+            "name": "maxOverall",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": true
+          },
+          {
+            "name": "teamId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "collectionId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["name", "overall", "recent"]
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "imageUrl": {
+                            "type": "string"
+                          },
+                          "overall": {
+                            "type": "number"
+                          },
+                          "position": {
+                            "type": "string",
+                            "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+                          },
+                          "secondaryPositions": {
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "CA",
+                                "GOL",
+                                "LD",
+                                "LE",
+                                "MA",
+                                "MC",
+                                "PD",
+                                "PE",
+                                "VOL",
+                                "ZAG"
+                              ]
+                            },
+                            "type": "array"
+                          },
+                          "defense": {
+                            "type": "number"
+                          },
+                          "attack": {
+                            "type": "number"
+                          },
+                          "creation": {
+                            "type": "number"
+                          },
+                          "passing": {
+                            "type": "number"
+                          },
+                          "control": {
+                            "type": "number"
+                          },
+                          "marking": {
+                            "type": "number"
+                          },
+                          "pace": {
+                            "type": "number"
+                          },
+                          "dribbling": {
+                            "type": "number"
+                          },
+                          "finishing": {
+                            "type": "number"
+                          },
+                          "price": {
+                            "type": "number"
+                          },
+                          "team": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "emoji": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["id", "name", "emoji"],
+                            "type": "object"
+                          },
+                          "collection": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "emoji": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["id", "name", "emoji"],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "imageUrl",
+                          "overall",
+                          "position",
+                          "secondaryPositions",
+                          "defense",
+                          "attack",
+                          "creation",
+                          "passing",
+                          "control",
+                          "marking",
+                          "pace",
+                          "dribbling",
+                          "finishing",
+                          "price",
+                          "team",
+                          "collection"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "pageSize": {
+                      "type": "number",
+                      "enum": [10]
+                    },
+                    "totalPages": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["items", "total", "page", "pageSize", "totalPages"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "cards", "listCards"],
+        "x-samchon-controller": "CardMarketController"
+      }
+    },
+    "/v1/cards/catalog": {
+      "get": {
+        "tags": ["Mercado de cards"],
+        "operationId": "listCardMarketCatalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "teams": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "emoji": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "name", "emoji"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "collections": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "emoji": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "name", "emoji"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": ["teams", "collections"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "cards", "catalog", "listCatalog"],
+        "x-samchon-controller": "CardMarketController"
+      }
+    },
     "/v1/cards/{cardId}/purchase": {
       "post": {
         "tags": ["Mercado de cards"],
@@ -2006,6 +2566,408 @@
         ],
         "x-samchon-accessor": ["v1", "cards", "sell", "sellCards"],
         "x-samchon-controller": "CardMarketController"
+      }
+    },
+    "/v1/team": {
+      "post": {
+        "tags": ["Time"],
+        "operationId": "getTeam",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "identity": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "avatarUrl": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": ["id", "name", "avatarUrl"],
+                    "type": "object"
+                  },
+                  "page": {
+                    "type": "number"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "position": {
+                    "type": "string",
+                    "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"],
+                    "nullable": true
+                  },
+                  "collectionId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "sort": {
+                    "type": "string",
+                    "enum": ["name", "overall", "recent"]
+                  }
+                },
+                "required": ["identity", "page", "name", "position", "collectionId", "sort"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "team", "view"],
+        "x-samchon-controller": "TeamController"
+      }
+    },
+    "/v1/team/formation": {
+      "put": {
+        "tags": ["Time"],
+        "operationId": "setTeamFormation",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "identity": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "avatarUrl": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": ["id", "name", "avatarUrl"],
+                    "type": "object"
+                  },
+                  "formationId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["identity", "formationId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "team", "formation", "setFormation"],
+        "x-samchon-controller": "TeamController"
+      }
+    },
+    "/v1/team/tactic": {
+      "put": {
+        "tags": ["Time"],
+        "operationId": "setTeamTactic",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "identity": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "avatarUrl": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": ["id", "name", "avatarUrl"],
+                    "type": "object"
+                  },
+                  "tactic": {
+                    "type": "string",
+                    "enum": ["balanced", "defensive", "offensive"]
+                  }
+                },
+                "required": ["identity", "tactic"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "team", "tactic", "setTactic"],
+        "x-samchon-controller": "TeamController"
+      }
+    },
+    "/v1/team/lineup/auto": {
+      "post": {
+        "tags": ["Time"],
+        "operationId": "autoSelectTeamLineup",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "identity": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "avatarUrl": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": ["id", "name", "avatarUrl"],
+                    "type": "object"
+                  }
+                },
+                "required": ["identity"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "team", "lineup", "auto", "autoLineup"],
+        "x-samchon-controller": "TeamController"
+      }
+    },
+    "/v1/team/lineup": {
+      "put": {
+        "tags": ["Time"],
+        "operationId": "setTeamLineupCard",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "identity": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "avatarUrl": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": ["id", "name", "avatarUrl"],
+                    "type": "object"
+                  },
+                  "userCardId": {
+                    "type": "string"
+                  },
+                  "position": {
+                    "type": "string",
+                    "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+                  }
+                },
+                "required": ["identity", "userCardId", "position"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "team", "lineup", "setLineupCard"],
+        "x-samchon-controller": "TeamController"
+      }
+    },
+    "/v1/team/captain": {
+      "put": {
+        "tags": ["Time"],
+        "operationId": "setTeamCaptain",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "identity": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "avatarUrl": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": ["id", "name", "avatarUrl"],
+                    "type": "object"
+                  },
+                  "userCardId": {
+                    "type": "string"
+                  }
+                },
+                "required": ["identity", "userCardId"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "team", "captain", "setCaptain"],
+        "x-samchon-controller": "TeamController"
+      }
+    },
+    "/v1/team/cards/{userCardId}/favorite": {
+      "put": {
+        "tags": ["Time"],
+        "operationId": "toggleTeamCardFavorite",
+        "parameters": [
+          {
+            "name": "userCardId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "identity": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "avatarUrl": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": ["id", "name", "avatarUrl"],
+                    "type": "object"
+                  }
+                },
+                "required": ["identity"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "team", "cards", "favorite", "toggleFavorite"],
+        "x-samchon-controller": "TeamController"
       }
     },
     "/v1/admin/session": {
@@ -5656,6 +6618,230 @@
         "x-samchon-accessor": ["v1", "admin", "cards", "image", "removeImage"],
         "x-samchon-controller": "AdminCardsController"
       }
+    },
+    "/v1/club": {
+      "post": {
+        "tags": ["Clube"],
+        "operationId": "getClub",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "avatarUrl": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["id", "name", "avatarUrl"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "balance": {
+                      "type": "number"
+                    },
+                    "stadium": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "level": {
+                          "type": "number"
+                        },
+                        "maxLevel": {
+                          "type": "number"
+                        },
+                        "nextUpgradeCost": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "ticketRevenue": {
+                          "type": "number"
+                        },
+                        "maintenance": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "level",
+                        "maxLevel",
+                        "nextUpgradeCost",
+                        "ticketRevenue",
+                        "maintenance"
+                      ],
+                      "type": "object"
+                    },
+                    "sponsor": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "weeklyMatches": {
+                          "type": "number"
+                        },
+                        "weeklyGoal": {
+                          "type": "number"
+                        },
+                        "payout": {
+                          "type": "number"
+                        },
+                        "completed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": ["name", "weeklyMatches", "weeklyGoal", "payout", "completed"],
+                      "type": "object"
+                    },
+                    "payroll": {
+                      "type": "number"
+                    },
+                    "projectedNet": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["balance", "stadium", "sponsor", "payroll", "projectedNet"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/v1/club/stadium/upgrade": {
+      "post": {
+        "tags": ["Clube"],
+        "operationId": "upgradeStadium",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "avatarUrl": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["id", "name", "avatarUrl"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "balance": {
+                      "type": "number"
+                    },
+                    "stadium": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "level": {
+                          "type": "number"
+                        },
+                        "maxLevel": {
+                          "type": "number"
+                        },
+                        "nextUpgradeCost": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "ticketRevenue": {
+                          "type": "number"
+                        },
+                        "maintenance": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "level",
+                        "maxLevel",
+                        "nextUpgradeCost",
+                        "ticketRevenue",
+                        "maintenance"
+                      ],
+                      "type": "object"
+                    },
+                    "sponsor": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "weeklyMatches": {
+                          "type": "number"
+                        },
+                        "weeklyGoal": {
+                          "type": "number"
+                        },
+                        "payout": {
+                          "type": "number"
+                        },
+                        "completed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": ["name", "weeklyMatches", "weeklyGoal", "payout", "completed"],
+                      "type": "object"
+                    },
+                    "payroll": {
+                      "type": "number"
+                    },
+                    "projectedNet": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["balance", "stadium", "sponsor", "payroll", "projectedNet"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "tags": [
@@ -5704,10 +6890,18 @@
       "description": "Estado do serviço."
     },
     {
+      "name": "Time",
+      "description": "Inventário, escalação, formação e tática do jogador."
+    },
+    {
       "name": "Admin bot responses"
     },
     {
       "name": "Bot responses"
+    },
+    {
+      "name": "Clube",
+      "description": "Gestão financeira e estrutura do clube."
     }
   ]
 }

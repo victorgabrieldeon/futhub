@@ -19,7 +19,7 @@ describe('Admin AI saved configuration', () => {
 
   beforeAll(async () => {
     context = await startE2eContext();
-  }, 60_000);
+  }, 120_000);
   beforeEach(async () => {
     await context.database.db.delete(context.database.schema.adminAiConfigs);
     vi.spyOn(AiHttpClient.prototype, 'request').mockResolvedValue({

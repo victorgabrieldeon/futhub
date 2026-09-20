@@ -14,21 +14,35 @@ export class ApiClientError extends Error {
   }
 }
 
-let options: Readonly<{
+type ConfiguredApiClient = Readonly<{
   baseUrl: URL;
   token: string;
   fetch: typeof globalThis.fetch;
-}> | null = null;
+}>;
+
+declare global {
+  var __futhubApiClient: ConfiguredApiClient | undefined;
+}
 
 export function configureApiClient(config: ApiClientOptions): void {
-  const baseUrl = new URL(config.baseUrl);
+  let baseUrl: URL;
+  try {
+    baseUrl = new URL(config.baseUrl);
+  } catch {
+    throw new Error('API base URL is invalid.');
+  }
   if (!['http:', 'https:'].includes(baseUrl.protocol))
     throw new Error('API base URL must use HTTP or HTTPS.');
   if (!config.token) throw new Error('API token is required.');
-  options = { baseUrl, token: config.token, fetch: config.fetch ?? globalThis.fetch };
+  globalThis.__futhubApiClient = {
+    baseUrl,
+    token: config.token,
+    fetch: config.fetch ?? globalThis.fetch,
+  };
 }
 
 export async function request<T>(url: string, init: RequestInit): Promise<T> {
+  const options = globalThis.__futhubApiClient;
   if (!options) throw new Error('API client is not configured.');
   const headers = new Headers(init.headers);
   if (!headers.has('authorization')) headers.set('authorization', `Bearer ${options.token}`);
@@ -61,5 +75,11 @@ export async function request<T>(url: string, init: RequestInit): Promise<T> {
     const prefix = `FutHub API request failed with status ${response.status}`;
     throw new ApiClientError(response.status, detail ? `${prefix}: ${detail}` : `${prefix}.`);
   }
-  return JSON.parse(await response.text());
+  const text = await response.text();
+  if (!text) return undefined as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new ApiClientError(response.status, 'FutHub API returned invalid JSON.');
+  }
 }

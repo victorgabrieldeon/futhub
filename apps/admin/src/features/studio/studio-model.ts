@@ -1,3 +1,5 @@
+import { type CardDesign, defaultCardDesign, parseCardDesign } from './card-design.ts';
+
 export const positions = ['GOL', 'LD', 'LE', 'ZAG', 'VOL', 'MA', 'MC', 'PD', 'PE', 'CA'] as const;
 
 export const statFields = [
@@ -48,6 +50,7 @@ export type LayerKey =
   | 'stats';
 
 export type StudioDraft = Readonly<{
+  design: CardDesign;
   name: string;
   overall: number;
   position: string;
@@ -213,6 +216,7 @@ export const defaultLayerOrder: readonly LayerKey[] = [
 ];
 
 export const emptyDraft: StudioDraft = {
+  design: defaultCardDesign,
   name: 'Selecione um jogador',
   overall: 90,
   position: 'CA',
@@ -441,6 +445,8 @@ export function inspectDraft(draft: StudioDraft): readonly InspectorCheck[] {
 export function parseStoredDraft(value: unknown): StudioDraft | null {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return null;
   const candidate = value as Record<string, unknown>;
+  const design = parseCardDesign(candidate.design);
+  if (!design) return null;
   const stringKeys = [
     'name',
     'position',
@@ -517,9 +523,9 @@ export function parseStoredDraft(value: unknown): StudioDraft | null {
     photoIsStandard?: unknown;
   };
   if (draft.playerImageUrl.startsWith('blob:')) {
-    return { ...draft, photoIsStandard: false, playerImageUrl: '', photoFormat: 'missing' };
+    return { ...draft, design, photoIsStandard: false, playerImageUrl: '', photoFormat: 'missing' };
   }
-  return { ...draft, photoIsStandard: photoIsStandard === true };
+  return { ...draft, design, photoIsStandard: photoIsStandard === true };
 }
 
 function contrastRatio(first: string, second: string): number {

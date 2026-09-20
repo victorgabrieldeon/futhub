@@ -1,33 +1,40 @@
-import { sellCards } from '@futhub/api-client';
-import { Declare, Options, createStringOption } from 'seyfert';
+import { Declare } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
-import { formatCardsSale } from '../game.js';
-import { CommandInputError, FutHubCommand, cardIds, identity } from './shared.js';
+import { loadClub, loadTeam } from '../team-api.js';
+import { createTeamSession, type TeamTab } from '../team-session.js';
+import { teamResponse } from '../team.js';
+import { FutHubCommand, identity } from './shared.js';
 
-const tabs = [{ name: 'Vender jogadores', value: 'vender' }] as const;
-const options = {
-  aba: createStringOption({ description: 'Área do time.', required: true, choices: tabs }),
-  ids: createStringOption({
-    description: 'IDs das cartas separados por vírgula.',
-    required: false,
-  }),
-};
+export async function createTeamPanel(context: CommandContext, tab: TeamTab = 'overview') {
+  const player = identity(context);
+  const [team, club] = await Promise.all([
+    loadTeam(player, {
+      page: 1,
+      name: '',
+      position: null,
+      collectionId: null,
+      sort: 'overall',
+    }),
+    tab === 'club' ? loadClub(player) : null,
+  ]);
+  const session = createTeamSession({
+    ownerId: context.author.id,
+    identity: player,
+    ephemeral: Boolean(context.interaction),
+    tab,
+    filters: { name: '', position: null, collectionId: null, sort: 'overall' },
+    selectedCardId: null,
+    confirmSale: false,
+    team,
+    club,
+  });
+  return teamResponse(session);
+}
 
-@Declare({ name: 'time', description: 'Gerencie seu time.' })
-@Options(options)
+@Declare({ name: 'time', description: 'Gerencie seu time e clube.' })
 export default class TimeCommand extends FutHubCommand {
-  async run(context: CommandContext<typeof options>): Promise<void> {
-    await this.respond(context, 'time', async () => {
-      if (context.options.aba === 'vender') {
-        return formatCardsSale(
-          await sellCards({
-            identity: identity(context),
-            userCardIds: [...cardIds(context.options.ids ?? '')],
-          }),
-        );
-      }
-      throw new CommandInputError('Aba do time inválida.');
-    });
+  async run(context: CommandContext): Promise<void> {
+    await this.respond(context, 'time', () => createTeamPanel(context));
   }
 }

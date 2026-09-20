@@ -85,7 +85,15 @@ describe('DrizzleResgatarLucroRepository', () => {
     expect(result).toEqual({
       kind: 'success',
       reward: { value: 50, weight: 1, message: 'Primeiro' },
-      balance: 50,
+      report: {
+        ticketRevenue: 200,
+        commercialRevenue: 50,
+        sponsorRevenue: 0,
+        maintenance: 50,
+        payroll: 0,
+        net: 200,
+      },
+      balance: 200,
       progression: { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] },
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
       embed: lucroCommand.embed,
@@ -113,7 +121,15 @@ describe('DrizzleResgatarLucroRepository', () => {
     ).resolves.toEqual({
       kind: 'success',
       reward: { value: 50, weight: 1, message: 'Primeiro' },
-      balance: 75,
+      report: {
+        ticketRevenue: 200,
+        commercialRevenue: 50,
+        sponsorRevenue: 0,
+        maintenance: 50,
+        payroll: 0,
+        net: 200,
+      },
+      balance: 225,
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
       progression: {
         gainedXp: 10,
@@ -150,7 +166,7 @@ describe('DrizzleResgatarLucroRepository', () => {
 
     const result = await useCase(repository).execute(identity, command, now, 0);
 
-    expect(result).toMatchObject({ kind: 'success', balance: 50 });
+    expect(result).toMatchObject({ kind: 'success', balance: 200 });
   });
 
   it('uses persisted cooldown configuration after defaults exist', async () => {
@@ -181,8 +197,8 @@ describe('DrizzleResgatarLucroRepository', () => {
     ]);
 
     expect(results).toMatchObject([
-      { kind: 'success', balance: 50 },
-      { kind: 'success', balance: 50 },
+      { kind: 'success', balance: 200 },
+      { kind: 'success', balance: 200 },
     ]);
   });
 });

@@ -1,4 +1,4 @@
-import type { DiscordIdentityDto } from '@futhub/api-client';
+import { configureApiClient, type DiscordIdentityDto } from '@futhub/api-client';
 import { Command, MessageFlags } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
@@ -8,10 +8,16 @@ export class CommandInputError extends Error {}
 
 export function identity(context: CommandContext): DiscordIdentityDto {
   return {
-    id: context.interaction.user.id,
-    name: context.interaction.user.username,
-    avatarUrl: context.interaction.user.avatarURL(),
+    id: context.author.id,
+    name: context.author.username,
+    avatarUrl: context.author.avatarURL(),
   };
+}
+
+export function refreshApiClient(): void {
+  const baseUrl = process.env.API_BASE_URL;
+  const token = process.env.API_INTERNAL_TOKEN;
+  if (baseUrl && token) configureApiClient({ baseUrl, token });
 }
 
 export function requiredText(value: string, name: string): string {
@@ -37,6 +43,7 @@ export abstract class FutHubCommand extends Command {
     action: () => Promise<CommandResponse>,
   ): Promise<void> {
     try {
+      refreshApiClient();
       const response = await action();
       await context.write(typeof response === 'string' ? { content: response } : response);
     } catch (error) {

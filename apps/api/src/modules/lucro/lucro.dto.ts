@@ -24,9 +24,19 @@ export const LucroRewardDtoSchema = z.object({
 });
 export type LucroRewardDto = z.infer<typeof LucroRewardDtoSchema>;
 
+export const LucroReportDtoSchema = z.object({
+  ticketRevenue: z.number().int(),
+  commercialRevenue: z.number().int(),
+  sponsorRevenue: z.number().int(),
+  maintenance: z.number().int(),
+  payroll: z.number().int(),
+  net: z.number().int(),
+});
+
 export const LucroSuccessResponseSchema = z.object({
   kind: z.enum(['success']),
   reward: LucroRewardDtoSchema,
+  report: LucroReportDtoSchema,
   balance: z.number(),
   availableAt: z.iso.datetime(),
   progression: ProgressionDtoSchema,

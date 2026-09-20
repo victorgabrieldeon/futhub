@@ -54,8 +54,8 @@ importers:
         specifier: 7.9.4
         version: 7.9.4(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       three:
-        specifier: 0.181.0
-        version: 0.181.0
+        specifier: ^0.185.1
+        version: 0.185.1
     devDependencies:
       '@types/node':
         specifier: 22.13.4
@@ -67,8 +67,8 @@ importers:
         specifier: 19.0.4
         version: 19.0.4(@types/react@19.0.10)
       '@types/three':
-        specifier: 0.181.0
-        version: 0.181.0
+        specifier: ^0.185.4
+        version: 0.185.4
       '@vitejs/plugin-react':
         specifier: 6.0.5
         version: 6.0.5(vite@8.2.0(@types/node@22.13.4)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.19.3)(yaml@2.9.0))
@@ -78,6 +78,9 @@ importers:
       vite:
         specifier: 8.2.0
         version: 8.2.0(@types/node@22.13.4)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.19.3)(yaml@2.9.0)
+      vitest:
+        specifier: 3.0.5
+        version: 3.0.5(@types/node@22.13.4)(jiti@2.7.0)(jsdom@26.1.0(canvas@3.2.3))(lightningcss@1.33.0)(tsx@4.19.3)(yaml@2.9.0)
 
   apps/api:
     dependencies:
@@ -96,15 +99,18 @@ importers:
       '@futhub/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@napi-rs/canvas':
+        specifier: 0.1.95
+        version: 0.1.95
       '@nestia/core':
         specifier: 13.0.2
-        version: 13.0.2(@nestia/fetcher@13.0.2)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.27.0)(typia@14.0.6(ttsc@0.27.0))
+        version: 13.0.2(@nestia/fetcher@13.0.2)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.30.4)(typia@14.0.6(ttsc@0.30.4))
       '@nestia/fetcher':
         specifier: 13.0.2
         version: 13.0.2
       '@nestia/sdk':
         specifier: 13.0.2
-        version: 13.0.2(@nestia/core@13.0.2(@nestia/fetcher@13.0.2)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.27.0)(typia@14.0.6(ttsc@0.27.0)))
+        version: 13.0.2(@nestia/core@13.0.2(@nestia/fetcher@13.0.2)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.30.4)(typia@14.0.6(ttsc@0.30.4)))
       '@nestjs/common':
         specifier: '12'
         version: 12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -140,7 +146,7 @@ importers:
         version: 7.8.2
       typia:
         specifier: 14.0.6
-        version: 14.0.6(ttsc@0.27.0)
+        version: 14.0.6(ttsc@0.30.4)
       zod:
         specifier: 4.6.2
         version: 4.6.2
@@ -152,8 +158,8 @@ importers:
         specifier: '12'
         version: 12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))
       '@ttsc/unplugin':
-        specifier: 0.27.0
-        version: 0.27.0(ttsc@0.27.0)
+        specifier: 0.30.4
+        version: 0.30.4(ttsc@0.30.4)
       '@types/node':
         specifier: 22.13.4
         version: 22.13.4
@@ -167,8 +173,8 @@ importers:
         specifier: '11'
         version: 11.14.0
       ttsc:
-        specifier: 0.27.0
-        version: 0.27.0
+        specifier: 0.30.4
+        version: 0.30.4
       vitest:
         specifier: 3.0.5
         version: 3.0.5(@types/node@22.13.4)(jiti@2.7.0)(jsdom@26.1.0(canvas@3.2.3))(lightningcss@1.33.0)(tsx@4.19.3)(yaml@2.9.0)
@@ -178,6 +184,9 @@ importers:
       '@futhub/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@napi-rs/canvas':
+        specifier: 0.1.95
+        version: 0.1.95
       discord.js:
         specifier: 14.25.1
         version: 14.25.1
@@ -1148,6 +1157,76 @@ packages:
   '@microsoft/tsdoc@0.16.0':
     resolution: {integrity: sha512-xgAyonlVVS+q7Vc7qLW0UrJU7rSFcETRWsqdXZtjzRU8dF+6CkozTK4V4y1LwOX7j8r/vHphjDeMeGI4tNGeGA==}
 
+  '@napi-rs/canvas-android-arm64@0.1.95':
+    resolution: {integrity: sha512-SqTh0wsYbetckMXEvHqmR7HKRJujVf1sYv1xdlhkifg6TlCSysz1opa49LlS3+xWuazcQcfRfmhA07HxxxGsAA==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [android]
+
+  '@napi-rs/canvas-darwin-arm64@0.1.95':
+    resolution: {integrity: sha512-F7jT0Syu+B9DGBUBcMk3qCRIxAWiDXmvEjamwbYfbZl7asI1pmXZUnCOoIu49Wt0RNooToYfRDxU9omD6t5Xuw==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@napi-rs/canvas-darwin-x64@0.1.95':
+    resolution: {integrity: sha512-54eb2Ho15RDjYGXO/harjRznBrAvu+j5nQ85Z4Qd6Qg3slR8/Ja+Yvvy9G4yo7rdX6NR9GPkZeSTf2UcKXwaXw==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@napi-rs/canvas-linux-arm-gnueabihf@0.1.95':
+    resolution: {integrity: sha512-hYaLCSLx5bmbnclzQc3ado3PgZ66blJWzjXp0wJmdwpr/kH+Mwhj6vuytJIomgksyJoCdIqIa4N6aiqBGJtJ5Q==}
+    engines: {node: '>= 10'}
+    cpu: [arm]
+    os: [linux]
+
+  '@napi-rs/canvas-linux-arm64-gnu@0.1.95':
+    resolution: {integrity: sha512-J7VipONahKsmScPZsipHVQBqpbZx4favaD8/enWzzlGcjiwycOoymL7f4tNeqdjK0su19bDOUt6mjp9gsPWYlw==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@napi-rs/canvas-linux-arm64-musl@0.1.95':
+    resolution: {integrity: sha512-PXy0UT1J/8MPG8UAkWp6Fd51ZtIZINFzIjGH909JjQrtCuJf3X6nanHYdz1A+Wq9o4aoPAw1YEUpFS1lelsVlg==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+
+  '@napi-rs/canvas-linux-riscv64-gnu@0.1.95':
+    resolution: {integrity: sha512-2IzCkW2RHRdcgF9W5/plHvYFpc6uikyjMb5SxjqmNxfyDFz9/HB89yhi8YQo0SNqrGRI7yBVDec7Pt+uMyRWsg==}
+    engines: {node: '>= 10'}
+    cpu: [riscv64]
+    os: [linux]
+
+  '@napi-rs/canvas-linux-x64-gnu@0.1.95':
+    resolution: {integrity: sha512-OV/ol/OtcUr4qDhQg8G7SdViZX8XyQeKpPsVv/j3+7U178FGoU4M+yIocdVo1ih/A8GQ63+LjF4jDoEjaVU8Pw==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+
+  '@napi-rs/canvas-linux-x64-musl@0.1.95':
+    resolution: {integrity: sha512-Z5KzqBK/XzPz5+SFHKz7yKqClEQ8pOiEDdgk5SlphBLVNb8JFIJkxhtJKSvnJyHh2rjVgiFmvtJzMF0gNwwKyQ==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+
+  '@napi-rs/canvas-win32-arm64-msvc@0.1.95':
+    resolution: {integrity: sha512-aj0YbRpe8qVJ4OzMsK7NfNQePgcf9zkGFzNZ9mSuaxXzhpLHmlF2GivNdCdNOg8WzA/NxV6IU4c5XkXadUMLeA==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [win32]
+
+  '@napi-rs/canvas-win32-x64-msvc@0.1.95':
+    resolution: {integrity: sha512-GA8leTTCfdjuHi8reICTIxU0081PhXvl3lzIniLUjeLACx9GubUiyzkwFb+oyeKLS5IAGZFLKnzAf4wm2epRlA==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [win32]
+
+  '@napi-rs/canvas@0.1.95':
+    resolution: {integrity: sha512-lkg23ge+rgyhgUwXmlbkPEhuhHq/hUi/gXKH+4I7vO+lJrbNfEYcQdJLIGjKyXLQzgFiiyDAwh5vAe/tITAE+w==}
+    engines: {node: '>= 10'}
+
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
     engines: {node: ^22.20 || ^24.12 || >=25}
@@ -1693,19 +1772,14 @@ packages:
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
 
-  '@ttsc/darwin-arm64@0.27.0':
-    resolution: {integrity: sha512-786BfoUZJcgqCLGMqa/NRlohjXxN3C9IqwJtPlq04vSB73yYVJJwO89Xp7+7DDV8CQak0SrrAgMy0FcfGIgAVg==}
-    cpu: [arm64]
-    os: [darwin]
-
   '@ttsc/darwin-arm64@0.28.6':
     resolution: {integrity: sha512-yBEA5cE1pAuQ1OdrWnv0rkeaXl3tOosQoREFvdLqonlwMajQ6HOF27mxoUdXe9Sa+tDErNxxGAJy48RzG0QfUw==}
     cpu: [arm64]
     os: [darwin]
 
-  '@ttsc/darwin-x64@0.27.0':
-    resolution: {integrity: sha512-JpJieroygdHN1F9PWVdwAXaFbSOQVxqu/KK5IfUDz9Sc8YyUUrXNkSqhnYkex9C+RTy8ezGgbUjfU0TirIaiIQ==}
-    cpu: [x64]
+  '@ttsc/darwin-arm64@0.30.4':
+    resolution: {integrity: sha512-+x5qOR5kTTjVJKUYqZtkIs33dS3MnNflJfu4Lg1XRvipqjqzIb6RtUlYJ0uTJcGF1ZZ6N1s+ddGocpFqxD9Zpw==}
+    cpu: [arm64]
     os: [darwin]
 
   '@ttsc/darwin-x64@0.28.6':
@@ -1713,22 +1787,22 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@ttsc/darwin-x64@0.30.4':
+    resolution: {integrity: sha512-thPKMLZhpqaV/HgeEEKvGq8pUrY+cV/8dLT/gF5lbBHvz3kRn5xN9CzPnommQj0dwtcpHEdn/JOSbIW16NPsCA==}
+    cpu: [x64]
+    os: [darwin]
+
   '@ttsc/factory@0.28.6':
     resolution: {integrity: sha512-+1WTX5LMBy0SlBMf0vGQKxA9g9h22tKQV9tai0SHTWkuuFVNd98qUQvyCE12yO52e7nsaLFTJywCAwCEZC/5ww==}
-
-  '@ttsc/linux-arm64@0.27.0':
-    resolution: {integrity: sha512-AwIaTr6/lXH3fpVErELT9V/MURo3PsFMQVBXaHIV8vqc6f187+pDhw7xGQmpT73d+jtDzBiq8pcdTepBU2mfMw==}
-    cpu: [arm64]
-    os: [linux]
 
   '@ttsc/linux-arm64@0.28.6':
     resolution: {integrity: sha512-TrCJXS0P1QnIzs8H5qg4ZfF2n4bfuuXupT3fb1yqGQRqUo7iMYnvARyiMnCWKiyKrz8ogP/6lIr04eutMp2Hiw==}
     cpu: [arm64]
     os: [linux]
 
-  '@ttsc/linux-arm@0.27.0':
-    resolution: {integrity: sha512-+VB/4HG172EL/ajfcvlkhFzRbBqiKulN1mP26PeV5qg/YCmZiG34YgllNKzpHQCwLs5iEL4mSREJ6aBl3ywAxw==}
-    cpu: [arm]
+  '@ttsc/linux-arm64@0.30.4':
+    resolution: {integrity: sha512-05Qtl4KOHiAuQIa/qRfwvp0vU7bVWjHQcOjJe0r9R9FdUsBAm51WQe18BnJTxV6cfE0xNaV/Ja/HWm7Qsq5vGQ==}
+    cpu: [arm64]
     os: [linux]
 
   '@ttsc/linux-arm@0.28.6':
@@ -1736,9 +1810,9 @@ packages:
     cpu: [arm]
     os: [linux]
 
-  '@ttsc/linux-x64@0.27.0':
-    resolution: {integrity: sha512-ecyI3NUgvhN39hfE1T9PLSaXw0+0LlKx7LVOVDTJCsgXfcUaHtWvo4PRAZEYVrJEHlMa91RnP6GL6LHzwkTvsQ==}
-    cpu: [x64]
+  '@ttsc/linux-arm@0.30.4':
+    resolution: {integrity: sha512-qNh2qlSnJoZXdYhsejsUXfA8nbOJEyR611S30p6Meqc2Sg6TVlsQT2XaLEDF2CrEcDALCi3pOQAhfWGjwyCa+A==}
+    cpu: [arm]
     os: [linux]
 
   '@ttsc/linux-x64@0.28.6':
@@ -1746,28 +1820,33 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@ttsc/unplugin@0.27.0':
-    resolution: {integrity: sha512-f174GLre595rt2HLOjGdejOwAGIBIRfwcj3OeDWFTcBPy+QnR88Q1hYNVbzKgeglM0HiEPqAgqnqPUUtWCHMRQ==}
-    peerDependencies:
-      ttsc: ^0.27.0
+  '@ttsc/linux-x64@0.30.4':
+    resolution: {integrity: sha512-JZrx4sXeQVAJeyGpA8phlffrvbeyIjwme8ZVoBG8gvyT+BswfVgKQhskBaEGDodi6VyM3k53i53e+QcywFN+xQ==}
+    cpu: [x64]
+    os: [linux]
 
-  '@ttsc/win32-arm64@0.27.0':
-    resolution: {integrity: sha512-hoir53A4t8W89k9cTa3iVs/yR6uyfDkQ2ghwiynA/AVPFb4h9ohIe6B58bS7nKdyNaCfUjtEW0o1kkRdhZQo8Q==}
-    cpu: [arm64]
-    os: [win32]
+  '@ttsc/unplugin@0.30.4':
+    resolution: {integrity: sha512-YzAtIzbgzLlUUMsgmoPQ2oYkYzAA+KsrpMq0BjLRa/pEve6NIOOQ1VRzS/nLrUt+VKtvGjHy4P/5w/oRLdbfUw==}
+    peerDependencies:
+      ttsc: ^0.30.4
 
   '@ttsc/win32-arm64@0.28.6':
     resolution: {integrity: sha512-xsLovpgHAZjoKJguLrHU3qDBsKQ9v2xhjZC5p2Kw8e2VS11Axv3Ywd0RgoV6ME5VcaEcCEyXlS0ZXJMSkJJcSg==}
     cpu: [arm64]
     os: [win32]
 
-  '@ttsc/win32-x64@0.27.0':
-    resolution: {integrity: sha512-+/OUWjyYcEgpd+ztkTWAqFLaysITE8bMrnngRZ+SzqiRaHqGUcfhrtKirU3jRo3+uF2AdaDeDni8fHpO4w0eQg==}
-    cpu: [x64]
+  '@ttsc/win32-arm64@0.30.4':
+    resolution: {integrity: sha512-8B9uOwajWhuklP1wvu7ynLddvsLpDygRHtp8zATnIGpipPDqUImcFmsQ7alwI40aEeIvfbI5COFBUd5aDOfbeQ==}
+    cpu: [arm64]
     os: [win32]
 
   '@ttsc/win32-x64@0.28.6':
     resolution: {integrity: sha512-k2DCIF9LTWlnq4LCgiTBPJ4mtfXnwZetCTLDvAkt37cVi28gWlNkbMr0BnMyimMskHBmKE/pqwxtziiYTx1J6A==}
+    cpu: [x64]
+    os: [win32]
+
+  '@ttsc/win32-x64@0.30.4':
+    resolution: {integrity: sha512-DDdWzQWrmzljRkoHnVxRACO8ikiM3rjuC/QRkPMmyzina0AimihHnOfOOWKdNttfkU9sAdCe3MIkg4ktpL38mQ==}
     cpu: [x64]
     os: [win32]
 
@@ -1821,8 +1900,8 @@ packages:
   '@types/stats.js@0.17.4':
     resolution: {integrity: sha512-jIBvWWShCvlBqBNIZt0KAshWpvSjhkwkEu4ZUcASoAvhmrgAUI2t1dXrjSL4xXVLB4FznPrIsX3nKXFl/Dt4vA==}
 
-  '@types/three@0.181.0':
-    resolution: {integrity: sha512-MLF1ks8yRM2k71D7RprFpDb9DOX0p22DbdPqT/uAkc6AtQXjxWCVDjCy23G9t1o8HcQPk7woD2NIyiaWcWPYmA==}
+  '@types/three@0.185.4':
+    resolution: {integrity: sha512-gAsBIC07NIFrxjbf7tH2t71c38uulFfk/RFoC7FNBSjMRAQ8J1x/RBvusX0N5PJouaYFJawXQqfCQ0RKUx/1nA==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -2021,15 +2100,17 @@ packages:
     resolution: {integrity: sha512-Xfe6rpCTxSxfbswi/W/Pz7zp1WWSNn4A0eW4mLkQUewCrXXtMj31lCg+iQyTkh/CkusZSq9eDflu7tjEDXUY6g==}
     engines: {node: '>=v14.0.0', npm: '>=7.0.0'}
 
-  '@webgpu/types@0.1.72':
-    resolution: {integrity: sha512-0cF7RFM2edNoiIS1ODJp0/Gzv4/xSXhwoR0YCza+OWpJWtn4wmo9DvK91aLlH9+uUnwIriP7ZiC3WitmyhuzBw==}
-
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
 
   abstract-logging@2.0.1:
     resolution: {integrity: sha512-2BjRTZxTPvheOvGbBslFSYOUkr+SjPtOnrLP33f+VIWLzezQpZcqVg7ja3L4dBXmzzgwT+a029jRx5PCi3JuiA==}
+
+  acorn@8.16.0:
+    resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
+    engines: {node: '>=0.4.0'}
+    hasBin: true
 
   acorn@8.18.0:
     resolution: {integrity: sha512-lGq+9yr1/GuAWaVYIHRjvvySG5/4VfKIvC8EWxStPdcDh/Ka7FG3twP6v4d5BkravUilhIAsG4Qj83t02LWUPQ==}
@@ -2274,6 +2355,9 @@ packages:
 
   chownr@1.1.4:
     resolution: {integrity: sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg==}
+
+  cjs-module-lexer@2.2.1:
+    resolution: {integrity: sha512-Ca8swihM+/4yKecYHY52kgJd300hi2lADU/a1RxNTRe+RJ9jvqQlESpbz9DnG9mowez8qwXHB8qYdIUw9e+F5Q==}
 
   cliui@8.0.1:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
@@ -3120,8 +3204,8 @@ packages:
   mdurl@2.1.0:
     resolution: {integrity: sha512-1+HBaOx0zi/dQWht8rNv9MYf9qqpqL/kxI0hXImU6Y547zM6Sni8BQibt7ifgMcYtQg41ao3Ivd6cnSM86inpg==}
 
-  meshoptimizer@0.22.0:
-    resolution: {integrity: sha512-IebiK79sqIy+E4EgOr+CAw+Ke8hAspXKzBd0JdgEmPHiAwmvEj2S4h1rfvo+o/BnfEYd/jAOg5IeeIjzlzSnDg==}
+  meshoptimizer@1.1.1:
+    resolution: {integrity: sha512-oRFNWJRDA/WTrVj7NWvqa5HqE1t9MYDj2VaWirQCzCCrAd2GHrqR/sQezCxiWATPNlKTcRaPRHPJwIRoPBAp5g==}
 
   mime-db@1.52.0:
     resolution: {integrity: sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==}
@@ -3827,8 +3911,8 @@ packages:
   thread-stream@3.2.0:
     resolution: {integrity: sha512-zLBvqpwr4Esa0kRjcrzGU6zL25lePWaCLMx0RQFrmteozIfeNdaMLpG5U7PeHzvlFkAWaRKA9/KVW4F60iB+qw==}
 
-  three@0.181.0:
-    resolution: {integrity: sha512-KGf6EOCOQGshXeleKxpxhbowQwAXR2dLlD93egHtZ9Qmk07Saf8sXDR+7wJb53Z1ORZiatZ4WGST9UsVxhHEbg==}
+  three@0.185.1:
+    resolution: {integrity: sha512-5aojFCXKwnjBRZvUnt3WFfEcvUJgkN5LlijRFN95hMy8WVkG4I0QNcJE+OuWvuJ0bOdStrbfXn0pkd6/QyiAlg==}
 
   through2@4.0.2:
     resolution: {integrity: sha512-iOqSav00cVxEEICeD7TjLB1sueEL+81Wpzp2bY17uZjZN0pWZPuo4suZ/61VujxmqSGFfgOcNuTZ85QJwNZQpw==}
@@ -3910,13 +3994,13 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  ttsc@0.27.0:
-    resolution: {integrity: sha512-kKlX7T/MGaSWvuZJlbzzTTb6y4Uk5HQ+7FNdXRnKgDEJ8nduJEqxzKtZkQjfZDGxSFLzQf7j6MKt4NJuQvnY/g==}
+  ttsc@0.28.6:
+    resolution: {integrity: sha512-7WLqjU7ggpjJrkfrd55oEad1eA5vEHQZIZrt7fMCkVkzdW9TZ/SI1URz4jN9pPakUYF+AtuEoY+Ul5Gw5CgppQ==}
     engines: {node: '>=22.15.0'}
     hasBin: true
 
-  ttsc@0.28.6:
-    resolution: {integrity: sha512-7WLqjU7ggpjJrkfrd55oEad1eA5vEHQZIZrt7fMCkVkzdW9TZ/SI1URz4jN9pPakUYF+AtuEoY+Ul5Gw5CgppQ==}
+  ttsc@0.30.4:
+    resolution: {integrity: sha512-JDw66o8hIkelLp0gMWj7izVzXAXxT+oObILBTOa6MxBGA8a2lqdfMsP++XN0hPYYxKNpyuLVnClBBvehNZyIpw==}
     engines: {node: '>=22.15.0'}
     hasBin: true
 
@@ -4968,10 +5052,57 @@ snapshots:
 
   '@microsoft/tsdoc@0.16.0': {}
 
+  '@napi-rs/canvas-android-arm64@0.1.95':
+    optional: true
+
+  '@napi-rs/canvas-darwin-arm64@0.1.95':
+    optional: true
+
+  '@napi-rs/canvas-darwin-x64@0.1.95':
+    optional: true
+
+  '@napi-rs/canvas-linux-arm-gnueabihf@0.1.95':
+    optional: true
+
+  '@napi-rs/canvas-linux-arm64-gnu@0.1.95':
+    optional: true
+
+  '@napi-rs/canvas-linux-arm64-musl@0.1.95':
+    optional: true
+
+  '@napi-rs/canvas-linux-riscv64-gnu@0.1.95':
+    optional: true
+
+  '@napi-rs/canvas-linux-x64-gnu@0.1.95':
+    optional: true
+
+  '@napi-rs/canvas-linux-x64-musl@0.1.95':
+    optional: true
+
+  '@napi-rs/canvas-win32-arm64-msvc@0.1.95':
+    optional: true
+
+  '@napi-rs/canvas-win32-x64-msvc@0.1.95':
+    optional: true
+
+  '@napi-rs/canvas@0.1.95':
+    optionalDependencies:
+      '@napi-rs/canvas-android-arm64': 0.1.95
+      '@napi-rs/canvas-darwin-arm64': 0.1.95
+      '@napi-rs/canvas-darwin-x64': 0.1.95
+      '@napi-rs/canvas-linux-arm-gnueabihf': 0.1.95
+      '@napi-rs/canvas-linux-arm64-gnu': 0.1.95
+      '@napi-rs/canvas-linux-arm64-musl': 0.1.95
+      '@napi-rs/canvas-linux-riscv64-gnu': 0.1.95
+      '@napi-rs/canvas-linux-x64-gnu': 0.1.95
+      '@napi-rs/canvas-linux-x64-musl': 0.1.95
+      '@napi-rs/canvas-win32-arm64-msvc': 0.1.95
+      '@napi-rs/canvas-win32-x64-msvc': 0.1.95
+
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
 
-  '@nestia/core@13.0.2(@nestia/fetcher@13.0.2)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.27.0)(typia@14.0.6(ttsc@0.27.0))':
+  '@nestia/core@13.0.2(@nestia/fetcher@13.0.2)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.30.4)(typia@14.0.6(ttsc@0.30.4))':
     dependencies:
       '@nestia/fetcher': 13.0.2
       '@nestjs/common': 12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -4985,10 +5116,10 @@ snapshots:
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
       tgrid: 1.2.1
-      typia: 14.0.6(ttsc@0.27.0)
+      typia: 14.0.6(ttsc@0.30.4)
       ws: 7.5.13
     optionalDependencies:
-      ttsc: 0.27.0
+      ttsc: 0.30.4
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -4998,9 +5129,9 @@ snapshots:
       '@typia/interface': 14.0.6
       '@typia/utils': 14.0.6
 
-  '@nestia/sdk@13.0.2(@nestia/core@13.0.2(@nestia/fetcher@13.0.2)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.27.0)(typia@14.0.6(ttsc@0.27.0)))':
+  '@nestia/sdk@13.0.2(@nestia/core@13.0.2(@nestia/fetcher@13.0.2)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.30.4)(typia@14.0.6(ttsc@0.30.4)))':
     dependencies:
-      '@nestia/core': 13.0.2(@nestia/fetcher@13.0.2)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.27.0)(typia@14.0.6(ttsc@0.27.0))
+      '@nestia/core': 13.0.2(@nestia/fetcher@13.0.2)(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1(@nestjs/common@12.0.1(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)(rxjs@7.8.2)(ttsc@0.30.4)(typia@14.0.6(ttsc@0.30.4))
       '@nestia/fetcher': 13.0.2
       '@ttsc/factory': 0.28.6
       '@typia/interface': 14.0.6
@@ -5480,53 +5611,53 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@ttsc/darwin-arm64@0.27.0':
-    optional: true
-
   '@ttsc/darwin-arm64@0.28.6':
     optional: true
 
-  '@ttsc/darwin-x64@0.27.0':
+  '@ttsc/darwin-arm64@0.30.4':
     optional: true
 
   '@ttsc/darwin-x64@0.28.6':
     optional: true
 
-  '@ttsc/factory@0.28.6': {}
-
-  '@ttsc/linux-arm64@0.27.0':
+  '@ttsc/darwin-x64@0.30.4':
     optional: true
+
+  '@ttsc/factory@0.28.6': {}
 
   '@ttsc/linux-arm64@0.28.6':
     optional: true
 
-  '@ttsc/linux-arm@0.27.0':
+  '@ttsc/linux-arm64@0.30.4':
     optional: true
 
   '@ttsc/linux-arm@0.28.6':
     optional: true
 
-  '@ttsc/linux-x64@0.27.0':
+  '@ttsc/linux-arm@0.30.4':
     optional: true
 
   '@ttsc/linux-x64@0.28.6':
     optional: true
 
-  '@ttsc/unplugin@0.27.0(ttsc@0.27.0)':
-    dependencies:
-      ttsc: 0.27.0
-      unplugin: 2.3.11
-
-  '@ttsc/win32-arm64@0.27.0':
+  '@ttsc/linux-x64@0.30.4':
     optional: true
+
+  '@ttsc/unplugin@0.30.4(ttsc@0.30.4)':
+    dependencies:
+      ttsc: 0.30.4
+      unplugin: 2.3.11
 
   '@ttsc/win32-arm64@0.28.6':
     optional: true
 
-  '@ttsc/win32-x64@0.27.0':
+  '@ttsc/win32-arm64@0.30.4':
     optional: true
 
   '@ttsc/win32-x64@0.28.6':
+    optional: true
+
+  '@ttsc/win32-x64@0.30.4':
     optional: true
 
   '@tweenjs/tween.js@23.1.3': {}
@@ -5591,15 +5722,14 @@ snapshots:
 
   '@types/stats.js@0.17.4': {}
 
-  '@types/three@0.181.0':
+  '@types/three@0.185.4':
     dependencies:
       '@dimforge/rapier3d-compat': 0.12.0
       '@tweenjs/tween.js': 23.1.3
       '@types/stats.js': 0.17.4
       '@types/webxr': 0.5.24
-      '@webgpu/types': 0.1.72
       fflate: 0.8.3
-      meshoptimizer: 0.22.0
+      meshoptimizer: 1.1.1
 
   '@types/trusted-types@2.0.7': {}
 
@@ -5738,13 +5868,13 @@ snapshots:
 
   '@vladfrangu/async_event_emitter@2.4.7': {}
 
-  '@webgpu/types@0.1.72': {}
-
   abort-controller@3.0.0:
     dependencies:
       event-target-shim: 5.0.1
 
   abstract-logging@2.0.1: {}
+
+  acorn@8.16.0: {}
 
   acorn@8.18.0: {}
 
@@ -5996,6 +6126,8 @@ snapshots:
       readdirp: 5.1.1
 
   chownr@1.1.4: {}
+
+  cjs-module-lexer@2.2.1: {}
 
   cliui@8.0.1:
     dependencies:
@@ -6912,7 +7044,7 @@ snapshots:
 
   mdurl@2.1.0: {}
 
-  meshoptimizer@0.22.0: {}
+  meshoptimizer@1.1.1: {}
 
   mime-db@1.52.0: {}
 
@@ -7723,7 +7855,7 @@ snapshots:
     dependencies:
       real-require: 0.2.0
 
-  three@0.181.0: {}
+  three@0.185.1: {}
 
   through2@4.0.2:
     dependencies:
@@ -7793,16 +7925,6 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  ttsc@0.27.0:
-    optionalDependencies:
-      '@ttsc/darwin-arm64': 0.27.0
-      '@ttsc/darwin-x64': 0.27.0
-      '@ttsc/linux-arm': 0.27.0
-      '@ttsc/linux-arm64': 0.27.0
-      '@ttsc/linux-x64': 0.27.0
-      '@ttsc/win32-arm64': 0.27.0
-      '@ttsc/win32-x64': 0.27.0
-
   ttsc@0.28.6:
     optionalDependencies:
       '@ttsc/darwin-arm64': 0.28.6
@@ -7812,6 +7934,19 @@ snapshots:
       '@ttsc/linux-x64': 0.28.6
       '@ttsc/win32-arm64': 0.28.6
       '@ttsc/win32-x64': 0.28.6
+
+  ttsc@0.30.4:
+    dependencies:
+      acorn: 8.16.0
+      cjs-module-lexer: 2.2.1
+    optionalDependencies:
+      '@ttsc/darwin-arm64': 0.30.4
+      '@ttsc/darwin-x64': 0.30.4
+      '@ttsc/linux-arm': 0.30.4
+      '@ttsc/linux-arm64': 0.30.4
+      '@ttsc/linux-x64': 0.30.4
+      '@ttsc/win32-arm64': 0.30.4
+      '@ttsc/win32-x64': 0.30.4
 
   tunnel-agent@0.6.0:
     dependencies:
@@ -7895,14 +8030,6 @@ snapshots:
       '@typescript/typescript-win32-arm64': 7.0.2
       '@typescript/typescript-win32-x64': 7.0.2
 
-  typia@14.0.6(ttsc@0.27.0):
-    dependencies:
-      '@typia/interface': 14.0.6
-      '@typia/utils': 14.0.6
-      randexp: 0.5.3
-    optionalDependencies:
-      ttsc: 0.27.0
-
   typia@14.0.6(ttsc@0.28.6):
     dependencies:
       '@typia/interface': 14.0.6
@@ -7910,6 +8037,14 @@ snapshots:
       randexp: 0.5.3
     optionalDependencies:
       ttsc: 0.28.6
+
+  typia@14.0.6(ttsc@0.30.4):
+    dependencies:
+      '@typia/interface': 14.0.6
+      '@typia/utils': 14.0.6
+      randexp: 0.5.3
+    optionalDependencies:
+      ttsc: 0.30.4
 
   uc.micro@2.1.0: {}
 

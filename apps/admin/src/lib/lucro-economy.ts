@@ -79,7 +79,7 @@ export function getLucroRewardTier(
       ? 0
       : Math.ceil((valueIndex * (rewardTiers.length - 1)) / (values.length - 1));
 
-  return { ...rewardTiers[tierIndex]!, index: tierIndex };
+  return { ...(rewardTiers[tierIndex] ?? rewardTiers[0]), index: tierIndex };
 }
 
 export function rollLucroReward(

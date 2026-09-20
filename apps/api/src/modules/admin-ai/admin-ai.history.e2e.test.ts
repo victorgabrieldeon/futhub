@@ -9,7 +9,7 @@ describe('Admin AI durable history', () => {
   const base = '/v1/admin/ai/sessions';
   beforeAll(async () => {
     context = await startE2eContext();
-  }, 60_000);
+  }, 120_000);
   afterEach(() => vi.restoreAllMocks());
   afterAll(async () => {
     await context?.close();
@@ -139,8 +139,11 @@ describe('Admin AI durable history', () => {
       payload: { provider: 'openai', baseUrl: 'https://example.com/v1', apiKey: 'owner-test' },
     });
     const { id } = created.json<{ id: string }>();
-    const { db, sql } = context.database;
-    await db.execute(sql`update admin_ai_history set owner = 'another-owner' where id = ${id}`);
+    const { db, eq, schema } = context.database;
+    await db
+      .update(schema.adminAiHistory)
+      .set({ owner: 'another-owner' })
+      .where(eq(schema.adminAiHistory.id, id));
     // When: trying to read/list that record under the authenticated owner.
     const detail = await context.app.inject({
       method: 'GET',

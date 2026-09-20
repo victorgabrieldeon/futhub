@@ -54,7 +54,7 @@ describe('Admin AI tools HTTP boundary', () => {
   };
   beforeAll(async () => {
     context = await startE2eContext();
-  }, 60_000);
+  }, 120_000);
   afterAll(async () => {
     vi.restoreAllMocks();
     await context?.close();

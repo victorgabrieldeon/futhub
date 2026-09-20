@@ -30,11 +30,21 @@ export function formatCommandResult(
     level: String(result.progression.level),
     availableAt: available,
   };
+  const report = result.report;
+  const closing = [
+    '**Fechamento do clube**',
+    `Bilheteria: **+${report.ticketRevenue}**`,
+    `Receita comercial: **+${report.commercialRevenue}**`,
+    `Patrocinador: **+${report.sponsorRevenue}**`,
+    `Manutenção: **-${report.maintenance}**`,
+    `Folha salarial: **-${report.payroll}**`,
+    `Lucro líquido: **${report.net >= 0 ? '+' : ''}${report.net}**`,
+  ].join('\n');
   return {
     embeds: [
       {
         title: render(result.embed.title, values),
-        description: render(result.embed.description, values),
+        description: `${render(result.embed.description, values)}\n\n${closing}`,
         color: Number.parseInt(result.embed.color.slice(1), 16),
         footer: result.embed.footer ? { text: render(result.embed.footer, values) } : undefined,
       },

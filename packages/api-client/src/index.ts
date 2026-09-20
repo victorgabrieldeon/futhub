@@ -1,8 +1,26 @@
 import type * as Generated from './generated.js';
 
 export * from './generated.js';
+export {
+  autoSelectTeamLineup,
+  getClub,
+  getTeam,
+  setTeamCaptain,
+  setTeamFormation,
+  setTeamLineupCard,
+  setTeamTactic,
+  toggleTeamCardFavorite,
+  upgradeStadium,
+} from './generated.js';
+export type {
+  GetTeamBodyPosition,
+  GetTeamBodySort,
+  TeamCard,
+  TeamResponse,
+} from './generated.js';
 export { ApiClientError, configureApiClient, request, type ApiClientOptions } from './request.js';
 export type DiscordIdentityDto = Generated.ExecuteLucroBody;
+export type ClubEconomyResponse = Generated.GetClub200;
 export type BotResponseDefinitionDto = Generated.BotResponseDefinitionDto;
 export type BotResponseTemplateDto = Generated.BotResponseTemplateDto;
 export type LeagueStatusResponse = Generated.GetV1LeagueDiscordUserId200;

@@ -56,7 +56,9 @@ export function PackCard({ onOpen, pack }: PackCardProps) {
 export function PacksEmpty({ onCreate }: Readonly<{ onCreate: () => void }>) {
   return (
     <aside className="collection-gallery-start packs-empty">
-      <span aria-hidden="true" className="collection-gallery-start-mark">+</span>
+      <span aria-hidden="true" className="collection-gallery-start-mark">
+        +
+      </span>
       <div>
         <h2>Nenhum pack nesta visão</h2>
         <p>Crie um pack para definir oferta, preço e elegibilidade de cards.</p>

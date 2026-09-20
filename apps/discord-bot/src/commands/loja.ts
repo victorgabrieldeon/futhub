@@ -3,8 +3,8 @@ import { Declare, Options, createStringOption } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
 import { formatCardPurchase, formatPackPurchase } from '../game.js';
+import { initialPacksState, storeResponse, storeSessionManager } from '../store.js';
 import { CommandInputError, FutHubCommand, identity, requiredText } from './shared.js';
-import { storeResponse } from '../store.js';
 
 const tabs = [
   { name: 'Packs', value: 'packs' },
@@ -21,7 +21,10 @@ const options = {
 export default class LojaCommand extends FutHubCommand {
   async run(context: CommandContext<typeof options>): Promise<void> {
     if (!context.options.aba) {
-      await context.write(await storeResponse('packs'));
+      await this.respond(context, 'loja', async () => {
+        const session = storeSessionManager.create(context.author.id, initialPacksState());
+        return storeResponse(session, 'packs');
+      });
       return;
     }
     await this.respond(context, 'loja', async () => {

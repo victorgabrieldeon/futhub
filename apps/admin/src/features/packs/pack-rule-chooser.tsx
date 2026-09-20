@@ -233,7 +233,9 @@ export function RuleChooser({
       {hasMoreOptions && !loading && (
         <p className="pack-rule__more">Role para carregar mais opções.</p>
       )}
-      {selected.length > 0 && <p className="pack-rule__count">{selected.length} itens configurados</p>}
+      {selected.length > 0 && (
+        <p className="pack-rule__count">{selected.length} itens configurados</p>
+      )}
     </section>
   );
 }

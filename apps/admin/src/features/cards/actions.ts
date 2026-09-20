@@ -1,7 +1,7 @@
 import {
   ApiClientError,
-  type GetV1AdminCardsParams,
   type GetV1AdminCardsCollectionsParams,
+  type GetV1AdminCardsParams,
   type GetV1AdminCardsTeamsParams,
   deleteV1AdminCardsCardId,
   deleteV1AdminCardsCollectionsCollectionId,
@@ -11,8 +11,8 @@ import {
   getPutV1AdminCardsCardIdImageUrl,
   getV1AdminCards,
   getV1AdminCardsCatalog,
-  getV1AdminCardsCollections,
   getV1AdminCardsCollectionArtworkSuggestions,
+  getV1AdminCardsCollections,
   getV1AdminCardsTeamLogoDetails,
   getV1AdminCardsTeamLogoSuggestions,
   getV1AdminCardsTeams,

@@ -57,7 +57,7 @@ export async function startE2eContext(): Promise<E2eContext> {
     // Database module reads DATABASE_URL during evaluation.
     database = await import('@futhub/database');
     const { buildApp } = await import('../../app.js');
-    app = await buildApp({ logger: false });
+    app = await buildApp({ abortOnError: false, logger: false });
     if (!app || !database || !container) throw new Error('Failed to initialize E2E context.');
     const initializedApp = app;
     const initializedDatabase = database;

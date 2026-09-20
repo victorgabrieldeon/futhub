@@ -14,7 +14,7 @@ describe('Admin AI bulk card creation', () => {
   beforeAll(async () => {
     context = await startE2eContext();
     catalog = await createCardCatalog(context.database, 'ai-bulk-cards');
-  }, 60_000);
+  }, 120_000);
   afterEach(() => vi.restoreAllMocks());
   afterAll(() => context?.close());
 

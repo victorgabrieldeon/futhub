@@ -57,6 +57,10 @@ export class FilesService {
     return this.store(image, { source: 'upload', prefix: 'uploads' });
   }
 
+  async generated(image: ImageFile): Promise<FileDto> {
+    return this.store(image, { source: 'generated', prefix: 'generated' });
+  }
+
   async importImage(sourceUrl: string, contentType?: ImageContentType): Promise<FileDto> {
     const url = this.importUrl(sourceUrl);
     const response = await fetch(url, { signal: AbortSignal.timeout(20_000) });

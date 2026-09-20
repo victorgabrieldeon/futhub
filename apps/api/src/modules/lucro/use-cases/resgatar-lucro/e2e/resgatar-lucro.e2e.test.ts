@@ -69,8 +69,17 @@ test('resgata lucro once and enters cooldown', async () => {
   expect(success.statusCode).toBe(200);
   expect(successBody).toMatchObject({
     kind: 'success',
+    report: {
+      ticketRevenue: 200,
+      sponsorRevenue: 0,
+      maintenance: 50,
+      payroll: 0,
+    },
     progression: { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] },
   });
+  expect(successBody.report.net).toBe(
+    successBody.report.ticketRevenue + successBody.report.commercialRevenue - 50,
+  );
 
   const cooldown = await request();
   expect(cooldown.statusCode).toBe(200);

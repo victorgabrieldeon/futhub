@@ -13,7 +13,7 @@ describe('Admin AI confirmed catalog creations', () => {
   beforeAll(async () => {
     context = await startE2eContext();
     catalog = await createCardCatalog(context.database, 'ai-catalog');
-  }, 60_000);
+  }, 120_000);
   afterAll(() => context?.close());
   afterEach(() => vi.restoreAllMocks());
 

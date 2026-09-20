@@ -9,5 +9,6 @@ import { AdminPacksService } from './admin-packs.service.js';
   imports: [AuthModule, FilesModule],
   controllers: [AdminPacksController],
   providers: [AdminPacksService],
+  exports: [AdminPacksService],
 })
 export class AdminPacksModule {}
