@@ -3,8 +3,10 @@ import { afterAll, beforeAll, expect, test } from 'vitest';
 import { internalToken, type E2eContext, startE2eContext } from '../../../test/e2e/context.js';
 import { createLeaguePlayer } from '../../../test/e2e/entities.js';
 
+const newcomer = { id: 'e2e-league-newcomer', name: 'New player', avatarUrl: null };
 const home = { id: 'e2e-league-home', name: 'Home player', avatarUrl: null };
 const away = { id: 'e2e-league-away', name: 'Away player', avatarUrl: null };
+const incomplete = { id: 'e2e-league-incomplete', name: 'Incomplete player', avatarUrl: null };
 let context: E2eContext | undefined;
 
 beforeAll(async () => {
@@ -15,13 +17,40 @@ afterAll(async () => {
   await context?.close();
 });
 
-test('forma partida ranked e expõe placar, eventos e classificação', async () => {
+test('abre a liga, evita autocombate e permite nova busca após o resultado', async () => {
   if (!context) throw new Error('E2E context was not initialized.');
   const { app, database } = context;
-  await createLeaguePlayer(database, home);
-  await createLeaguePlayer(database, away);
   const headers = { authorization: `Bearer ${internalToken}` };
 
+  const opened = await app.inject({
+    method: 'POST',
+    url: '/v1/league',
+    headers,
+    payload: newcomer,
+  });
+  expect(opened.statusCode).toBe(200);
+  expect(opened.json()).toMatchObject({
+    points: 0,
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    division: { name: 'Bronze' },
+    queue: null,
+  });
+  const newcomerUser = await database.db.query.users.findFirst({
+    columns: { id: true },
+    where: database.eq(database.schema.users.discordUserId, newcomer.id),
+  });
+  expect(newcomerUser).toBeDefined();
+  const newcomerStanding = newcomerUser
+    ? await database.db.query.userLeagueStandings.findFirst({
+        where: database.eq(database.schema.userLeagueStandings.userId, newcomerUser.id),
+      })
+    : undefined;
+  expect(newcomerStanding).toMatchObject({ points: 0, wins: 0, draws: 0, losses: 0 });
+
+  const homeUser = await createLeaguePlayer(database, home);
+  const awayUser = await createLeaguePlayer(database, away);
   const firstQueue = await app.inject({
     method: 'POST',
     url: '/v1/ranked/queue',
@@ -30,6 +59,16 @@ test('forma partida ranked e expõe placar, eventos e classificação', async ()
   });
   expect(firstQueue.statusCode).toBe(200);
   expect(firstQueue.json()).toMatchObject({ kind: 'waiting', division: { name: 'Bronze' } });
+
+  const repeatedQueue = await app.inject({
+    method: 'POST',
+    url: '/v1/ranked/queue',
+    headers,
+    payload: home,
+  });
+  expect(repeatedQueue.statusCode).toBe(200);
+  expect(repeatedQueue.json()).toMatchObject({ kind: 'waiting' });
+  expect(await database.db.query.rooms.findMany()).toHaveLength(0);
 
   const secondQueue = await app.inject({
     method: 'POST',
@@ -51,21 +90,66 @@ test('forma partida ranked e expõe placar, eventos e classificação', async ()
   expect(match.statusCode).toBe(200);
   expect(match.json()).toMatchObject({
     id: queue.matchId,
-    homeUserId: expect.any(String),
-    awayUserId: expect.any(String),
+    home,
+    away,
   });
   expect(match.json<{ events: unknown[] }>().events).toEqual(
     expect.arrayContaining([expect.objectContaining({ minute: 0, type: 'kickoff' })]),
   );
 
-  const standing = await app.inject({
-    method: 'GET',
-    url: `/v1/league/${home.id}`,
+  for (const identity of [home, away]) {
+    const standing = await app.inject({
+      method: 'GET',
+      url: `/v1/league/${identity.id}`,
+      headers,
+    });
+    expect(standing.statusCode).toBe(200);
+    expect(standing.json()).toMatchObject({
+      division: { name: 'Bronze' },
+      queue: { kind: 'matched', matchId: queue.matchId },
+    });
+    const campaign = standing.json<{ wins: number; draws: number; losses: number }>();
+    expect(campaign.wins + campaign.draws + campaign.losses).toBe(1);
+  }
+
+  const requeued = await app.inject({
+    method: 'POST',
+    url: '/v1/ranked/queue',
     headers,
+    payload: home,
   });
-  expect(standing.statusCode).toBe(200);
-  expect(standing.json()).toMatchObject({
-    division: { name: 'Bronze' },
-    queue: { kind: 'matched', matchId: queue.matchId },
+  expect(requeued.statusCode).toBe(200);
+  expect(requeued.json()).toMatchObject({ kind: 'waiting', division: { name: 'Bronze' } });
+  expect(
+    await database.db.query.rankedQueues.findFirst({
+      where: database.eq(database.schema.rankedQueues.userId, homeUser.id),
+    }),
+  ).toMatchObject({ status: 'waiting', roomId: null });
+  expect(
+    await database.db.query.rankedQueues.findFirst({
+      where: database.eq(database.schema.rankedQueues.userId, awayUser.id),
+    }),
+  ).toMatchObject({ status: 'matched', roomId: queue.matchId });
+});
+
+test('rejeita escalação incompleta sem persistir entrada na fila', async () => {
+  if (!context) throw new Error('E2E context was not initialized.');
+  const { app, database } = context;
+  const user = await createLeaguePlayer(database, incomplete, { holderCount: 10 });
+  const response = await app.inject({
+    method: 'POST',
+    url: '/v1/ranked/queue',
+    headers: { authorization: `Bearer ${internalToken}` },
+    payload: incomplete,
   });
+  expect(response.statusCode).toBe(400);
+  expect(response.json()).toMatchObject({
+    message:
+      'Complete a escalação com 11 titulares em posições compatíveis antes de buscar uma partida.',
+  });
+  expect(
+    await database.db.query.rankedQueues.findFirst({
+      where: database.eq(database.schema.rankedQueues.userId, user.id),
+    }),
+  ).toBeUndefined();
 });

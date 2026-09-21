@@ -21,61 +21,57 @@ import {
 type Database = typeof DatabaseModule;
 type DatabaseLoader = () => Promise<Database>;
 type Transaction = Parameters<Parameters<Database['db']['transaction']>[0]>[0];
+const INVALID_LINEUP_MESSAGE =
+  'Complete a escalação com 11 titulares em posições compatíveis antes de buscar uma partida.';
 
 export class DrizzleLeagueRepository implements LeagueRepository {
   constructor(private readonly loadDatabase: DatabaseLoader) {}
 
+  async open(identity: DiscordIdentity): Promise<LeagueStatusResponse> {
+    const database = await this.loadDatabase();
+    const now = new Date();
+    await database.db.transaction((tx) => this.ensureStanding(database, tx, identity, now));
+    return this.standings(identity.id);
+  }
+
   async join(identity: DiscordIdentity): Promise<QueueResponse> {
     const database = await this.loadDatabase();
     const now = new Date();
-    const { and, db, eq, schema, sql } = database;
-    const current = await db.transaction(async (tx) => {
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtext(${`ranked-user:${identity.id}`}))`,
-      );
-      const user = await upsertDiscordUser(tx, schema, identity, now);
-      const bronze = await tx.query.divisions.findFirst({
-        columns: { id: true },
-        where: eq(schema.divisions.name, 'Bronze'),
-      });
-      if (!bronze) throw new Error('Bronze division is missing.');
-      const [standing] = await tx
-        .insert(schema.userLeagueStandings)
-        .values({ userId: user.id, divisionId: bronze.id })
-        .onConflictDoNothing()
-        .returning();
-      const persisted =
-        standing ??
-        (await tx.query.userLeagueStandings.findFirst({
-          where: eq(schema.userLeagueStandings.userId, user.id),
-        }));
-      if (!persisted) throw new Error('Failed to load league standing.');
-      return { userId: user.id, standing: persisted };
-    });
-
-    const ownQueue = await db.query.rankedQueues.findFirst({
-      columns: { status: true, roomId: true },
-      where: eq(schema.rankedQueues.userId, current.userId),
-    });
-    if (ownQueue?.status === 'matched' && ownQueue.roomId)
-      return { kind: 'matched', matchId: ownQueue.roomId };
-
-    const division = await db.query.divisions.findFirst({
-      columns: { id: true, name: true, points: true, emoji: true, color: true, imageFileId: true },
-      where: eq(schema.divisions.id, current.standing.divisionId),
-    });
-    if (!division) throw new Error('Standing division is missing.');
-    const ownLineup = await this.loadLineup(database, current.userId);
+    const { and, db, eq, ne, schema, sql } = database;
 
     return db.transaction(async (tx) => {
+      const current = await this.ensureStanding(database, tx, identity, now);
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtext(${`ranked-division:${current.standing.divisionId}`}))`,
       );
+
+      const ownQueue = await tx.query.rankedQueues.findFirst({
+        columns: { status: true },
+        where: eq(schema.rankedQueues.userId, current.userId),
+      });
+      if (ownQueue?.status === 'matched') {
+        await tx.delete(schema.rankedQueues).where(eq(schema.rankedQueues.userId, current.userId));
+      }
+
+      const division = await tx.query.divisions.findFirst({
+        columns: {
+          id: true,
+          name: true,
+          points: true,
+          emoji: true,
+          color: true,
+          imageFileId: true,
+        },
+        where: eq(schema.divisions.id, current.standing.divisionId),
+      });
+      if (!division) throw new Error('Standing division is missing.');
+      const ownLineup = await this.loadLineup(database, current.userId);
       const queued = await tx.query.rankedQueues.findFirst({
         columns: { userId: true },
         where: and(
           eq(schema.rankedQueues.divisionId, current.standing.divisionId),
           eq(schema.rankedQueues.status, 'waiting'),
+          ne(schema.rankedQueues.userId, current.userId),
         ),
       });
       if (!queued) {
@@ -150,7 +146,21 @@ export class DrizzleLeagueRepository implements LeagueRepository {
       await tx
         .update(schema.rankedQueues)
         .set({ status: 'matched', roomId: room.id, updatedAt: now })
-        .where(sql`${schema.rankedQueues.userId} in (${queued.userId}, ${current.userId})`);
+        .where(eq(schema.rankedQueues.userId, queued.userId));
+      await tx
+        .insert(schema.rankedQueues)
+        .values({
+          userId: current.userId,
+          divisionId: current.standing.divisionId,
+          status: 'matched',
+          roomId: room.id,
+          queuedAt: now,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: schema.rankedQueues.userId,
+          set: { status: 'matched', roomId: room.id, updatedAt: now },
+        });
       await this.recordCardStatistics(
         tx,
         schema,
@@ -256,10 +266,21 @@ export class DrizzleLeagueRepository implements LeagueRepository {
     const { db, eq, schema } = await this.loadDatabase();
     const room = await db.query.rooms.findFirst({ where: eq(schema.rooms.id, matchId) });
     if (!room) throw new LeagueNotFoundError('Match not found.');
+    const [home, away] = await Promise.all([
+      db.query.users.findFirst({
+        columns: { discordUserId: true, nome: true, urlAvatar: true },
+        where: eq(schema.users.id, room.homeUserId),
+      }),
+      db.query.users.findFirst({
+        columns: { discordUserId: true, nome: true, urlAvatar: true },
+        where: eq(schema.users.id, room.awayUserId),
+      }),
+    ]);
+    if (!home || !away) throw new Error('Match participant is missing.');
     return {
       id: room.id,
-      homeUserId: room.homeUserId,
-      awayUserId: room.awayUserId,
+      home: { id: home.discordUserId, name: home.nome, avatarUrl: home.urlAvatar },
+      away: { id: away.discordUserId, name: away.nome, avatarUrl: away.urlAvatar },
       homeGoals: room.homeGoals,
       awayGoals: room.awayGoals,
       completedAt: room.completedAt.toISOString(),
@@ -282,6 +303,34 @@ export class DrizzleLeagueRepository implements LeagueRepository {
       .map((event) => ({ ...event }));
   }
 
+  private async ensureStanding(
+    database: Database,
+    tx: Transaction,
+    identity: DiscordIdentity,
+    now: Date,
+  ) {
+    const { eq, schema, sql } = database;
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`ranked-user:${identity.id}`}))`);
+    const user = await upsertDiscordUser(tx, schema, identity, now);
+    const bronze = await tx.query.divisions.findFirst({
+      columns: { id: true },
+      where: eq(schema.divisions.name, 'Bronze'),
+    });
+    if (!bronze) throw new Error('Bronze division is missing.');
+    const [standing] = await tx
+      .insert(schema.userLeagueStandings)
+      .values({ userId: user.id, divisionId: bronze.id })
+      .onConflictDoNothing()
+      .returning();
+    const persisted =
+      standing ??
+      (await tx.query.userLeagueStandings.findFirst({
+        where: eq(schema.userLeagueStandings.userId, user.id),
+      }));
+    if (!persisted) throw new Error('Failed to load league standing.');
+    return { userId: user.id, standing: persisted };
+  }
+
   private async loadLineup(
     database: Database,
     userId: string,
@@ -290,7 +339,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
     const formation = await db.query.userFormations.findFirst({
       where: eq(schema.userFormations.userId, userId),
     });
-    if (!formation) throw new LeagueInputError('Player has no selected formation.');
+    if (!formation) throw new LeagueInputError(INVALID_LINEUP_MESSAGE);
     const slots = await db.query.formationSlots.findMany({
       where: eq(schema.formationSlots.formationId, formation.formationId),
     });
@@ -300,11 +349,12 @@ export class DrizzleLeagueRepository implements LeagueRepository {
     const cards = await Promise.all(
       holders.map(async (holder) => {
         const card = await db.query.cards.findFirst({ where: eq(schema.cards.id, holder.cardId) });
-        if (!card || !holder.holderPosition) throw new LeagueInputError('Holder card is invalid.');
+        if (!card) throw new Error('Holder card is missing.');
+        if (!holder.holderPosition) throw new LeagueInputError(INVALID_LINEUP_MESSAGE);
         const stats = await db.query.cardStats.findFirst({
           where: eq(schema.cardStats.id, card.statsId),
         });
-        if (!stats) throw new LeagueInputError('Holder statistics are missing.');
+        if (!stats) throw new Error('Holder statistics are missing.');
         const secondary = await db.query.cardSecondaryPositions.findMany({
           where: eq(schema.cardSecondaryPositions.cardId, card.id),
         });
@@ -323,10 +373,14 @@ export class DrizzleLeagueRepository implements LeagueRepository {
         };
       }),
     );
-    validateLineup(
-      cards,
-      slots.map((slot) => slot.position),
-    );
+    try {
+      validateLineup(
+        cards,
+        slots.map((slot) => slot.position),
+      );
+    } catch {
+      throw new LeagueInputError(INVALID_LINEUP_MESSAGE);
+    }
     return {
       cards,
       tactic: (formation as typeof formation & { tactic: TeamTactic }).tactic,

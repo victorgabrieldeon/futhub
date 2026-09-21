@@ -1,8 +1,12 @@
+import { ApiClientError } from '@futhub/api-client';
+
 import { ComponentCommand, Label, MessageFlags, Modal, TextInput } from 'seyfert';
 import type { ComponentContext } from 'seyfert';
 
 import {
   autoLineup,
+  loadLeague,
+  queueLeagueMatch,
   reloadTeam,
   sellTeamCard,
   setTactic,
@@ -55,6 +59,24 @@ export default class TimeButtonComponent extends ComponentCommand {
     await context.deferUpdate();
     try {
       const { session, action, argument } = parsed;
+      if (action === 'league-refresh' || action === 'league-queue') {
+        try {
+          const league =
+            action === 'league-queue'
+              ? await queueLeagueMatch(session.identity)
+              : await loadLeague(session.identity);
+          const updated = updateTeamSession(session, { league });
+          await context.editOrReply(await teamResponse(updated));
+        } catch (error) {
+          console.error('Failed to update league panel.', error);
+          const notice =
+            action === 'league-queue' && error instanceof ApiClientError && error.status === 400
+              ? '⚠️ Complete sua escalação com 11 titulares compatíveis antes de buscar partida.'
+              : '❌ Não foi possível atualizar a liga. Tente novamente.';
+          await context.editOrReply(await teamResponse(session, notice));
+        }
+        return;
+      }
       if (action === 'cancel') {
         const updated = updateTeamSession(session, { confirmSale: false });
         await context.editOrReply(await teamResponse(updated));

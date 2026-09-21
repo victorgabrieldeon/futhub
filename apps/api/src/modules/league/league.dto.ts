@@ -59,8 +59,8 @@ export type MatchEventDto = z.infer<typeof MatchEventDtoSchema>;
 
 export const MatchResponseSchema = z.object({
   id: z.uuid(),
-  homeUserId: z.uuid(),
-  awayUserId: z.uuid(),
+  home: DiscordIdentityDtoSchema,
+  away: DiscordIdentityDtoSchema,
   homeGoals: z.number(),
   awayGoals: z.number(),
   completedAt: z.iso.datetime(),

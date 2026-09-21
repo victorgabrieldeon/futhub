@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import type { LeagueStatusResponse, MatchResponse } from '@futhub/api-client';
 
 const ttlMs = 15 * 60_000;
 const maxSessions = 1_000;
@@ -58,7 +59,11 @@ export type ClubResponse = {
   payroll: number;
   projectedNet: number;
 };
-export type TeamTab = 'overview' | 'lineup' | 'inventory' | 'packs' | 'sale' | 'club';
+export type LeaguePanelState = Readonly<{
+  status: LeagueStatusResponse;
+  match: MatchResponse | null;
+}>;
+export type TeamTab = 'overview' | 'lineup' | 'inventory' | 'packs' | 'sale' | 'club' | 'league';
 export type TeamFilters = {
   readonly name: string;
   readonly position: TeamPosition | null;
@@ -77,6 +82,7 @@ export type TeamSession = {
   readonly confirmSale: boolean;
   readonly team: TeamResponse;
   readonly club: ClubResponse | null;
+  readonly league: LeaguePanelState | null;
 };
 export type TeamAction =
   | 'tab'
@@ -95,7 +101,9 @@ export type TeamAction =
   | 'sell'
   | 'cancel'
   | 'search'
-  | 'stadium-upgrade';
+  | 'stadium-upgrade'
+  | 'league-queue'
+  | 'league-refresh';
 
 const sessions = new Map<string, TeamSession>();
 
@@ -174,5 +182,7 @@ function isTeamAction(value: string): value is TeamAction {
     'cancel',
     'search',
     'stadium-upgrade',
+    'league-queue',
+    'league-refresh',
   ].includes(value);
 }

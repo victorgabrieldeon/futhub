@@ -1654,6 +1654,164 @@
         "x-samchon-controller": "AdminLucroController"
       }
     },
+    "/v1/league": {
+      "post": {
+        "tags": ["Liga"],
+        "operationId": "getLeague",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "avatarUrl": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["id", "name", "avatarUrl"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "points": {
+                      "type": "number"
+                    },
+                    "wins": {
+                      "type": "number"
+                    },
+                    "draws": {
+                      "type": "number"
+                    },
+                    "losses": {
+                      "type": "number"
+                    },
+                    "division": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "minimumPoints": {
+                          "type": "number"
+                        },
+                        "emoji": {
+                          "type": "string"
+                        },
+                        "color": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "imageUrl": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["id", "name", "minimumPoints", "emoji", "color", "imageUrl"],
+                      "type": "object"
+                    },
+                    "queue": {
+                      "oneOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": ["waiting"]
+                            },
+                            "division": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "minimumPoints": {
+                                  "type": "number"
+                                },
+                                "emoji": {
+                                  "type": "string"
+                                },
+                                "color": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "imageUrl": {
+                                  "type": "string",
+                                  "nullable": true
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "minimumPoints",
+                                "emoji",
+                                "color",
+                                "imageUrl"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": ["kind", "division"],
+                          "type": "object",
+                          "nullable": true
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": ["matched"]
+                            },
+                            "matchId": {
+                              "type": "string"
+                            }
+                          },
+                          "required": ["kind", "matchId"],
+                          "type": "object",
+                          "nullable": true
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["points", "wins", "draws", "losses", "division", "queue"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "league", "open"],
+        "x-samchon-controller": "LeagueController"
+      }
+    },
     "/v1/ranked/queue": {
       "post": {
         "tags": ["Liga"],
@@ -2002,11 +2160,39 @@
                     "id": {
                       "type": "string"
                     },
-                    "homeUserId": {
-                      "type": "string"
+                    "home": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "avatarUrl": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["id", "name", "avatarUrl"],
+                      "type": "object"
                     },
-                    "awayUserId": {
-                      "type": "string"
+                    "away": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "avatarUrl": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["id", "name", "avatarUrl"],
+                      "type": "object"
                     },
                     "homeGoals": {
                       "type": "number"
@@ -2066,8 +2252,8 @@
                   },
                   "required": [
                     "id",
-                    "homeUserId",
-                    "awayUserId",
+                    "home",
+                    "away",
                     "homeGoals",
                     "awayGoals",
                     "completedAt",

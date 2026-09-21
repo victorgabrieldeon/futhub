@@ -27,13 +27,21 @@ const tabs: readonly [TeamTab, string][] = [
   ['packs', 'Packs'],
   ['sale', 'Venda'],
   ['club', 'Clube'],
+  ['league', 'Liga'],
 ];
 const positions = ['GOL', 'LD', 'LE', 'ZAG', 'VOL', 'MA', 'MC', 'PD', 'PE', 'CA'] as const;
 const sortLabels = { overall: 'Força', name: 'Nome', recent: 'Recentes' } as const;
 const nextSort = { overall: 'name', name: 'recent', recent: 'overall' } as const;
 
 export async function teamResponse(session: TeamSession, notice?: string) {
-  const image = await renderTeamImage(session);
+  if (session.tab === 'league') return leagueResponse(session, notice);
+
+  const image = await renderTeamImage({
+    identity: session.identity,
+    tab: session.tab,
+    team: session.team,
+    club: session.club,
+  });
   const components = [
     tabMenu(session),
     new TextDisplay().setContent(teamBody(session, notice)),
@@ -55,6 +63,103 @@ export async function teamResponse(session: TeamSession, notice?: string) {
     components: [new Container().setColor('#16785b').setComponents(...components)],
     allowedMentions: noMentions,
   };
+}
+
+function leagueResponse(session: TeamSession, notice?: string) {
+  const league = session.league;
+  const imageUrl = league?.status.division.imageUrl ?? null;
+  const imageName = 'futhub-league.png';
+  const components = [
+    tabMenu(session),
+    new TextDisplay().setContent(leagueBody(session, notice)),
+    ...(imageUrl
+      ? [
+          new MediaGallery().addItems(
+            new MediaGalleryItem()
+              .setMedia(`attachment://${imageName}`)
+              .setDescription(`Divisão ${league?.status.division.name ?? 'da liga'}`),
+          ),
+        ]
+      : []),
+    leagueControls(session),
+  ];
+  const divisionColor = league?.status.division.color;
+  const color =
+    divisionColor && /^#[0-9a-f]{6}$/.test(divisionColor)
+      ? Number.parseInt(divisionColor.slice(1), 16)
+      : '#16785b';
+  return {
+    flags: 32768 | (session.ephemeral ? 64 : 0),
+    ...(imageUrl
+      ? {
+          files: [
+            new AttachmentBuilder()
+              .setName(imageName)
+              .setDescription(`Divisão ${league?.status.division.name ?? 'da liga'}`)
+              .setFile('url', imageUrl),
+          ],
+        }
+      : {}),
+    components: [new Container().setColor(color).setComponents(...components)],
+    allowedMentions: noMentions,
+  };
+}
+
+function leagueControls(session: TeamSession): ActionRow<Button> {
+  const queue = session.league?.status.queue;
+  const waiting = queue?.kind === 'waiting';
+  const matched = queue?.kind === 'matched';
+  const action = waiting ? 'league-refresh' : 'league-queue';
+  return new ActionRow<Button>().setComponents(
+    new Button()
+      .setCustomId(teamCustomId(session, action))
+      .setLabel(waiting ? 'Atualizar' : matched ? 'Buscar nova partida' : 'Buscar partida')
+      .setStyle(waiting ? ButtonStyle.Secondary : ButtonStyle.Primary)
+      .setDisabled(!waiting && session.team.lineup.length !== 11),
+  );
+}
+
+function leagueBody(session: TeamSession, notice?: string): string {
+  const league = session.league;
+  if (!league)
+    return ['# MEU TIME · LIGA', 'Carregando informações da liga...', notice]
+      .filter(Boolean)
+      .join('\n');
+
+  const { status, match } = league;
+  const lines = [
+    '# MEU TIME · LIGA',
+    `${status.division.emoji} **${status.division.name}** · **${status.points.toLocaleString('pt-BR')} pontos**`,
+    `**Vitórias:** ${status.wins} · **Empates:** ${status.draws} · **Derrotas:** ${status.losses}`,
+  ];
+  if (notice) lines.push(notice);
+  if (status.queue === null) lines.push('', 'Pronto para buscar um adversário.');
+  else if (status.queue.kind === 'waiting') lines.push('', 'Buscando adversário...');
+  else if (match) {
+    const ownerIsHome = match.home.id === session.identity.id;
+    const ownerIsAway = match.away.id === session.identity.id;
+    const ownerGoals = ownerIsHome ? match.homeGoals : match.awayGoals;
+    const opponentGoals = ownerIsHome ? match.awayGoals : match.homeGoals;
+    const result =
+      !ownerIsHome && !ownerIsAway
+        ? 'Resultado indisponível'
+        : ownerGoals === opponentGoals
+          ? 'Empate'
+          : ownerGoals > opponentGoals
+            ? 'Vitória'
+            : 'Derrota';
+    const completedAt = Math.floor(new Date(match.completedAt).getTime() / 1_000);
+    lines.push(
+      '',
+      '## ÚLTIMA PARTIDA',
+      `**${match.home.name} ${match.homeGoals} × ${match.awayGoals} ${match.away.name}**`,
+      `**Resultado:** ${result} · <t:${completedAt}:f>`,
+      ...match.events.map((event) => `${event.minute}' · ${event.description}`),
+    );
+  } else lines.push('', 'Resultado da partida indisponível. Use **Atualizar** novamente.');
+  if (status.queue?.kind !== 'waiting' && session.team.lineup.length !== 11)
+    lines.push('', 'Complete os 11 titulares para entrar na fila.');
+  return lines.join('\n');
 }
 
 function tabMenu(session: TeamSession): ActionRow<StringSelectMenu> {

@@ -31,6 +31,18 @@ import { LeagueInputError, LeagueNotFoundError } from './use-cases/league/league
 export class LeagueController {
   constructor(@Inject(LeagueUseCase) private readonly league: LeagueUseCase) {}
 
+  @TypedRoute.Post('league')
+  @HttpCode(200)
+  @SwaggerCustomizer(({ route }) => {
+    route.operationId = 'getLeague';
+    route.security = [{ bearer: [] }];
+  })
+  async open(
+    @Body({ schema: DiscordIdentityDtoSchema }) identity: DiscordIdentityDto,
+  ): Promise<LeagueStatusResponse> {
+    return this.handle(() => this.league.open(identity));
+  }
+
   @TypedRoute.Post('ranked/queue')
   @HttpCode(200)
   @SwaggerCustomizer(({ route }) => {

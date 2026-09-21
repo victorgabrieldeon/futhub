@@ -1,7 +1,14 @@
 import { ComponentCommand, MessageFlags } from 'seyfert';
 import type { ComponentContext } from 'seyfert';
 
-import { loadClub, reloadTeam, setCaptain, setFormation, setLineupCard } from '../team-api.js';
+import {
+  loadClub,
+  loadLeague,
+  reloadTeam,
+  setCaptain,
+  setFormation,
+  setLineupCard,
+} from '../team-api.js';
 import {
   type TeamPosition,
   type TeamTab,
@@ -45,6 +52,7 @@ export default class TimeSelectComponent extends ComponentCommand {
           selectedCardId: null,
           confirmSale: false,
           club: value === 'club' ? await loadClub(session.identity) : session.club,
+          league: value === 'league' ? await loadLeague(session.identity) : session.league,
         });
         await context.editOrReply(await teamResponse(updated));
         return;
@@ -125,7 +133,7 @@ export default class TimeSelectComponent extends ComponentCommand {
 }
 
 function isTab(value: string): value is TeamTab {
-  return ['overview', 'lineup', 'inventory', 'packs', 'sale', 'club'].includes(value);
+  return ['overview', 'lineup', 'inventory', 'packs', 'sale', 'club', 'league'].includes(value);
 }
 
 function isPosition(value: string): value is TeamPosition {

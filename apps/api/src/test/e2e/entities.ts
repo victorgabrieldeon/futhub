@@ -316,6 +316,7 @@ export async function createCardMarketFixture(database: Database): Promise<{
 export async function createLeaguePlayer(
   database: Database,
   identity: DiscordIdentity,
+  input: Readonly<{ holderCount?: number }> = {},
 ): Promise<{ id: string }> {
   const user = await createUser(database, identity);
   const catalog = await createCardCatalog(database, identity.id);
@@ -347,7 +348,9 @@ export async function createLeaguePlayer(
     userId: user.id,
     formationId: formation.id,
   });
-  for (const [index, position] of formationPositions.entries()) {
+  for (const [index, position] of formationPositions
+    .slice(0, input.holderCount ?? formationPositions.length)
+    .entries()) {
     const card = await createCard(database, catalog, `${identity.name} ${index}`, position);
     await database.db.insert(database.schema.userCards).values({
       userId: user.id,
