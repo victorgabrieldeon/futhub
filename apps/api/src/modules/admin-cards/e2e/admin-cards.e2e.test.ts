@@ -5,9 +5,10 @@ import { afterAll, beforeAll, expect, test, vi } from 'vitest';
 
 import { type E2eContext, adminToken, startE2eContext } from '../../../test/e2e/context.js';
 import { createPackFixture } from '../../../test/e2e/entities.js';
-import { FilesService } from '../../files/files.service.js';
+import type { FilesService } from '../../files/files.service.js';
 
 let context: E2eContext;
+let filesServiceClass: typeof FilesService;
 
 const importHeaders: Record<string, string> = {
   slug: 'Código único',
@@ -31,6 +32,8 @@ const importHeaders: Record<string, string> = {
 
 beforeAll(async () => {
   context = await startE2eContext();
+  // Static loading races the isolated Vite bootstrap for this app module.
+  ({ FilesService: filesServiceClass } = await import('../../files/files.service.js'));
 }, 120_000);
 
 afterAll(async () => {
@@ -536,7 +539,7 @@ test('imports cards atomically and updates them by slug', async () => {
   const teamImage = files.find((file) => file.objectKey.startsWith('teams/'));
   if (!cardImage || !collectionImage || !teamImage)
     throw new Error('Failed to create image fixtures.');
-  const urls = vi.spyOn(FilesService.prototype, 'urls').mockResolvedValue(
+  const urls = vi.spyOn(filesServiceClass.prototype, 'urls').mockResolvedValue(
     new Map([
       [cardImage.id, 'https://images.test/player.png'],
       [collectionImage.id, 'https://images.test/collection.png'],
@@ -662,7 +665,7 @@ test('filters and sorts cards', async () => {
   );
   expect(cards).toHaveLength(2);
 
-  const defaultImage = vi.spyOn(FilesService.prototype, 'defaultCardImage').mockResolvedValue({
+  const defaultImage = vi.spyOn(filesServiceClass.prototype, 'defaultCardImage').mockResolvedValue({
     id: 'default-card-image',
     url: 'https://images.test/default.webp',
     contentType: 'image/webp',
