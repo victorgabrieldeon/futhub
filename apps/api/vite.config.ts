@@ -6,6 +6,10 @@ export default defineConfig({
   test: {
     exclude: [...configDefaults.exclude, 'scripts/**/*.test.mjs'],
     fileParallelism: false,
+    pool: 'forks',
+    poolOptions: {
+      forks: { singleFork: true },
+    },
     isolate: true,
   },
 });
