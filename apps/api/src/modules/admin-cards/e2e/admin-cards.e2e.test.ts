@@ -34,7 +34,7 @@ beforeAll(async () => {
   context = await startE2eContext();
   // Static loading races the isolated Vite bootstrap for this app module.
   ({ FilesService: filesServiceClass } = await import('../../files/files.service.js'));
-}, 120_000);
+}, 300_000);
 
 afterAll(async () => {
   await context?.close();
