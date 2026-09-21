@@ -72,9 +72,16 @@ resource "terraform_data" "rustfs_environment" {
 
 locals {
   applications = {
-    admin  = { stage = "admin", host = var.admin_domain }
-    api    = { stage = "api", host = var.api_domain }
-    player = { stage = "player", host = var.player_domain }
+    admin       = { stage = "admin" }
+    api         = { stage = "api" }
+    discord-bot = { stage = "discord-bot" }
+    player      = { stage = "player" }
+  }
+
+  public_applications = {
+    admin  = var.admin_domain
+    api    = var.api_domain
+    player = var.player_domain
   }
 
   application_variables = {
@@ -107,6 +114,12 @@ locals {
       PLAYER_DISCORD_REDIRECT_URI = "https://${var.player_domain}/v1/auth/player/discord/callback"
       PLAYER_SESSION_SECRET       = var.player_session_secret
       THESPORTSDB_API_KEY         = var.thesportsdb_api_key
+    }
+    discord-bot = {
+      API_BASE_URL       = "https://${var.api_domain}"
+      API_INTERNAL_TOKEN = var.api_internal_token
+      DISCORD_CLIENT_ID  = var.discord_client_id
+      DISCORD_TOKEN      = var.discord_token
     }
     player = {
       PLAYER_API_URL = "https://${var.api_domain}"
@@ -157,10 +170,10 @@ resource "terraform_data" "futhub_environment" {
 }
 
 resource "dokploy_domain" "futhub" {
-  for_each = local.applications
+  for_each = local.public_applications
 
   application_id       = dokploy_application.futhub[each.key].id
-  host                 = each.value.host
+  host                 = each.value
   port                 = 3000
   https                = true
   certificate_provider = "letsencrypt"

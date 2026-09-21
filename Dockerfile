@@ -34,3 +34,9 @@ FROM build AS player
 ENV NODE_ENV=production
 
 CMD ["pnpm", "--filter", "@futhub/play", "start"]
+
+FROM build AS discord-bot
+
+ENV NODE_ENV=production
+
+CMD ["sh", "-ec", "cd apps/discord-bot && exec node dist/index.js"]

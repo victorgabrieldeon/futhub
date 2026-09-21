@@ -18,6 +18,7 @@ player_session_secret = "replace-with-a-32-character-minimum-secret"
 
 discord_client_id       = ""
 discord_client_secret   = ""
+discord_token           = ""
 admin_discord_user_ids  = ""
 # brave_search_api_key = ""
 # thesportsdb_api_key  = ""
