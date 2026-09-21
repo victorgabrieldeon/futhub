@@ -135,6 +135,12 @@ variable "discord_client_secret" {
   sensitive   = true
 }
 
+variable "discord_token" {
+  description = "Token de produção do bot Discord."
+  type        = string
+  sensitive   = true
+}
+
 variable "admin_discord_user_ids" {
   description = "IDs Discord autorizados no painel, no formato esperado pela aplicação."
   type        = string

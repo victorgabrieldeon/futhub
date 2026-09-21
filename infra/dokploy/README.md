@@ -1,12 +1,13 @@
 # Dokploy + Terraform
 
-Este diretório cria no Dokploy um projeto `futhub`, o ambiente `production` e cinco serviços independentes. Não há stack Compose em produção.
+Este diretório cria no Dokploy um projeto `futhub`, o ambiente `production` e seis serviços independentes. Não há stack Compose em produção.
 
 ## Serviços
 
 - `admin`: painel administrativo.
 - `player`: aplicação do jogador.
 - `api`: API HTTP, inclusive `/health`.
+- `discord-bot`: bot Discord conectado à API por credenciais internas.
 - `postgres`: banco PostgreSQL gerenciado pelo Dokploy.
 - `rustfs`: armazenamento S3 de imagens com volume persistente; o console não é publicado.
 
@@ -34,4 +35,4 @@ terraform apply tfplan
 
 `terraform.tfvars` e o state contêm segredos. Não os versione; use backend remoto criptografado antes de aplicar em equipe.
 
-O `discord-bot` permanece fora deste ambiente porque é opcional e falha sem credenciais Discord. Adicione-o somente quando houver token de produção e monitoramento.
+O `discord-bot` é criado como aplicação Git sem domínio público e exige `discord_token`, `discord_client_id` e `api_internal_token` válidos.
