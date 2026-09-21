@@ -1,5 +1,14 @@
 import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
-import { Body, Controller, HttpCode, Inject, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Inject,
+  Param,
+  ParseUUIDPipe,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
@@ -53,7 +62,7 @@ export class PacksController {
     route.operationId = 'inspectPack';
     route.security = [{ bearer: [] }];
   })
-  inspectPack(@Param('packId') packId: string): Promise<PackShopItemDto> {
+  inspectPack(@Param('packId', new ParseUUIDPipe()) packId: string): Promise<PackShopItemDto> {
     return this.shop.inspect(packId);
   }
 
@@ -64,7 +73,7 @@ export class PacksController {
     route.security = [{ bearer: [] }];
   })
   purchasePack(
-    @Param('packId') packId: string,
+    @Param('packId', new ParseUUIDPipe()) packId: string,
     @Body({ schema: PackActionRequestSchema }) request: PackActionRequest,
   ): Promise<PurchasePackResponse> {
     return this.purchase.execute(request.identity, packId);
@@ -77,7 +86,7 @@ export class PacksController {
     route.security = [{ bearer: [] }];
   })
   async openPack(
-    @Param('packId') packId: string,
+    @Param('packId', new ParseUUIDPipe()) packId: string,
     @Body({ schema: PackActionRequestSchema }) request: PackActionRequest,
   ): Promise<OpenPackResponse> {
     const result = await this.open.execute(request.identity, packId);

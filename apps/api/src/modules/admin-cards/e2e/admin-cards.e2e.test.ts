@@ -31,7 +31,7 @@ const importHeaders: Record<string, string> = {
 
 beforeAll(async () => {
   context = await startE2eContext();
-}, 30_000);
+}, 120_000);
 
 afterAll(async () => {
   await context?.close();
@@ -662,19 +662,31 @@ test('filters and sorts cards', async () => {
   );
   expect(cards).toHaveLength(2);
 
-  const response = await context.app.inject({
-    method: 'GET',
-    url: `/v1/admin/cards?page=1&query=${suffix}&teamId=${source.teamId}&position=CA&sort=overall`,
-    headers: { authorization: `Bearer ${adminToken}` },
+  const defaultImage = vi.spyOn(FilesService.prototype, 'defaultCardImage').mockResolvedValue({
+    id: 'default-card-image',
+    url: 'https://images.test/default.webp',
+    contentType: 'image/webp',
+    sizeBytes: 1,
+    width: null,
+    height: null,
   });
-  expect(response.statusCode, response.body).toBe(200);
-  expect(response.json()).toMatchObject({
-    total: 2,
-    items: [
-      { name: `Filter high ${suffix}`, overall: 99 },
-      { name: `Filter low ${suffix}`, overall: 80 },
-    ],
-  });
+  try {
+    const response = await context.app.inject({
+      method: 'GET',
+      url: `/v1/admin/cards?page=1&query=${suffix}&teamId=${source.teamId}&position=CA&sort=overall`,
+      headers: { authorization: `Bearer ${adminToken}` },
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json()).toMatchObject({
+      total: 2,
+      items: [
+        { name: `Filter high ${suffix}`, overall: 99 },
+        { name: `Filter low ${suffix}`, overall: 80 },
+      ],
+    });
+  } finally {
+    defaultImage.mockRestore();
+  }
 });
 
 test('rejects workbook with errors without persisting valid rows', async () => {

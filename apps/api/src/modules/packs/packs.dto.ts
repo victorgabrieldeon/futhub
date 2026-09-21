@@ -35,7 +35,9 @@ export type PackShopDto = Readonly<{
   totalPages: number;
 }>;
 
-export const PackShopQuerySchema = z.object({ page: z.coerce.number().int().min(1).optional() });
+export const PackShopQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).max(10_000).optional(),
+});
 export type PackShopQuery = z.infer<typeof PackShopQuerySchema>;
 
 export const PurchasePackResponseSchema = z.object({

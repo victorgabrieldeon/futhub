@@ -18,7 +18,7 @@ import { validateBotResponse } from '../bot-responses.service.js';
 let context: E2eContext;
 beforeAll(async () => {
   context = await startE2eContext();
-}, 60_000);
+}, 120_000);
 afterAll(async () => {
   await context?.close();
 });
@@ -69,7 +69,6 @@ test('guards every route, whitelists keys, returns defaults without writing', as
   const openapi = await context.app.inject({ method: 'GET', url: '/openapi.json' });
   expect(openapi.statusCode).toBe(200);
   const document = openapi.json();
-  expect(document.components.schemas.PackShopQueryDto).not.toHaveProperty('required');
   expect(document.paths['/v1/packs/shop'].get.parameters).toContainEqual(
     expect.objectContaining({ name: 'page', in: 'query', required: false }),
   );

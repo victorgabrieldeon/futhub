@@ -16,7 +16,12 @@ export type E2eContext = Readonly<{
 }>;
 
 function restoreEnvironment(
-  name: 'DATABASE_URL' | 'API_INTERNAL_TOKEN' | 'ADMIN_API_TOKEN',
+  name:
+    | 'DATABASE_URL'
+    | 'API_INTERNAL_TOKEN'
+    | 'ADMIN_API_TOKEN'
+    | 'MINIO_BUCKET'
+    | 'MINIO_PUBLIC_URL',
   value: string | undefined,
 ): void {
   if (value === undefined) delete process.env[name];
@@ -27,6 +32,8 @@ export async function startE2eContext(): Promise<E2eContext> {
   const databaseUrl = process.env.DATABASE_URL;
   const apiToken = process.env.API_INTERNAL_TOKEN;
   const adminApiToken = process.env.ADMIN_API_TOKEN;
+  const minioBucket = process.env.MINIO_BUCKET;
+  const minioPublicUrl = process.env.MINIO_PUBLIC_URL;
   let container: StartedTestContainer | undefined;
   let database: typeof DatabaseModule | undefined;
   let app: NestFastifyApplication | undefined;
@@ -50,6 +57,8 @@ export async function startE2eContext(): Promise<E2eContext> {
     process.env.DATABASE_URL = `postgresql://futhub:futhub@${container.getHost()}:${container.getMappedPort(5432)}/futhub_e2e`;
     process.env.API_INTERNAL_TOKEN = internalToken;
     process.env.ADMIN_API_TOKEN = adminToken;
+    process.env.MINIO_BUCKET ??= 'e2e';
+    process.env.MINIO_PUBLIC_URL ??= 'https://minio.test';
     await execFileAsync('pnpm', ['--filter', '@futhub/database', 'db:migrate'], {
       cwd: process.cwd(),
       env: process.env,
@@ -73,6 +82,8 @@ export async function startE2eContext(): Promise<E2eContext> {
         restoreEnvironment('DATABASE_URL', databaseUrl);
         restoreEnvironment('API_INTERNAL_TOKEN', apiToken);
         restoreEnvironment('ADMIN_API_TOKEN', adminApiToken);
+        restoreEnvironment('MINIO_BUCKET', minioBucket);
+        restoreEnvironment('MINIO_PUBLIC_URL', minioPublicUrl);
       },
     };
   } catch (error) {
@@ -82,6 +93,8 @@ export async function startE2eContext(): Promise<E2eContext> {
     restoreEnvironment('DATABASE_URL', databaseUrl);
     restoreEnvironment('API_INTERNAL_TOKEN', apiToken);
     restoreEnvironment('ADMIN_API_TOKEN', adminApiToken);
+    restoreEnvironment('MINIO_BUCKET', minioBucket);
+    restoreEnvironment('MINIO_PUBLIC_URL', minioPublicUrl);
     throw error;
   }
 }
