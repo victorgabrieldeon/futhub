@@ -8,6 +8,9 @@ import type { DiscordIdentity, LeagueRepository } from './league.use-case.types.
 
 export class LeagueUseCase {
   constructor(private readonly repository: LeagueRepository) {}
+  open(identity: DiscordIdentity): Promise<LeagueStatusResponse> {
+    return this.repository.open(identity);
+  }
 
   join(identity: DiscordIdentity): Promise<QueueResponse> {
     return this.repository.join(identity);

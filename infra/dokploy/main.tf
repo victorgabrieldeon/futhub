@@ -11,7 +11,7 @@ resource "dokploy_project" "futhub" {
 resource "dokploy_environment" "production" {
   project_id  = dokploy_project.futhub.id
   name        = "production"
-  description = "Production"
+  description = "production environment"
 }
 
 resource "dokploy_database" "postgres" {
@@ -30,7 +30,7 @@ resource "dokploy_application" "rustfs" {
   source_type           = "git"
   custom_git_url        = var.repository_url
   custom_git_branch     = var.repository_branch
-  custom_git_ssh_key_id = var.dokploy_git_ssh_key_id
+  custom_git_ssh_key_id = var.dokploy_git_ssh_key_id != "" ? var.dokploy_git_ssh_key_id : null
   build_type            = "dockerfile"
   dockerfile_path       = "./Dockerfile"
   docker_context_path   = "/"
@@ -45,12 +45,28 @@ resource "dokploy_application" "rustfs" {
   }]
 }
 
-resource "dokploy_environment_variables" "rustfs" {
-  application_id = dokploy_application.rustfs.id
-  variables = {
+locals {
+  rustfs_application_variables = {
     RUSTFS_ACCESS_KEY     = var.minio_root_user
     RUSTFS_SECRET_KEY     = var.minio_root_password
     RUSTFS_CONSOLE_ENABLE = "false"
+  }
+}
+
+resource "terraform_data" "rustfs_environment" {
+  triggers_replace = [
+    dokploy_application.rustfs.id,
+    sha256(jsonencode(local.rustfs_application_variables)),
+  ]
+
+  provisioner "local-exec" {
+    command = "node ${path.module}/save-application-environment.mjs"
+    environment = {
+      DOKPLOY_API_URL        = var.dokploy_api_url
+      DOKPLOY_API_KEY        = var.dokploy_api_key
+      DOKPLOY_APPLICATION_ID = dokploy_application.rustfs.id
+      DOKPLOY_VARIABLES_JSON = jsonencode(local.rustfs_application_variables)
+    }
   }
 }
 
@@ -77,7 +93,7 @@ locals {
       API_INTERNAL_TOKEN          = var.api_internal_token
       API_PORT                    = "3000"
       BRAVE_SEARCH_API_KEY        = var.brave_search_api_key
-      DATABASE_URL                = "postgresql://postgres:${var.postgres_password}@${dokploy_database.postgres.name}:${dokploy_database.postgres.internal_port}/postgres"
+      DATABASE_URL                = "postgresql://postgres:${var.postgres_password}@__DOKPLOY_POSTGRES_HOST__:5432/postgres"
       DISCORD_CLIENT_ID           = var.discord_client_id
       DISCORD_CLIENT_SECRET       = var.discord_client_secret
       MINIO_ACCESS_KEY            = var.minio_root_user
@@ -108,7 +124,7 @@ resource "dokploy_application" "futhub" {
   source_type           = "git"
   custom_git_url        = var.repository_url
   custom_git_branch     = var.repository_branch
-  custom_git_ssh_key_id = var.dokploy_git_ssh_key_id
+  custom_git_ssh_key_id = var.dokploy_git_ssh_key_id != "" ? var.dokploy_git_ssh_key_id : null
   build_type            = "dockerfile"
   dockerfile_path       = "./Dockerfile"
   docker_context_path   = "/"
@@ -117,11 +133,27 @@ resource "dokploy_application" "futhub" {
   deploy_on_create      = false
 }
 
-resource "dokploy_environment_variables" "futhub" {
+resource "terraform_data" "futhub_environment" {
   for_each = local.application_variables
 
-  application_id = dokploy_application.futhub[each.key].id
-  variables      = each.value
+  triggers_replace = concat(
+    [
+      dokploy_application.futhub[each.key].id,
+      sha256(jsonencode(each.value)),
+    ],
+    each.key == "api" ? [dokploy_database.postgres.id] : [],
+  )
+
+  provisioner "local-exec" {
+    command = "node ${path.module}/save-application-environment.mjs"
+    environment = {
+      DOKPLOY_API_URL        = var.dokploy_api_url
+      DOKPLOY_API_KEY        = var.dokploy_api_key
+      DOKPLOY_APPLICATION_ID = dokploy_application.futhub[each.key].id
+      DOKPLOY_POSTGRES_ID    = each.key == "api" ? dokploy_database.postgres.id : ""
+      DOKPLOY_VARIABLES_JSON = jsonencode(each.value)
+    }
+  }
 }
 
 resource "dokploy_domain" "futhub" {
@@ -134,7 +166,7 @@ resource "dokploy_domain" "futhub" {
   certificate_provider = "letsencrypt"
   redeploy_on_update   = true
 
-  depends_on = [dokploy_environment_variables.futhub]
+  depends_on = [terraform_data.futhub_environment]
 }
 
 resource "dokploy_domain" "rustfs" {
@@ -145,7 +177,7 @@ resource "dokploy_domain" "rustfs" {
   certificate_provider = "letsencrypt"
   redeploy_on_update   = true
 
-  depends_on = [dokploy_environment_variables.rustfs]
+  depends_on = [terraform_data.rustfs_environment]
 }
 
 moved {

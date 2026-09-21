@@ -7,7 +7,9 @@ import type { TeamCard, TeamResponse, TeamSession, TeamTab } from './team-sessio
 
 export const teamImageName = 'futhub-team.png';
 
-type TeamImageData = Pick<TeamSession, 'identity' | 'tab' | 'team'> &
+export type TeamImageTab = Exclude<TeamTab, 'league'>;
+type TeamImageData = Pick<TeamSession, 'identity' | 'team'> &
+  Readonly<{ tab: TeamImageTab }> &
   Partial<Pick<TeamSession, 'club'>>;
 
 const WIDTH = 1_200;
@@ -23,7 +25,7 @@ const CLOUD = '#242424';
 const MUTE = '#9e9ea0';
 const HAIRLINE = '#4b4b4d';
 const SALE = '#d30005';
-const titles: Record<TeamTab, string> = {
+const titles: Record<TeamImageTab, string> = {
   overview: 'VISÃO GERAL',
   lineup: 'ESCALAÇÃO',
   inventory: 'ELENCO',

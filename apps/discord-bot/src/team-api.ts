@@ -1,9 +1,28 @@
-import { request } from '@futhub/api-client';
+import { getLeague, getV1MatchesMatchId, joinRankedQueue, request } from '@futhub/api-client';
 
 import { refreshApiClient } from './commands/shared.js';
-import type { ClubResponse, TeamPosition, TeamResponse, TeamSession } from './team-session.js';
+import type {
+  ClubResponse,
+  LeaguePanelState,
+  TeamPosition,
+  TeamResponse,
+  TeamSession,
+} from './team-session.js';
 
 type Identity = TeamSession['identity'];
+export async function loadLeague(identity: Identity): Promise<LeaguePanelState> {
+  refreshApiClient();
+  const status = await getLeague(identity);
+  const match =
+    status.queue?.kind === 'matched' ? await getV1MatchesMatchId(status.queue.matchId) : null;
+  return { status, match };
+}
+
+export async function queueLeagueMatch(identity: Identity): Promise<LeaguePanelState> {
+  refreshApiClient();
+  await joinRankedQueue(identity);
+  return loadLeague(identity);
+}
 
 export async function reloadTeam(session: TeamSession, page = 1): Promise<TeamResponse> {
   return loadTeam(session.identity, {

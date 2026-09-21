@@ -701,6 +701,53 @@ export type GetV1AdminLucroSchema200 = {
   properties: GetV1AdminLucroSchema200Properties;
 };
 
+export type GetLeagueBody = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type GetLeague200Division = {
+  id: string;
+  name: string;
+  minimumPoints: number;
+  emoji: string;
+  /** @nullable */
+  color: string | null;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type GetLeague200Queue =
+  | {
+      kind: "waiting";
+      division: {
+        id: string;
+        name: string;
+        minimumPoints: number;
+        emoji: string;
+        /** @nullable */
+        color: string | null;
+        /** @nullable */
+        imageUrl: string | null;
+      };
+    }
+  | null
+  | {
+      kind: "matched";
+      matchId: string;
+    };
+
+export type GetLeague200 = {
+  points: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  division: GetLeague200Division;
+  queue: GetLeague200Queue;
+};
+
 export type JoinRankedQueueBody = {
   id: string;
   name: string;
@@ -787,6 +834,20 @@ export type GetV1LeagueDiscordUserId200 = {
   queue: GetV1LeagueDiscordUserId200Queue;
 };
 
+export type GetV1MatchesMatchId200Home = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type GetV1MatchesMatchId200Away = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
 export type GetV1MatchesMatchId200EventsItemType =
   (typeof GetV1MatchesMatchId200EventsItemType)[keyof typeof GetV1MatchesMatchId200EventsItemType];
 
@@ -813,8 +874,8 @@ export type GetV1MatchesMatchId200EventsItem = {
 
 export type GetV1MatchesMatchId200 = {
   id: string;
-  homeUserId: string;
-  awayUserId: string;
+  home: GetV1MatchesMatchId200Home;
+  away: GetV1MatchesMatchId200Away;
   homeGoals: number;
   awayGoals: number;
   completedAt: string;
@@ -2679,6 +2740,22 @@ export const getV1AdminLucroSchema = async (
   return request<GetV1AdminLucroSchema200>(getGetV1AdminLucroSchemaUrl(), {
     ...options,
     method: "GET",
+  });
+};
+
+export const getGetLeagueUrl = () => {
+  return `/v1/league`;
+};
+
+export const getLeague = async (
+  getLeagueBody: GetLeagueBody,
+  options?: Parameters<typeof request>[1],
+): Promise<GetLeague200> => {
+  return request<GetLeague200>(getGetLeagueUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(getLeagueBody),
   });
 };
 

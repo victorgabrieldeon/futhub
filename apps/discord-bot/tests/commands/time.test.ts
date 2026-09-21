@@ -7,8 +7,8 @@ import { createMockBot } from '@slipher/testing';
 import TimeCommand from '../../src/commands/time.js';
 import TimeButtonComponent from '../../src/components/time-button.js';
 import TimeSelectComponent from '../../src/components/time-select.js';
-import { renderTeamImage } from '../../src/team-image.js';
-import type { TeamResponse, TeamTab } from '../../src/team-session.js';
+import { renderTeamImage, type TeamImageTab } from '../../src/team-image.js';
+import type { TeamResponse } from '../../src/team-session.js';
 import { type ApiRequest, mockApi } from '../support/api.js';
 
 const club = {
@@ -52,6 +52,33 @@ const team = {
   inventory: { items: [], total: 12, page: 1, pageSize: 10, totalPages: 2 },
   packs: [{ id: 'pack-1', name: 'Pack Ouro', emoji: '📦', quantity: 2 }],
   collections: [],
+};
+const leagueTeam = {
+  ...team,
+  lineup: Array.from({ length: 11 }, (_, index) => ({
+    userCardId: `league-card-${index}`,
+    name: `Titular ${index + 1}`,
+    imageUrl: null,
+    overall: 80,
+    position: 'CA',
+    secondaryPositions: [],
+    collection: { id: 'collection-1', name: 'Base', emoji: '⚽' },
+    favorite: false,
+    holder: true,
+    holderPosition: 'CA',
+    captain: index === 0,
+    sellPrice: 100,
+    claimedAt: '2026-01-01T00:00:00.000Z',
+  })),
+} as TeamResponse;
+
+const leagueDivision = {
+  id: '00000000-0000-4000-8000-000000000002',
+  name: 'Bronze',
+  minimumPoints: 0,
+  emoji: '🏆',
+  color: '#123abc',
+  imageUrl: 'https://cdn.test/bronze.png',
 };
 
 function record(value: unknown): value is Record<string, unknown> {
@@ -137,6 +164,120 @@ test('abre o painel privado do time por slash command', async () => {
     },
   ]);
 });
+test('executa campanha, fila, resultado e nova busca na aba Liga', async (context) => {
+  type Stage = 'idle' | 'waiting' | 'matched' | 'requeued';
+  let stage: Stage = 'idle';
+  const nativeFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const url = input instanceof Request ? input.url : input.toString();
+    if (url === leagueDivision.imageUrl)
+      return new Response(
+        Uint8Array.from(
+          Buffer.from(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+            'base64',
+          ),
+        ),
+        { headers: { 'content-type': 'image/png' } },
+      );
+    return nativeFetch(input, init);
+  };
+  context.after(() => {
+    globalThis.fetch = nativeFetch;
+  });
+  const leagueStatus = () => ({
+    points: stage === 'matched' ? 3 : 0,
+    wins: stage === 'matched' ? 1 : 0,
+    draws: 0,
+    losses: 0,
+    division: leagueDivision,
+    queue:
+      stage === 'idle'
+        ? null
+        : stage === 'matched'
+          ? { kind: 'matched', matchId: '00000000-0000-4000-8000-000000000003' }
+          : { kind: 'waiting', division: leagueDivision },
+  });
+  const match = {
+    id: '00000000-0000-4000-8000-000000000003',
+    home: {
+      id: '900000000000000005',
+      name: 'slipher-tester',
+      avatarUrl: 'https://cdn.discordapp.com/embed/avatars/1.png',
+    },
+    away: { id: '900000000000000006', name: 'Rival', avatarUrl: null },
+    homeGoals: 2,
+    awayGoals: 1,
+    completedAt: '2026-08-15T12:00:00.000Z',
+    events: [
+      {
+        sequence: 1,
+        minute: 42,
+        type: 'goal',
+        playerUserCardId: null,
+        assistUserCardId: null,
+        description: 'Titular 1 abriu o placar',
+        homeGoals: 1,
+        awayGoals: 0,
+      },
+    ],
+  };
+  const api = mockApi((request: ApiRequest) => {
+    if (request.path === '/v1/team') return leagueTeam;
+    if (request.path === '/v1/league') return leagueStatus();
+    if (request.path === '/v1/ranked/queue') {
+      stage = stage === 'matched' ? 'requeued' : 'waiting';
+      return leagueStatus().queue;
+    }
+    if (request.path === `/v1/matches/${match.id}`) return match;
+    throw new Error(`Unexpected API request: ${request.method} ${request.path}`);
+  });
+  await using bot = await createMockBot({
+    commands: [TimeCommand],
+    components: [TimeButtonComponent, TimeSelectComponent],
+  });
+
+  const opened = await bot.slash(TimeCommand);
+  bot.reset();
+  const league = await bot.selectMenu(selectId(opened.messages, 'Escolha uma aba'), ['league']);
+  const leaguePayload = JSON.stringify(league.messages);
+  assert.equal(opened.ephemeral, true);
+  assert.match(body(league.messages), /MEU TIME · LIGA/);
+  assert.match(body(league.messages), /Bronze.*0 pontos/);
+  assert.match(body(league.messages), /Vitórias:.*0.*Empates:.*0.*Derrotas:.*0/);
+  assert.match(leaguePayload, /1194684/);
+  assert.match(leaguePayload, /futhub-league\.png/);
+  assert.doesNotMatch(leaguePayload, /futhub-team\.png/);
+
+  bot.reset();
+  const waiting = await bot.clickButton(buttonId(league.messages, 'Buscar partida'));
+  assert.match(body(waiting.messages), /Buscando adversário/);
+
+  stage = 'matched';
+  bot.reset();
+  const result = await bot.clickButton(buttonId(waiting.messages, 'Atualizar'));
+  assert.match(body(result.messages), /ÚLTIMA PARTIDA/);
+  assert.match(body(result.messages), /slipher-tester 2 × 1 Rival/);
+  assert.match(body(result.messages), /Resultado:.*Vitória/);
+  assert.match(body(result.messages), /42' · Titular 1 abriu o placar/);
+
+  bot.reset();
+  const requeued = await bot.clickButton(buttonId(result.messages, 'Buscar nova partida'));
+  assert.match(body(requeued.messages), /Buscando adversário/);
+  assert.deepEqual(
+    api.requests.map(({ method, path }) => ({ method, path })),
+    [
+      { method: 'POST', path: '/v1/team' },
+      { method: 'POST', path: '/v1/league' },
+      { method: 'POST', path: '/v1/ranked/queue' },
+      { method: 'POST', path: '/v1/league' },
+      { method: 'POST', path: '/v1/league' },
+      { method: 'GET', path: `/v1/matches/${match.id}` },
+      { method: 'POST', path: '/v1/ranked/queue' },
+      { method: 'POST', path: '/v1/league' },
+    ],
+  );
+});
 
 test('abre o painel público por prefixo, restringe os controles e mostra o clube', async () => {
   const api = mockApi((request: ApiRequest) => (request.path === '/v1/club' ? club : team));
@@ -221,7 +362,7 @@ test('melhora o estádio dentro do painel do time', async () => {
 });
 
 test('gera uma imagem diferente para cada aba do time', async () => {
-  const tabs: TeamTab[] = ['overview', 'lineup', 'inventory', 'packs', 'sale', 'club'];
+  const tabs: TeamImageTab[] = ['overview', 'lineup', 'inventory', 'packs', 'sale', 'club'];
   const images = await Promise.all(
     tabs.map((tab) =>
       renderTeamImage({
