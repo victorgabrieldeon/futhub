@@ -1,6 +1,6 @@
-import { fileURLToPath } from 'node:url';
 import { GlobalFonts, Path2D, createCanvas, loadImage } from '@napi-rs/canvas';
 import type { SKRSContext2D } from '@napi-rs/canvas';
+import { workspacePath } from '../../workspace-path.js';
 
 export type TeamCardImageInput = Readonly<{
   name: string;
@@ -23,9 +23,7 @@ export type TeamCardImageInput = Readonly<{
 
 const imageFont = 'Fira Sans';
 for (const weight of ['Regular', 'SemiBold', 'ExtraBold'] as const) {
-  const path = fileURLToPath(
-    new URL(`../../../../discord-bot/assets/FiraSans-${weight}.otf`, import.meta.url),
-  );
+  const path = workspacePath('apps/discord-bot/assets', `FiraSans-${weight}.otf`);
   if (!GlobalFonts.registerFromPath(path)) throw new Error(`Failed to load image font: ${path}`);
 }
 

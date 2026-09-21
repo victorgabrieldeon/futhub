@@ -8,9 +8,10 @@ import type { OpenAPIObject } from '@nestjs/swagger';
 import { renderApiReference } from '@scalar/client-side-rendering';
 
 import { AppModule } from './app.module.js';
+import { workspacePath } from './workspace-path.js';
 
 export async function readOpenApiDocument(): Promise<OpenAPIObject> {
-  return JSON.parse(await readFile(new URL('../openapi.json', import.meta.url), 'utf8'));
+  return JSON.parse(await readFile(workspacePath('apps/api/openapi.json'), 'utf8'));
 }
 
 export async function configureApiReference(app: NestFastifyApplication): Promise<void> {

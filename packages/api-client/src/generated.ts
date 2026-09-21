@@ -550,6 +550,14 @@ export type ExecuteLucro200 =
         weight: number;
         message: string;
       };
+      report: {
+        ticketRevenue: number;
+        commercialRevenue: number;
+        sponsorRevenue: number;
+        maintenance: number;
+        payroll: number;
+        net: number;
+      };
       balance: number;
       availableAt: string;
       progression: {
@@ -570,14 +578,6 @@ export type ExecuteLucro200 =
         description: string;
         color: string;
         footer: string;
-      };
-      report: {
-        ticketRevenue: number;
-        commercialRevenue: number;
-        sponsorRevenue: number;
-        maintenance: number;
-        payroll: number;
-        net: number;
       };
     }
   | {
@@ -997,6 +997,70 @@ export type SellCards200 = {
   userCardIds: string[];
   balance: number;
   amount: number;
+};
+
+export type GetClubBody = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type GetClub200Stadium = {
+  level: number;
+  maxLevel: number;
+  /** @nullable */
+  nextUpgradeCost: number | null;
+  ticketRevenue: number;
+  maintenance: number;
+};
+
+export type GetClub200Sponsor = {
+  name: string;
+  weeklyMatches: number;
+  weeklyGoal: number;
+  payout: number;
+  completed: boolean;
+};
+
+export type GetClub200 = {
+  balance: number;
+  stadium: GetClub200Stadium;
+  sponsor: GetClub200Sponsor;
+  payroll: number;
+  projectedNet: number;
+};
+
+export type UpgradeStadiumBody = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type UpgradeStadium200Stadium = {
+  level: number;
+  maxLevel: number;
+  /** @nullable */
+  nextUpgradeCost: number | null;
+  ticketRevenue: number;
+  maintenance: number;
+};
+
+export type UpgradeStadium200Sponsor = {
+  name: string;
+  weeklyMatches: number;
+  weeklyGoal: number;
+  payout: number;
+  completed: boolean;
+};
+
+export type UpgradeStadium200 = {
+  balance: number;
+  stadium: UpgradeStadium200Stadium;
+  sponsor: UpgradeStadium200Sponsor;
+  payroll: number;
+  projectedNet: number;
 };
 
 export type GetTeamBodyIdentity = {
@@ -2447,70 +2511,6 @@ export type DeleteV1AdminCardsCardIdImage200 = {
   imageUrl: string;
 };
 
-export type GetClubBody = {
-  id: string;
-  name: string;
-  /** @nullable */
-  avatarUrl: string | null;
-};
-
-export type GetClub200Stadium = {
-  level: number;
-  maxLevel: number;
-  /** @nullable */
-  nextUpgradeCost: number | null;
-  ticketRevenue: number;
-  maintenance: number;
-};
-
-export type GetClub200Sponsor = {
-  name: string;
-  weeklyMatches: number;
-  weeklyGoal: number;
-  payout: number;
-  completed: boolean;
-};
-
-export type GetClub200 = {
-  balance: number;
-  stadium: GetClub200Stadium;
-  sponsor: GetClub200Sponsor;
-  payroll: number;
-  projectedNet: number;
-};
-
-export type UpgradeStadiumBody = {
-  id: string;
-  name: string;
-  /** @nullable */
-  avatarUrl: string | null;
-};
-
-export type UpgradeStadium200Stadium = {
-  level: number;
-  maxLevel: number;
-  /** @nullable */
-  nextUpgradeCost: number | null;
-  ticketRevenue: number;
-  maintenance: number;
-};
-
-export type UpgradeStadium200Sponsor = {
-  name: string;
-  weeklyMatches: number;
-  weeklyGoal: number;
-  payout: number;
-  completed: boolean;
-};
-
-export type UpgradeStadium200 = {
-  balance: number;
-  stadium: UpgradeStadium200Stadium;
-  sponsor: UpgradeStadium200Sponsor;
-  payroll: number;
-  projectedNet: number;
-};
-
 export const getListPackCatalogUrl = () => {
   return `/v1/packs`;
 };
@@ -2837,6 +2837,38 @@ export const sellCards = async (
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(sellCardsBody),
+  });
+};
+
+export const getGetClubUrl = () => {
+  return `/v1/club`;
+};
+
+export const getClub = async (
+  getClubBody: GetClubBody,
+  options?: Parameters<typeof request>[1],
+): Promise<GetClub200> => {
+  return request<GetClub200>(getGetClubUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(getClubBody),
+  });
+};
+
+export const getUpgradeStadiumUrl = () => {
+  return `/v1/club/stadium/upgrade`;
+};
+
+export const upgradeStadium = async (
+  upgradeStadiumBody: UpgradeStadiumBody,
+  options?: Parameters<typeof request>[1],
+): Promise<UpgradeStadium200> => {
+  return request<UpgradeStadium200>(getUpgradeStadiumUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(upgradeStadiumBody),
   });
 };
 
@@ -3646,36 +3678,4 @@ export const deleteV1AdminCardsCardIdImage = async (
       method: "DELETE",
     },
   );
-};
-
-export const getGetClubUrl = () => {
-  return `/v1/club`;
-};
-
-export const getClub = async (
-  getClubBody: GetClubBody,
-  options?: Parameters<typeof request>[1],
-): Promise<GetClub200> => {
-  return request<GetClub200>(getGetClubUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(getClubBody),
-  });
-};
-
-export const getUpgradeStadiumUrl = () => {
-  return `/v1/club/stadium/upgrade`;
-};
-
-export const upgradeStadium = async (
-  upgradeStadiumBody: UpgradeStadiumBody,
-  options?: Parameters<typeof request>[1],
-): Promise<UpgradeStadium200> => {
-  return request<UpgradeStadium200>(getUpgradeStadiumUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(upgradeStadiumBody),
-  });
 };

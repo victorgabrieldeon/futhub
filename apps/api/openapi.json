@@ -1168,6 +1168,38 @@
                           "required": ["value", "weight", "message"],
                           "type": "object"
                         },
+                        "report": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "ticketRevenue": {
+                              "type": "number"
+                            },
+                            "commercialRevenue": {
+                              "type": "number"
+                            },
+                            "sponsorRevenue": {
+                              "type": "number"
+                            },
+                            "maintenance": {
+                              "type": "number"
+                            },
+                            "payroll": {
+                              "type": "number"
+                            },
+                            "net": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "ticketRevenue",
+                            "commercialRevenue",
+                            "sponsorRevenue",
+                            "maintenance",
+                            "payroll",
+                            "net"
+                          ],
+                          "type": "object"
+                        },
                         "balance": {
                           "type": "number"
                         },
@@ -1234,38 +1266,6 @@
                             }
                           },
                           "required": ["title", "description", "color", "footer"],
-                          "type": "object"
-                        },
-                        "report": {
-                          "additionalProperties": false,
-                          "properties": {
-                            "ticketRevenue": {
-                              "type": "number"
-                            },
-                            "commercialRevenue": {
-                              "type": "number"
-                            },
-                            "sponsorRevenue": {
-                              "type": "number"
-                            },
-                            "maintenance": {
-                              "type": "number"
-                            },
-                            "payroll": {
-                              "type": "number"
-                            },
-                            "net": {
-                              "type": "number"
-                            }
-                          },
-                          "required": [
-                            "ticketRevenue",
-                            "commercialRevenue",
-                            "sponsorRevenue",
-                            "maintenance",
-                            "payroll",
-                            "net"
-                          ],
                           "type": "object"
                         }
                       },
@@ -2566,6 +2566,234 @@
         ],
         "x-samchon-accessor": ["v1", "cards", "sell", "sellCards"],
         "x-samchon-controller": "CardMarketController"
+      }
+    },
+    "/v1/club": {
+      "post": {
+        "tags": ["Clube"],
+        "operationId": "getClub",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "avatarUrl": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["id", "name", "avatarUrl"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "balance": {
+                      "type": "number"
+                    },
+                    "stadium": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "level": {
+                          "type": "number"
+                        },
+                        "maxLevel": {
+                          "type": "number"
+                        },
+                        "nextUpgradeCost": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "ticketRevenue": {
+                          "type": "number"
+                        },
+                        "maintenance": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "level",
+                        "maxLevel",
+                        "nextUpgradeCost",
+                        "ticketRevenue",
+                        "maintenance"
+                      ],
+                      "type": "object"
+                    },
+                    "sponsor": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "weeklyMatches": {
+                          "type": "number"
+                        },
+                        "weeklyGoal": {
+                          "type": "number"
+                        },
+                        "payout": {
+                          "type": "number"
+                        },
+                        "completed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": ["name", "weeklyMatches", "weeklyGoal", "payout", "completed"],
+                      "type": "object"
+                    },
+                    "payroll": {
+                      "type": "number"
+                    },
+                    "projectedNet": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["balance", "stadium", "sponsor", "payroll", "projectedNet"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "club", "get"],
+        "x-samchon-controller": "ClubController"
+      }
+    },
+    "/v1/club/stadium/upgrade": {
+      "post": {
+        "tags": ["Clube"],
+        "operationId": "upgradeStadium",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "avatarUrl": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["id", "name", "avatarUrl"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "balance": {
+                      "type": "number"
+                    },
+                    "stadium": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "level": {
+                          "type": "number"
+                        },
+                        "maxLevel": {
+                          "type": "number"
+                        },
+                        "nextUpgradeCost": {
+                          "type": "number",
+                          "nullable": true
+                        },
+                        "ticketRevenue": {
+                          "type": "number"
+                        },
+                        "maintenance": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "level",
+                        "maxLevel",
+                        "nextUpgradeCost",
+                        "ticketRevenue",
+                        "maintenance"
+                      ],
+                      "type": "object"
+                    },
+                    "sponsor": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "weeklyMatches": {
+                          "type": "number"
+                        },
+                        "weeklyGoal": {
+                          "type": "number"
+                        },
+                        "payout": {
+                          "type": "number"
+                        },
+                        "completed": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": ["name", "weeklyMatches", "weeklyGoal", "payout", "completed"],
+                      "type": "object"
+                    },
+                    "payroll": {
+                      "type": "number"
+                    },
+                    "projectedNet": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["balance", "stadium", "sponsor", "payroll", "projectedNet"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "club", "stadium", "upgrade", "upgradeStadium"],
+        "x-samchon-controller": "ClubController"
       }
     },
     "/v1/team": {
@@ -6618,230 +6846,6 @@
         "x-samchon-accessor": ["v1", "admin", "cards", "image", "removeImage"],
         "x-samchon-controller": "AdminCardsController"
       }
-    },
-    "/v1/club": {
-      "post": {
-        "tags": ["Clube"],
-        "operationId": "getClub",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "additionalProperties": false,
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "avatarUrl": {
-                    "type": "string",
-                    "nullable": true
-                  }
-                },
-                "required": ["id", "name", "avatarUrl"],
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "balance": {
-                      "type": "number"
-                    },
-                    "stadium": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "level": {
-                          "type": "number"
-                        },
-                        "maxLevel": {
-                          "type": "number"
-                        },
-                        "nextUpgradeCost": {
-                          "type": "number",
-                          "nullable": true
-                        },
-                        "ticketRevenue": {
-                          "type": "number"
-                        },
-                        "maintenance": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "level",
-                        "maxLevel",
-                        "nextUpgradeCost",
-                        "ticketRevenue",
-                        "maintenance"
-                      ],
-                      "type": "object"
-                    },
-                    "sponsor": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "weeklyMatches": {
-                          "type": "number"
-                        },
-                        "weeklyGoal": {
-                          "type": "number"
-                        },
-                        "payout": {
-                          "type": "number"
-                        },
-                        "completed": {
-                          "type": "boolean"
-                        }
-                      },
-                      "required": ["name", "weeklyMatches", "weeklyGoal", "payout", "completed"],
-                      "type": "object"
-                    },
-                    "payroll": {
-                      "type": "number"
-                    },
-                    "projectedNet": {
-                      "type": "number"
-                    }
-                  },
-                  "required": ["balance", "stadium", "sponsor", "payroll", "projectedNet"],
-                  "type": "object"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/v1/club/stadium/upgrade": {
-      "post": {
-        "tags": ["Clube"],
-        "operationId": "upgradeStadium",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "additionalProperties": false,
-                "properties": {
-                  "id": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "avatarUrl": {
-                    "type": "string",
-                    "nullable": true
-                  }
-                },
-                "required": ["id", "name", "avatarUrl"],
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": false,
-                  "properties": {
-                    "balance": {
-                      "type": "number"
-                    },
-                    "stadium": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "level": {
-                          "type": "number"
-                        },
-                        "maxLevel": {
-                          "type": "number"
-                        },
-                        "nextUpgradeCost": {
-                          "type": "number",
-                          "nullable": true
-                        },
-                        "ticketRevenue": {
-                          "type": "number"
-                        },
-                        "maintenance": {
-                          "type": "number"
-                        }
-                      },
-                      "required": [
-                        "level",
-                        "maxLevel",
-                        "nextUpgradeCost",
-                        "ticketRevenue",
-                        "maintenance"
-                      ],
-                      "type": "object"
-                    },
-                    "sponsor": {
-                      "additionalProperties": false,
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "weeklyMatches": {
-                          "type": "number"
-                        },
-                        "weeklyGoal": {
-                          "type": "number"
-                        },
-                        "payout": {
-                          "type": "number"
-                        },
-                        "completed": {
-                          "type": "boolean"
-                        }
-                      },
-                      "required": ["name", "weeklyMatches", "weeklyGoal", "payout", "completed"],
-                      "type": "object"
-                    },
-                    "payroll": {
-                      "type": "number"
-                    },
-                    "projectedNet": {
-                      "type": "number"
-                    }
-                  },
-                  "required": ["balance", "stadium", "sponsor", "payroll", "projectedNet"],
-                  "type": "object"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
     }
   },
   "tags": [
@@ -6864,6 +6868,10 @@
     {
       "name": "Respostas do bot",
       "description": "Templates configuráveis de resposta do bot Discord."
+    },
+    {
+      "name": "Clube",
+      "description": "Gestão financeira e estrutura do clube."
     },
     {
       "name": "Comandos",
@@ -6898,10 +6906,6 @@
     },
     {
       "name": "Bot responses"
-    },
-    {
-      "name": "Clube",
-      "description": "Gestão financeira e estrutura do clube."
     }
   ]
 }
