@@ -124,6 +124,12 @@ async function createCard(
   catalog: { collectionId: string; teamId: string },
   name: string,
   position: (typeof formationPositions)[number],
+  input: Readonly<{
+    overall?: number;
+    createdAt?: Date;
+    imageFileId?: string;
+    secondaryPositions?: readonly (typeof formationPositions)[number][];
+  }> = {},
 ): Promise<{ id: string }> {
   const [stats] = await database.db
     .insert(database.schema.cardStats)
@@ -139,13 +145,23 @@ async function createCard(
       teamId: catalog.teamId,
       statsId: stats.id,
       position,
+      imageFileId: input.imageFileId,
       defense: 80,
       attack: 80,
       creation: 80,
-      overall: 80,
+      overall: input.overall ?? 80,
+      createdAt: input.createdAt,
     })
     .returning({ id: database.schema.cards.id });
   if (!card) throw new Error('Failed to create test card.');
+  if (input.secondaryPositions?.length) {
+    await database.db.insert(database.schema.cardSecondaryPositions).values(
+      input.secondaryPositions.map((secondaryPosition) => ({
+        cardId: card.id,
+        position: secondaryPosition,
+      })),
+    );
+  }
   return card;
 }
 
@@ -217,23 +233,84 @@ export async function createPackFixture(
   return { packId: pack.id, cardId: card.id };
 }
 
-export async function createCardMarketFixture(
-  database: Database,
-): Promise<{ cardId: string; blockedCardId: string }> {
+export async function createCardMarketFixture(database: Database): Promise<{
+  cardId: string;
+  blockedCardId: string;
+  collectionId: string;
+  teamId: string;
+  secondaryPositionCardId: string;
+  eligibleCardIds: readonly string[];
+}> {
   const catalog = await createCardCatalog(database, 'market');
-  const card = await createCard(database, catalog, 'Market card', 'CA');
+  const image = await createFileFixture(database, `cards/market-${randomUUID()}.png`);
+  const card = await createCard(database, catalog, 'Market card', 'CA', {
+    imageFileId: image.id,
+    createdAt: new Date('2025-01-01T00:00:00.000Z'),
+  });
+  const eligibleCards = [card];
+  for (let index = 0; index < 13; index++) {
+    eligibleCards.push(
+      await createCard(
+        database,
+        catalog,
+        index < 2 ? 'Market tie' : `Market ${String(index).padStart(2, '0')}`,
+        'MC',
+        {
+          overall: index < 2 ? 90 : index < 5 ? 85 : 80,
+          imageFileId: index === 12 ? undefined : image.id,
+          createdAt: new Date(Date.UTC(2025, 0, index + 2)),
+          secondaryPositions: index === 0 ? ['MA'] : index === 1 ? ['CA'] : [],
+        },
+      ),
+    );
+  }
   const blockedCard = await createCard(database, catalog, 'Blocked market card', 'CA');
   await database.db
     .update(database.schema.cards)
     .set({ contractsBlocked: true })
     .where(database.eq(database.schema.cards.id, blockedCard.id));
-  await database.db.insert(database.schema.cardPriceConfigs).values({ overall: 80, price: 100 });
-  await database.db.insert(database.schema.cardMarketConfig).values({
-    singleton: true,
-    buyMultiplierBasisPoints: 20_000,
-    sellMultiplierBasisPoints: 2_000,
-  });
-  return { cardId: card.id, blockedCardId: blockedCard.id };
+  const blockedCatalog = await createCardCatalog(database, 'blocked-market');
+  await database.db
+    .update(database.schema.collections)
+    .set({ contractsBlocked: true })
+    .where(database.eq(database.schema.collections.id, blockedCatalog.collectionId));
+  await createCard(database, blockedCatalog, 'Blocked collection card', 'CA');
+  await createCard(database, catalog, 'Missing price card', 'CA', { overall: 99 });
+  for (const price of [
+    { overall: 80, price: 100 },
+    { overall: 85, price: 150 },
+    { overall: 90, price: 200 },
+  ]) {
+    await database.db
+      .insert(database.schema.cardPriceConfigs)
+      .values(price)
+      .onConflictDoUpdate({
+        target: database.schema.cardPriceConfigs.overall,
+        set: { price: price.price },
+      });
+  }
+  await database.db
+    .delete(database.schema.cardPriceConfigs)
+    .where(database.eq(database.schema.cardPriceConfigs.overall, 99));
+  await database.db
+    .insert(database.schema.cardMarketConfig)
+    .values({
+      singleton: true,
+      buyMultiplierBasisPoints: 20_000,
+      sellMultiplierBasisPoints: 2_000,
+    })
+    .onConflictDoUpdate({
+      target: database.schema.cardMarketConfig.singleton,
+      set: { buyMultiplierBasisPoints: 20_000, sellMultiplierBasisPoints: 2_000 },
+    });
+  return {
+    cardId: card.id,
+    blockedCardId: blockedCard.id,
+    collectionId: catalog.collectionId,
+    teamId: catalog.teamId,
+    secondaryPositionCardId: eligibleCards[1]?.id ?? card.id,
+    eligibleCardIds: eligibleCards.map((eligibleCard) => eligibleCard.id),
+  };
 }
 
 export async function createLeaguePlayer(
@@ -248,6 +325,11 @@ export async function createLeaguePlayer(
     .returning({ id: database.schema.localizedTexts.id });
   const textId = text?.id;
   if (!textId) throw new Error('Failed to create test formation text.');
+  await database.db.insert(database.schema.localizedTextTranslations).values({
+    localizedTextId: textId,
+    locale: 'pt-BR',
+    content: `4-3-3 ${identity.id}`,
+  });
   const [formation] = await database.db
     .insert(database.schema.formations)
     .values({ nameTextId: textId })
@@ -275,6 +357,63 @@ export async function createLeaguePlayer(
     });
   }
   return user;
+}
+
+export async function createTeamPlayer(database: Database, identity: DiscordIdentity) {
+  const user = await createLeaguePlayer(database, identity);
+  const catalog = await createCardCatalog(database, `${identity.id}-reserve`);
+  const reserve = await createCard(database, catalog, `${identity.name} Reserva`, 'CA', {
+    overall: 95,
+    secondaryPositions: ['MA'],
+  });
+  const [owned] = await database.db
+    .insert(database.schema.userCards)
+    .values({ userId: user.id, cardId: reserve.id })
+    .returning({ id: database.schema.userCards.id });
+  if (!owned) throw new Error('Failed to create reserve card.');
+  const [packConfig] = await database.db
+    .insert(database.schema.packConfigs)
+    .values({ name: `team-pack-${randomUUID()}`, minOverall: 80, maxOverall: 90 })
+    .returning({ id: database.schema.packConfigs.id });
+  if (!packConfig) throw new Error('Failed to create team pack config.');
+  const [pack] = await database.db
+    .insert(database.schema.packs)
+    .values({
+      name: 'Pack do time',
+      configId: packConfig.id,
+      color: '#111111',
+      emoji: '📦',
+      cardsAmount: 3,
+      price: 10,
+    })
+    .returning({ id: database.schema.packs.id });
+  if (!pack) throw new Error('Failed to create team pack.');
+  await database.db
+    .insert(database.schema.userPacks)
+    .values({ userId: user.id, packId: pack.id, quantity: 2 });
+  await database.db
+    .insert(database.schema.cardPriceConfigs)
+    .values([
+      { overall: 80, price: 100 },
+      { overall: 95, price: 200 },
+    ])
+    .onConflictDoNothing();
+  await database.db
+    .insert(database.schema.cardMarketConfig)
+    .values({ singleton: true, sellMultiplierBasisPoints: 2_000 })
+    .onConflictDoNothing();
+  const formation = await database.db.query.userFormations.findFirst({
+    columns: { formationId: true },
+    where: database.eq(database.schema.userFormations.userId, user.id),
+  });
+  if (!formation) throw new Error('Failed to load test formation.');
+  return {
+    userId: user.id,
+    reserveCardId: reserve.id,
+    reserveUserCardId: owned.id,
+    packId: pack.id,
+    formationId: formation.formationId,
+  };
 }
 
 export async function createBotResponseMigrationFixture(database: Database) {

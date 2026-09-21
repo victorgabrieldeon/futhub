@@ -1,38 +1,55 @@
-import type { tags } from 'typia';
+import { z } from 'zod';
 
-import type { ProgressionDto } from '../progression/progression.dto.js';
+import { ProgressionDtoSchema } from '../progression/progression.dto.js';
 
-export interface PackShopItemDto {
-  id: string & tags.Format<'uuid'>;
+const packIdentitySchema = z.object({
+  id: z.string().min(1).max(80),
+  name: z.string().min(1).max(80),
+  avatarUrl: z.url().max(2048).nullable(),
+});
+
+export const PackActionRequestSchema = z.object({ identity: packIdentitySchema });
+export type PackActionRequest = z.infer<typeof PackActionRequestSchema>;
+
+export const PackCatalogItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  emoji: z.string(),
+  cardsAmount: z.number().int().positive(),
+  price: z.number().int().nonnegative(),
+  limitPerUser: z.number().int().nonnegative(),
+});
+export type PackCatalogItem = z.infer<typeof PackCatalogItemSchema>;
+
+export type PackShopItemDto = Readonly<{
+  id: string;
   name: string;
   price: number;
   imageUrl: string;
   cardsPerPack: number;
-}
+}>;
 
-export interface PackShopDto {
+export type PackShopDto = Readonly<{
   packs: PackShopItemDto[];
   page: number;
   totalPages: number;
-}
+}>;
 
-export interface PackShopQueryDto {
-  page?: number & tags.Type<'int32'> & tags.Minimum<1>;
-}
+export const PackShopQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).max(10_000).optional(),
+});
+export type PackShopQuery = z.infer<typeof PackShopQuerySchema>;
 
-export interface PackActionRequest {
-  identity: {
-    id: string & tags.MinLength<1> & tags.MaxLength<80>;
-    name: string & tags.MinLength<1> & tags.MaxLength<80>;
-    avatarUrl: (string & tags.Format<'url'> & tags.MaxLength<2048>) | null;
-  };
-}
+export const PurchasePackResponseSchema = z.object({
+  balance: z.number(),
+  quantity: z.number(),
+});
+export type PurchasePackResponse = z.infer<typeof PurchasePackResponseSchema>;
 
-export interface PurchasePackResponse {
-  balance: number;
-  quantity: number;
-}
-export interface OpenPackResponse {
-  cards: { id: string; card: { id: string; overall: number } }[];
-  progression: ProgressionDto;
-}
+export const OpenPackResponseSchema = z.object({
+  cards: z.array(
+    z.object({ id: z.string(), card: z.object({ id: z.string(), overall: z.number() }) }),
+  ),
+  progression: ProgressionDtoSchema,
+});
+export type OpenPackResponse = z.infer<typeof OpenPackResponseSchema>;

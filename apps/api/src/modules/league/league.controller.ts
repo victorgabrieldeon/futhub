@@ -1,6 +1,7 @@
-import { SwaggerCustomizer, TypedBody, TypedRoute } from '@nestia/core';
+import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
 import {
   BadRequestException,
+  Body,
   Controller,
   HttpCode,
   Inject,
@@ -13,12 +14,13 @@ import { ApiTags } from '@nestjs/swagger';
 import { type Observable, from } from 'rxjs';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
-import type {
-  DiscordIdentityDto,
-  LeagueStatusResponse,
-  MatchEventDto,
-  MatchResponse,
-  QueueResponse,
+import {
+  type DiscordIdentityDto,
+  DiscordIdentityDtoSchema,
+  type LeagueStatusResponse,
+  type MatchEventDto,
+  type MatchResponse,
+  type QueueResponse,
 } from './league.dto.js';
 import { LeagueUseCase } from './use-cases/league/league.use-case.js';
 import { LeagueInputError, LeagueNotFoundError } from './use-cases/league/league.use-case.types.js';
@@ -35,7 +37,9 @@ export class LeagueController {
     route.operationId = 'joinRankedQueue';
     route.security = [{ bearer: [] }];
   })
-  async join(@TypedBody() identity: DiscordIdentityDto): Promise<QueueResponse> {
+  async join(
+    @Body({ schema: DiscordIdentityDtoSchema }) identity: DiscordIdentityDto,
+  ): Promise<QueueResponse> {
     return this.handle(() => this.league.join(identity));
   }
 

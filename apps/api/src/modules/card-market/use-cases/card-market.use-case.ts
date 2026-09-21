@@ -1,11 +1,30 @@
 import type {
   CardMarketRepository,
   DiscordIdentity,
+  ListCardsQuery,
+  ListCardsResult,
+  ListCatalogResult,
   PurchaseCardResult,
   SaleCardsResult,
 } from './card-market.types.js';
 
 const maxBalance = 2_147_483_647;
+
+export class ListCardsUseCase {
+  constructor(private readonly repository: CardMarketRepository) {}
+
+  execute(query: ListCardsQuery): Promise<ListCardsResult> {
+    return this.repository.listCards(query);
+  }
+}
+
+export class ListCardCatalogUseCase {
+  constructor(private readonly repository: CardMarketRepository) {}
+
+  execute(): Promise<ListCatalogResult> {
+    return this.repository.listCatalog();
+  }
+}
 
 export class PurchaseCardUseCase {
   constructor(private readonly repository: CardMarketRepository) {}
@@ -36,8 +55,8 @@ export class SellCardsUseCase {
     return this.repository.runSale(identity, userCardIds, async (transaction) => {
       if (transaction.cards.length !== userCardIds.length)
         throw new Error('One or more cards not found.');
-      if (transaction.cards.some((card) => card.holder || card.favorite))
-        throw new Error('Holder and favorite cards cannot be sold.');
+      if (transaction.cards.some((card) => card.holder || card.favorite || card.captain))
+        throw new Error('Holder, favorite, and captain cards cannot be sold.');
       const amount = transaction.cards.reduce((total, card) => total + card.price, 0);
       if (amount > maxBalance - transaction.balance) throw new Error('Balance limit exceeded.');
       return transaction.commit(amount);

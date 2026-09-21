@@ -1,209 +1,251 @@
-import type { tags } from 'typia';
+import { z } from 'zod';
 
-export type CardPosition = 'GOL' | 'LD' | 'LE' | 'ZAG' | 'VOL' | 'MA' | 'MC' | 'PD' | 'PE' | 'CA';
-export type Slug = string & tags.Pattern<'^[a-z0-9]+(?:-[a-z0-9]+)*$'> & tags.MaxLength<100>;
-export type HexColor = string & tags.Pattern<'^#[0-9A-Fa-f]{6}$'>;
+export const CardPositionSchema = z.enum([
+  'GOL',
+  'LD',
+  'LE',
+  'ZAG',
+  'VOL',
+  'MA',
+  'MC',
+  'PD',
+  'PE',
+  'CA',
+]);
+export type CardPosition = z.infer<typeof CardPositionSchema>;
 
-export interface CardInput {
-  slug: Slug;
-  name: string & tags.MinLength<1> & tags.MaxLength<100>;
-  collectionId: string & tags.Format<'uuid'>;
-  teamId: string & tags.Format<'uuid'>;
-  position: CardPosition;
-  secondaryPositions?: CardPosition[];
-  contractsBlocked?: boolean;
-  defense: number & tags.Minimum<1>;
-  attack: number & tags.Minimum<1>;
-  creation: number & tags.Minimum<1>;
-  overall: number & tags.Minimum<60> & tags.Maximum<100>;
-  passing: number & tags.Minimum<1>;
-  control: number & tags.Minimum<1>;
-  marking: number & tags.Minimum<1>;
-  pace: number & tags.Minimum<1>;
-  dribbling: number & tags.Minimum<1>;
-  finishing: number & tags.Minimum<1>;
-}
+export const SlugSchema = z
+  .string()
+  .max(100)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+export type Slug = z.infer<typeof SlugSchema>;
 
-export type CardUpdate = Omit<CardInput, 'slug'>;
+export const HexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
+export type HexColor = z.infer<typeof HexColorSchema>;
 
-export interface CardListQuery {
-  query?: string;
-  collectionId?: string;
-  teamId?: string;
-  position?: CardPosition;
-  image?: 'default' | 'custom';
-  contractsBlocked?: boolean;
-  sort?: 'recent' | 'overall' | 'name';
-  page: number & tags.Minimum<1>;
-  pageSize?: number & tags.Minimum<1> & tags.Maximum<100>;
-}
+const queryBooleanSchema = z.preprocess((value) => {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return value;
+}, z.boolean());
 
-export interface CardTemplate {
-  filename: string;
-  content: string;
-}
+export const CardInputSchema = z.object({
+  slug: SlugSchema,
+  name: z.string().min(1).max(100),
+  collectionId: z.uuid(),
+  teamId: z.uuid(),
+  position: CardPositionSchema,
+  secondaryPositions: z.array(CardPositionSchema).optional(),
+  contractsBlocked: z.boolean().optional(),
+  defense: z.number().min(1),
+  attack: z.number().min(1),
+  creation: z.number().min(1),
+  overall: z.number().min(60).max(100),
+  passing: z.number().min(1),
+  control: z.number().min(1),
+  marking: z.number().min(1),
+  pace: z.number().min(1),
+  dribbling: z.number().min(1),
+  finishing: z.number().min(1),
+});
+export type CardInput = z.infer<typeof CardInputSchema>;
 
-export interface ImportError {
-  row: number;
-  field: string;
-  message: string;
-}
+export const CardUpdateSchema = CardInputSchema.omit({ slug: true });
+export type CardUpdate = z.infer<typeof CardUpdateSchema>;
 
-export interface ImportPreview {
-  valid: boolean;
-  createCount: number;
-  updateCount: number;
-  errors: ImportError[];
-}
+export const CardListQuerySchema = z.object({
+  query: z.string().optional(),
+  collectionId: z.string().optional(),
+  teamId: z.string().optional(),
+  position: CardPositionSchema.optional(),
+  image: z.enum(['default', 'custom']).optional(),
+  contractsBlocked: queryBooleanSchema.optional(),
+  sort: z.enum(['recent', 'overall', 'name']).optional(),
+  page: z.coerce.number().min(1),
+  pageSize: z.coerce.number().min(1).max(100).optional(),
+});
+export type CardListQuery = z.infer<typeof CardListQuerySchema>;
 
-export interface CardReference {
-  id: string & tags.Format<'uuid'>;
-  name: string;
-  slug: Slug;
-  emoji: string;
-  imageUrl: string | null;
-}
+export const CardTemplateSchema = z.object({ filename: z.string(), content: z.string() });
+export type CardTemplate = z.infer<typeof CardTemplateSchema>;
 
-export interface CardCatalog {
-  collections: CardReference[];
-  teams: CardReference[];
-}
+export const ImportErrorSchema = z.object({
+  row: z.number(),
+  field: z.string(),
+  message: z.string(),
+});
+export type ImportError = z.infer<typeof ImportErrorSchema>;
 
-export interface AdminCard {
-  id: string & tags.Format<'uuid'>;
-  slug: Slug;
-  name: string;
-  collection: CardReference;
-  team: CardReference;
-  position: CardPosition;
-  secondaryPositions: CardPosition[];
-  contractsBlocked: boolean;
-  defense: number;
-  attack: number;
-  creation: number;
-  overall: number;
-  passing: number;
-  control: number;
-  marking: number;
-  pace: number;
-  dribbling: number;
-  finishing: number;
-  imageUrl: string;
-}
+export const ImportPreviewSchema = z.object({
+  valid: z.boolean(),
+  createCount: z.number(),
+  updateCount: z.number(),
+  errors: z.array(ImportErrorSchema),
+});
+export type ImportPreview = z.infer<typeof ImportPreviewSchema>;
 
-export interface CardPage {
-  items: AdminCard[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+export const CardReferenceSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  slug: SlugSchema,
+  emoji: z.string(),
+  imageUrl: z.string().nullable(),
+});
+export type CardReference = z.infer<typeof CardReferenceSchema>;
 
-export interface CatalogListQuery {
-  query?: string & tags.MaxLength<100>;
-  page: number & tags.Minimum<1>;
-  pageSize?: number & tags.Minimum<1> & tags.Maximum<100>;
-}
-export interface CollectionListQuery extends CatalogListQuery {
-  contractsBlocked?: boolean;
-}
+export const CardCatalogSchema = z.object({
+  collections: z.array(CardReferenceSchema),
+  teams: z.array(CardReferenceSchema),
+});
+export type CardCatalog = z.infer<typeof CardCatalogSchema>;
 
-export interface TeamListQuery extends CatalogListQuery {
-  image?: 'default' | 'custom';
-}
+export const AdminCardSchema = z.object({
+  id: z.uuid(),
+  slug: SlugSchema,
+  name: z.string(),
+  collection: CardReferenceSchema,
+  team: CardReferenceSchema,
+  position: CardPositionSchema,
+  secondaryPositions: z.array(CardPositionSchema),
+  contractsBlocked: z.boolean(),
+  defense: z.number(),
+  attack: z.number(),
+  creation: z.number(),
+  overall: z.number(),
+  passing: z.number(),
+  control: z.number(),
+  marking: z.number(),
+  pace: z.number(),
+  dribbling: z.number(),
+  finishing: z.number(),
+  imageUrl: z.string(),
+});
+export type AdminCard = z.infer<typeof AdminCardSchema>;
 
-export interface TeamLogoSuggestionsQuery {
-  q: string & tags.MinLength<2> & tags.MaxLength<100>;
-}
+export const CardPageSchema = z.object({
+  items: z.array(AdminCardSchema),
+  total: z.number(),
+  page: z.number(),
+  pageSize: z.number(),
+});
+export type CardPage = z.infer<typeof CardPageSchema>;
 
-export interface TeamLogoSuggestion {
-  name: string;
-  slug: Slug;
-  description: string;
-  imageUrl: string;
-  sourceUrl: string;
-}
-export interface TeamLogoDetailsQuery {
-  slug: Slug;
-}
+export const CatalogListQuerySchema = z.object({
+  query: z.string().max(100).optional(),
+  page: z.coerce.number().min(1),
+  pageSize: z.coerce.number().min(1).max(100).optional(),
+});
+export type CatalogListQuery = z.infer<typeof CatalogListQuerySchema>;
 
-export interface TeamLogoDetails {
-  name: string;
-  slug: Slug;
-  symbol: string;
-  colors: string[];
-  imageUrl: string;
-  sourceUrl: string;
-}
-export interface CollectionArtworkSuggestionsQuery {
-  q: string & tags.MaxLength<100>;
-}
+export const CollectionListQuerySchema = CatalogListQuerySchema.extend({
+  contractsBlocked: queryBooleanSchema.optional(),
+});
+export type CollectionListQuery = z.infer<typeof CollectionListQuerySchema>;
 
-export interface CollectionArtworkSuggestion {
-  name: string;
-  slug: Slug;
-  symbol: string;
-  primaryColor: HexColor;
-  secondaryColor: HexColor;
-  imageUrl: string;
-  overlayUrl: string;
-  bannerUrl: string;
-  description: string;
-  sourceUrl: string;
-}
+export const TeamListQuerySchema = CatalogListQuerySchema.extend({
+  image: z.enum(['default', 'custom']).optional(),
+});
+export type TeamListQuery = z.infer<typeof TeamListQuerySchema>;
 
-export interface PlayerPhotoSuggestionsQuery {
-  q: string & tags.MinLength<2> & tags.MaxLength<100>;
-}
+export const TeamLogoSuggestionsQuerySchema = z.object({ q: z.string().min(2).max(100) });
+export type TeamLogoSuggestionsQuery = z.infer<typeof TeamLogoSuggestionsQuerySchema>;
 
-export interface PlayerPhotoSuggestion {
-  id: string;
-  name: string;
-  team: string;
-  position: string;
-  imageUrl: string;
-  sourceUrl: string;
-  provider: string;
-}
+export const TeamLogoSuggestionSchema = z.object({
+  name: z.string(),
+  slug: SlugSchema,
+  description: z.string(),
+  imageUrl: z.string(),
+  sourceUrl: z.string(),
+});
+export type TeamLogoSuggestion = z.infer<typeof TeamLogoSuggestionSchema>;
 
-export interface TeamInput {
-  slug: Slug;
-  name: string & tags.MinLength<1> & tags.MaxLength<100>;
-  emoji: string & tags.MinLength<1> & tags.MaxLength<30>;
-  color: HexColor;
-  colors?: HexColor[] & tags.MinItems<1> & tags.MaxItems<8>;
-  imageUrl?: (string & tags.MaxLength<2048>) | null;
-}
+export const TeamLogoDetailsQuerySchema = z.object({ slug: SlugSchema });
+export type TeamLogoDetailsQuery = z.infer<typeof TeamLogoDetailsQuerySchema>;
 
-export interface AdminTeam extends TeamInput {
-  id: string & tags.Format<'uuid'>;
-}
+export const TeamLogoDetailsSchema = z.object({
+  name: z.string(),
+  slug: SlugSchema,
+  symbol: z.string(),
+  colors: z.array(z.string()),
+  imageUrl: z.string(),
+  sourceUrl: z.string(),
+});
+export type TeamLogoDetails = z.infer<typeof TeamLogoDetailsSchema>;
 
-export interface TeamPage {
-  items: AdminTeam[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+export const CollectionArtworkSuggestionsQuerySchema = z.object({ q: z.string().max(100) });
+export type CollectionArtworkSuggestionsQuery = z.infer<
+  typeof CollectionArtworkSuggestionsQuerySchema
+>;
 
-export interface CollectionInput {
-  slug: Slug;
-  name: string & tags.MinLength<1> & tags.MaxLength<100>;
-  emoji: string & tags.MinLength<1> & tags.MaxLength<30>;
-  primaryColor: string & tags.MinLength<1> & tags.MaxLength<16>;
-  secondaryColor: string & tags.MinLength<1> & tags.MaxLength<16>;
-  imageUrl?: (string & tags.MaxLength<2048>) | null;
-  overlayUrl?: (string & tags.MaxLength<2048>) | null;
-  bannerUrl?: (string & tags.MaxLength<2048>) | null;
-  contractsBlocked?: boolean;
-}
+export const CollectionArtworkSuggestionSchema = z.object({
+  name: z.string(),
+  slug: SlugSchema,
+  symbol: z.string(),
+  primaryColor: HexColorSchema,
+  secondaryColor: HexColorSchema,
+  imageUrl: z.string(),
+  overlayUrl: z.string(),
+  bannerUrl: z.string(),
+  description: z.string(),
+  sourceUrl: z.string(),
+});
+export type CollectionArtworkSuggestion = z.infer<typeof CollectionArtworkSuggestionSchema>;
 
-export interface AdminCollection extends CollectionInput {
-  id: string & tags.Format<'uuid'>;
-}
+export const PlayerPhotoSuggestionsQuerySchema = z.object({ q: z.string().min(2).max(100) });
+export type PlayerPhotoSuggestionsQuery = z.infer<typeof PlayerPhotoSuggestionsQuerySchema>;
 
-export interface CollectionPage {
-  items: AdminCollection[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
+export const PlayerPhotoSuggestionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  team: z.string(),
+  position: z.string(),
+  imageUrl: z.string(),
+  sourceUrl: z.string(),
+  provider: z.string(),
+});
+export type PlayerPhotoSuggestion = z.infer<typeof PlayerPhotoSuggestionSchema>;
+
+export const TeamInputSchema = z.object({
+  slug: SlugSchema,
+  name: z.string().min(1).max(100),
+  emoji: z.string().min(1).max(30),
+  color: HexColorSchema,
+  colors: z.array(HexColorSchema).min(1).max(8).optional(),
+  imageUrl: z.string().max(2048).nullable().optional(),
+});
+export type TeamInput = z.infer<typeof TeamInputSchema>;
+
+export const AdminTeamSchema = TeamInputSchema.extend({ id: z.uuid() });
+export type AdminTeam = z.infer<typeof AdminTeamSchema>;
+
+export const TeamPageSchema = z.object({
+  items: z.array(AdminTeamSchema),
+  total: z.number(),
+  page: z.number(),
+  pageSize: z.number(),
+});
+export type TeamPage = z.infer<typeof TeamPageSchema>;
+
+export const CollectionInputSchema = z.object({
+  slug: SlugSchema,
+  name: z.string().min(1).max(100),
+  emoji: z.string().min(1).max(30),
+  primaryColor: z.string().min(1).max(16),
+  secondaryColor: z.string().min(1).max(16),
+  imageUrl: z.string().max(2048).nullable().optional(),
+  overlayUrl: z.string().max(2048).nullable().optional(),
+  bannerUrl: z.string().max(2048).nullable().optional(),
+  contractsBlocked: z.boolean().optional(),
+});
+export type CollectionInput = z.infer<typeof CollectionInputSchema>;
+
+export const AdminCollectionSchema = CollectionInputSchema.extend({ id: z.uuid() });
+export type AdminCollection = z.infer<typeof AdminCollectionSchema>;
+
+export const CollectionPageSchema = z.object({
+  items: z.array(AdminCollectionSchema),
+  total: z.number(),
+  page: z.number(),
+  pageSize: z.number(),
+});
+export type CollectionPage = z.infer<typeof CollectionPageSchema>;

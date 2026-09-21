@@ -1,4 +1,5 @@
 export type MatchEventType = 'kickoff' | 'goal' | 'yellow_card' | 'red_card' | 'fulltime';
+export type TeamTactic = 'defensive' | 'balanced' | 'offensive';
 
 export type LineupCard = Readonly<{
   userCardId: string;

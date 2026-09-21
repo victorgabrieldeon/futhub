@@ -8,14 +8,28 @@ import {
   formatMatch,
   formatPackOpen,
   formatPackPurchase,
+  formatPackStore,
   formatQueueStatus,
   formatRankedQueue,
-} from './game.js';
+} from '../src/game.js';
 
 test('formata resultados de packs e mercado', () => {
   assert.equal(
     formatPackPurchase({ quantity: 2, balance: 450 }),
     'Pack comprado. Quantidade: 2. Saldo: 450.',
+  );
+  assert.equal(
+    formatPackStore([
+      {
+        id: 'pack-1',
+        name: 'Pack Ouro',
+        emoji: '📦',
+        cardsAmount: 3,
+        price: 50,
+        limitPerUser: 2,
+      },
+    ]),
+    '## Loja\n### Packs\n📦 **Pack Ouro** — 3 carta(s), 50 moedas, limite 2.\nID: `pack-1`\n\nComprar: `/loja aba:packs pack_id:<ID>`.',
   );
   assert.equal(
     formatPackOpen({

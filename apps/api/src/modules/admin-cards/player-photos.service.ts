@@ -79,7 +79,12 @@ export class PlayerPhotosService {
   }
 
   private async searchSportsDb(name: string): Promise<PlayerPhotoSuggestion[]> {
-    const url = sportsDbUrl('searchplayers.php', 'p', name);
+    const apiKey = process.env.THESPORTSDB_API_KEY?.trim() || '123';
+    const url = new URL(
+      `/api/v1/json/${encodeURIComponent(apiKey)}/searchplayers.php`,
+      sportsDbOrigin,
+    );
+    url.searchParams.set('p', name);
 
     const response = await fetch(url, { signal: AbortSignal.timeout(5_000) });
     if (!response.ok) throw new Error(`TheSportsDB returned ${response.status}.`);
@@ -113,7 +118,12 @@ export class PlayerPhotosService {
   }
 
   private async lookupSportsDbPlayer(id: string): Promise<SportsDbPlayerDetails | null> {
-    const url = sportsDbUrl('lookupplayer.php', 'id', id);
+    const apiKey = process.env.THESPORTSDB_API_KEY?.trim() || '123';
+    const url = new URL(
+      `/api/v1/json/${encodeURIComponent(apiKey)}/lookupplayer.php`,
+      sportsDbOrigin,
+    );
+    url.searchParams.set('id', id);
 
     const response = await fetch(url, { signal: AbortSignal.timeout(5_000) });
     if (!response.ok) throw new Error(`TheSportsDB returned ${response.status}.`);
@@ -157,13 +167,6 @@ export class PlayerPhotosService {
     }
     return { buffer, contentType };
   }
-}
-
-function sportsDbUrl(endpoint: string, parameter: string, value: string): URL {
-  const apiKey = process.env.THESPORTSDB_API_KEY?.trim() || '123';
-  const url = new URL(`/api/v1/json/${encodeURIComponent(apiKey)}/${endpoint}`, sportsDbOrigin);
-  url.searchParams.set(parameter, value);
-  return url;
 }
 
 function playerPhotos(value: SportsDbPlayerDetails): PlayerPhotoSuggestion[] {

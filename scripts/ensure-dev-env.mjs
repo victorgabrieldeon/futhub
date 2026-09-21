@@ -17,12 +17,7 @@ const requiredVariables = [
   ['ADMIN_API_TOKEN', () => randomBytes(32).toString('hex')],
   ['MINIO_ROOT_USER', () => 'minioadmin'],
   ['MINIO_ROOT_PASSWORD', () => randomBytes(32).toString('hex')],
-  ['MINIO_BUCKET', () => 'futhub-card-images'],
-  ['MINIO_PUBLIC_URL', () => 'http://s3.futhub.localhost:8080'],
-  [
-    'ADMIN_DISCORD_REDIRECT_URI',
-    () => 'http://admin.futhub.localhost:8080/api/auth/discord/callback',
-  ],
+  ['MINIO_PUBLIC_URL', () => 'http://s3.futhub.localhost'],
 ];
 let nextContents = contents;
 
@@ -39,15 +34,7 @@ for (const [name, createValue] of requiredVariables) {
 
 nextContents = nextContents.replace(
   /^MINIO_PUBLIC_URL=http:\/\/localhost:9002$/m,
-  'MINIO_PUBLIC_URL=http://s3.futhub.localhost:8080',
-);
-nextContents = nextContents.replace(
-  /^MINIO_PUBLIC_URL=http:\/\/s3\.futhub\.localhost$/m,
-  'MINIO_PUBLIC_URL=http://s3.futhub.localhost:8080',
-);
-nextContents = nextContents.replace(
-  /^ADMIN_DISCORD_REDIRECT_URI=http:\/\/admin\.futhub\.localhost\/api\/auth\/discord\/callback$/m,
-  'ADMIN_DISCORD_REDIRECT_URI=http://admin.futhub.localhost:8080/api/auth/discord/callback',
+  'MINIO_PUBLIC_URL=http://s3.futhub.localhost',
 );
 
 if (nextContents === contents) process.exit(0);

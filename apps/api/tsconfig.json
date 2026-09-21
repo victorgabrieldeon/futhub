@@ -6,7 +6,10 @@
     "outDir": "dist",
     "plugins": [
       { "transform": "typia/lib/transform", "enabled": false },
-      { "transform": "@nestia/core/native/transform.cjs", "validate": "validateEquals" }
+      {
+        "transform": "@nestia/core/native/transform.cjs",
+        "stringify": null
+      }
     ],
     "rootDir": "src"
   },

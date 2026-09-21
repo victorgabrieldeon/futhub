@@ -2,14 +2,7 @@ import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
 import { Controller } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-interface HealthResponse {
-  /**
-   * Estado atual do serviço.
-   *
-   * @title Estado do serviço
-   */
-  status: 'ok';
-}
+import type { HealthResponse } from './health.dto.js';
 
 @ApiTags('Saúde')
 @Controller()

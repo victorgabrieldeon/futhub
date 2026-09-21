@@ -1,4 +1,20 @@
+import type {
+  CardMarketCatalog,
+  CardMarketItem,
+  CardMarketListQuery,
+  CardMarketPage,
+  CardMarketPosition,
+} from '../card-market.dto.js';
+
 export type DiscordIdentity = Readonly<{ id: string; name: string; avatarUrl: string | null }>;
+export type ListCardsQuery = Readonly<
+  Omit<CardMarketListQuery, 'positions'> & {
+    positions?: readonly CardMarketPosition[];
+  }
+>;
+export type ListCardsResult = CardMarketPage;
+export type ListCardsItem = CardMarketItem;
+export type ListCatalogResult = CardMarketCatalog;
 
 export type PurchaseCardResult = Readonly<{
   userCardId: string;
@@ -26,6 +42,7 @@ export type SaleCard = Readonly<{
   userCardId: string;
   holder: boolean;
   favorite: boolean;
+  captain: boolean;
   price: number;
 }>;
 
@@ -36,6 +53,10 @@ export type SaleCardsTransaction = Readonly<{
 }>;
 
 export abstract class CardMarketRepository {
+  abstract listCards(query: ListCardsQuery): Promise<ListCardsResult>;
+
+  abstract listCatalog(): Promise<ListCatalogResult>;
+
   abstract runPurchase<T>(
     identity: DiscordIdentity,
     cardId: string,

@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import { Injectable } from '@nestjs/common';
 import { Client } from 'minio';
+import { workspacePath } from '../../workspace-path.js';
 
 const DEFAULT_KEY = 'defaults/card.webp';
 const DEFAULT_CONTENT_TYPE = 'image/webp';
@@ -44,9 +45,7 @@ export class CardImageStorage {
     try {
       await client.statObject(bucket, DEFAULT_KEY);
     } catch {
-      const image = await readFile(
-        new URL('../../../media/assets/card/default.webp', import.meta.url),
-      );
+      const image = await readFile(workspacePath('apps/api/media/assets/card/default.webp'));
       await client.putObject(bucket, DEFAULT_KEY, image, image.length, {
         'Content-Type': DEFAULT_CONTENT_TYPE,
       });

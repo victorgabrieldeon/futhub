@@ -43,7 +43,22 @@ export class ResgatarLucroUseCase {
       const availableAt = await transaction.getAvailableAt();
       if (availableAt && now < availableAt) return { kind: 'cooldown', availableAt };
       const reward = selectWeightedReward(persistedCommand.rewards, random);
-      const balance = await transaction.credit(reward.value);
+      const club = await transaction.getClub();
+      const sponsorRevenue = club.sponsor.completed ? club.sponsor.payout : 0;
+      const report = {
+        ticketRevenue: club.stadium.ticketRevenue,
+        commercialRevenue: reward.value,
+        sponsorRevenue,
+        maintenance: club.stadium.maintenance,
+        payroll: club.payroll,
+        net:
+          club.stadium.ticketRevenue +
+          reward.value +
+          sponsorRevenue -
+          club.stadium.maintenance -
+          club.payroll,
+      };
+      const balance = await transaction.credit(report.net);
       await transaction.advanceMission();
       const progression = await transaction.grantProgression();
       const levelRewardBalance = progression.rewards.reduce(
@@ -55,6 +70,7 @@ export class ResgatarLucroUseCase {
       return {
         kind: 'success',
         reward,
+        report,
         balance: balance + levelRewardBalance,
         availableAt: nextAvailableAt,
         progression,

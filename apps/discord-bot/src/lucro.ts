@@ -1,12 +1,19 @@
 import type { LucroResponse } from '@futhub/api-client';
-import type { InteractionReplyOptions } from 'discord.js';
-import { expand } from './responses.js';
+import type { CommandContext } from 'seyfert';
+
+type InteractionCreateBodyRequest = Parameters<CommandContext['write']>[0];
 
 function render(template: string, values: Record<string, string>): string {
-  return expand(template, values);
+  return Object.entries(values).reduce(
+    (message, [name, value]) => message.replaceAll(`{${name}}`, value),
+    template,
+  );
 }
 
-export function formatCommandResult(result: LucroResponse, now: Date): InteractionReplyOptions {
+export function formatCommandResult(
+  result: LucroResponse,
+  now: Date,
+): InteractionCreateBodyRequest {
   const availableAt = new Date(result.availableAt);
   if (!Number.isFinite(availableAt.getTime())) throw new Error('API returned an invalid date.');
   const available = `<t:${Math.floor(availableAt.getTime() / 1000)}:F>`;
@@ -23,11 +30,21 @@ export function formatCommandResult(result: LucroResponse, now: Date): Interacti
     level: String(result.progression.level),
     availableAt: available,
   };
+  const report = result.report;
+  const closing = [
+    '**Fechamento do clube**',
+    `Bilheteria: **+${report.ticketRevenue}**`,
+    `Receita comercial: **+${report.commercialRevenue}**`,
+    `Patrocinador: **+${report.sponsorRevenue}**`,
+    `Manutenção: **-${report.maintenance}**`,
+    `Folha salarial: **-${report.payroll}**`,
+    `Lucro líquido: **${report.net >= 0 ? '+' : ''}${report.net}**`,
+  ].join('\n');
   return {
     embeds: [
       {
         title: render(result.embed.title, values),
-        description: render(result.embed.description, values),
+        description: `${render(result.embed.description, values)}\n\n${closing}`,
         color: Number.parseInt(result.embed.color.slice(1), 16),
         footer: result.embed.footer ? { text: render(result.embed.footer, values) } : undefined,
       },

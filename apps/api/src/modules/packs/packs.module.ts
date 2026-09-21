@@ -5,7 +5,7 @@ import { PackShopService } from './pack-shop.service.js';
 import { PacksController } from './packs.controller.js';
 import { DrizzlePackRepository } from './repository/packs.repository.js';
 import { OpenPackUseCase } from './use-cases/open-pack/open-pack.use-case.js';
-import { PackRepository } from './use-cases/pack.types.js';
+import { PackCatalogRepository, PackRepository } from './use-cases/pack.types.js';
 import { PurchasePackUseCase } from './use-cases/purchase-pack/purchase-pack.use-case.js';
 
 @Module({
@@ -15,6 +15,13 @@ import { PurchasePackUseCase } from './use-cases/purchase-pack/purchase-pack.use
     PackShopService,
     {
       provide: PackRepository,
+      useFactory: () => {
+        if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required.');
+        return new DrizzlePackRepository(() => import('@futhub/database'));
+      },
+    },
+    {
+      provide: PackCatalogRepository,
       useFactory: () => {
         if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required.');
         return new DrizzlePackRepository(() => import('@futhub/database'));

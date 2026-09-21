@@ -4,6 +4,7 @@ import { Readable } from 'node:stream';
 
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Client } from 'minio';
+import { workspacePath } from '../../workspace-path.js';
 
 const defaultCardObjectKey = 'defaults/card.webp';
 const maxImageBytes = 10 * 1024 * 1024;
@@ -57,6 +58,10 @@ export class FilesService {
     return this.store(image, { source: 'upload', prefix: 'uploads' });
   }
 
+  async generated(image: ImageFile): Promise<FileDto> {
+    return this.store(image, { source: 'generated', prefix: 'generated' });
+  }
+
   async importImage(sourceUrl: string, contentType?: ImageContentType): Promise<FileDto> {
     const url = this.importUrl(sourceUrl);
     const response = await fetch(url, { signal: AbortSignal.timeout(20_000) });
@@ -106,9 +111,7 @@ export class FilesService {
     try {
       sizeBytes = (await client.statObject(bucket, defaultCardObjectKey)).size;
     } catch {
-      const buffer = await readFile(
-        new URL('../../../media/assets/card/default.webp', import.meta.url),
-      );
+      const buffer = await readFile(workspacePath('apps/api/media/assets/card/default.webp'));
       await client.putObject(bucket, defaultCardObjectKey, buffer, buffer.length, {
         'Content-Type': 'image/webp',
       });

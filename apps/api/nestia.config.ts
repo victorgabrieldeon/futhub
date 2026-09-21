@@ -13,12 +13,18 @@ export const swaggerConfig = {
     { name: 'Administração / Lucro', description: 'Configuração do comando de lucro.' },
     { name: 'Administração / Packs', description: 'Gerenciamento de packs e imagens.' },
     { name: 'Administração / Sessão', description: 'Sessão autenticada da área administrativa.' },
+    {
+      name: 'Respostas do bot',
+      description: 'Templates configuráveis de resposta do bot Discord.',
+    },
+    { name: 'Clube', description: 'Gestão financeira e estrutura do clube.' },
     { name: 'Comandos', description: 'Comandos executados por jogadores.' },
     { name: 'Liga', description: 'Fila ranqueada, classificação e partidas.' },
     { name: 'Mercado de cards', description: 'Compra e venda de cards de jogadores.' },
     { name: 'Missões', description: 'Missões disponíveis para jogador.' },
     { name: 'Packs', description: 'Compra e abertura de packs.' },
     { name: 'Saúde', description: 'Estado do serviço.' },
+    { name: 'Time', description: 'Inventário, escalação, formação e tática do jogador.' },
   ],
   security: {
     bearer: { type: 'http', scheme: 'bearer' },
@@ -27,6 +33,20 @@ export const swaggerConfig = {
 } satisfies Omit<INestiaConfig.ISwaggerConfig, 'output'>;
 
 export default {
-  input: 'src/**/*.controller.ts',
+  input: [
+    'src/modules/packs/packs.controller.ts',
+    'src/modules/missions/missions.controller.ts',
+    'src/modules/lucro/lucro.controller.ts',
+    'src/modules/lucro/admin-lucro.controller.ts',
+    'src/modules/league/league.controller.ts',
+    'src/modules/health/health.controller.ts',
+    'src/modules/card-market/card-market.controller.ts',
+    'src/modules/club/club.controller.ts',
+    'src/modules/team/team.controller.ts',
+    'src/modules/auth/admin-session.controller.ts',
+    'src/modules/bot-responses/bot-responses.controller.ts',
+    'src/modules/admin-packs/admin-packs.controller.ts',
+    'src/modules/admin-cards/admin-cards.controller.ts',
+  ],
   swagger: { ...swaggerConfig, output: 'openapi.json' },
 } satisfies INestiaConfig;

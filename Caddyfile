@@ -2,16 +2,8 @@ http://admin.futhub.localhost {
 	reverse_proxy admin:3000
 }
 
-http://player.futhub.localhost {
-	reverse_proxy player:3000
-}
-
 http://api.futhub.localhost {
 	reverse_proxy api:3000
-}
-
-http://db.futhub.localhost {
-	reverse_proxy pgadmin:80
 }
 
 http://s3.futhub.localhost {

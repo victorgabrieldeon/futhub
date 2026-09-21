@@ -1,16 +1,18 @@
-import type { tags } from 'typia';
+import { z } from 'zod';
 
-export interface ProgressionRewardDto {
-  itemId: string & tags.Format<'uuid'>;
-  type: 'card' | 'pack' | 'balance' | 'field';
-  quantity: number & tags.Minimum<1>;
-  resourceId: (string & tags.Format<'uuid'>) | null;
-}
+export const ProgressionRewardDtoSchema = z.object({
+  itemId: z.uuid(),
+  type: z.enum(['card', 'pack', 'balance', 'field']),
+  quantity: z.number().min(1),
+  resourceId: z.uuid().nullable(),
+});
+export type ProgressionRewardDto = z.infer<typeof ProgressionRewardDtoSchema>;
 
-export interface ProgressionDto {
-  gainedXp: number & tags.Minimum<0>;
-  level: number & tags.Minimum<1>;
-  xp: number & tags.Minimum<0>;
-  nextLevelXp: number & tags.Minimum<1>;
-  rewards: readonly ProgressionRewardDto[];
-}
+export const ProgressionDtoSchema = z.object({
+  gainedXp: z.number().min(0),
+  level: z.number().min(1),
+  xp: z.number().min(0),
+  nextLevelXp: z.number().min(1),
+  rewards: z.array(ProgressionRewardDtoSchema).readonly(),
+});
+export type ProgressionDto = z.infer<typeof ProgressionDtoSchema>;

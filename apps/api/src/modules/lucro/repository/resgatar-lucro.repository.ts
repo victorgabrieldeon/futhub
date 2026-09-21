@@ -1,3 +1,4 @@
+import { clubProjection, ensureClub } from '../../club/club.service.js';
 import { advanceMissions } from '../../missions/missions.service.js';
 import { grantCommandXp } from '../../progression/progression.js';
 import { upsertDiscordUser } from '../../users/user.repository.js';
@@ -93,9 +94,13 @@ export class DrizzleResgatarLucroRepository implements ResgatarLucroRepository {
             });
             return cooldown?.availableAt ?? null;
           },
+          getClub: async () => {
+            const club = await ensureClub(database, tx, user.id, now);
+            return clubProjection(database, tx, user.id, user.balance, club.stadiumLevel, now);
+          },
           credit: async (value) => {
-            if (!persistedCommand.rewards.some((reward) => reward.value === value))
-              throw new Error('Unknown reward.');
+            if (!Number.isSafeInteger(value) || value < 1)
+              throw new Error('Profit settlement must be a positive integer.');
             const [credited] = await tx
               .update(schema.users)
               .set({ saldo: sql`${schema.users.saldo} + ${value}`, atualizadoEm: now })

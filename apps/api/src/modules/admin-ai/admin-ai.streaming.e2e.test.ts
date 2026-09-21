@@ -29,7 +29,7 @@ describe('Admin AI streaming HTTP', () => {
     context = await startE2eContext();
     await context.app.listen(0, '127.0.0.1');
     origin = await context.app.getUrl();
-  }, 60_000);
+  }, 120_000);
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();

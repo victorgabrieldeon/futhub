@@ -6,16 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import { request } from "./request.js";
-export interface ReadonlyavatarUrlstringnullbalancenumberexpiresAtnumberidstringnamestring {
-  /** @nullable */
-  avatarUrl: string | null;
-  balance: number;
-  expiresAt: number;
-  id: string;
-  name: string;
-}
-
-export interface PackShopItemDto {
+export interface ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber {
   id: string;
   name: string;
   price: number;
@@ -23,518 +14,158 @@ export interface PackShopItemDto {
   cardsPerPack: number;
 }
 
-export interface PackShopDto {
-  packs: PackShopItemDto[];
+export interface ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber {
+  packs: ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber[];
   page: number;
   totalPages: number;
 }
 
-export interface PackShopQueryDto {
-  /** @minimum 1 */
-  page?: number;
-}
+export type TeamCardPosition =
+  (typeof TeamCardPosition)[keyof typeof TeamCardPosition];
 
-export interface PurchasePackResponse {
-  balance: number;
-  quantity: number;
-}
-
-export type PackActionRequestIdentity = {
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
-  id: string;
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
-  name: string;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  avatarUrl: string | null;
-};
-
-export interface PackActionRequest {
-  identity: PackActionRequestIdentity;
-}
-
-export type OpenPackResponseCardsItemCard = {
-  id: string;
-  overall: number;
-};
-
-export type OpenPackResponseCardsItem = {
-  id: string;
-  card: OpenPackResponseCardsItemCard;
-};
-
-export type ProgressionRewardDtoType =
-  (typeof ProgressionRewardDtoType)[keyof typeof ProgressionRewardDtoType];
-
-export const ProgressionRewardDtoType = {
-  balance: "balance",
-  card: "card",
-  field: "field",
-  pack: "pack",
+export const TeamCardPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
 } as const;
 
-export interface ProgressionRewardDto {
-  itemId: string;
-  type: ProgressionRewardDtoType;
-  /** @minimum 1 */
-  quantity: number;
-  /** @nullable */
-  resourceId: string | null;
-}
+export type TeamCardSecondaryPositionsItem =
+  (typeof TeamCardSecondaryPositionsItem)[keyof typeof TeamCardSecondaryPositionsItem];
 
-export interface ProgressionDto {
-  /** @minimum 0 */
-  gainedXp: number;
-  /** @minimum 1 */
-  level: number;
-  /** @minimum 0 */
-  xp: number;
-  /** @minimum 1 */
-  nextLevelXp: number;
-  rewards: ProgressionRewardDto[];
-}
-
-export interface OpenPackResponse {
-  cards: OpenPackResponseCardsItem[];
-  progression: ProgressionDto;
-}
-
-export type MissionRewardDtoNullableType =
-  (typeof MissionRewardDtoNullableType)[keyof typeof MissionRewardDtoNullableType];
-
-export const MissionRewardDtoNullableType = {
-  balance: "balance",
-  card: "card",
-  field: "field",
-  pack: "pack",
-  premium: "premium",
+export const TeamCardSecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
 } as const;
 
 /**
  * @nullable
  */
-export type MissionRewardDtoNullable = {
-  itemId: string;
-  type: MissionRewardDtoNullableType;
-  /** @minimum 1 */
-  quantity: number;
-  /** @nullable */
-  resourceId: string | null;
-} | null;
+export type TeamCardHolderPosition =
+  (typeof TeamCardHolderPosition)[keyof typeof TeamCardHolderPosition] | null;
 
-export type MissionDtoType =
-  (typeof MissionDtoType)[keyof typeof MissionDtoType];
-
-export const MissionDtoType = {
-  claim_profit: "claim_profit",
-  open_pack: "open_pack",
-  play_match: "play_match",
-  sell_player: "sell_player",
+export const TeamCardHolderPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
 } as const;
 
-export type MissionDtoCadence =
-  (typeof MissionDtoCadence)[keyof typeof MissionDtoCadence];
-
-export const MissionDtoCadence = {
-  daily: "daily",
-  monthly: "monthly",
-  weekly: "weekly",
-} as const;
-
-export interface MissionDto {
-  id: string;
-  title: string;
-  type: MissionDtoType;
-  cadence: MissionDtoCadence;
-  /** @minimum 1 */
-  tier: number;
-  /** @minimum 1 */
-  goal: number;
-  /** @minimum 0 */
-  progress: number;
-  completed: boolean;
-  claimed: boolean;
-  expiresAt: string;
-  reward: MissionRewardDtoNullable | null;
-}
-
-export type MissionRewardDtoType =
-  (typeof MissionRewardDtoType)[keyof typeof MissionRewardDtoType];
-
-export const MissionRewardDtoType = {
-  balance: "balance",
-  card: "card",
-  field: "field",
-  pack: "pack",
-  premium: "premium",
-} as const;
-
-export interface MissionRewardDto {
-  itemId: string;
-  type: MissionRewardDtoType;
-  /** @minimum 1 */
-  quantity: number;
-  /** @nullable */
-  resourceId: string | null;
-}
-
-export interface MissionsResponse {
-  missions: MissionDto[];
-}
-
-export interface MissionsRequest {
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
-  id: string;
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
-  name: string;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  avatarUrl: string | null;
-}
-
-/**
- * Resultado com cooldown ainda ativo.
- */
-export type LucroCooldownResponseKind =
-  (typeof LucroCooldownResponseKind)[keyof typeof LucroCooldownResponseKind];
-
-export const LucroCooldownResponseKind = {
-  cooldown: "cooldown",
-} as const;
-
-export interface LucroCooldownResponse {
-  /** Resultado com cooldown ainda ativo. */
-  kind: LucroCooldownResponseKind;
-  availableAt: string;
-}
-
-export interface LucroEmbedDto {
-  title: string;
-  description: string;
-  color: string;
-  footer: string;
-}
-
-export interface LucroRewardDto {
-  readonly value: number;
-  readonly weight: number;
-  readonly message: string;
-}
-
-/**
- * Resultado com recompensa concedida.
- */
-export type LucroSuccessResponseKind =
-  (typeof LucroSuccessResponseKind)[keyof typeof LucroSuccessResponseKind];
-
-export const LucroSuccessResponseKind = {
-  success: "success",
-} as const;
-
-export interface LucroSuccessResponse {
-  /** Resultado com recompensa concedida. */
-  kind: LucroSuccessResponseKind;
-  reward: LucroRewardDto;
-  balance: number;
-  availableAt: string;
-  progression: ProgressionDto;
-  embed: LucroEmbedDto;
-}
-
-export interface DiscordIdentityDto {
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
-  id: string;
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
-  name: string;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  avatarUrl: string | null;
-}
-
-export interface LucroMessagesDto {
-  /**
-   * @minLength 1
-   * @maxLength 280
-   */
-  pt: string;
-  /**
-   * @minLength 1
-   * @maxLength 280
-   */
-  es: string;
-  /**
-   * @minLength 1
-   * @maxLength 280
-   */
-  en: string;
-}
-
-export interface LucroRewardDtoO1 {
-  /** @minimum 1 */
-  value: number;
-  /** @minimum 1 */
-  weight: number;
-  messages: LucroMessagesDto;
-  id: string;
-}
-
-export interface LucroEmbedDtoO1 {
-  /**
-   * @minLength 1
-   * @maxLength 256
-   */
-  title: string;
-  /**
-   * @minLength 1
-   * @maxLength 4000
-   */
-  description: string;
-  /** @pattern ^#[0-9A-Fa-f]{6}$ */
-  color: string;
-  /** @maxLength 2048 */
-  footer: string;
-}
-
-export interface LucroConfigDto {
-  cooldownSeconds: number;
-  rewards: LucroRewardDtoO1[];
-  embed: LucroEmbedDtoO1;
-}
-
-export type LucroEmbedSchemaDtoVariablesItem = {
-  token: string;
-  description: string;
-  example: string;
-};
-
-export type LucroEmbedSchemaDtoPropertiesTitle = {
-  maxLength: number;
-  examples: string[];
-};
-
-export type LucroEmbedSchemaDtoPropertiesDescription = {
-  maxLength: number;
-  examples: string[];
-};
-
-export type LucroEmbedSchemaDtoPropertiesColor = {
-  maxLength: number;
-  examples: string[];
-};
-
-export type LucroEmbedSchemaDtoPropertiesFooter = {
-  maxLength: number;
-  examples: string[];
-};
-
-export type LucroEmbedSchemaDtoProperties = {
-  title: LucroEmbedSchemaDtoPropertiesTitle;
-  description: LucroEmbedSchemaDtoPropertiesDescription;
-  color: LucroEmbedSchemaDtoPropertiesColor;
-  footer: LucroEmbedSchemaDtoPropertiesFooter;
-};
-
-export interface LucroEmbedSchemaDto {
-  description: string;
-  variables: LucroEmbedSchemaDtoVariablesItem[];
-  properties: LucroEmbedSchemaDtoProperties;
-}
-
-export interface LucroRewardInputDto {
-  /** @minimum 1 */
-  value: number;
-  /** @minimum 1 */
-  weight: number;
-  messages: LucroMessagesDto;
-}
-
-export interface LucroConfigInputDto {
-  /** @minimum 1 */
-  cooldownSeconds: number;
-  /** @minItems 1 */
-  rewards: LucroRewardInputDto[];
-  embed: LucroEmbedDtoO1;
-}
-
-export interface LeagueDivisionDto {
+export interface TeamCollection {
   id: string;
   name: string;
-  minimumPoints: number;
   emoji: string;
-  /** @nullable */
-  color: string | null;
+}
+
+export interface TeamCard {
+  userCardId: string;
+  name: string;
   /** @nullable */
   imageUrl: string | null;
+  overall: number;
+  position: TeamCardPosition;
+  secondaryPositions: TeamCardSecondaryPositionsItem[];
+  collection: TeamCollection;
+  favorite: boolean;
+  holder: boolean;
+  /** @nullable */
+  holderPosition: TeamCardHolderPosition;
+  captain: boolean;
+  sellPrice: number;
+  claimedAt: string;
 }
 
-/**
- * Partida criada para jogador.
- */
-export type QueueMatchedResponseKind =
-  (typeof QueueMatchedResponseKind)[keyof typeof QueueMatchedResponseKind];
+export type TeamFormationSlotPosition =
+  (typeof TeamFormationSlotPosition)[keyof typeof TeamFormationSlotPosition];
 
-export const QueueMatchedResponseKind = {
-  matched: "matched",
+export const TeamFormationSlotPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
 } as const;
 
-export interface QueueMatchedResponse {
-  /** Partida criada para jogador. */
-  kind: QueueMatchedResponseKind;
-  matchId: string;
-}
-
-/**
- * Jogador aguardando adversário.
- */
-export type QueueWaitingResponseKind =
-  (typeof QueueWaitingResponseKind)[keyof typeof QueueWaitingResponseKind];
-
-export const QueueWaitingResponseKind = {
-  waiting: "waiting",
-} as const;
-
-export interface QueueWaitingResponse {
-  /** Jogador aguardando adversário. */
-  kind: QueueWaitingResponseKind;
-  division: LeagueDivisionDto;
-}
-
-export interface DiscordIdentityDtoO1 {
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
+export interface TeamFormationSlot {
   id: string;
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
+  position: TeamFormationSlotPosition;
+  x: number;
+  y: number;
+}
+
+export interface TeamFormation {
+  id: string;
   name: string;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  avatarUrl: string | null;
+  slots: TeamFormationSlot[];
 }
 
-/**
- * Partida criada para jogador.
- */
-export type QueueMatchedResponseNullableKind =
-  (typeof QueueMatchedResponseNullableKind)[keyof typeof QueueMatchedResponseNullableKind];
+export type TeamInventoryPageSize =
+  (typeof TeamInventoryPageSize)[keyof typeof TeamInventoryPageSize];
 
-export const QueueMatchedResponseNullableKind = {
-  matched: "matched",
+export const TeamInventoryPageSize = {
+  NUMBER_10: 10,
 } as const;
 
-/**
- * @nullable
- */
-export type QueueMatchedResponseNullable = {
-  /** Partida criada para jogador. */
-  kind: QueueMatchedResponseNullableKind;
-  matchId: string;
-} | null;
-
-/**
- * Jogador aguardando adversário.
- */
-export type QueueWaitingResponseNullableKind =
-  (typeof QueueWaitingResponseNullableKind)[keyof typeof QueueWaitingResponseNullableKind];
-
-export const QueueWaitingResponseNullableKind = {
-  waiting: "waiting",
-} as const;
-
-/**
- * @nullable
- */
-export type QueueWaitingResponseNullable = {
-  /** Jogador aguardando adversário. */
-  kind: QueueWaitingResponseNullableKind;
-  division: LeagueDivisionDto;
-} | null;
-
-export interface LeagueStatusResponse {
-  points: number;
-  wins: number;
-  draws: number;
-  losses: number;
-  division: LeagueDivisionDto;
-  queue: QueueMatchedResponseNullable | null | QueueWaitingResponseNullable;
+export interface TeamInventory {
+  items: TeamCard[];
+  total: number;
+  page: number;
+  pageSize: TeamInventoryPageSize;
+  totalPages: number;
 }
 
-export type MatchEventDtoType =
-  (typeof MatchEventDtoType)[keyof typeof MatchEventDtoType];
-
-export const MatchEventDtoType = {
-  fulltime: "fulltime",
-  goal: "goal",
-  kickoff: "kickoff",
-  red_card: "red_card",
-  yellow_card: "yellow_card",
-} as const;
-
-export interface MatchEventDto {
-  sequence: number;
-  minute: number;
-  type: MatchEventDtoType;
-  /** @nullable */
-  playerUserCardId: string | null;
-  /** @nullable */
-  assistUserCardId: string | null;
-  description: string;
-  homeGoals: number;
-  awayGoals: number;
-}
-
-export interface MatchResponse {
+export interface TeamPack {
   id: string;
-  homeUserId: string;
-  awayUserId: string;
-  homeGoals: number;
-  awayGoals: number;
-  completedAt: string;
-  events: MatchEventDto[];
+  name: string;
+  emoji: string;
+  quantity: number;
 }
 
-/**
- * Estado atual do serviço.
- */
-export type HealthResponseStatus =
-  (typeof HealthResponseStatus)[keyof typeof HealthResponseStatus];
+export type TeamResponseTactic =
+  (typeof TeamResponseTactic)[keyof typeof TeamResponseTactic];
 
-export const HealthResponseStatus = {
-  ok: "ok",
+export const TeamResponseTactic = {
+  balanced: "balanced",
+  defensive: "defensive",
+  offensive: "offensive",
 } as const;
 
-export interface HealthResponse {
-  /** Estado atual do serviço. */
-  status: HealthResponseStatus;
+export interface TeamResponse {
+  balance: number;
+  strength: number;
+  inventoryCount: number;
+  tactic: TeamResponseTactic;
+  formation: TeamFormation;
+  formations: TeamFormation[];
+  lineup: TeamCard[];
+  inventory: TeamInventory;
+  packs: TeamPack[];
+  collections: TeamCollection[];
 }
 
 export type BotResponseButtonDtoStyle =
@@ -756,186 +387,875 @@ export interface BotResponseDefinitionDto {
   defaultTemplate: BotResponseTemplateDto;
 }
 
-export interface PurchaseCardResponse {
-  userCardId: string;
-  balance: number;
-  price: number;
-}
-
-export interface CardMarketIdentity {
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
+export type ListPackCatalog200Item = {
   id: string;
-  /**
-   * @minLength 1
-   * @maxLength 80
-   */
   name: string;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
+  emoji: string;
+  cardsAmount: number;
+  price: number;
+  limitPerUser: number;
+};
+
+export type GetPackShopParams = {
+  page?: number;
+};
+
+export type PurchasePackBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
   avatarUrl: string | null;
-}
+};
 
-export interface PurchaseCardRequest {
-  identity: CardMarketIdentity;
-}
+export type PurchasePackBody = {
+  identity: PurchasePackBodyIdentity;
+};
 
-export interface SellCardsResponse {
-  userCardIds: string[];
+export type PurchasePack200 = {
   balance: number;
-  amount: number;
-}
+  quantity: number;
+};
 
-export interface SellCardsRequest {
-  identity: CardMarketIdentity;
-  /** @minItems 1 */
-  userCardIds: string[];
-}
+export type OpenPackBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
 
-export interface AdminSessionResponse {
-  /** Indica que a sessão administrativa está ativa. */
-  ok: boolean;
-}
+export type OpenPackBody = {
+  identity: OpenPackBodyIdentity;
+};
 
-export interface AdminSessionInput {
-  /** Credencial administrativa fornecida pelo operador. */
-  apiKey: string;
-}
+export type OpenPack200CardsItemCard = {
+  id: string;
+  overall: number;
+};
 
-export type AdminPackPresentationInputNullableEffect =
-  (typeof AdminPackPresentationInputNullableEffect)[keyof typeof AdminPackPresentationInputNullableEffect];
+export type OpenPack200CardsItem = {
+  id: string;
+  card: OpenPack200CardsItemCard;
+};
 
-export const AdminPackPresentationInputNullableEffect = {
-  chrome: "chrome",
-  foil: "foil",
-  holographic: "holographic",
+export type OpenPack200ProgressionRewardsItemType =
+  (typeof OpenPack200ProgressionRewardsItemType)[keyof typeof OpenPack200ProgressionRewardsItemType];
+
+export const OpenPack200ProgressionRewardsItemType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
 } as const;
 
-export type AdminPackPresentationInputNullableTexture =
-  (typeof AdminPackPresentationInputNullableTexture)[keyof typeof AdminPackPresentationInputNullableTexture];
+export type OpenPack200ProgressionRewardsItem = {
+  itemId: string;
+  type: OpenPack200ProgressionRewardsItemType;
+  quantity: number;
+  /** @nullable */
+  resourceId: string | null;
+};
 
-export const AdminPackPresentationInputNullableTexture = {
-  aura: "aura",
-  fire: "fire",
-  lightning: "lightning",
-  none: "none",
+export type OpenPack200Progression = {
+  gainedXp: number;
+  level: number;
+  xp: number;
+  nextLevelXp: number;
+  rewards: OpenPack200ProgressionRewardsItem[];
+};
+
+export type OpenPack200 = {
+  cards: OpenPack200CardsItem[];
+  progression: OpenPack200Progression;
+};
+
+export type ListMissionsBody = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type ListMissions200MissionsItemType =
+  (typeof ListMissions200MissionsItemType)[keyof typeof ListMissions200MissionsItemType];
+
+export const ListMissions200MissionsItemType = {
+  claim_profit: "claim_profit",
+  open_pack: "open_pack",
+  play_match: "play_match",
+  sell_player: "sell_player",
+} as const;
+
+export type ListMissions200MissionsItemCadence =
+  (typeof ListMissions200MissionsItemCadence)[keyof typeof ListMissions200MissionsItemCadence];
+
+export const ListMissions200MissionsItemCadence = {
+  daily: "daily",
+  monthly: "monthly",
+  weekly: "weekly",
+} as const;
+
+export type ListMissions200MissionsItemRewardType =
+  (typeof ListMissions200MissionsItemRewardType)[keyof typeof ListMissions200MissionsItemRewardType];
+
+export const ListMissions200MissionsItemRewardType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+  premium: "premium",
 } as const;
 
 /**
  * @nullable
  */
-export type AdminPackPresentationInputNullable = {
-  /**
-   * @minimum 1
-   * @maximum 1
-   */
-  schemaVersion: number;
-  /** @pattern ^#[0-9A-Fa-f]{6}$ */
-  color: string;
-  /** @pattern ^#[0-9A-Fa-f]{6}$ */
-  accentColor: string;
-  /** @pattern ^#[0-9A-Fa-f]{6}$ */
-  textColor: string;
-  effect: AdminPackPresentationInputNullableEffect;
-  texture: AdminPackPresentationInputNullableTexture;
-  /**
-   * @minimum 0
-   * @maximum 65
-   */
-  textureOpacity: number;
-  /**
-   * @minimum 0
-   * @maximum 42
-   */
-  tintOpacity: number;
-  /**
-   * @minLength 1
-   * @maxLength 18
-   */
-  headline: string;
-  /**
-   * @minimum 24
-   * @maximum 100
-   */
-  headlineSize: number;
-  /**
-   * @minimum 80
-   * @maximum 520
-   */
-  headlineX: number;
-  /**
-   * @minimum 190
-   * @maximum 470
-   */
-  headlineY: number;
-  /** @maxLength 60 */
-  kicker: string;
-  /**
-   * @minimum 80
-   * @maximum 520
-   */
-  kickerX: number;
-  /**
-   * @minimum 120
-   * @maximum 300
-   */
-  kickerY: number;
+export type ListMissions200MissionsItemReward = {
+  itemId: string;
+  type: ListMissions200MissionsItemRewardType;
+  quantity: number;
+  /** @nullable */
+  resourceId: string | null;
 } | null;
 
-export type AdminPackConfigOnlyPositionsItem =
-  (typeof AdminPackConfigOnlyPositionsItem)[keyof typeof AdminPackConfigOnlyPositionsItem];
+export type ListMissions200MissionsItem = {
+  id: string;
+  title: string;
+  type: ListMissions200MissionsItemType;
+  cadence: ListMissions200MissionsItemCadence;
+  tier: number;
+  goal: number;
+  progress: number;
+  completed: boolean;
+  claimed: boolean;
+  expiresAt: string;
+  /** @nullable */
+  reward: ListMissions200MissionsItemReward;
+};
 
-export const AdminPackConfigOnlyPositionsItem = {
-  CA: "CA",
-  GOL: "GOL",
-  LD: "LD",
-  LE: "LE",
-  MA: "MA",
-  MC: "MC",
-  PD: "PD",
-  PE: "PE",
-  VOL: "VOL",
-  ZAG: "ZAG",
+export type ListMissions200 = {
+  missions: ListMissions200MissionsItem[];
+};
+
+export type ExecuteLucroBody = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type ExecuteLucro200 =
+  | {
+      kind: "success";
+      reward: {
+        value: number;
+        weight: number;
+        message: string;
+      };
+      report: {
+        ticketRevenue: number;
+        commercialRevenue: number;
+        sponsorRevenue: number;
+        maintenance: number;
+        payroll: number;
+        net: number;
+      };
+      balance: number;
+      availableAt: string;
+      progression: {
+        gainedXp: number;
+        level: number;
+        xp: number;
+        nextLevelXp: number;
+        rewards: {
+          itemId: string;
+          type: "balance" | "card" | "field" | "pack";
+          quantity: number;
+          /** @nullable */
+          resourceId: string | null;
+        }[];
+      };
+      embed: {
+        title: string;
+        description: string;
+        color: string;
+        footer: string;
+      };
+    }
+  | {
+      kind: "cooldown";
+      availableAt: string;
+    };
+
+export type GetV1AdminLucro200RewardsItemMessages = {
+  pt: string;
+  es: string;
+  en: string;
+};
+
+export type GetV1AdminLucro200RewardsItem = {
+  value: number;
+  weight: number;
+  messages: GetV1AdminLucro200RewardsItemMessages;
+  id: string;
+};
+
+export type GetV1AdminLucro200Embed = {
+  title: string;
+  description: string;
+  color: string;
+  footer: string;
+};
+
+export type GetV1AdminLucro200 = {
+  cooldownSeconds: number;
+  rewards: GetV1AdminLucro200RewardsItem[];
+  embed: GetV1AdminLucro200Embed;
+};
+
+export type PutV1AdminLucroBodyRewardsItemMessages = {
+  pt: string;
+  es: string;
+  en: string;
+};
+
+export type PutV1AdminLucroBodyRewardsItem = {
+  value: number;
+  weight: number;
+  messages: PutV1AdminLucroBodyRewardsItemMessages;
+};
+
+export type PutV1AdminLucroBodyEmbed = {
+  title: string;
+  description: string;
+  color: string;
+  footer: string;
+};
+
+export type PutV1AdminLucroBody = {
+  cooldownSeconds: number;
+  rewards: PutV1AdminLucroBodyRewardsItem[];
+  embed: PutV1AdminLucroBodyEmbed;
+};
+
+export type PutV1AdminLucro200RewardsItemMessages = {
+  pt: string;
+  es: string;
+  en: string;
+};
+
+export type PutV1AdminLucro200RewardsItem = {
+  value: number;
+  weight: number;
+  messages: PutV1AdminLucro200RewardsItemMessages;
+  id: string;
+};
+
+export type PutV1AdminLucro200Embed = {
+  title: string;
+  description: string;
+  color: string;
+  footer: string;
+};
+
+export type PutV1AdminLucro200 = {
+  cooldownSeconds: number;
+  rewards: PutV1AdminLucro200RewardsItem[];
+  embed: PutV1AdminLucro200Embed;
+};
+
+export type GetV1AdminLucroSchema200VariablesItem = {
+  token: string;
+  description: string;
+  example: string;
+};
+
+export type GetV1AdminLucroSchema200PropertiesTitle = {
+  maxLength: number;
+  examples: string[];
+};
+
+export type GetV1AdminLucroSchema200PropertiesDescription = {
+  maxLength: number;
+  examples: string[];
+};
+
+export type GetV1AdminLucroSchema200PropertiesColor = {
+  maxLength: number;
+  examples: string[];
+};
+
+export type GetV1AdminLucroSchema200PropertiesFooter = {
+  maxLength: number;
+  examples: string[];
+};
+
+export type GetV1AdminLucroSchema200Properties = {
+  title: GetV1AdminLucroSchema200PropertiesTitle;
+  description: GetV1AdminLucroSchema200PropertiesDescription;
+  color: GetV1AdminLucroSchema200PropertiesColor;
+  footer: GetV1AdminLucroSchema200PropertiesFooter;
+};
+
+export type GetV1AdminLucroSchema200 = {
+  description: string;
+  variables: GetV1AdminLucroSchema200VariablesItem[];
+  properties: GetV1AdminLucroSchema200Properties;
+};
+
+export type JoinRankedQueueBody = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type JoinRankedQueue200 =
+  | {
+      kind: "waiting";
+      division: {
+        id: string;
+        name: string;
+        minimumPoints: number;
+        emoji: string;
+        /** @nullable */
+        color: string | null;
+        /** @nullable */
+        imageUrl: string | null;
+      };
+    }
+  | {
+      kind: "matched";
+      matchId: string;
+    };
+
+export type GetV1RankedStatusDiscordUserId200 =
+  | {
+      kind: "waiting";
+      division: {
+        id: string;
+        name: string;
+        minimumPoints: number;
+        emoji: string;
+        /** @nullable */
+        color: string | null;
+        /** @nullable */
+        imageUrl: string | null;
+      };
+    }
+  | null
+  | {
+      kind: "matched";
+      matchId: string;
+    };
+
+export type GetV1LeagueDiscordUserId200Division = {
+  id: string;
+  name: string;
+  minimumPoints: number;
+  emoji: string;
+  /** @nullable */
+  color: string | null;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type GetV1LeagueDiscordUserId200Queue =
+  | {
+      kind: "waiting";
+      division: {
+        id: string;
+        name: string;
+        minimumPoints: number;
+        emoji: string;
+        /** @nullable */
+        color: string | null;
+        /** @nullable */
+        imageUrl: string | null;
+      };
+    }
+  | null
+  | {
+      kind: "matched";
+      matchId: string;
+    };
+
+export type GetV1LeagueDiscordUserId200 = {
+  points: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  division: GetV1LeagueDiscordUserId200Division;
+  queue: GetV1LeagueDiscordUserId200Queue;
+};
+
+export type GetV1MatchesMatchId200EventsItemType =
+  (typeof GetV1MatchesMatchId200EventsItemType)[keyof typeof GetV1MatchesMatchId200EventsItemType];
+
+export const GetV1MatchesMatchId200EventsItemType = {
+  fulltime: "fulltime",
+  goal: "goal",
+  kickoff: "kickoff",
+  red_card: "red_card",
+  yellow_card: "yellow_card",
 } as const;
 
-export type AdminPackConfigExcludedPositionsItem =
-  (typeof AdminPackConfigExcludedPositionsItem)[keyof typeof AdminPackConfigExcludedPositionsItem];
+export type GetV1MatchesMatchId200EventsItem = {
+  sequence: number;
+  minute: number;
+  type: GetV1MatchesMatchId200EventsItemType;
+  /** @nullable */
+  playerUserCardId: string | null;
+  /** @nullable */
+  assistUserCardId: string | null;
+  description: string;
+  homeGoals: number;
+  awayGoals: number;
+};
 
-export const AdminPackConfigExcludedPositionsItem = {
-  CA: "CA",
-  GOL: "GOL",
-  LD: "LD",
-  LE: "LE",
-  MA: "MA",
-  MC: "MC",
-  PD: "PD",
-  PE: "PE",
-  VOL: "VOL",
-  ZAG: "ZAG",
+export type GetV1MatchesMatchId200 = {
+  id: string;
+  homeUserId: string;
+  awayUserId: string;
+  homeGoals: number;
+  awayGoals: number;
+  completedAt: string;
+  events: GetV1MatchesMatchId200EventsItem[];
+};
+
+export type HealthControllerHealth200Status =
+  (typeof HealthControllerHealth200Status)[keyof typeof HealthControllerHealth200Status];
+
+export const HealthControllerHealth200Status = {
+  ok: "ok",
 } as const;
 
-export interface AdminPackConfig {
-  /**
-   * @maxLength 100
-   * @nullable
-   */
-  name: string | null;
-  /**
-   * @minimum 60
-   * @maximum 100
-   */
+export type HealthControllerHealth200 = {
+  status: HealthControllerHealth200Status;
+};
+
+export type ListCardMarketParams = {
+  page: number;
+  positions?: ListCardMarketPositionsItem[];
   minOverall: number;
-  /**
-   * @minimum 60
-   * @maximum 100
-   */
   maxOverall: number;
-  onlyPositions: AdminPackConfigOnlyPositionsItem[];
-  excludedPositions: AdminPackConfigExcludedPositionsItem[];
+  teamId?: string;
+  collectionId?: string;
+  sort: ListCardMarketSort;
+};
+
+export type ListCardMarketPositionsItem =
+  (typeof ListCardMarketPositionsItem)[keyof typeof ListCardMarketPositionsItem];
+
+export const ListCardMarketPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type ListCardMarketSort =
+  (typeof ListCardMarketSort)[keyof typeof ListCardMarketSort];
+
+export const ListCardMarketSort = {
+  name: "name",
+  overall: "overall",
+  recent: "recent",
+} as const;
+
+export type ListCardMarket200ItemsItemPosition =
+  (typeof ListCardMarket200ItemsItemPosition)[keyof typeof ListCardMarket200ItemsItemPosition];
+
+export const ListCardMarket200ItemsItemPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type ListCardMarket200ItemsItemSecondaryPositionsItem =
+  (typeof ListCardMarket200ItemsItemSecondaryPositionsItem)[keyof typeof ListCardMarket200ItemsItemSecondaryPositionsItem];
+
+export const ListCardMarket200ItemsItemSecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type ListCardMarket200ItemsItemTeam = {
+  id: string;
+  name: string;
+  emoji: string;
+};
+
+export type ListCardMarket200ItemsItemCollection = {
+  id: string;
+  name: string;
+  emoji: string;
+};
+
+export type ListCardMarket200ItemsItem = {
+  id: string;
+  name: string;
+  imageUrl: string;
+  overall: number;
+  position: ListCardMarket200ItemsItemPosition;
+  secondaryPositions: ListCardMarket200ItemsItemSecondaryPositionsItem[];
+  defense: number;
+  attack: number;
+  creation: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  price: number;
+  team: ListCardMarket200ItemsItemTeam;
+  collection: ListCardMarket200ItemsItemCollection;
+};
+
+export type ListCardMarket200PageSize =
+  (typeof ListCardMarket200PageSize)[keyof typeof ListCardMarket200PageSize];
+
+export const ListCardMarket200PageSize = {
+  NUMBER_10: 10,
+} as const;
+
+export type ListCardMarket200 = {
+  items: ListCardMarket200ItemsItem[];
+  total: number;
+  page: number;
+  pageSize: ListCardMarket200PageSize;
+  totalPages: number;
+};
+
+export type ListCardMarketCatalog200TeamsItem = {
+  id: string;
+  name: string;
+  emoji: string;
+};
+
+export type ListCardMarketCatalog200CollectionsItem = {
+  id: string;
+  name: string;
+  emoji: string;
+};
+
+export type ListCardMarketCatalog200 = {
+  teams: ListCardMarketCatalog200TeamsItem[];
+  collections: ListCardMarketCatalog200CollectionsItem[];
+};
+
+export type PurchaseCardBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type PurchaseCardBody = {
+  identity: PurchaseCardBodyIdentity;
+};
+
+export type PurchaseCard200 = {
+  userCardId: string;
+  balance: number;
+  price: number;
+};
+
+export type SellCardsBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type SellCardsBody = {
+  identity: SellCardsBodyIdentity;
+  userCardIds: string[];
+};
+
+export type SellCards200 = {
+  userCardIds: string[];
+  balance: number;
+  amount: number;
+};
+
+export type GetClubBody = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type GetClub200Stadium = {
+  level: number;
+  maxLevel: number;
+  /** @nullable */
+  nextUpgradeCost: number | null;
+  ticketRevenue: number;
+  maintenance: number;
+};
+
+export type GetClub200Sponsor = {
+  name: string;
+  weeklyMatches: number;
+  weeklyGoal: number;
+  payout: number;
+  completed: boolean;
+};
+
+export type GetClub200 = {
+  balance: number;
+  stadium: GetClub200Stadium;
+  sponsor: GetClub200Sponsor;
+  payroll: number;
+  projectedNet: number;
+};
+
+export type UpgradeStadiumBody = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type UpgradeStadium200Stadium = {
+  level: number;
+  maxLevel: number;
+  /** @nullable */
+  nextUpgradeCost: number | null;
+  ticketRevenue: number;
+  maintenance: number;
+};
+
+export type UpgradeStadium200Sponsor = {
+  name: string;
+  weeklyMatches: number;
+  weeklyGoal: number;
+  payout: number;
+  completed: boolean;
+};
+
+export type UpgradeStadium200 = {
+  balance: number;
+  stadium: UpgradeStadium200Stadium;
+  sponsor: UpgradeStadium200Sponsor;
+  payroll: number;
+  projectedNet: number;
+};
+
+export type GetTeamBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+/**
+ * @nullable
+ */
+export type GetTeamBodyPosition =
+  (typeof GetTeamBodyPosition)[keyof typeof GetTeamBodyPosition] | null;
+
+export const GetTeamBodyPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type GetTeamBodySort =
+  (typeof GetTeamBodySort)[keyof typeof GetTeamBodySort];
+
+export const GetTeamBodySort = {
+  name: "name",
+  overall: "overall",
+  recent: "recent",
+} as const;
+
+export type GetTeamBody = {
+  identity: GetTeamBodyIdentity;
+  page: number;
+  name: string;
+  /** @nullable */
+  position: GetTeamBodyPosition;
+  /** @nullable */
+  collectionId: string | null;
+  sort: GetTeamBodySort;
+};
+
+export type SetTeamFormationBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type SetTeamFormationBody = {
+  identity: SetTeamFormationBodyIdentity;
+  formationId: string;
+};
+
+export type SetTeamTacticBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type SetTeamTacticBodyTactic =
+  (typeof SetTeamTacticBodyTactic)[keyof typeof SetTeamTacticBodyTactic];
+
+export const SetTeamTacticBodyTactic = {
+  balanced: "balanced",
+  defensive: "defensive",
+  offensive: "offensive",
+} as const;
+
+export type SetTeamTacticBody = {
+  identity: SetTeamTacticBodyIdentity;
+  tactic: SetTeamTacticBodyTactic;
+};
+
+export type AutoSelectTeamLineupBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type AutoSelectTeamLineupBody = {
+  identity: AutoSelectTeamLineupBodyIdentity;
+};
+
+export type SetTeamLineupCardBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type SetTeamLineupCardBodyPosition =
+  (typeof SetTeamLineupCardBodyPosition)[keyof typeof SetTeamLineupCardBodyPosition];
+
+export const SetTeamLineupCardBodyPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type SetTeamLineupCardBody = {
+  identity: SetTeamLineupCardBodyIdentity;
+  userCardId: string;
+  position: SetTeamLineupCardBodyPosition;
+};
+
+export type SetTeamCaptainBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type SetTeamCaptainBody = {
+  identity: SetTeamCaptainBodyIdentity;
+  userCardId: string;
+};
+
+export type ToggleTeamCardFavoriteBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type ToggleTeamCardFavoriteBody = {
+  identity: ToggleTeamCardFavoriteBodyIdentity;
+};
+
+export type PostV1AdminSessionBody = {
+  apiKey: string;
+};
+
+export type PostV1AdminSession201 = {
+  ok: boolean;
+};
+
+export type GetV1AdminSession200 = {
+  ok: boolean;
+};
+
+export type GetV1AdminPacks200ItemConfigOnlyPositionsItem =
+  (typeof GetV1AdminPacks200ItemConfigOnlyPositionsItem)[keyof typeof GetV1AdminPacks200ItemConfigOnlyPositionsItem];
+
+export const GetV1AdminPacks200ItemConfigOnlyPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type GetV1AdminPacks200ItemConfigExcludedPositionsItem =
+  (typeof GetV1AdminPacks200ItemConfigExcludedPositionsItem)[keyof typeof GetV1AdminPacks200ItemConfigExcludedPositionsItem];
+
+export const GetV1AdminPacks200ItemConfigExcludedPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type GetV1AdminPacks200ItemConfig = {
+  /** @nullable */
+  name: string | null;
+  minOverall: number;
+  maxOverall: number;
+  onlyPositions: GetV1AdminPacks200ItemConfigOnlyPositionsItem[];
+  excludedPositions: GetV1AdminPacks200ItemConfigExcludedPositionsItem[];
   onlyCollectionIds: string[];
   excludedCollectionIds: string[];
   onlyCardIds: string[];
@@ -943,122 +1263,26 @@ export interface AdminPackConfig {
   onlyTeamIds: string[];
   excludedTeamIds: string[];
   id: string;
-}
+};
 
-export interface AdminPack {
-  /**
-   * @minLength 1
-   * @maxLength 100
-   */
+export type GetV1AdminPacks200Item = {
   name: string;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
+  /** @nullable */
   imageUrl: string | null;
-  /**
-   * @minLength 1
-   * @maxLength 16
-   */
   color: string;
-  /**
-   * @minLength 1
-   * @maxLength 255
-   */
   emoji: string;
-  /** @minimum 1 */
   cardsAmount: number;
-  /** @minimum 0 */
   price: number;
   canBuy: boolean;
-  /** @minimum 0 */
   limitPerUser: number;
   id: string;
-  config: AdminPackConfig;
-  presentation: AdminPackPresentationInputNullable | null;
-}
+  config: GetV1AdminPacks200ItemConfig;
+};
 
-export type AdminPackPresentationInputEffect =
-  (typeof AdminPackPresentationInputEffect)[keyof typeof AdminPackPresentationInputEffect];
+export type PostV1AdminPacksBodyConfigOnlyPositionsItem =
+  (typeof PostV1AdminPacksBodyConfigOnlyPositionsItem)[keyof typeof PostV1AdminPacksBodyConfigOnlyPositionsItem];
 
-export const AdminPackPresentationInputEffect = {
-  chrome: "chrome",
-  foil: "foil",
-  holographic: "holographic",
-} as const;
-
-export type AdminPackPresentationInputTexture =
-  (typeof AdminPackPresentationInputTexture)[keyof typeof AdminPackPresentationInputTexture];
-
-export const AdminPackPresentationInputTexture = {
-  aura: "aura",
-  fire: "fire",
-  lightning: "lightning",
-  none: "none",
-} as const;
-
-export interface AdminPackPresentationInput {
-  /**
-   * @minimum 1
-   * @maximum 1
-   */
-  schemaVersion: number;
-  /** @pattern ^#[0-9A-Fa-f]{6}$ */
-  color: string;
-  /** @pattern ^#[0-9A-Fa-f]{6}$ */
-  accentColor: string;
-  /** @pattern ^#[0-9A-Fa-f]{6}$ */
-  textColor: string;
-  effect: AdminPackPresentationInputEffect;
-  texture: AdminPackPresentationInputTexture;
-  /**
-   * @minimum 0
-   * @maximum 65
-   */
-  textureOpacity: number;
-  /**
-   * @minimum 0
-   * @maximum 42
-   */
-  tintOpacity: number;
-  /**
-   * @minLength 1
-   * @maxLength 18
-   */
-  headline: string;
-  /**
-   * @minimum 24
-   * @maximum 100
-   */
-  headlineSize: number;
-  /**
-   * @minimum 80
-   * @maximum 520
-   */
-  headlineX: number;
-  /**
-   * @minimum 190
-   * @maximum 470
-   */
-  headlineY: number;
-  /** @maxLength 60 */
-  kicker: string;
-  /**
-   * @minimum 80
-   * @maximum 520
-   */
-  kickerX: number;
-  /**
-   * @minimum 120
-   * @maximum 300
-   */
-  kickerY: number;
-}
-
-export type AdminPackConfigInputOnlyPositionsItem =
-  (typeof AdminPackConfigInputOnlyPositionsItem)[keyof typeof AdminPackConfigInputOnlyPositionsItem];
-
-export const AdminPackConfigInputOnlyPositionsItem = {
+export const PostV1AdminPacksBodyConfigOnlyPositionsItem = {
   CA: "CA",
   GOL: "GOL",
   LD: "LD",
@@ -1071,10 +1295,10 @@ export const AdminPackConfigInputOnlyPositionsItem = {
   ZAG: "ZAG",
 } as const;
 
-export type AdminPackConfigInputExcludedPositionsItem =
-  (typeof AdminPackConfigInputExcludedPositionsItem)[keyof typeof AdminPackConfigInputExcludedPositionsItem];
+export type PostV1AdminPacksBodyConfigExcludedPositionsItem =
+  (typeof PostV1AdminPacksBodyConfigExcludedPositionsItem)[keyof typeof PostV1AdminPacksBodyConfigExcludedPositionsItem];
 
-export const AdminPackConfigInputExcludedPositionsItem = {
+export const PostV1AdminPacksBodyConfigExcludedPositionsItem = {
   CA: "CA",
   GOL: "GOL",
   LD: "LD",
@@ -1087,148 +1311,412 @@ export const AdminPackConfigInputExcludedPositionsItem = {
   ZAG: "ZAG",
 } as const;
 
-export interface AdminPackConfigInput {
-  /**
-   * @maxLength 100
-   * @nullable
-   */
+export type PostV1AdminPacksBodyConfig = {
+  /** @nullable */
   name: string | null;
-  /**
-   * @minimum 60
-   * @maximum 100
-   */
   minOverall: number;
-  /**
-   * @minimum 60
-   * @maximum 100
-   */
   maxOverall: number;
-  onlyPositions: AdminPackConfigInputOnlyPositionsItem[];
-  excludedPositions: AdminPackConfigInputExcludedPositionsItem[];
+  onlyPositions: PostV1AdminPacksBodyConfigOnlyPositionsItem[];
+  excludedPositions: PostV1AdminPacksBodyConfigExcludedPositionsItem[];
   onlyCollectionIds: string[];
   excludedCollectionIds: string[];
   onlyCardIds: string[];
   excludedCardIds: string[];
   onlyTeamIds: string[];
   excludedTeamIds: string[];
-}
+};
 
-export interface AdminPackInput {
-  /**
-   * @minLength 1
-   * @maxLength 100
-   */
+export type PostV1AdminPacksBody = {
   name: string;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
+  /** @nullable */
   imageUrl: string | null;
-  /**
-   * @minLength 1
-   * @maxLength 16
-   */
   color: string;
-  /**
-   * @minLength 1
-   * @maxLength 255
-   */
   emoji: string;
-  /** @minimum 1 */
   cardsAmount: number;
-  /** @minimum 0 */
   price: number;
   canBuy: boolean;
-  /** @minimum 0 */
   limitPerUser: number;
-  config: AdminPackConfigInput;
-  presentation?: AdminPackPresentationInput;
-}
+  config: PostV1AdminPacksBodyConfig;
+};
 
-export interface CardReference {
+export type PostV1AdminPacks201ConfigOnlyPositionsItem =
+  (typeof PostV1AdminPacks201ConfigOnlyPositionsItem)[keyof typeof PostV1AdminPacks201ConfigOnlyPositionsItem];
+
+export const PostV1AdminPacks201ConfigOnlyPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PostV1AdminPacks201ConfigExcludedPositionsItem =
+  (typeof PostV1AdminPacks201ConfigExcludedPositionsItem)[keyof typeof PostV1AdminPacks201ConfigExcludedPositionsItem];
+
+export const PostV1AdminPacks201ConfigExcludedPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PostV1AdminPacks201Config = {
+  /** @nullable */
+  name: string | null;
+  minOverall: number;
+  maxOverall: number;
+  onlyPositions: PostV1AdminPacks201ConfigOnlyPositionsItem[];
+  excludedPositions: PostV1AdminPacks201ConfigExcludedPositionsItem[];
+  onlyCollectionIds: string[];
+  excludedCollectionIds: string[];
+  onlyCardIds: string[];
+  excludedCardIds: string[];
+  onlyTeamIds: string[];
+  excludedTeamIds: string[];
+  id: string;
+};
+
+export type PostV1AdminPacks201 = {
+  name: string;
+  /** @nullable */
+  imageUrl: string | null;
+  color: string;
+  emoji: string;
+  cardsAmount: number;
+  price: number;
+  canBuy: boolean;
+  limitPerUser: number;
+  id: string;
+  config: PostV1AdminPacks201Config;
+};
+
+export type PutV1AdminPacksIdBodyConfigOnlyPositionsItem =
+  (typeof PutV1AdminPacksIdBodyConfigOnlyPositionsItem)[keyof typeof PutV1AdminPacksIdBodyConfigOnlyPositionsItem];
+
+export const PutV1AdminPacksIdBodyConfigOnlyPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PutV1AdminPacksIdBodyConfigExcludedPositionsItem =
+  (typeof PutV1AdminPacksIdBodyConfigExcludedPositionsItem)[keyof typeof PutV1AdminPacksIdBodyConfigExcludedPositionsItem];
+
+export const PutV1AdminPacksIdBodyConfigExcludedPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PutV1AdminPacksIdBodyConfig = {
+  /** @nullable */
+  name: string | null;
+  minOverall: number;
+  maxOverall: number;
+  onlyPositions: PutV1AdminPacksIdBodyConfigOnlyPositionsItem[];
+  excludedPositions: PutV1AdminPacksIdBodyConfigExcludedPositionsItem[];
+  onlyCollectionIds: string[];
+  excludedCollectionIds: string[];
+  onlyCardIds: string[];
+  excludedCardIds: string[];
+  onlyTeamIds: string[];
+  excludedTeamIds: string[];
+};
+
+export type PutV1AdminPacksIdBody = {
+  name: string;
+  /** @nullable */
+  imageUrl: string | null;
+  color: string;
+  emoji: string;
+  cardsAmount: number;
+  price: number;
+  canBuy: boolean;
+  limitPerUser: number;
+  config: PutV1AdminPacksIdBodyConfig;
+};
+
+export type PutV1AdminPacksId200ConfigOnlyPositionsItem =
+  (typeof PutV1AdminPacksId200ConfigOnlyPositionsItem)[keyof typeof PutV1AdminPacksId200ConfigOnlyPositionsItem];
+
+export const PutV1AdminPacksId200ConfigOnlyPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PutV1AdminPacksId200ConfigExcludedPositionsItem =
+  (typeof PutV1AdminPacksId200ConfigExcludedPositionsItem)[keyof typeof PutV1AdminPacksId200ConfigExcludedPositionsItem];
+
+export const PutV1AdminPacksId200ConfigExcludedPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PutV1AdminPacksId200Config = {
+  /** @nullable */
+  name: string | null;
+  minOverall: number;
+  maxOverall: number;
+  onlyPositions: PutV1AdminPacksId200ConfigOnlyPositionsItem[];
+  excludedPositions: PutV1AdminPacksId200ConfigExcludedPositionsItem[];
+  onlyCollectionIds: string[];
+  excludedCollectionIds: string[];
+  onlyCardIds: string[];
+  excludedCardIds: string[];
+  onlyTeamIds: string[];
+  excludedTeamIds: string[];
+  id: string;
+};
+
+export type PutV1AdminPacksId200 = {
+  name: string;
+  /** @nullable */
+  imageUrl: string | null;
+  color: string;
+  emoji: string;
+  cardsAmount: number;
+  price: number;
+  canBuy: boolean;
+  limitPerUser: number;
+  id: string;
+  config: PutV1AdminPacksId200Config;
+};
+
+export type DeleteV1AdminPacksId200ConfigOnlyPositionsItem =
+  (typeof DeleteV1AdminPacksId200ConfigOnlyPositionsItem)[keyof typeof DeleteV1AdminPacksId200ConfigOnlyPositionsItem];
+
+export const DeleteV1AdminPacksId200ConfigOnlyPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type DeleteV1AdminPacksId200ConfigExcludedPositionsItem =
+  (typeof DeleteV1AdminPacksId200ConfigExcludedPositionsItem)[keyof typeof DeleteV1AdminPacksId200ConfigExcludedPositionsItem];
+
+export const DeleteV1AdminPacksId200ConfigExcludedPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type DeleteV1AdminPacksId200Config = {
+  /** @nullable */
+  name: string | null;
+  minOverall: number;
+  maxOverall: number;
+  onlyPositions: DeleteV1AdminPacksId200ConfigOnlyPositionsItem[];
+  excludedPositions: DeleteV1AdminPacksId200ConfigExcludedPositionsItem[];
+  onlyCollectionIds: string[];
+  excludedCollectionIds: string[];
+  onlyCardIds: string[];
+  excludedCardIds: string[];
+  onlyTeamIds: string[];
+  excludedTeamIds: string[];
+  id: string;
+};
+
+export type DeleteV1AdminPacksId200 = {
+  name: string;
+  /** @nullable */
+  imageUrl: string | null;
+  color: string;
+  emoji: string;
+  cardsAmount: number;
+  price: number;
+  canBuy: boolean;
+  limitPerUser: number;
+  id: string;
+  config: DeleteV1AdminPacksId200Config;
+};
+
+export type PutV1AdminPacksIdImage200ConfigOnlyPositionsItem =
+  (typeof PutV1AdminPacksIdImage200ConfigOnlyPositionsItem)[keyof typeof PutV1AdminPacksIdImage200ConfigOnlyPositionsItem];
+
+export const PutV1AdminPacksIdImage200ConfigOnlyPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PutV1AdminPacksIdImage200ConfigExcludedPositionsItem =
+  (typeof PutV1AdminPacksIdImage200ConfigExcludedPositionsItem)[keyof typeof PutV1AdminPacksIdImage200ConfigExcludedPositionsItem];
+
+export const PutV1AdminPacksIdImage200ConfigExcludedPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PutV1AdminPacksIdImage200Config = {
+  /** @nullable */
+  name: string | null;
+  minOverall: number;
+  maxOverall: number;
+  onlyPositions: PutV1AdminPacksIdImage200ConfigOnlyPositionsItem[];
+  excludedPositions: PutV1AdminPacksIdImage200ConfigExcludedPositionsItem[];
+  onlyCollectionIds: string[];
+  excludedCollectionIds: string[];
+  onlyCardIds: string[];
+  excludedCardIds: string[];
+  onlyTeamIds: string[];
+  excludedTeamIds: string[];
+  id: string;
+};
+
+export type PutV1AdminPacksIdImage200 = {
+  name: string;
+  /** @nullable */
+  imageUrl: string | null;
+  color: string;
+  emoji: string;
+  cardsAmount: number;
+  price: number;
+  canBuy: boolean;
+  limitPerUser: number;
+  id: string;
+  config: PutV1AdminPacksIdImage200Config;
+};
+
+export type GetV1AdminCardsCatalog200CollectionsItem = {
   id: string;
   name: string;
-  /**
-   * @maxLength 100
-   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
-   */
   slug: string;
   emoji: string;
   /** @nullable */
   imageUrl: string | null;
-}
+};
 
-export interface CardCatalog {
-  collections: CardReference[];
-  teams: CardReference[];
-}
-
-export interface TeamLogoSuggestion {
+export type GetV1AdminCardsCatalog200TeamsItem = {
+  id: string;
   name: string;
-  /**
-   * @maxLength 100
-   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
-   */
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type GetV1AdminCardsCatalog200 = {
+  collections: GetV1AdminCardsCatalog200CollectionsItem[];
+  teams: GetV1AdminCardsCatalog200TeamsItem[];
+};
+
+export type GetV1AdminCardsTeamLogoSuggestionsParams = {
+  q: string;
+};
+
+export type GetV1AdminCardsTeamLogoSuggestions200Item = {
+  name: string;
   slug: string;
   description: string;
   imageUrl: string;
   sourceUrl: string;
-}
+};
 
-export interface TeamLogoSuggestionsQuery {
-  /**
-   * @minLength 2
-   * @maxLength 100
-   */
-  q: string;
-}
+export type GetV1AdminCardsTeamLogoDetailsParams = {
+  slug: string;
+};
 
-export interface TeamLogoDetails {
+export type GetV1AdminCardsTeamLogoDetails200 = {
   name: string;
-  /**
-   * @maxLength 100
-   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
-   */
   slug: string;
   symbol: string;
   colors: string[];
   imageUrl: string;
   sourceUrl: string;
-}
+};
 
-export interface TeamLogoDetailsQuery {
-  /**
-   * @maxLength 100
-   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
-   */
-  slug: string;
-}
+export type GetV1AdminCardsCollectionArtworkSuggestionsParams = {
+  q: string;
+};
 
-export interface CollectionArtworkSuggestion {
+export type GetV1AdminCardsCollectionArtworkSuggestions200Item = {
   name: string;
-  /**
-   * @maxLength 100
-   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
-   */
   slug: string;
   symbol: string;
-  /** @pattern ^#[0-9A-Fa-f]{6}$ */
   primaryColor: string;
-  /** @pattern ^#[0-9A-Fa-f]{6}$ */
   secondaryColor: string;
   imageUrl: string;
   overlayUrl: string;
   bannerUrl: string;
   description: string;
   sourceUrl: string;
-}
+};
 
-export interface CollectionArtworkSuggestionsQuery {
-  /** @maxLength 100 */
+export type GetV1AdminCardsPlayerPhotoSuggestionsParams = {
   q: string;
-}
+};
 
-export interface PlayerPhotoSuggestion {
+export type GetV1AdminCardsPlayerPhotoSuggestions200Item = {
   id: string;
   name: string;
   team: string;
@@ -1236,701 +1724,6 @@ export interface PlayerPhotoSuggestion {
   imageUrl: string;
   sourceUrl: string;
   provider: string;
-}
-
-export interface PlayerPhotoSuggestionsQuery {
-  /**
-   * @minLength 2
-   * @maxLength 100
-   */
-  q: string;
-}
-
-export interface AdminCollection {
-  /**
-   * @maxLength 100
-   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
-   */
-  slug: string;
-  /**
-   * @minLength 1
-   * @maxLength 100
-   */
-  name: string;
-  /**
-   * @minLength 1
-   * @maxLength 30
-   */
-  emoji: string;
-  /**
-   * @minLength 1
-   * @maxLength 16
-   */
-  primaryColor: string;
-  /**
-   * @minLength 1
-   * @maxLength 16
-   */
-  secondaryColor: string;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  imageUrl?: string | null;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  overlayUrl?: string | null;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  bannerUrl?: string | null;
-  contractsBlocked?: boolean;
-  id: string;
-}
-
-export interface CollectionPage {
-  items: AdminCollection[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-export interface CollectionListQuery {
-  /** @maxLength 100 */
-  query?: string;
-  /** @minimum 1 */
-  page: number;
-  /**
-   * @minimum 1
-   * @maximum 100
-   */
-  pageSize?: number;
-  contractsBlocked?: boolean;
-}
-
-export interface CollectionInput {
-  /**
-   * @maxLength 100
-   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
-   */
-  slug: string;
-  /**
-   * @minLength 1
-   * @maxLength 100
-   */
-  name: string;
-  /**
-   * @minLength 1
-   * @maxLength 30
-   */
-  emoji: string;
-  /**
-   * @minLength 1
-   * @maxLength 16
-   */
-  primaryColor: string;
-  /**
-   * @minLength 1
-   * @maxLength 16
-   */
-  secondaryColor: string;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  imageUrl?: string | null;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  overlayUrl?: string | null;
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  bannerUrl?: string | null;
-  contractsBlocked?: boolean;
-}
-
-export interface AdminTeam {
-  /**
-   * @maxLength 100
-   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
-   */
-  slug: string;
-  /**
-   * @minLength 1
-   * @maxLength 100
-   */
-  name: string;
-  /**
-   * @minLength 1
-   * @maxLength 30
-   */
-  emoji: string;
-  /** @pattern ^#[0-9A-Fa-f]{6}$ */
-  color: string;
-  /**
-   * @minItems 1
-   * @maxItems 8
-   * @items.pattern ^#[0-9A-Fa-f]{6}$
-   */
-  colors?: string[];
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  imageUrl?: string | null;
-  id: string;
-}
-
-export interface TeamPage {
-  items: AdminTeam[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-export type TeamListQueryImage =
-  (typeof TeamListQueryImage)[keyof typeof TeamListQueryImage];
-
-export const TeamListQueryImage = {
-  custom: "custom",
-  default: "default",
-} as const;
-
-export interface TeamListQuery {
-  /** @maxLength 100 */
-  query?: string;
-  /** @minimum 1 */
-  page: number;
-  /**
-   * @minimum 1
-   * @maximum 100
-   */
-  pageSize?: number;
-  image?: TeamListQueryImage;
-}
-
-export interface TeamInput {
-  /**
-   * @maxLength 100
-   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
-   */
-  slug: string;
-  /**
-   * @minLength 1
-   * @maxLength 100
-   */
-  name: string;
-  /**
-   * @minLength 1
-   * @maxLength 30
-   */
-  emoji: string;
-  /** @pattern ^#[0-9A-Fa-f]{6}$ */
-  color: string;
-  /**
-   * @minItems 1
-   * @maxItems 8
-   * @items.pattern ^#[0-9A-Fa-f]{6}$
-   */
-  colors?: string[];
-  /**
-   * @maxLength 2048
-   * @nullable
-   */
-  imageUrl?: string | null;
-}
-
-export interface CardTemplate {
-  filename: string;
-  content: string;
-}
-
-export interface ImportError {
-  row: number;
-  field: string;
-  message: string;
-}
-
-export interface ImportPreview {
-  valid: boolean;
-  createCount: number;
-  updateCount: number;
-  errors: ImportError[];
-}
-
-export type AdminCardPosition =
-  (typeof AdminCardPosition)[keyof typeof AdminCardPosition];
-
-export const AdminCardPosition = {
-  CA: "CA",
-  GOL: "GOL",
-  LD: "LD",
-  LE: "LE",
-  MA: "MA",
-  MC: "MC",
-  PD: "PD",
-  PE: "PE",
-  VOL: "VOL",
-  ZAG: "ZAG",
-} as const;
-
-export type AdminCardSecondaryPositionsItem =
-  (typeof AdminCardSecondaryPositionsItem)[keyof typeof AdminCardSecondaryPositionsItem];
-
-export const AdminCardSecondaryPositionsItem = {
-  CA: "CA",
-  GOL: "GOL",
-  LD: "LD",
-  LE: "LE",
-  MA: "MA",
-  MC: "MC",
-  PD: "PD",
-  PE: "PE",
-  VOL: "VOL",
-  ZAG: "ZAG",
-} as const;
-
-export interface AdminCard {
-  id: string;
-  /**
-   * @maxLength 100
-   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
-   */
-  slug: string;
-  name: string;
-  collection: CardReference;
-  team: CardReference;
-  position: AdminCardPosition;
-  secondaryPositions: AdminCardSecondaryPositionsItem[];
-  contractsBlocked: boolean;
-  defense: number;
-  attack: number;
-  creation: number;
-  overall: number;
-  passing: number;
-  control: number;
-  marking: number;
-  pace: number;
-  dribbling: number;
-  finishing: number;
-  imageUrl: string;
-}
-
-export interface CardPage {
-  items: AdminCard[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-export type CardListQueryPosition =
-  (typeof CardListQueryPosition)[keyof typeof CardListQueryPosition];
-
-export const CardListQueryPosition = {
-  CA: "CA",
-  GOL: "GOL",
-  LD: "LD",
-  LE: "LE",
-  MA: "MA",
-  MC: "MC",
-  PD: "PD",
-  PE: "PE",
-  VOL: "VOL",
-  ZAG: "ZAG",
-} as const;
-
-export type CardListQueryImage =
-  (typeof CardListQueryImage)[keyof typeof CardListQueryImage];
-
-export const CardListQueryImage = {
-  custom: "custom",
-  default: "default",
-} as const;
-
-export type CardListQuerySort =
-  (typeof CardListQuerySort)[keyof typeof CardListQuerySort];
-
-export const CardListQuerySort = {
-  name: "name",
-  overall: "overall",
-  recent: "recent",
-} as const;
-
-export interface CardListQuery {
-  query?: string;
-  collectionId?: string;
-  teamId?: string;
-  position?: CardListQueryPosition;
-  image?: CardListQueryImage;
-  contractsBlocked?: boolean;
-  sort?: CardListQuerySort;
-  /** @minimum 1 */
-  page: number;
-  /**
-   * @minimum 1
-   * @maximum 100
-   */
-  pageSize?: number;
-}
-
-export type CardInputPosition =
-  (typeof CardInputPosition)[keyof typeof CardInputPosition];
-
-export const CardInputPosition = {
-  CA: "CA",
-  GOL: "GOL",
-  LD: "LD",
-  LE: "LE",
-  MA: "MA",
-  MC: "MC",
-  PD: "PD",
-  PE: "PE",
-  VOL: "VOL",
-  ZAG: "ZAG",
-} as const;
-
-export type CardInputSecondaryPositionsItem =
-  (typeof CardInputSecondaryPositionsItem)[keyof typeof CardInputSecondaryPositionsItem];
-
-export const CardInputSecondaryPositionsItem = {
-  CA: "CA",
-  GOL: "GOL",
-  LD: "LD",
-  LE: "LE",
-  MA: "MA",
-  MC: "MC",
-  PD: "PD",
-  PE: "PE",
-  VOL: "VOL",
-  ZAG: "ZAG",
-} as const;
-
-export interface CardInput {
-  /**
-   * @maxLength 100
-   * @pattern ^[a-z0-9]+(?:-[a-z0-9]+)*$
-   */
-  slug: string;
-  /**
-   * @minLength 1
-   * @maxLength 100
-   */
-  name: string;
-  collectionId: string;
-  teamId: string;
-  position: CardInputPosition;
-  secondaryPositions?: CardInputSecondaryPositionsItem[];
-  contractsBlocked?: boolean;
-  /** @minimum 1 */
-  defense: number;
-  /** @minimum 1 */
-  attack: number;
-  /** @minimum 1 */
-  creation: number;
-  /**
-   * @minimum 60
-   * @maximum 100
-   */
-  overall: number;
-  /** @minimum 1 */
-  passing: number;
-  /** @minimum 1 */
-  control: number;
-  /** @minimum 1 */
-  marking: number;
-  /** @minimum 1 */
-  pace: number;
-  /** @minimum 1 */
-  dribbling: number;
-  /** @minimum 1 */
-  finishing: number;
-}
-
-export type CardUpdatePosition =
-  (typeof CardUpdatePosition)[keyof typeof CardUpdatePosition];
-
-export const CardUpdatePosition = {
-  CA: "CA",
-  GOL: "GOL",
-  LD: "LD",
-  LE: "LE",
-  MA: "MA",
-  MC: "MC",
-  PD: "PD",
-  PE: "PE",
-  VOL: "VOL",
-  ZAG: "ZAG",
-} as const;
-
-export type CardUpdateSecondaryPositionsItem =
-  (typeof CardUpdateSecondaryPositionsItem)[keyof typeof CardUpdateSecondaryPositionsItem];
-
-export const CardUpdateSecondaryPositionsItem = {
-  CA: "CA",
-  GOL: "GOL",
-  LD: "LD",
-  LE: "LE",
-  MA: "MA",
-  MC: "MC",
-  PD: "PD",
-  PE: "PE",
-  VOL: "VOL",
-  ZAG: "ZAG",
-} as const;
-
-export interface CardUpdate {
-  /**
-   * @minLength 1
-   * @maxLength 100
-   */
-  name: string;
-  collectionId: string;
-  teamId: string;
-  position: CardUpdatePosition;
-  secondaryPositions?: CardUpdateSecondaryPositionsItem[];
-  contractsBlocked?: boolean;
-  /** @minimum 1 */
-  defense: number;
-  /** @minimum 1 */
-  attack: number;
-  /** @minimum 1 */
-  creation: number;
-  /**
-   * @minimum 60
-   * @maximum 100
-   */
-  overall: number;
-  /** @minimum 1 */
-  passing: number;
-  /** @minimum 1 */
-  control: number;
-  /** @minimum 1 */
-  marking: number;
-  /** @minimum 1 */
-  pace: number;
-  /** @minimum 1 */
-  dribbling: number;
-  /** @minimum 1 */
-  finishing: number;
-}
-
-export type AiSavedConfigProvider =
-  (typeof AiSavedConfigProvider)[keyof typeof AiSavedConfigProvider];
-
-export const AiSavedConfigProvider = {
-  anthropic: "anthropic",
-  openai: "openai",
-  "opencode-go": "opencode-go",
-} as const;
-
-export interface AiSavedConfig {
-  provider: AiSavedConfigProvider;
-  baseUrl: string;
-  apiKeyConfigured: boolean;
-  models: string[];
-  /** @nullable */
-  model: string | null;
-}
-
-export type AiSessionInputProvider =
-  (typeof AiSessionInputProvider)[keyof typeof AiSessionInputProvider];
-
-export const AiSessionInputProvider = {
-  anthropic: "anthropic",
-  openai: "openai",
-  "opencode-go": "opencode-go",
-} as const;
-
-export interface AiSessionInput {
-  provider: AiSessionInputProvider;
-  /**
-   * @minLength 1
-   * @maxLength 2048
-   */
-  baseUrl: string;
-  /**
-   * @minLength 1
-   * @maxLength 4096
-   */
-  apiKey?: string;
-}
-
-export type AiChatActionTool =
-  (typeof AiChatActionTool)[keyof typeof AiChatActionTool];
-
-export const AiChatActionTool = {
-  create_card: "create_card",
-  create_collection: "create_collection",
-  create_pack: "create_pack",
-  create_team: "create_team",
-} as const;
-
-export type AiChatActionStatus =
-  (typeof AiChatActionStatus)[keyof typeof AiChatActionStatus];
-
-export const AiChatActionStatus = {
-  failed: "failed",
-  pending: "pending",
-  rejected: "rejected",
-  succeeded: "succeeded",
-} as const;
-
-export interface AiChatAction {
-  id: string;
-  tool: AiChatActionTool;
-  arguments: string;
-  status: AiChatActionStatus;
-  /** @nullable */
-  result: string | null;
-}
-
-export type AiChatStateMessagesItemRole =
-  (typeof AiChatStateMessagesItemRole)[keyof typeof AiChatStateMessagesItemRole];
-
-export const AiChatStateMessagesItemRole = {
-  assistant: "assistant",
-  tool: "tool",
-  user: "user",
-} as const;
-
-export type AiChatStateMessagesItem = {
-  id: string;
-  role: AiChatStateMessagesItemRole;
-  content: string;
-};
-
-export interface AiChatState {
-  id: string;
-  models: string[];
-  /** @nullable */
-  model: string | null;
-  /** @nullable */
-  notice: string | null;
-  messages: AiChatStateMessagesItem[];
-  actions: AiChatAction[];
-}
-
-export type AiHistorySummaryProvider =
-  (typeof AiHistorySummaryProvider)[keyof typeof AiHistorySummaryProvider];
-
-export const AiHistorySummaryProvider = {
-  anthropic: "anthropic",
-  openai: "openai",
-  "opencode-go": "opencode-go",
-} as const;
-
-export interface AiHistorySummary {
-  id: string;
-  title: string;
-  provider: AiHistorySummaryProvider;
-  /** @nullable */
-  model: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AiHistoryPage {
-  items: AiHistorySummary[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-export interface AiHistoryQuery {
-  /**
-   * @minimum 1
-   * @maximum 10000
-   */
-  page?: number;
-}
-
-export type AiHistoryDetailProvider =
-  (typeof AiHistoryDetailProvider)[keyof typeof AiHistoryDetailProvider];
-
-export const AiHistoryDetailProvider = {
-  anthropic: "anthropic",
-  openai: "openai",
-  "opencode-go": "opencode-go",
-} as const;
-
-export interface AiHistoryDetail {
-  id: string;
-  title: string;
-  provider: AiHistoryDetailProvider;
-  /** @nullable */
-  model: string | null;
-  createdAt: string;
-  updatedAt: string;
-  state: AiChatState;
-}
-
-export interface AiPromptInput {
-  /**
-   * @minLength 1
-   * @maxLength 200
-   */
-  model: string;
-  /**
-   * @minLength 1
-   * @maxLength 12000
-   */
-  message: string;
-}
-
-export interface AiApprovalInput {
-  approved: boolean;
-}
-
-export type AiSavedConfigNullableProvider =
-  (typeof AiSavedConfigNullableProvider)[keyof typeof AiSavedConfigNullableProvider];
-
-export const AiSavedConfigNullableProvider = {
-  anthropic: "anthropic",
-  openai: "openai",
-  "opencode-go": "opencode-go",
-} as const;
-
-/**
- * @nullable
- */
-export type AiSavedConfigNullable = {
-  provider: AiSavedConfigNullableProvider;
-  baseUrl: string;
-  apiKeyConfigured: boolean;
-  models: string[];
-  /** @nullable */
-  model: string | null;
-} | null;
-
-export type GetV1AuthPlayerDiscordCallbackParams = {
-  code?: string;
-  state?: string;
-};
-
-export type GetPackShopParams = {
-  page?: number;
-};
-
-export type GetV1AdminCardsTeamLogoSuggestionsParams = {
-  q: string;
-};
-
-export type GetV1AdminCardsTeamLogoDetailsParams = {
-  slug: string;
-};
-
-export type GetV1AdminCardsCollectionArtworkSuggestionsParams = {
-  q: string;
-};
-
-export type GetV1AdminCardsPlayerPhotoSuggestionsParams = {
-  q: string;
 };
 
 export type GetV1AdminCardsCollectionsParams = {
@@ -1938,6 +1731,91 @@ export type GetV1AdminCardsCollectionsParams = {
   page: number;
   pageSize?: number;
   contractsBlocked?: boolean;
+};
+
+export type GetV1AdminCardsCollections200ItemsItem = {
+  slug: string;
+  name: string;
+  emoji: string;
+  primaryColor: string;
+  secondaryColor: string;
+  /** @nullable */
+  imageUrl?: string | null;
+  /** @nullable */
+  overlayUrl?: string | null;
+  /** @nullable */
+  bannerUrl?: string | null;
+  contractsBlocked?: boolean;
+  id: string;
+};
+
+export type GetV1AdminCardsCollections200 = {
+  items: GetV1AdminCardsCollections200ItemsItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type PostV1AdminCardsCollectionsBody = {
+  slug: string;
+  name: string;
+  emoji: string;
+  primaryColor: string;
+  secondaryColor: string;
+  /** @nullable */
+  imageUrl?: string | null;
+  /** @nullable */
+  overlayUrl?: string | null;
+  /** @nullable */
+  bannerUrl?: string | null;
+  contractsBlocked?: boolean;
+};
+
+export type PostV1AdminCardsCollections201 = {
+  slug: string;
+  name: string;
+  emoji: string;
+  primaryColor: string;
+  secondaryColor: string;
+  /** @nullable */
+  imageUrl?: string | null;
+  /** @nullable */
+  overlayUrl?: string | null;
+  /** @nullable */
+  bannerUrl?: string | null;
+  contractsBlocked?: boolean;
+  id: string;
+};
+
+export type PutV1AdminCardsCollectionsCollectionIdBody = {
+  slug: string;
+  name: string;
+  emoji: string;
+  primaryColor: string;
+  secondaryColor: string;
+  /** @nullable */
+  imageUrl?: string | null;
+  /** @nullable */
+  overlayUrl?: string | null;
+  /** @nullable */
+  bannerUrl?: string | null;
+  contractsBlocked?: boolean;
+};
+
+export type PutV1AdminCardsCollectionsCollectionId200 = {
+  slug: string;
+  name: string;
+  emoji: string;
+  primaryColor: string;
+  secondaryColor: string;
+  /** @nullable */
+  imageUrl?: string | null;
+  /** @nullable */
+  overlayUrl?: string | null;
+  /** @nullable */
+  bannerUrl?: string | null;
+  contractsBlocked?: boolean;
+  id: string;
 };
 
 export type GetV1AdminCardsTeamsParams = {
@@ -1954,6 +1832,97 @@ export const GetV1AdminCardsTeamsImage = {
   custom: "custom",
   default: "default",
 } as const;
+
+export type GetV1AdminCardsTeams200ItemsItem = {
+  slug: string;
+  name: string;
+  emoji: string;
+  color: string;
+  colors?: string[];
+  /** @nullable */
+  imageUrl?: string | null;
+  id: string;
+};
+
+export type GetV1AdminCardsTeams200 = {
+  items: GetV1AdminCardsTeams200ItemsItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type PostV1AdminCardsTeamsBody = {
+  slug: string;
+  name: string;
+  emoji: string;
+  color: string;
+  colors?: string[];
+  /** @nullable */
+  imageUrl?: string | null;
+};
+
+export type PostV1AdminCardsTeams201 = {
+  slug: string;
+  name: string;
+  emoji: string;
+  color: string;
+  colors?: string[];
+  /** @nullable */
+  imageUrl?: string | null;
+  id: string;
+};
+
+export type PutV1AdminCardsTeamsTeamIdBody = {
+  slug: string;
+  name: string;
+  emoji: string;
+  color: string;
+  colors?: string[];
+  /** @nullable */
+  imageUrl?: string | null;
+};
+
+export type PutV1AdminCardsTeamsTeamId200 = {
+  slug: string;
+  name: string;
+  emoji: string;
+  color: string;
+  colors?: string[];
+  /** @nullable */
+  imageUrl?: string | null;
+  id: string;
+};
+
+export type GetV1AdminCardsTemplate200 = {
+  filename: string;
+  content: string;
+};
+
+export type PostV1AdminCardsPreview200ErrorsItem = {
+  row: number;
+  field: string;
+  message: string;
+};
+
+export type PostV1AdminCardsPreview200 = {
+  valid: boolean;
+  createCount: number;
+  updateCount: number;
+  errors: PostV1AdminCardsPreview200ErrorsItem[];
+};
+
+export type PostV1AdminCardsImport200ErrorsItem = {
+  row: number;
+  field: string;
+  message: string;
+};
+
+export type PostV1AdminCardsImport200 = {
+  valid: boolean;
+  createCount: number;
+  updateCount: number;
+  errors: PostV1AdminCardsImport200ErrorsItem[];
+};
 
 export type GetV1AdminCardsParams = {
   query?: string;
@@ -2000,81 +1969,558 @@ export const GetV1AdminCardsSort = {
   recent: "recent",
 } as const;
 
-export type GetV1AdminAiSessionsCapabilities200 = {
-  webSearch: boolean;
+export type GetV1AdminCards200ItemsItemCollection = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
 };
 
-export type GetV1AdminAiSessionsHistoryParams = {
-  page?: number;
+export type GetV1AdminCards200ItemsItemTeam = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
 };
 
-export const getGetV1AuthPlayerDiscordUrl = () => {
-  return `/v1/auth/player/discord`;
+export type GetV1AdminCards200ItemsItemPosition =
+  (typeof GetV1AdminCards200ItemsItemPosition)[keyof typeof GetV1AdminCards200ItemsItemPosition];
+
+export const GetV1AdminCards200ItemsItemPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type GetV1AdminCards200ItemsItemSecondaryPositionsItem =
+  (typeof GetV1AdminCards200ItemsItemSecondaryPositionsItem)[keyof typeof GetV1AdminCards200ItemsItemSecondaryPositionsItem];
+
+export const GetV1AdminCards200ItemsItemSecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type GetV1AdminCards200ItemsItem = {
+  id: string;
+  slug: string;
+  name: string;
+  collection: GetV1AdminCards200ItemsItemCollection;
+  team: GetV1AdminCards200ItemsItemTeam;
+  position: GetV1AdminCards200ItemsItemPosition;
+  secondaryPositions: GetV1AdminCards200ItemsItemSecondaryPositionsItem[];
+  contractsBlocked: boolean;
+  defense: number;
+  attack: number;
+  creation: number;
+  overall: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  imageUrl: string;
 };
 
-export const getV1AuthPlayerDiscord = async (
+export type GetV1AdminCards200 = {
+  items: GetV1AdminCards200ItemsItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type PostV1AdminCardsBodyPosition =
+  (typeof PostV1AdminCardsBodyPosition)[keyof typeof PostV1AdminCardsBodyPosition];
+
+export const PostV1AdminCardsBodyPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PostV1AdminCardsBodySecondaryPositionsItem =
+  (typeof PostV1AdminCardsBodySecondaryPositionsItem)[keyof typeof PostV1AdminCardsBodySecondaryPositionsItem];
+
+export const PostV1AdminCardsBodySecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PostV1AdminCardsBody = {
+  slug: string;
+  name: string;
+  collectionId: string;
+  teamId: string;
+  position: PostV1AdminCardsBodyPosition;
+  secondaryPositions?: PostV1AdminCardsBodySecondaryPositionsItem[];
+  contractsBlocked?: boolean;
+  defense: number;
+  attack: number;
+  creation: number;
+  overall: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+};
+
+export type PostV1AdminCards201Collection = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type PostV1AdminCards201Team = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type PostV1AdminCards201Position =
+  (typeof PostV1AdminCards201Position)[keyof typeof PostV1AdminCards201Position];
+
+export const PostV1AdminCards201Position = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PostV1AdminCards201SecondaryPositionsItem =
+  (typeof PostV1AdminCards201SecondaryPositionsItem)[keyof typeof PostV1AdminCards201SecondaryPositionsItem];
+
+export const PostV1AdminCards201SecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PostV1AdminCards201 = {
+  id: string;
+  slug: string;
+  name: string;
+  collection: PostV1AdminCards201Collection;
+  team: PostV1AdminCards201Team;
+  position: PostV1AdminCards201Position;
+  secondaryPositions: PostV1AdminCards201SecondaryPositionsItem[];
+  contractsBlocked: boolean;
+  defense: number;
+  attack: number;
+  creation: number;
+  overall: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  imageUrl: string;
+};
+
+export type GetV1AdminCardsCardId200Collection = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type GetV1AdminCardsCardId200Team = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type GetV1AdminCardsCardId200Position =
+  (typeof GetV1AdminCardsCardId200Position)[keyof typeof GetV1AdminCardsCardId200Position];
+
+export const GetV1AdminCardsCardId200Position = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type GetV1AdminCardsCardId200SecondaryPositionsItem =
+  (typeof GetV1AdminCardsCardId200SecondaryPositionsItem)[keyof typeof GetV1AdminCardsCardId200SecondaryPositionsItem];
+
+export const GetV1AdminCardsCardId200SecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type GetV1AdminCardsCardId200 = {
+  id: string;
+  slug: string;
+  name: string;
+  collection: GetV1AdminCardsCardId200Collection;
+  team: GetV1AdminCardsCardId200Team;
+  position: GetV1AdminCardsCardId200Position;
+  secondaryPositions: GetV1AdminCardsCardId200SecondaryPositionsItem[];
+  contractsBlocked: boolean;
+  defense: number;
+  attack: number;
+  creation: number;
+  overall: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  imageUrl: string;
+};
+
+export type PutV1AdminCardsCardIdBodyPosition =
+  (typeof PutV1AdminCardsCardIdBodyPosition)[keyof typeof PutV1AdminCardsCardIdBodyPosition];
+
+export const PutV1AdminCardsCardIdBodyPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PutV1AdminCardsCardIdBodySecondaryPositionsItem =
+  (typeof PutV1AdminCardsCardIdBodySecondaryPositionsItem)[keyof typeof PutV1AdminCardsCardIdBodySecondaryPositionsItem];
+
+export const PutV1AdminCardsCardIdBodySecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PutV1AdminCardsCardIdBody = {
+  name: string;
+  collectionId: string;
+  teamId: string;
+  position: PutV1AdminCardsCardIdBodyPosition;
+  secondaryPositions?: PutV1AdminCardsCardIdBodySecondaryPositionsItem[];
+  contractsBlocked?: boolean;
+  defense: number;
+  attack: number;
+  creation: number;
+  overall: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+};
+
+export type PutV1AdminCardsCardId200Collection = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type PutV1AdminCardsCardId200Team = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type PutV1AdminCardsCardId200Position =
+  (typeof PutV1AdminCardsCardId200Position)[keyof typeof PutV1AdminCardsCardId200Position];
+
+export const PutV1AdminCardsCardId200Position = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PutV1AdminCardsCardId200SecondaryPositionsItem =
+  (typeof PutV1AdminCardsCardId200SecondaryPositionsItem)[keyof typeof PutV1AdminCardsCardId200SecondaryPositionsItem];
+
+export const PutV1AdminCardsCardId200SecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PutV1AdminCardsCardId200 = {
+  id: string;
+  slug: string;
+  name: string;
+  collection: PutV1AdminCardsCardId200Collection;
+  team: PutV1AdminCardsCardId200Team;
+  position: PutV1AdminCardsCardId200Position;
+  secondaryPositions: PutV1AdminCardsCardId200SecondaryPositionsItem[];
+  contractsBlocked: boolean;
+  defense: number;
+  attack: number;
+  creation: number;
+  overall: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  imageUrl: string;
+};
+
+export type PutV1AdminCardsCardIdImage200Collection = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type PutV1AdminCardsCardIdImage200Team = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type PutV1AdminCardsCardIdImage200Position =
+  (typeof PutV1AdminCardsCardIdImage200Position)[keyof typeof PutV1AdminCardsCardIdImage200Position];
+
+export const PutV1AdminCardsCardIdImage200Position = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PutV1AdminCardsCardIdImage200SecondaryPositionsItem =
+  (typeof PutV1AdminCardsCardIdImage200SecondaryPositionsItem)[keyof typeof PutV1AdminCardsCardIdImage200SecondaryPositionsItem];
+
+export const PutV1AdminCardsCardIdImage200SecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PutV1AdminCardsCardIdImage200 = {
+  id: string;
+  slug: string;
+  name: string;
+  collection: PutV1AdminCardsCardIdImage200Collection;
+  team: PutV1AdminCardsCardIdImage200Team;
+  position: PutV1AdminCardsCardIdImage200Position;
+  secondaryPositions: PutV1AdminCardsCardIdImage200SecondaryPositionsItem[];
+  contractsBlocked: boolean;
+  defense: number;
+  attack: number;
+  creation: number;
+  overall: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  imageUrl: string;
+};
+
+export type DeleteV1AdminCardsCardIdImage200Collection = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type DeleteV1AdminCardsCardIdImage200Team = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type DeleteV1AdminCardsCardIdImage200Position =
+  (typeof DeleteV1AdminCardsCardIdImage200Position)[keyof typeof DeleteV1AdminCardsCardIdImage200Position];
+
+export const DeleteV1AdminCardsCardIdImage200Position = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type DeleteV1AdminCardsCardIdImage200SecondaryPositionsItem =
+  (typeof DeleteV1AdminCardsCardIdImage200SecondaryPositionsItem)[keyof typeof DeleteV1AdminCardsCardIdImage200SecondaryPositionsItem];
+
+export const DeleteV1AdminCardsCardIdImage200SecondaryPositionsItem = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type DeleteV1AdminCardsCardIdImage200 = {
+  id: string;
+  slug: string;
+  name: string;
+  collection: DeleteV1AdminCardsCardIdImage200Collection;
+  team: DeleteV1AdminCardsCardIdImage200Team;
+  position: DeleteV1AdminCardsCardIdImage200Position;
+  secondaryPositions: DeleteV1AdminCardsCardIdImage200SecondaryPositionsItem[];
+  contractsBlocked: boolean;
+  defense: number;
+  attack: number;
+  creation: number;
+  overall: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  imageUrl: string;
+};
+
+export const getListPackCatalogUrl = () => {
+  return `/v1/packs`;
+};
+
+export const listPackCatalog = async (
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getGetV1AuthPlayerDiscordUrl(), {
+): Promise<ListPackCatalog200Item[]> => {
+  return request<ListPackCatalog200Item[]>(getListPackCatalogUrl(), {
     ...options,
     method: "GET",
-  });
-};
-
-export const getGetV1AuthPlayerDiscordCallbackUrl = (
-  params?: GetV1AuthPlayerDiscordCallbackParams,
-) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : String(value));
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0
-    ? `/v1/auth/player/discord/callback?${stringifiedParams}`
-    : `/v1/auth/player/discord/callback`;
-};
-
-export const getV1AuthPlayerDiscordCallback = async (
-  params?: GetV1AuthPlayerDiscordCallbackParams,
-  options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getGetV1AuthPlayerDiscordCallbackUrl(params), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getGetV1AuthPlayerSessionUrl = () => {
-  return `/v1/auth/player/session`;
-};
-
-export const getV1AuthPlayerSession = async (
-  options?: Parameters<typeof request>[1],
-): Promise<ReadonlyavatarUrlstringnullbalancenumberexpiresAtnumberidstringnamestring> => {
-  return request<ReadonlyavatarUrlstringnullbalancenumberexpiresAtnumberidstringnamestring>(
-    getGetV1AuthPlayerSessionUrl(),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-export const getDeleteV1AuthPlayerSessionUrl = () => {
-  return `/v1/auth/player/session`;
-};
-
-export const deleteV1AuthPlayerSession = async (
-  options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getDeleteV1AuthPlayerSessionUrl(), {
-    ...options,
-    method: "DELETE",
   });
 };
 
@@ -2097,11 +2543,14 @@ export const getGetPackShopUrl = (params?: GetPackShopParams) => {
 export const getPackShop = async (
   params?: GetPackShopParams,
   options?: Parameters<typeof request>[1],
-): Promise<PackShopDto> => {
-  return request<PackShopDto>(getGetPackShopUrl(params), {
-    ...options,
-    method: "GET",
-  });
+): Promise<ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber> => {
+  return request<ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber>(
+    getGetPackShopUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export const getInspectPackUrl = (packId: string) => {
@@ -2111,11 +2560,14 @@ export const getInspectPackUrl = (packId: string) => {
 export const inspectPack = async (
   packId: string,
   options?: Parameters<typeof request>[1],
-): Promise<PackShopItemDto> => {
-  return request<PackShopItemDto>(getInspectPackUrl(packId), {
-    ...options,
-    method: "GET",
-  });
+): Promise<ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber> => {
+  return request<ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber>(
+    getInspectPackUrl(packId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export const getPurchasePackUrl = (packId: string) => {
@@ -2124,14 +2576,14 @@ export const getPurchasePackUrl = (packId: string) => {
 
 export const purchasePack = async (
   packId: string,
-  packActionRequest: PackActionRequest,
+  purchasePackBody: PurchasePackBody,
   options?: Parameters<typeof request>[1],
-): Promise<PurchasePackResponse> => {
-  return request<PurchasePackResponse>(getPurchasePackUrl(packId), {
+): Promise<PurchasePack200> => {
+  return request<PurchasePack200>(getPurchasePackUrl(packId), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(packActionRequest),
+    body: JSON.stringify(purchasePackBody),
   });
 };
 
@@ -2141,14 +2593,14 @@ export const getOpenPackUrl = (packId: string) => {
 
 export const openPack = async (
   packId: string,
-  packActionRequest: PackActionRequest,
+  openPackBody: OpenPackBody,
   options?: Parameters<typeof request>[1],
-): Promise<OpenPackResponse> => {
-  return request<OpenPackResponse>(getOpenPackUrl(packId), {
+): Promise<OpenPack200> => {
+  return request<OpenPack200>(getOpenPackUrl(packId), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(packActionRequest),
+    body: JSON.stringify(openPackBody),
   });
 };
 
@@ -2157,14 +2609,14 @@ export const getListMissionsUrl = () => {
 };
 
 export const listMissions = async (
-  missionsRequest: MissionsRequest,
+  listMissionsBody: ListMissionsBody,
   options?: Parameters<typeof request>[1],
-): Promise<MissionsResponse> => {
-  return request<MissionsResponse>(getListMissionsUrl(), {
+): Promise<ListMissions200> => {
+  return request<ListMissions200>(getListMissionsUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(missionsRequest),
+    body: JSON.stringify(listMissionsBody),
   });
 };
 
@@ -2177,18 +2629,15 @@ export const getExecuteLucroUrl = () => {
  * @summary Executa o comando lucro
  */
 export const executeLucro = async (
-  discordIdentityDto: DiscordIdentityDto,
+  executeLucroBody: ExecuteLucroBody,
   options?: Parameters<typeof request>[1],
-): Promise<LucroCooldownResponse | LucroSuccessResponse> => {
-  return request<LucroCooldownResponse | LucroSuccessResponse>(
-    getExecuteLucroUrl(),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(discordIdentityDto),
-    },
-  );
+): Promise<ExecuteLucro200> => {
+  return request<ExecuteLucro200>(getExecuteLucroUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(executeLucroBody),
+  });
 };
 
 export const getGetV1AdminLucroUrl = () => {
@@ -2197,8 +2646,8 @@ export const getGetV1AdminLucroUrl = () => {
 
 export const getV1AdminLucro = async (
   options?: Parameters<typeof request>[1],
-): Promise<LucroConfigDto> => {
-  return request<LucroConfigDto>(getGetV1AdminLucroUrl(), {
+): Promise<GetV1AdminLucro200> => {
+  return request<GetV1AdminLucro200>(getGetV1AdminLucroUrl(), {
     ...options,
     method: "GET",
   });
@@ -2209,14 +2658,14 @@ export const getPutV1AdminLucroUrl = () => {
 };
 
 export const putV1AdminLucro = async (
-  lucroConfigInputDto: LucroConfigInputDto,
+  putV1AdminLucroBody: PutV1AdminLucroBody,
   options?: Parameters<typeof request>[1],
-): Promise<LucroConfigDto> => {
-  return request<LucroConfigDto>(getPutV1AdminLucroUrl(), {
+): Promise<PutV1AdminLucro200> => {
+  return request<PutV1AdminLucro200>(getPutV1AdminLucroUrl(), {
     ...options,
     method: "PUT",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(lucroConfigInputDto),
+    body: JSON.stringify(putV1AdminLucroBody),
   });
 };
 
@@ -2226,8 +2675,8 @@ export const getGetV1AdminLucroSchemaUrl = () => {
 
 export const getV1AdminLucroSchema = async (
   options?: Parameters<typeof request>[1],
-): Promise<LucroEmbedSchemaDto> => {
-  return request<LucroEmbedSchemaDto>(getGetV1AdminLucroSchemaUrl(), {
+): Promise<GetV1AdminLucroSchema200> => {
+  return request<GetV1AdminLucroSchema200>(getGetV1AdminLucroSchemaUrl(), {
     ...options,
     method: "GET",
   });
@@ -2238,18 +2687,15 @@ export const getJoinRankedQueueUrl = () => {
 };
 
 export const joinRankedQueue = async (
-  discordIdentityDtoO1: DiscordIdentityDtoO1,
+  joinRankedQueueBody: JoinRankedQueueBody,
   options?: Parameters<typeof request>[1],
-): Promise<QueueMatchedResponse | QueueWaitingResponse> => {
-  return request<QueueMatchedResponse | QueueWaitingResponse>(
-    getJoinRankedQueueUrl(),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(discordIdentityDtoO1),
-    },
-  );
+): Promise<JoinRankedQueue200> => {
+  return request<JoinRankedQueue200>(getJoinRankedQueueUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(joinRankedQueueBody),
+  });
 };
 
 export const getGetV1RankedStatusDiscordUserIdUrl = (discordUserId: string) => {
@@ -2259,15 +2705,14 @@ export const getGetV1RankedStatusDiscordUserIdUrl = (discordUserId: string) => {
 export const getV1RankedStatusDiscordUserId = async (
   discordUserId: string,
   options?: Parameters<typeof request>[1],
-): Promise<
-  QueueMatchedResponseNullable | null | QueueWaitingResponseNullable
-> => {
-  return request<
-    QueueMatchedResponseNullable | null | QueueWaitingResponseNullable
-  >(getGetV1RankedStatusDiscordUserIdUrl(discordUserId), {
-    ...options,
-    method: "GET",
-  });
+): Promise<GetV1RankedStatusDiscordUserId200> => {
+  return request<GetV1RankedStatusDiscordUserId200>(
+    getGetV1RankedStatusDiscordUserIdUrl(discordUserId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export const getGetV1LeagueDiscordUserIdUrl = (discordUserId: string) => {
@@ -2277,8 +2722,8 @@ export const getGetV1LeagueDiscordUserIdUrl = (discordUserId: string) => {
 export const getV1LeagueDiscordUserId = async (
   discordUserId: string,
   options?: Parameters<typeof request>[1],
-): Promise<LeagueStatusResponse> => {
-  return request<LeagueStatusResponse>(
+): Promise<GetV1LeagueDiscordUserId200> => {
+  return request<GetV1LeagueDiscordUserId200>(
     getGetV1LeagueDiscordUserIdUrl(discordUserId),
     {
       ...options,
@@ -2294,8 +2739,8 @@ export const getGetV1MatchesMatchIdUrl = (matchId: string) => {
 export const getV1MatchesMatchId = async (
   matchId: string,
   options?: Parameters<typeof request>[1],
-): Promise<MatchResponse> => {
-  return request<MatchResponse>(getGetV1MatchesMatchIdUrl(matchId), {
+): Promise<GetV1MatchesMatchId200> => {
+  return request<GetV1MatchesMatchId200>(getGetV1MatchesMatchIdUrl(matchId), {
     ...options,
     method: "GET",
   });
@@ -2307,10 +2752,278 @@ export const getHealthControllerHealthUrl = () => {
 
 export const healthControllerHealth = async (
   options?: Parameters<typeof request>[1],
-): Promise<HealthResponse> => {
-  return request<HealthResponse>(getHealthControllerHealthUrl(), {
+): Promise<HealthControllerHealth200> => {
+  return request<HealthControllerHealth200>(getHealthControllerHealthUrl(), {
     ...options,
     method: "GET",
+  });
+};
+
+export const getListCardMarketUrl = (params: ListCardMarketParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["positions"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? "null" : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/cards?${stringifiedParams}`
+    : `/v1/cards`;
+};
+
+export const listCardMarket = async (
+  params: ListCardMarketParams,
+  options?: Parameters<typeof request>[1],
+): Promise<ListCardMarket200> => {
+  return request<ListCardMarket200>(getListCardMarketUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListCardMarketCatalogUrl = () => {
+  return `/v1/cards/catalog`;
+};
+
+export const listCardMarketCatalog = async (
+  options?: Parameters<typeof request>[1],
+): Promise<ListCardMarketCatalog200> => {
+  return request<ListCardMarketCatalog200>(getListCardMarketCatalogUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getPurchaseCardUrl = (cardId: string) => {
+  return `/v1/cards/${cardId}/purchase`;
+};
+
+export const purchaseCard = async (
+  cardId: string,
+  purchaseCardBody: PurchaseCardBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PurchaseCard200> => {
+  return request<PurchaseCard200>(getPurchaseCardUrl(cardId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(purchaseCardBody),
+  });
+};
+
+export const getSellCardsUrl = () => {
+  return `/v1/cards/sell`;
+};
+
+export const sellCards = async (
+  sellCardsBody: SellCardsBody,
+  options?: Parameters<typeof request>[1],
+): Promise<SellCards200> => {
+  return request<SellCards200>(getSellCardsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sellCardsBody),
+  });
+};
+
+export const getGetClubUrl = () => {
+  return `/v1/club`;
+};
+
+export const getClub = async (
+  getClubBody: GetClubBody,
+  options?: Parameters<typeof request>[1],
+): Promise<GetClub200> => {
+  return request<GetClub200>(getGetClubUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(getClubBody),
+  });
+};
+
+export const getUpgradeStadiumUrl = () => {
+  return `/v1/club/stadium/upgrade`;
+};
+
+export const upgradeStadium = async (
+  upgradeStadiumBody: UpgradeStadiumBody,
+  options?: Parameters<typeof request>[1],
+): Promise<UpgradeStadium200> => {
+  return request<UpgradeStadium200>(getUpgradeStadiumUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(upgradeStadiumBody),
+  });
+};
+
+export const getGetTeamUrl = () => {
+  return `/v1/team`;
+};
+
+export const getTeam = async (
+  getTeamBody: GetTeamBody,
+  options?: Parameters<typeof request>[1],
+): Promise<TeamResponse> => {
+  return request<TeamResponse>(getGetTeamUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(getTeamBody),
+  });
+};
+
+export const getSetTeamFormationUrl = () => {
+  return `/v1/team/formation`;
+};
+
+export const setTeamFormation = async (
+  setTeamFormationBody: SetTeamFormationBody,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getSetTeamFormationUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setTeamFormationBody),
+  });
+};
+
+export const getSetTeamTacticUrl = () => {
+  return `/v1/team/tactic`;
+};
+
+export const setTeamTactic = async (
+  setTeamTacticBody: SetTeamTacticBody,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getSetTeamTacticUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setTeamTacticBody),
+  });
+};
+
+export const getAutoSelectTeamLineupUrl = () => {
+  return `/v1/team/lineup/auto`;
+};
+
+export const autoSelectTeamLineup = async (
+  autoSelectTeamLineupBody: AutoSelectTeamLineupBody,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getAutoSelectTeamLineupUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(autoSelectTeamLineupBody),
+  });
+};
+
+export const getSetTeamLineupCardUrl = () => {
+  return `/v1/team/lineup`;
+};
+
+export const setTeamLineupCard = async (
+  setTeamLineupCardBody: SetTeamLineupCardBody,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getSetTeamLineupCardUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setTeamLineupCardBody),
+  });
+};
+
+export const getSetTeamCaptainUrl = () => {
+  return `/v1/team/captain`;
+};
+
+export const setTeamCaptain = async (
+  setTeamCaptainBody: SetTeamCaptainBody,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getSetTeamCaptainUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(setTeamCaptainBody),
+  });
+};
+
+export const getToggleTeamCardFavoriteUrl = (userCardId: string) => {
+  return `/v1/team/cards/${userCardId}/favorite`;
+};
+
+export const toggleTeamCardFavorite = async (
+  userCardId: string,
+  toggleTeamCardFavoriteBody: ToggleTeamCardFavoriteBody,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getToggleTeamCardFavoriteUrl(userCardId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(toggleTeamCardFavoriteBody),
+  });
+};
+
+export const getPostV1AdminSessionUrl = () => {
+  return `/v1/admin/session`;
+};
+
+export const postV1AdminSession = async (
+  postV1AdminSessionBody: PostV1AdminSessionBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PostV1AdminSession201> => {
+  return request<PostV1AdminSession201>(getPostV1AdminSessionUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(postV1AdminSessionBody),
+  });
+};
+
+export const getGetV1AdminSessionUrl = () => {
+  return `/v1/admin/session`;
+};
+
+export const getV1AdminSession = async (
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminSession200> => {
+  return request<GetV1AdminSession200>(getGetV1AdminSessionUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getDeleteV1AdminSessionUrl = () => {
+  return `/v1/admin/session`;
+};
+
+export const deleteV1AdminSession = async (
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getDeleteV1AdminSessionUrl(), {
+    ...options,
+    method: "DELETE",
   });
 };
 
@@ -2372,89 +3085,14 @@ export const getBotResponse = async (
   });
 };
 
-export const getPurchaseCardUrl = (cardId: string) => {
-  return `/v1/cards/${cardId}/purchase`;
-};
-
-export const purchaseCard = async (
-  cardId: string,
-  purchaseCardRequest: PurchaseCardRequest,
-  options?: Parameters<typeof request>[1],
-): Promise<PurchaseCardResponse> => {
-  return request<PurchaseCardResponse>(getPurchaseCardUrl(cardId), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(purchaseCardRequest),
-  });
-};
-
-export const getSellCardsUrl = () => {
-  return `/v1/cards/sell`;
-};
-
-export const sellCards = async (
-  sellCardsRequest: SellCardsRequest,
-  options?: Parameters<typeof request>[1],
-): Promise<SellCardsResponse> => {
-  return request<SellCardsResponse>(getSellCardsUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(sellCardsRequest),
-  });
-};
-
-export const getPostV1AdminSessionUrl = () => {
-  return `/v1/admin/session`;
-};
-
-export const postV1AdminSession = async (
-  adminSessionInput: AdminSessionInput,
-  options?: Parameters<typeof request>[1],
-): Promise<AdminSessionResponse> => {
-  return request<AdminSessionResponse>(getPostV1AdminSessionUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(adminSessionInput),
-  });
-};
-
-export const getGetV1AdminSessionUrl = () => {
-  return `/v1/admin/session`;
-};
-
-export const getV1AdminSession = async (
-  options?: Parameters<typeof request>[1],
-): Promise<AdminSessionResponse> => {
-  return request<AdminSessionResponse>(getGetV1AdminSessionUrl(), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getDeleteV1AdminSessionUrl = () => {
-  return `/v1/admin/session`;
-};
-
-export const deleteV1AdminSession = async (
-  options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getDeleteV1AdminSessionUrl(), {
-    ...options,
-    method: "DELETE",
-  });
-};
-
 export const getGetV1AdminPacksUrl = () => {
   return `/v1/admin/packs`;
 };
 
 export const getV1AdminPacks = async (
   options?: Parameters<typeof request>[1],
-): Promise<AdminPack[]> => {
-  return request<AdminPack[]>(getGetV1AdminPacksUrl(), {
+): Promise<GetV1AdminPacks200Item[]> => {
+  return request<GetV1AdminPacks200Item[]>(getGetV1AdminPacksUrl(), {
     ...options,
     method: "GET",
   });
@@ -2465,14 +3103,14 @@ export const getPostV1AdminPacksUrl = () => {
 };
 
 export const postV1AdminPacks = async (
-  adminPackInput: AdminPackInput,
+  postV1AdminPacksBody: PostV1AdminPacksBody,
   options?: Parameters<typeof request>[1],
-): Promise<AdminPack> => {
-  return request<AdminPack>(getPostV1AdminPacksUrl(), {
+): Promise<PostV1AdminPacks201> => {
+  return request<PostV1AdminPacks201>(getPostV1AdminPacksUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(adminPackInput),
+    body: JSON.stringify(postV1AdminPacksBody),
   });
 };
 
@@ -2482,14 +3120,14 @@ export const getPutV1AdminPacksIdUrl = (id: string) => {
 
 export const putV1AdminPacksId = async (
   id: string,
-  adminPackInput: AdminPackInput,
+  putV1AdminPacksIdBody: PutV1AdminPacksIdBody,
   options?: Parameters<typeof request>[1],
-): Promise<AdminPack> => {
-  return request<AdminPack>(getPutV1AdminPacksIdUrl(id), {
+): Promise<PutV1AdminPacksId200> => {
+  return request<PutV1AdminPacksId200>(getPutV1AdminPacksIdUrl(id), {
     ...options,
     method: "PUT",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(adminPackInput),
+    body: JSON.stringify(putV1AdminPacksIdBody),
   });
 };
 
@@ -2500,8 +3138,8 @@ export const getDeleteV1AdminPacksIdUrl = (id: string) => {
 export const deleteV1AdminPacksId = async (
   id: string,
   options?: Parameters<typeof request>[1],
-): Promise<AdminPack> => {
-  return request<AdminPack>(getDeleteV1AdminPacksIdUrl(id), {
+): Promise<DeleteV1AdminPacksId200> => {
+  return request<DeleteV1AdminPacksId200>(getDeleteV1AdminPacksIdUrl(id), {
     ...options,
     method: "DELETE",
   });
@@ -2514,8 +3152,8 @@ export const getPutV1AdminPacksIdImageUrl = (id: string) => {
 export const putV1AdminPacksIdImage = async (
   id: string,
   options?: Parameters<typeof request>[1],
-): Promise<AdminPack> => {
-  return request<AdminPack>(getPutV1AdminPacksIdImageUrl(id), {
+): Promise<PutV1AdminPacksIdImage200> => {
+  return request<PutV1AdminPacksIdImage200>(getPutV1AdminPacksIdImageUrl(id), {
     ...options,
     method: "PUT",
   });
@@ -2527,8 +3165,8 @@ export const getGetV1AdminCardsCatalogUrl = () => {
 
 export const getV1AdminCardsCatalog = async (
   options?: Parameters<typeof request>[1],
-): Promise<CardCatalog> => {
-  return request<CardCatalog>(getGetV1AdminCardsCatalogUrl(), {
+): Promise<GetV1AdminCardsCatalog200> => {
+  return request<GetV1AdminCardsCatalog200>(getGetV1AdminCardsCatalogUrl(), {
     ...options,
     method: "GET",
   });
@@ -2555,8 +3193,8 @@ export const getGetV1AdminCardsTeamLogoSuggestionsUrl = (
 export const getV1AdminCardsTeamLogoSuggestions = async (
   params: GetV1AdminCardsTeamLogoSuggestionsParams,
   options?: Parameters<typeof request>[1],
-): Promise<TeamLogoSuggestion[]> => {
-  return request<TeamLogoSuggestion[]>(
+): Promise<GetV1AdminCardsTeamLogoSuggestions200Item[]> => {
+  return request<GetV1AdminCardsTeamLogoSuggestions200Item[]>(
     getGetV1AdminCardsTeamLogoSuggestionsUrl(params),
     {
       ...options,
@@ -2586,8 +3224,8 @@ export const getGetV1AdminCardsTeamLogoDetailsUrl = (
 export const getV1AdminCardsTeamLogoDetails = async (
   params: GetV1AdminCardsTeamLogoDetailsParams,
   options?: Parameters<typeof request>[1],
-): Promise<TeamLogoDetails> => {
-  return request<TeamLogoDetails>(
+): Promise<GetV1AdminCardsTeamLogoDetails200> => {
+  return request<GetV1AdminCardsTeamLogoDetails200>(
     getGetV1AdminCardsTeamLogoDetailsUrl(params),
     {
       ...options,
@@ -2603,8 +3241,8 @@ export const getGetV1AdminCardsTeamLogosFilenameUrl = (filename: string) => {
 export const getV1AdminCardsTeamLogosFilename = async (
   filename: string,
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getGetV1AdminCardsTeamLogosFilenameUrl(filename), {
+): Promise<void> => {
+  return request<void>(getGetV1AdminCardsTeamLogosFilenameUrl(filename), {
     ...options,
     method: "GET",
   });
@@ -2631,8 +3269,8 @@ export const getGetV1AdminCardsCollectionArtworkSuggestionsUrl = (
 export const getV1AdminCardsCollectionArtworkSuggestions = async (
   params: GetV1AdminCardsCollectionArtworkSuggestionsParams,
   options?: Parameters<typeof request>[1],
-): Promise<CollectionArtworkSuggestion[]> => {
-  return request<CollectionArtworkSuggestion[]>(
+): Promise<GetV1AdminCardsCollectionArtworkSuggestions200Item[]> => {
+  return request<GetV1AdminCardsCollectionArtworkSuggestions200Item[]>(
     getGetV1AdminCardsCollectionArtworkSuggestionsUrl(params),
     {
       ...options,
@@ -2662,8 +3300,8 @@ export const getGetV1AdminCardsPlayerPhotoSuggestionsUrl = (
 export const getV1AdminCardsPlayerPhotoSuggestions = async (
   params: GetV1AdminCardsPlayerPhotoSuggestionsParams,
   options?: Parameters<typeof request>[1],
-): Promise<PlayerPhotoSuggestion[]> => {
-  return request<PlayerPhotoSuggestion[]>(
+): Promise<GetV1AdminCardsPlayerPhotoSuggestions200Item[]> => {
+  return request<GetV1AdminCardsPlayerPhotoSuggestions200Item[]>(
     getGetV1AdminCardsPlayerPhotoSuggestionsUrl(params),
     {
       ...options,
@@ -2679,8 +3317,8 @@ export const getGetV1AdminCardsPlayerPhotosFilenameUrl = (filename: string) => {
 export const getV1AdminCardsPlayerPhotosFilename = async (
   filename: string,
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getGetV1AdminCardsPlayerPhotosFilenameUrl(filename), {
+): Promise<void> => {
+  return request<void>(getGetV1AdminCardsPlayerPhotosFilenameUrl(filename), {
     ...options,
     method: "GET",
   });
@@ -2697,8 +3335,8 @@ export const getV1AdminCardsPlayerPhotosKindFilename = async (
   kind: string,
   filename: string,
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(
+): Promise<void> => {
+  return request<void>(
     getGetV1AdminCardsPlayerPhotosKindFilenameUrl(kind, filename),
     {
       ...options,
@@ -2728,11 +3366,14 @@ export const getGetV1AdminCardsCollectionsUrl = (
 export const getV1AdminCardsCollections = async (
   params: GetV1AdminCardsCollectionsParams,
   options?: Parameters<typeof request>[1],
-): Promise<CollectionPage> => {
-  return request<CollectionPage>(getGetV1AdminCardsCollectionsUrl(params), {
-    ...options,
-    method: "GET",
-  });
+): Promise<GetV1AdminCardsCollections200> => {
+  return request<GetV1AdminCardsCollections200>(
+    getGetV1AdminCardsCollectionsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export const getPostV1AdminCardsCollectionsUrl = () => {
@@ -2740,15 +3381,18 @@ export const getPostV1AdminCardsCollectionsUrl = () => {
 };
 
 export const postV1AdminCardsCollections = async (
-  collectionInput: CollectionInput,
+  postV1AdminCardsCollectionsBody: PostV1AdminCardsCollectionsBody,
   options?: Parameters<typeof request>[1],
-): Promise<AdminCollection> => {
-  return request<AdminCollection>(getPostV1AdminCardsCollectionsUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(collectionInput),
-  });
+): Promise<PostV1AdminCardsCollections201> => {
+  return request<PostV1AdminCardsCollections201>(
+    getPostV1AdminCardsCollectionsUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(postV1AdminCardsCollectionsBody),
+    },
+  );
 };
 
 export const getPutV1AdminCardsCollectionsCollectionIdUrl = (
@@ -2759,16 +3403,16 @@ export const getPutV1AdminCardsCollectionsCollectionIdUrl = (
 
 export const putV1AdminCardsCollectionsCollectionId = async (
   collectionId: string,
-  collectionInput: CollectionInput,
+  putV1AdminCardsCollectionsCollectionIdBody: PutV1AdminCardsCollectionsCollectionIdBody,
   options?: Parameters<typeof request>[1],
-): Promise<AdminCollection> => {
-  return request<AdminCollection>(
+): Promise<PutV1AdminCardsCollectionsCollectionId200> => {
+  return request<PutV1AdminCardsCollectionsCollectionId200>(
     getPutV1AdminCardsCollectionsCollectionIdUrl(collectionId),
     {
       ...options,
       method: "PUT",
       headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(collectionInput),
+      body: JSON.stringify(putV1AdminCardsCollectionsCollectionIdBody),
     },
   );
 };
@@ -2782,8 +3426,8 @@ export const getDeleteV1AdminCardsCollectionsCollectionIdUrl = (
 export const deleteV1AdminCardsCollectionsCollectionId = async (
   collectionId: string,
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(
+): Promise<void> => {
+  return request<void>(
     getDeleteV1AdminCardsCollectionsCollectionIdUrl(collectionId),
     {
       ...options,
@@ -2813,8 +3457,8 @@ export const getGetV1AdminCardsTeamsUrl = (
 export const getV1AdminCardsTeams = async (
   params: GetV1AdminCardsTeamsParams,
   options?: Parameters<typeof request>[1],
-): Promise<TeamPage> => {
-  return request<TeamPage>(getGetV1AdminCardsTeamsUrl(params), {
+): Promise<GetV1AdminCardsTeams200> => {
+  return request<GetV1AdminCardsTeams200>(getGetV1AdminCardsTeamsUrl(params), {
     ...options,
     method: "GET",
   });
@@ -2825,14 +3469,14 @@ export const getPostV1AdminCardsTeamsUrl = () => {
 };
 
 export const postV1AdminCardsTeams = async (
-  teamInput: TeamInput,
+  postV1AdminCardsTeamsBody: PostV1AdminCardsTeamsBody,
   options?: Parameters<typeof request>[1],
-): Promise<AdminTeam> => {
-  return request<AdminTeam>(getPostV1AdminCardsTeamsUrl(), {
+): Promise<PostV1AdminCardsTeams201> => {
+  return request<PostV1AdminCardsTeams201>(getPostV1AdminCardsTeamsUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(teamInput),
+    body: JSON.stringify(postV1AdminCardsTeamsBody),
   });
 };
 
@@ -2842,15 +3486,18 @@ export const getPutV1AdminCardsTeamsTeamIdUrl = (teamId: string) => {
 
 export const putV1AdminCardsTeamsTeamId = async (
   teamId: string,
-  teamInput: TeamInput,
+  putV1AdminCardsTeamsTeamIdBody: PutV1AdminCardsTeamsTeamIdBody,
   options?: Parameters<typeof request>[1],
-): Promise<AdminTeam> => {
-  return request<AdminTeam>(getPutV1AdminCardsTeamsTeamIdUrl(teamId), {
-    ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(teamInput),
-  });
+): Promise<PutV1AdminCardsTeamsTeamId200> => {
+  return request<PutV1AdminCardsTeamsTeamId200>(
+    getPutV1AdminCardsTeamsTeamIdUrl(teamId),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(putV1AdminCardsTeamsTeamIdBody),
+    },
+  );
 };
 
 export const getDeleteV1AdminCardsTeamsTeamIdUrl = (teamId: string) => {
@@ -2860,8 +3507,8 @@ export const getDeleteV1AdminCardsTeamsTeamIdUrl = (teamId: string) => {
 export const deleteV1AdminCardsTeamsTeamId = async (
   teamId: string,
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getDeleteV1AdminCardsTeamsTeamIdUrl(teamId), {
+): Promise<void> => {
+  return request<void>(getDeleteV1AdminCardsTeamsTeamIdUrl(teamId), {
     ...options,
     method: "DELETE",
   });
@@ -2873,8 +3520,8 @@ export const getGetV1AdminCardsTemplateUrl = () => {
 
 export const getV1AdminCardsTemplate = async (
   options?: Parameters<typeof request>[1],
-): Promise<CardTemplate> => {
-  return request<CardTemplate>(getGetV1AdminCardsTemplateUrl(), {
+): Promise<GetV1AdminCardsTemplate200> => {
+  return request<GetV1AdminCardsTemplate200>(getGetV1AdminCardsTemplateUrl(), {
     ...options,
     method: "GET",
   });
@@ -2886,8 +3533,8 @@ export const getPostV1AdminCardsPreviewUrl = () => {
 
 export const postV1AdminCardsPreview = async (
   options?: Parameters<typeof request>[1],
-): Promise<ImportPreview> => {
-  return request<ImportPreview>(getPostV1AdminCardsPreviewUrl(), {
+): Promise<PostV1AdminCardsPreview200> => {
+  return request<PostV1AdminCardsPreview200>(getPostV1AdminCardsPreviewUrl(), {
     ...options,
     method: "POST",
   });
@@ -2899,8 +3546,8 @@ export const getPostV1AdminCardsImportUrl = () => {
 
 export const postV1AdminCardsImport = async (
   options?: Parameters<typeof request>[1],
-): Promise<ImportPreview> => {
-  return request<ImportPreview>(getPostV1AdminCardsImportUrl(), {
+): Promise<PostV1AdminCardsImport200> => {
+  return request<PostV1AdminCardsImport200>(getPostV1AdminCardsImportUrl(), {
     ...options,
     method: "POST",
   });
@@ -2925,8 +3572,8 @@ export const getGetV1AdminCardsUrl = (params: GetV1AdminCardsParams) => {
 export const getV1AdminCards = async (
   params: GetV1AdminCardsParams,
   options?: Parameters<typeof request>[1],
-): Promise<CardPage> => {
-  return request<CardPage>(getGetV1AdminCardsUrl(params), {
+): Promise<GetV1AdminCards200> => {
+  return request<GetV1AdminCards200>(getGetV1AdminCardsUrl(params), {
     ...options,
     method: "GET",
   });
@@ -2937,14 +3584,14 @@ export const getPostV1AdminCardsUrl = () => {
 };
 
 export const postV1AdminCards = async (
-  cardInput: CardInput,
+  postV1AdminCardsBody: PostV1AdminCardsBody,
   options?: Parameters<typeof request>[1],
-): Promise<AdminCard> => {
-  return request<AdminCard>(getPostV1AdminCardsUrl(), {
+): Promise<PostV1AdminCards201> => {
+  return request<PostV1AdminCards201>(getPostV1AdminCardsUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(cardInput),
+    body: JSON.stringify(postV1AdminCardsBody),
   });
 };
 
@@ -2955,11 +3602,14 @@ export const getGetV1AdminCardsCardIdUrl = (cardId: string) => {
 export const getV1AdminCardsCardId = async (
   cardId: string,
   options?: Parameters<typeof request>[1],
-): Promise<AdminCard> => {
-  return request<AdminCard>(getGetV1AdminCardsCardIdUrl(cardId), {
-    ...options,
-    method: "GET",
-  });
+): Promise<GetV1AdminCardsCardId200> => {
+  return request<GetV1AdminCardsCardId200>(
+    getGetV1AdminCardsCardIdUrl(cardId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
 export const getPutV1AdminCardsCardIdUrl = (cardId: string) => {
@@ -2968,15 +3618,18 @@ export const getPutV1AdminCardsCardIdUrl = (cardId: string) => {
 
 export const putV1AdminCardsCardId = async (
   cardId: string,
-  cardUpdate: CardUpdate,
+  putV1AdminCardsCardIdBody: PutV1AdminCardsCardIdBody,
   options?: Parameters<typeof request>[1],
-): Promise<AdminCard> => {
-  return request<AdminCard>(getPutV1AdminCardsCardIdUrl(cardId), {
-    ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(cardUpdate),
-  });
+): Promise<PutV1AdminCardsCardId200> => {
+  return request<PutV1AdminCardsCardId200>(
+    getPutV1AdminCardsCardIdUrl(cardId),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(putV1AdminCardsCardIdBody),
+    },
+  );
 };
 
 export const getDeleteV1AdminCardsCardIdUrl = (cardId: string) => {
@@ -2986,8 +3639,8 @@ export const getDeleteV1AdminCardsCardIdUrl = (cardId: string) => {
 export const deleteV1AdminCardsCardId = async (
   cardId: string,
   options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getDeleteV1AdminCardsCardIdUrl(cardId), {
+): Promise<void> => {
+  return request<void>(getDeleteV1AdminCardsCardIdUrl(cardId), {
     ...options,
     method: "DELETE",
   });
@@ -3000,11 +3653,14 @@ export const getPutV1AdminCardsCardIdImageUrl = (cardId: string) => {
 export const putV1AdminCardsCardIdImage = async (
   cardId: string,
   options?: Parameters<typeof request>[1],
-): Promise<AdminCard> => {
-  return request<AdminCard>(getPutV1AdminCardsCardIdImageUrl(cardId), {
-    ...options,
-    method: "PUT",
-  });
+): Promise<PutV1AdminCardsCardIdImage200> => {
+  return request<PutV1AdminCardsCardIdImage200>(
+    getPutV1AdminCardsCardIdImageUrl(cardId),
+    {
+      ...options,
+      method: "PUT",
+    },
+  );
 };
 
 export const getDeleteV1AdminCardsCardIdImageUrl = (cardId: string) => {
@@ -3014,197 +3670,12 @@ export const getDeleteV1AdminCardsCardIdImageUrl = (cardId: string) => {
 export const deleteV1AdminCardsCardIdImage = async (
   cardId: string,
   options?: Parameters<typeof request>[1],
-): Promise<AdminCard> => {
-  return request<AdminCard>(getDeleteV1AdminCardsCardIdImageUrl(cardId), {
-    ...options,
-    method: "DELETE",
-  });
-};
-
-export const getGetV1AdminAiSessionsCapabilitiesUrl = () => {
-  return `/v1/admin/ai/sessions/capabilities`;
-};
-
-export const getV1AdminAiSessionsCapabilities = async (
-  options?: Parameters<typeof request>[1],
-): Promise<GetV1AdminAiSessionsCapabilities200> => {
-  return request<GetV1AdminAiSessionsCapabilities200>(
-    getGetV1AdminAiSessionsCapabilitiesUrl(),
+): Promise<DeleteV1AdminCardsCardIdImage200> => {
+  return request<DeleteV1AdminCardsCardIdImage200>(
+    getDeleteV1AdminCardsCardIdImageUrl(cardId),
     {
       ...options,
-      method: "GET",
-    },
-  );
-};
-
-export const getGetV1AdminAiSessionsConfigUrl = () => {
-  return `/v1/admin/ai/sessions/config`;
-};
-
-export const getV1AdminAiSessionsConfig = async (
-  options?: Parameters<typeof request>[1],
-): Promise<AiSavedConfigNullable | null> => {
-  return request<AiSavedConfigNullable | null>(
-    getGetV1AdminAiSessionsConfigUrl(),
-    {
-      ...options,
-      method: "GET",
-    },
-  );
-};
-
-export const getPutV1AdminAiSessionsConfigUrl = () => {
-  return `/v1/admin/ai/sessions/config`;
-};
-
-export const putV1AdminAiSessionsConfig = async (
-  aiSessionInput: AiSessionInput,
-  options?: Parameters<typeof request>[1],
-): Promise<AiSavedConfig> => {
-  return request<AiSavedConfig>(getPutV1AdminAiSessionsConfigUrl(), {
-    ...options,
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(aiSessionInput),
-  });
-};
-
-export const getPostV1AdminAiSessionsSavedUrl = () => {
-  return `/v1/admin/ai/sessions/saved`;
-};
-
-export const postV1AdminAiSessionsSaved = async (
-  options?: Parameters<typeof request>[1],
-): Promise<AiChatState> => {
-  return request<AiChatState>(getPostV1AdminAiSessionsSavedUrl(), {
-    ...options,
-    method: "POST",
-  });
-};
-
-export const getGetV1AdminAiSessionsHistoryUrl = (
-  params?: GetV1AdminAiSessionsHistoryParams,
-) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? "null" : String(value));
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0
-    ? `/v1/admin/ai/sessions/history?${stringifiedParams}`
-    : `/v1/admin/ai/sessions/history`;
-};
-
-export const getV1AdminAiSessionsHistory = async (
-  params?: GetV1AdminAiSessionsHistoryParams,
-  options?: Parameters<typeof request>[1],
-): Promise<AiHistoryPage> => {
-  return request<AiHistoryPage>(getGetV1AdminAiSessionsHistoryUrl(params), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getGetV1AdminAiSessionsHistoryIdUrl = (id: string) => {
-  return `/v1/admin/ai/sessions/history/${id}`;
-};
-
-export const getV1AdminAiSessionsHistoryId = async (
-  id: string,
-  options?: Parameters<typeof request>[1],
-): Promise<AiHistoryDetail> => {
-  return request<AiHistoryDetail>(getGetV1AdminAiSessionsHistoryIdUrl(id), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getPostV1AdminAiSessionsUrl = () => {
-  return `/v1/admin/ai/sessions`;
-};
-
-export const postV1AdminAiSessions = async (
-  aiSessionInput: AiSessionInput,
-  options?: Parameters<typeof request>[1],
-): Promise<AiChatState> => {
-  return request<AiChatState>(getPostV1AdminAiSessionsUrl(), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(aiSessionInput),
-  });
-};
-
-export const getGetV1AdminAiSessionsIdUrl = (id: string) => {
-  return `/v1/admin/ai/sessions/${id}`;
-};
-
-export const getV1AdminAiSessionsId = async (
-  id: string,
-  options?: Parameters<typeof request>[1],
-): Promise<AiChatState> => {
-  return request<AiChatState>(getGetV1AdminAiSessionsIdUrl(id), {
-    ...options,
-    method: "GET",
-  });
-};
-
-export const getDeleteV1AdminAiSessionsIdUrl = (id: string) => {
-  return `/v1/admin/ai/sessions/${id}`;
-};
-
-export const deleteV1AdminAiSessionsId = async (
-  id: string,
-  options?: Parameters<typeof request>[1],
-): Promise<unknown> => {
-  return request<unknown>(getDeleteV1AdminAiSessionsIdUrl(id), {
-    ...options,
-    method: "DELETE",
-  });
-};
-
-export const getPostV1AdminAiSessionsIdMessagesUrl = (id: string) => {
-  return `/v1/admin/ai/sessions/${id}/messages`;
-};
-
-export const postV1AdminAiSessionsIdMessages = async (
-  id: string,
-  aiPromptInput: AiPromptInput,
-  options?: Parameters<typeof request>[1],
-): Promise<AiChatState> => {
-  return request<AiChatState>(getPostV1AdminAiSessionsIdMessagesUrl(id), {
-    ...options,
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(aiPromptInput),
-  });
-};
-
-export const getPostV1AdminAiSessionsIdActionsActionIdUrl = (
-  id: string,
-  actionId: string,
-) => {
-  return `/v1/admin/ai/sessions/${id}/actions/${actionId}`;
-};
-
-export const postV1AdminAiSessionsIdActionsActionId = async (
-  id: string,
-  actionId: string,
-  aiApprovalInput: AiApprovalInput,
-  options?: Parameters<typeof request>[1],
-): Promise<AiChatState> => {
-  return request<AiChatState>(
-    getPostV1AdminAiSessionsIdActionsActionIdUrl(id, actionId),
-    {
-      ...options,
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...options?.headers },
-      body: JSON.stringify(aiApprovalInput),
+      method: "DELETE",
     },
   );
 };

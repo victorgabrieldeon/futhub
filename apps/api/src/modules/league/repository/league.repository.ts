@@ -10,7 +10,7 @@ import type {
   QueueResponse,
 } from '../league.dto.js';
 import { simulateMatch, validateLineup } from '../use-cases/league/league.simulator.js';
-import type { LineupCard } from '../use-cases/league/league.types.js';
+import type { LineupCard, TeamTactic } from '../use-cases/league/league.types.js';
 import {
   type DiscordIdentity,
   LeagueInputError,
@@ -114,7 +114,13 @@ export class DrizzleLeagueRepository implements LeagueRepository {
 
       const homeLineup = await this.loadLineup(database, queued.userId);
       const seed = Math.floor(Math.random() * 2_147_483_647) + 1;
-      const simulated = simulateMatch(homeLineup, ownLineup, seed);
+      const simulated = simulateMatch(
+        homeLineup.cards,
+        ownLineup.cards,
+        seed,
+        homeLineup.tactic,
+        ownLineup.tactic,
+      );
       const [room] = await tx
         .insert(schema.rooms)
         .values({
@@ -149,7 +155,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
         tx,
         schema,
         sql,
-        [...homeLineup, ...ownLineup],
+        [...homeLineup.cards, ...ownLineup.cards],
         simulated.events,
       );
       const homeStanding = await tx.query.userLeagueStandings.findFirst({
@@ -276,7 +282,10 @@ export class DrizzleLeagueRepository implements LeagueRepository {
       .map((event) => ({ ...event }));
   }
 
-  private async loadLineup(database: Database, userId: string): Promise<LineupCard[]> {
+  private async loadLineup(
+    database: Database,
+    userId: string,
+  ): Promise<{ cards: LineupCard[]; tactic: TeamTactic }> {
     const { and, db, eq, schema } = database;
     const formation = await db.query.userFormations.findFirst({
       where: eq(schema.userFormations.userId, userId),
@@ -318,7 +327,10 @@ export class DrizzleLeagueRepository implements LeagueRepository {
       cards,
       slots.map((slot) => slot.position),
     );
-    return cards;
+    return {
+      cards,
+      tactic: (formation as typeof formation & { tactic: TeamTactic }).tactic,
+    };
   }
 
   private async recordCardStatistics(

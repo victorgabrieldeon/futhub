@@ -1,14 +1,12 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-
-import { GenericContainer, type StartedTestContainer, Wait } from 'testcontainers';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import type * as DatabaseModule from '@futhub/database';
+
+import { type E2eContext, startE2eContext } from '../../../../../test/e2e/context.js';
+import { DrizzleResgatarLucroRepository } from '../../../repository/resgatar-lucro.repository.js';
 import type { ResgatarLucroRepository } from '../resgatar-lucro.types.js';
 import { lucroCommand } from '../resgatar-lucro.types.js';
 import { ResgatarLucroUseCase } from '../resgatar-lucro.use-case.js';
-
-const execFileAsync = promisify(execFile);
 const command = {
   name: 'lucro-test',
   cooldownSeconds: 10,
@@ -20,8 +18,8 @@ const identity = {
   avatarUrl: 'https://example.com/avatar.png',
 };
 
-let container: StartedTestContainer | undefined;
-let database: typeof import('@futhub/database') | undefined;
+let context: E2eContext | undefined;
+let database: typeof DatabaseModule | undefined;
 let repository: ResgatarLucroRepository | undefined;
 
 function useCase(subject: ResgatarLucroRepository): ResgatarLucroUseCase {
@@ -29,31 +27,10 @@ function useCase(subject: ResgatarLucroRepository): ResgatarLucroUseCase {
 }
 
 beforeAll(async () => {
-  container = await new GenericContainer('postgres:17-alpine')
-    .withEnvironment({
-      POSTGRES_DB: 'futhub_test',
-      POSTGRES_USER: 'futhub',
-      POSTGRES_PASSWORD: 'futhub',
-    })
-    .withExposedPorts(5432)
-    .withHealthCheck({
-      test: ['CMD-SHELL', 'pg_isready -U futhub -d futhub_test'],
-      interval: 1_000,
-      timeout: 5_000,
-      retries: 10,
-    })
-    .withWaitStrategy(Wait.forHealthCheck())
-    .start();
-  process.env.DATABASE_URL = `postgresql://futhub:futhub@${container.getHost()}:${container.getMappedPort(5432)}/futhub_test`;
-  await execFileAsync('pnpm', ['--filter', '@futhub/database', 'db:migrate'], {
-    cwd: process.cwd(),
-    env: process.env,
-  });
-  const loadedDatabase = await import('@futhub/database');
-  database = loadedDatabase;
-  repository = new (
-    await import('../../../repository/resgatar-lucro.repository.js')
-  ).DrizzleResgatarLucroRepository(async () => loadedDatabase);
+  const initializedContext = await startE2eContext();
+  context = initializedContext;
+  database = initializedContext.database;
+  repository = new DrizzleResgatarLucroRepository(async () => initializedContext.database);
 }, 120_000);
 
 beforeEach(async () => {
@@ -67,8 +44,7 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
-  await database?.pool.end();
-  await container?.stop();
+  await context?.close();
 });
 
 describe('DrizzleResgatarLucroRepository', () => {
@@ -85,7 +61,15 @@ describe('DrizzleResgatarLucroRepository', () => {
     expect(result).toEqual({
       kind: 'success',
       reward: { value: 50, weight: 1, message: 'Primeiro' },
-      balance: 50,
+      report: {
+        ticketRevenue: 200,
+        commercialRevenue: 50,
+        sponsorRevenue: 0,
+        maintenance: 50,
+        payroll: 0,
+        net: 200,
+      },
+      balance: 200,
       progression: { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] },
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
       embed: lucroCommand.embed,
@@ -113,7 +97,15 @@ describe('DrizzleResgatarLucroRepository', () => {
     ).resolves.toEqual({
       kind: 'success',
       reward: { value: 50, weight: 1, message: 'Primeiro' },
-      balance: 75,
+      report: {
+        ticketRevenue: 200,
+        commercialRevenue: 50,
+        sponsorRevenue: 0,
+        maintenance: 50,
+        payroll: 0,
+        net: 200,
+      },
+      balance: 225,
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
       progression: {
         gainedXp: 10,
@@ -150,7 +142,7 @@ describe('DrizzleResgatarLucroRepository', () => {
 
     const result = await useCase(repository).execute(identity, command, now, 0);
 
-    expect(result).toMatchObject({ kind: 'success', balance: 50 });
+    expect(result).toMatchObject({ kind: 'success', balance: 200 });
   });
 
   it('uses persisted cooldown configuration after defaults exist', async () => {
@@ -181,8 +173,8 @@ describe('DrizzleResgatarLucroRepository', () => {
     ]);
 
     expect(results).toMatchObject([
-      { kind: 'success', balance: 50 },
-      { kind: 'success', balance: 50 },
+      { kind: 'success', balance: 200 },
+      { kind: 'success', balance: 200 },
     ]);
   });
 });

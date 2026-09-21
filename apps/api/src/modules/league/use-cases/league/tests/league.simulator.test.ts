@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { LineupCard } from '../league.types.js';
 import { simulateMatch, validateLineup } from '../league.simulator.js';
+import type { LineupCard } from '../league.types.js';
 
 const positions = ['GOL', 'LD', 'LE', 'ZAG', 'ZAG', 'VOL', 'MC', 'MA', 'PD', 'PE', 'CA'];
 
@@ -48,6 +48,17 @@ describe('league simulator', () => {
       if (event.playerUserCardId) expect(playerIds).toContain(event.playerUserCardId);
       if (event.assistUserCardId) expect(playerIds).toContain(event.assistUserCardId);
     }
+  });
+
+  it('applies offensive and defensive tactical modifiers', () => {
+    const home = lineup('home', 80);
+    const away = lineup('away', 80);
+
+    const attacking = simulateMatch(home, away, 2, 'offensive', 'defensive');
+    const defending = simulateMatch(home, away, 2, 'defensive', 'offensive');
+
+    expect([attacking.homeGoals, attacking.awayGoals]).toEqual([4, 2]);
+    expect([defending.homeGoals, defending.awayGoals]).toEqual([1, 5]);
   });
 
   it('rejects incomplete and position-incompatible lineups', () => {

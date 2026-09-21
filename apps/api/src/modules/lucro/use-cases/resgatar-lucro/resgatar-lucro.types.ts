@@ -1,3 +1,4 @@
+import type { ClubResponse } from '../../../club/club.dto.js';
 import type { ProgressionSummary } from '../../../progression/progression.js';
 
 export type Reward = Readonly<{ value: number; weight: number; message: string }>;
@@ -22,10 +23,20 @@ export type DiscordIdentity = Readonly<{
   avatarUrl: string | null;
 }>;
 
+export type ProfitReport = Readonly<{
+  ticketRevenue: number;
+  commercialRevenue: number;
+  sponsorRevenue: number;
+  maintenance: number;
+  payroll: number;
+  net: number;
+}>;
+
 export type CommandResult =
   | Readonly<{
       kind: 'success';
       reward: Reward;
+      report: ProfitReport;
       balance: number;
       availableAt: Date;
       progression: ProgressionSummary;
@@ -35,6 +46,7 @@ export type CommandResult =
 
 export type CommandTransaction = Readonly<{
   getAvailableAt(): Promise<Date | null>;
+  getClub(): Promise<ClubResponse>;
   credit(value: number): Promise<number>;
   grantProgression(): Promise<ProgressionSummary>;
   advanceMission(): Promise<void>;
@@ -60,7 +72,7 @@ export abstract class RandomSource {
 
 export const lucroCommand = {
   name: 'lucro',
-  cooldownSeconds: 600,
+  cooldownSeconds: 86_400,
   embed: {
     title: '/lucro',
     description:

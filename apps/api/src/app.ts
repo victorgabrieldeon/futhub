@@ -1,16 +1,17 @@
 import { readFile } from 'node:fs/promises';
 
 import multipart from '@fastify/multipart';
-import type { NestApplicationOptions } from '@nestjs/common';
+import { type NestApplicationOptions, StandardSchemaValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import type { OpenAPIObject } from '@nestjs/swagger';
 import { renderApiReference } from '@scalar/client-side-rendering';
 
 import { AppModule } from './app.module.js';
+import { workspacePath } from './workspace-path.js';
 
 export async function readOpenApiDocument(): Promise<OpenAPIObject> {
-  return JSON.parse(await readFile(new URL('../openapi.json', import.meta.url), 'utf8'));
+  return JSON.parse(await readFile(workspacePath('apps/api/openapi.json'), 'utf8'));
 }
 
 export async function configureApiReference(app: NestFastifyApplication): Promise<void> {
@@ -36,6 +37,7 @@ export async function buildApp(options?: NestApplicationOptions): Promise<NestFa
     new FastifyAdapter(),
     options,
   );
+  app.useGlobalPipes(new StandardSchemaValidationPipe());
   await app.register(multipart as never, { limits: { files: 1, fileSize: 10 * 1024 * 1024 } });
   await configureApiReference(app);
   await app.init();

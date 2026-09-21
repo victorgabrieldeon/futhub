@@ -17,6 +17,25 @@ const rewards = [
 const command: CommandConfig = { name: 'ganho', cooldownSeconds: 10, rewards };
 const identity = { id: '1', name: 'Nome', avatarUrl: 'https://example.com/avatar.png' };
 const progression = { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] };
+const club = {
+  balance: 0,
+  stadium: {
+    level: 1,
+    maxLevel: 5,
+    nextUpgradeCost: 1000,
+    ticketRevenue: 200,
+    maintenance: 50,
+  },
+  sponsor: {
+    name: 'Comércio Local',
+    weeklyMatches: 0,
+    weeklyGoal: 3,
+    payout: 300,
+    completed: false,
+  },
+  payroll: 0,
+  projectedNet: 150,
+};
 
 function memoryRepository(): ResgatarLucroRepository {
   let balance = 0;
@@ -25,6 +44,7 @@ function memoryRepository(): ResgatarLucroRepository {
     run: async (_command, _identity, _now, operation) => {
       const transaction: CommandTransaction = {
         getAvailableAt: async () => availableAt,
+        getClub: async () => club,
         credit: async (value) => {
           balance += value;
           return balance;
@@ -76,7 +96,15 @@ describe('ResgatarLucroUseCase.execute', () => {
     expect(result).toEqual({
       kind: 'success',
       reward: { value: 50, weight: 1, message: 'Primeiro' },
-      balance: 50,
+      report: {
+        ticketRevenue: 200,
+        commercialRevenue: 50,
+        sponsorRevenue: 0,
+        maintenance: 50,
+        payroll: 0,
+        net: 200,
+      },
+      balance: 200,
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
       progression,
       embed: lucroCommand.embed,
@@ -116,7 +144,15 @@ describe('ResgatarLucroUseCase.execute', () => {
     expect(result).toEqual({
       kind: 'success',
       reward: { value: 100, weight: 1, message: 'Segundo' },
-      balance: 150,
+      report: {
+        ticketRevenue: 200,
+        commercialRevenue: 100,
+        sponsorRevenue: 0,
+        maintenance: 50,
+        payroll: 0,
+        net: 250,
+      },
+      balance: 450,
       availableAt: new Date('2026-08-15T12:00:20.000Z'),
       progression,
       embed: lucroCommand.embed,

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { configureApiClient, executeLucro, request } from './index.js';
+import { configureApiClient, executeLucro, listCardMarket, request } from './index.js';
 
 test('executeLucro sends authenticated request to configured API', async () => {
   let requestUrl: string | undefined;
@@ -33,6 +33,28 @@ test('executeLucro sends authenticated request to configured API', async () => {
   });
 });
 
+test('listCardMarket serializes repeated position filters', async () => {
+  let requestUrl: URL | undefined;
+  configureApiClient({
+    baseUrl: 'https://api.example.com',
+    token: 'internal-token',
+    fetch: async (input) => {
+      requestUrl = new URL(input.toString());
+      return Response.json({ items: [], total: 0, page: 1, pageSize: 10, totalPages: 0 });
+    },
+  });
+
+  await listCardMarket({
+    page: 1,
+    positions: ['MA', 'CA'],
+    minOverall: 60,
+    maxOverall: 100,
+    sort: 'recent',
+  });
+
+  assert.deepEqual(requestUrl?.searchParams.getAll('positions'), ['MA', 'CA']);
+});
+
 test('request preserves API validation details', async () => {
   configureApiClient({
     baseUrl: 'https://api.example.com',
@@ -51,4 +73,26 @@ test('request preserves API validation details', async () => {
     message:
       'FutHub API request failed with status 400: Request body data is not following the promised type. ($input.slug)',
   });
+});
+
+test('request accepts an empty successful response', async () => {
+  configureApiClient({
+    baseUrl: 'https://api.example.com',
+    token: 'internal-token',
+    fetch: async () => new Response(null, { status: 204 }),
+  });
+
+  assert.equal(await request('/v1/team/tactic', { method: 'PUT' }), undefined);
+});
+
+test('request keeps configuration after module reload', async () => {
+  configureApiClient({
+    baseUrl: 'https://api.example.com',
+    token: 'internal-token',
+    fetch: async () => Response.json({ ok: true }),
+  });
+
+  const reloaded = await import(`./request.js?reload=${Date.now()}`);
+
+  assert.deepEqual(await reloaded.request('/v1/health', { method: 'GET' }), { ok: true });
 });

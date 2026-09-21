@@ -1,12 +1,13 @@
-import { TypedBody, TypedRoute } from '@nestia/core';
-import { Controller, Inject, UseGuards } from '@nestjs/common';
+import { TypedRoute } from '@nestia/core';
+import { Body, Controller, Inject, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { AdminAuthGuard } from '../auth/admin-auth.guard.js';
-import type {
-  LucroConfigDto,
-  LucroConfigInputDto,
-  LucroEmbedSchemaDto,
+import {
+  type LucroConfigDto,
+  type LucroConfigInputDto,
+  LucroConfigInputDtoSchema,
+  type LucroEmbedSchemaDto,
 } from './admin-lucro.dto.js';
 import { AdminLucroService } from './admin-lucro.service.js';
 
@@ -27,7 +28,9 @@ export class AdminLucroController {
   }
 
   @TypedRoute.Put()
-  update(@TypedBody() input: LucroConfigInputDto): Promise<LucroConfigDto> {
+  update(
+    @Body({ schema: LucroConfigInputDtoSchema }) input: LucroConfigInputDto,
+  ): Promise<LucroConfigDto> {
     return this.lucro.update(input);
   }
 }

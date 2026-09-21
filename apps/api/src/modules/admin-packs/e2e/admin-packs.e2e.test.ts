@@ -21,23 +21,6 @@ const input = {
   price: 20,
   canBuy: true,
   limitPerUser: 5,
-  presentation: {
-    schemaVersion: 1,
-    color: '#123456',
-    accentColor: '#f2bd54',
-    textColor: '#ffffff',
-    effect: 'foil',
-    texture: 'aura',
-    textureOpacity: 42,
-    tintOpacity: 16,
-    headline: '4 CARTAS',
-    headlineSize: 58,
-    headlineX: 300,
-    headlineY: 320,
-    kicker: 'EDIÇÃO PADRÃO',
-    kickerX: 300,
-    kickerY: 230,
-  },
   config: {
     name: 'Admin filter',
     minOverall: 72,
@@ -63,32 +46,20 @@ test('creates and updates pack with config filters over HTTP', async () => {
   expect(created.statusCode).toBe(201);
   const pack = created.json();
   expect(pack.config.onlyPositions).toEqual(['CA']);
-  expect(pack.presentation).toMatchObject({ effect: 'foil', headline: '4 CARTAS' });
 
   const updated = await context.app.inject({
     method: 'PUT',
     url: `/v1/admin/packs/${pack.id}`,
     headers: { authorization: `Bearer ${adminToken}` },
-    payload: {
-      ...input,
-      name: 'Updated pack',
-      presentation: { ...input.presentation, effect: 'chrome', headline: 'ATUALIZADO' },
-      config: { ...input.config, onlyPositions: ['PE'] },
-    },
+    payload: { ...input, name: 'Updated pack', config: { ...input.config, onlyPositions: ['PE'] } },
   });
   expect(updated.statusCode).toBe(200);
   expect(updated.json().config.onlyPositions).toEqual(['PE']);
-  expect(updated.json().presentation).toMatchObject({ effect: 'chrome', headline: 'ATUALIZADO' });
   const [persisted] = await context.database.db
     .select()
     .from(context.database.schema.packs)
     .where(context.database.eq(context.database.schema.packs.id, pack.id));
   expect(persisted?.name).toBe('Updated pack');
-  const [presentation] = await context.database.db
-    .select()
-    .from(context.database.schema.packPresentations)
-    .where(context.database.eq(context.database.schema.packPresentations.packId, pack.id));
-  expect(presentation).toMatchObject({ effect: 'chrome', headline: 'ATUALIZADO' });
 });
 
 test('rejects a filter category configured to include and block over HTTP', async () => {

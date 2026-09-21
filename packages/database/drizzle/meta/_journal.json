@@ -134,6 +134,34 @@
       "when": 1788795851360,
       "tag": "0018_bot_response_templates",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789592364781,
+      "tag": "0020_chief_titanium_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789593865721,
+      "tag": "0021_default_formations",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1789598089109,
+      "tag": "0022_default_card_market",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1789652540897,
+      "tag": "0023_empty_havok",
+      "breakpoints": true
     }
   ]
 }

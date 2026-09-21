@@ -4,14 +4,11 @@ import ExcelJS from 'exceljs';
 import { afterAll, beforeAll, expect, test, vi } from 'vitest';
 
 import { type E2eContext, adminToken, startE2eContext } from '../../../test/e2e/context.js';
-import {
-  createAdminCardFixture,
-  createFileFixture,
-  createPackFixture,
-} from '../../../test/e2e/entities.js';
-import { FilesService } from '../../files/files.service.js';
+import { createPackFixture } from '../../../test/e2e/entities.js';
+import type { FilesService } from '../../files/files.service.js';
 
 let context: E2eContext;
+let filesServiceClass: typeof FilesService;
 
 const importHeaders: Record<string, string> = {
   slug: 'Código único',
@@ -34,17 +31,13 @@ const importHeaders: Record<string, string> = {
 };
 
 beforeAll(async () => {
-  vi.stubEnv('MINIO_PUBLIC_URL', 'https://images.test');
-  vi.stubEnv('MINIO_BUCKET', 'e2e');
   context = await startE2eContext();
-}, 30_000);
+  // Static loading races the isolated Vite bootstrap for this app module.
+  ({ FilesService: filesServiceClass } = await import('../../files/files.service.js'));
+}, 300_000);
 
 afterAll(async () => {
-  try {
-    await context?.close();
-  } finally {
-    vi.unstubAllEnvs();
-  }
+  await context?.close();
 });
 
 test('suggests matching FootyLogos badges', async () => {
@@ -512,19 +505,41 @@ test('imports cards atomically and updates them by slug', async () => {
   expect(cards[0]).toMatchObject({ name: 'Updated', overall: 89 });
   const storedCard = cards[0];
   if (!storedCard) throw new Error('Imported card was not persisted.');
-  const files = await Promise.all(
-    [
-      `cards/${storedCard.id}/image.png`,
-      `collections/${source.collectionId}/image.png`,
-      `teams/${source.teamId}/logo.png`,
-    ].map((objectKey) => createFileFixture(context.database, objectKey)),
-  );
+  const files = await context.database.db
+    .insert(context.database.schema.files)
+    .values([
+      {
+        objectKey: `cards/${storedCard.id}/image.png`,
+        contentType: 'image/png',
+        sizeBytes: 1,
+        source: 'upload',
+        metadata: {},
+      },
+      {
+        objectKey: `collections/${source.collectionId}/image.png`,
+        contentType: 'image/png',
+        sizeBytes: 1,
+        source: 'upload',
+        metadata: {},
+      },
+      {
+        objectKey: `teams/${source.teamId}/logo.png`,
+        contentType: 'image/png',
+        sizeBytes: 1,
+        source: 'upload',
+        metadata: {},
+      },
+    ])
+    .returning({
+      id: context.database.schema.files.id,
+      objectKey: context.database.schema.files.objectKey,
+    });
   const cardImage = files.find((file) => file.objectKey.startsWith('cards/'));
   const collectionImage = files.find((file) => file.objectKey.startsWith('collections/'));
   const teamImage = files.find((file) => file.objectKey.startsWith('teams/'));
   if (!cardImage || !collectionImage || !teamImage)
     throw new Error('Failed to create image fixtures.');
-  const urls = vi.spyOn(FilesService.prototype, 'urls').mockResolvedValue(
+  const urls = vi.spyOn(filesServiceClass.prototype, 'urls').mockResolvedValue(
     new Map([
       [cardImage.id, 'https://images.test/player.png'],
       [collectionImage.id, 'https://images.test/collection.png'],
@@ -622,39 +637,59 @@ test('filters and sorts cards', async () => {
     [
       { name: `Filter high ${suffix}`, overall: 99 },
       { name: `Filter low ${suffix}`, overall: 80 },
-    ].map((card) =>
-      createAdminCardFixture(context.database, {
-        slug: `${card.overall}-${suffix}`,
-        name: card.name,
-        collectionId: source.collectionId,
-        teamId: source.teamId,
-        overall: card.overall,
-      }),
-    ),
+    ].map(async (card) => {
+      const [statistics] = await context.database.db
+        .insert(context.database.schema.cardStats)
+        .values({ passing: 80, control: 80, marking: 80, pace: 80, dribbling: 80, finishing: 80 })
+        .returning({ id: context.database.schema.cardStats.id });
+      if (!statistics) throw new Error('Missing card statistics.');
+      const [created] = await context.database.db
+        .insert(context.database.schema.cards)
+        .values({
+          slug: `${card.overall}-${suffix}`,
+          name: card.name,
+          collectionId: source.collectionId,
+          teamId: source.teamId,
+          position: 'CA',
+          statsId: statistics.id,
+          imageUrl: 'https://images.test/player.png',
+          defense: 80,
+          attack: 80,
+          creation: 80,
+          overall: card.overall,
+        })
+        .returning({ id: context.database.schema.cards.id });
+      if (!created) throw new Error('Missing test card.');
+      return created;
+    }),
   );
   expect(cards).toHaveLength(2);
 
-  const response = await context.app.inject({
-    method: 'GET',
-    url: `/v1/admin/cards?page=1&query=${suffix}&teamId=${source.teamId}&position=CA&sort=overall`,
-    headers: { authorization: `Bearer ${adminToken}` },
+  const defaultImage = vi.spyOn(filesServiceClass.prototype, 'defaultCardImage').mockResolvedValue({
+    id: 'default-card-image',
+    url: 'https://images.test/default.webp',
+    contentType: 'image/webp',
+    sizeBytes: 1,
+    width: null,
+    height: null,
   });
-  expect(response.statusCode, response.body).toBe(200);
-  expect(response.json()).toMatchObject({
-    total: 2,
-    items: [
-      {
-        name: `Filter high ${suffix}`,
-        overall: 99,
-        imageUrl: `https://images.test/e2e/cards/99-${suffix}/image.png`,
-      },
-      {
-        name: `Filter low ${suffix}`,
-        overall: 80,
-        imageUrl: `https://images.test/e2e/cards/80-${suffix}/image.png`,
-      },
-    ],
-  });
+  try {
+    const response = await context.app.inject({
+      method: 'GET',
+      url: `/v1/admin/cards?page=1&query=${suffix}&teamId=${source.teamId}&position=CA&sort=overall`,
+      headers: { authorization: `Bearer ${adminToken}` },
+    });
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json()).toMatchObject({
+      total: 2,
+      items: [
+        { name: `Filter high ${suffix}`, overall: 99 },
+        { name: `Filter low ${suffix}`, overall: 80 },
+      ],
+    });
+  } finally {
+    defaultImage.mockRestore();
+  }
 });
 
 test('rejects workbook with errors without persisting valid rows', async () => {

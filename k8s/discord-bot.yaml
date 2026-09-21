@@ -38,6 +38,8 @@ spec:
           env:
             - name: API_BASE_URL
               value: http://api:3000
+            - name: MINIO_INTERNAL_URL
+              value: http://minio:9000
           volumeMounts:
             - name: dotenv
               mountPath: /app/.env

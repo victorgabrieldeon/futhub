@@ -1,46 +1,23 @@
 node_modules/
 .turbo/
-.devspace/
 dist/
 coverage/
+.vitest/
 .env
 .env.*
 !.env.example
-*.tfvars
-!*.tfvars.example
-.terraform/
 *.tsbuildinfo
+
+# Terraform local state and secrets
+infra/dokploy/terraform.tfvars
+infra/dokploy/terraform.tfstate*
+infra/dokploy/tfplan*
 apps/*/.wrangler/
 .next/
 .openclaude/settings.local.json
 .openclaude/worktrees/
 .herdr-plus/
-
-# Local agent, editor, and design artifacts
-/.omo/
-/.stitch/
-/.superpowers/
-/.vscode/
-/artifacts/
-/nike/
-
-# Local media exports and 3D models
-*.png
-*.jpg
-*.jpeg
-*.webp
-*.gif
-*.mp4
-*.webm
-*.mp3
-*.wav
-*.glb
-/apps/admin/public/models/
-
-# Local database credentials and Terraform state
-/pgadmin/pgpass
-*.tfstate
-*.tfstate.*
-*.tfplan
-tfplan
-crash.log
+.omo/
+.devspace/
+.stitch/
+.superpowers/

@@ -2,6 +2,7 @@ import type {
   LeagueStatusResponse,
   MatchResponse,
   OpenPackResponse,
+  PackCatalogItem,
   PurchaseCardResponse,
   PurchasePackResponse,
   QueueMatchedResponse,
@@ -52,6 +53,17 @@ function discordTimestamp(value: string): string {
 
 export function formatPackPurchase(result: PurchasePackResponse): string {
   return `Pack comprado. Quantidade: ${result.quantity}. Saldo: ${result.balance}.`;
+}
+
+export function formatPackStore(packs: readonly PackCatalogItem[]): string {
+  if (!packs.length) return '## Loja\n### Packs\nNenhum pack disponível agora.';
+  const options = packs
+    .map(
+      ({ cardsAmount, emoji, id, limitPerUser, name, price }) =>
+        `${emoji} **${name}** — ${cardsAmount} carta(s), ${price} moedas, limite ${limitPerUser}.\nID: \`${id}\``,
+    )
+    .join('\n\n');
+  return truncate(`## Loja\n### Packs\n${options}\n\nComprar: \`/loja aba:packs pack_id:<ID>\`.`);
 }
 
 export function formatPackOpen(result: OpenPackResponse): string {

@@ -1,48 +1,57 @@
-import type { tags } from 'typia';
+import { z } from 'zod';
 
-import type { ProgressionDto } from '../progression/progression.dto.js';
+import { ProgressionDtoSchema } from '../progression/progression.dto.js';
 
-export interface LucroEmbedDto {
-  title: string;
-  description: string;
-  color: string;
-  footer: string;
-}
+export const LucroEmbedDtoSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  color: z.string(),
+  footer: z.string(),
+});
+export type LucroEmbedDto = z.infer<typeof LucroEmbedDtoSchema>;
 
-export interface DiscordIdentityDto {
-  id: string & tags.MinLength<1> & tags.MaxLength<80>;
-  name: string & tags.MinLength<1> & tags.MaxLength<80>;
-  avatarUrl: (string & tags.Format<'url'> & tags.MaxLength<2048>) | null;
-}
+export const DiscordIdentityDtoSchema = z.object({
+  id: z.string().min(1).max(80),
+  name: z.string().min(1).max(80),
+  avatarUrl: z.url().max(2048).nullable(),
+});
+export type DiscordIdentityDto = z.infer<typeof DiscordIdentityDtoSchema>;
 
-export type LucroResponse = LucroSuccessResponse | LucroCooldownResponse;
+export const LucroRewardDtoSchema = z.object({
+  value: z.number(),
+  weight: z.number(),
+  message: z.string(),
+});
+export type LucroRewardDto = z.infer<typeof LucroRewardDtoSchema>;
 
-export interface LucroSuccessResponse {
-  /**
-   * Resultado com recompensa concedida.
-   *
-   * @title Tipo do resultado
-   */
-  kind: 'success';
-  reward: LucroRewardDto;
-  balance: number;
-  availableAt: string & tags.Format<'date-time'>;
-  progression: ProgressionDto;
-  embed: LucroEmbedDto;
-}
+export const LucroReportDtoSchema = z.object({
+  ticketRevenue: z.number().int(),
+  commercialRevenue: z.number().int(),
+  sponsorRevenue: z.number().int(),
+  maintenance: z.number().int(),
+  payroll: z.number().int(),
+  net: z.number().int(),
+});
 
-export interface LucroRewardDto {
-  readonly value: number;
-  readonly weight: number;
-  readonly message: string;
-}
+export const LucroSuccessResponseSchema = z.object({
+  kind: z.enum(['success']),
+  reward: LucroRewardDtoSchema,
+  report: LucroReportDtoSchema,
+  balance: z.number(),
+  availableAt: z.iso.datetime(),
+  progression: ProgressionDtoSchema,
+  embed: LucroEmbedDtoSchema,
+});
+export type LucroSuccessResponse = z.infer<typeof LucroSuccessResponseSchema>;
 
-export interface LucroCooldownResponse {
-  /**
-   * Resultado com cooldown ainda ativo.
-   *
-   * @title Tipo do resultado
-   */
-  kind: 'cooldown';
-  availableAt: string & tags.Format<'date-time'>;
-}
+export const LucroCooldownResponseSchema = z.object({
+  kind: z.enum(['cooldown']),
+  availableAt: z.iso.datetime(),
+});
+export type LucroCooldownResponse = z.infer<typeof LucroCooldownResponseSchema>;
+
+export const LucroResponseSchema = z.discriminatedUnion('kind', [
+  LucroSuccessResponseSchema,
+  LucroCooldownResponseSchema,
+]);
+export type LucroResponse = z.infer<typeof LucroResponseSchema>;

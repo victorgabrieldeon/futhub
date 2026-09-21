@@ -1,19 +1,31 @@
-import { SwaggerCustomizer, TypedBody, TypedParam, TypedQuery, TypedRoute } from '@nestia/core';
-import { Controller, HttpCode, Inject, UseGuards } from '@nestjs/common';
+import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Inject,
+  Param,
+  ParseUUIDPipe,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { tags } from 'typia';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
-import { PackShopService } from './pack-shop.service.js';
-import type {
-  OpenPackResponse,
-  PackActionRequest,
-  PackShopDto,
-  PackShopItemDto,
-  PackShopQueryDto,
-  PurchasePackResponse,
+import {
+  type OpenPackResponse,
+  type PackActionRequest,
+  PackActionRequestSchema,
+  type PackCatalogItem,
+  type PackShopDto,
+  type PackShopItemDto,
+  type PackShopQuery,
+  PackShopQuerySchema,
+  type PurchasePackResponse,
 } from './packs.dto.js';
+import { PackShopService } from './pack-shop.service.js';
 import { OpenPackUseCase } from './use-cases/open-pack/open-pack.use-case.js';
+import { PackCatalogRepository } from './use-cases/pack.types.js';
 import { PurchasePackUseCase } from './use-cases/purchase-pack/purchase-pack.use-case.js';
 
 @ApiTags('Packs')
@@ -21,20 +33,27 @@ import { PurchasePackUseCase } from './use-cases/purchase-pack/purchase-pack.use
 @UseGuards(InternalAuthGuard)
 export class PacksController {
   constructor(
+    @Inject(PackCatalogRepository) private readonly packs: PackCatalogRepository,
     @Inject(PurchasePackUseCase) private readonly purchase: PurchasePackUseCase,
     @Inject(OpenPackUseCase) private readonly open: OpenPackUseCase,
     @Inject(PackShopService) private readonly shop: PackShopService,
   ) {}
 
+  @TypedRoute.Get()
+  @SwaggerCustomizer(({ route }) => {
+    route.operationId = 'listPackCatalog';
+    route.security = [{ bearer: [] }];
+  })
+  listPacks(): Promise<readonly PackCatalogItem[]> {
+    return this.packs.listAvailable();
+  }
+
   @TypedRoute.Get('shop')
-  @SwaggerCustomizer(({ route, swagger }) => {
+  @SwaggerCustomizer(({ route }) => {
     route.operationId = 'getPackShop';
     route.security = [{ bearer: [] }];
-    // Nestia emits an empty required array; OpenAPI 3.0 requires its omission.
-    const query = swagger.components.schemas?.PackShopQueryDto;
-    if (query && 'required' in query && query.required?.length === 0) query.required = undefined;
   })
-  getPackShop(@TypedQuery() query: PackShopQueryDto): Promise<PackShopDto> {
+  getPackShop(@Query({ schema: PackShopQuerySchema }) query: PackShopQuery): Promise<PackShopDto> {
     return this.shop.list(query.page ?? 1);
   }
 
@@ -43,9 +62,7 @@ export class PacksController {
     route.operationId = 'inspectPack';
     route.security = [{ bearer: [] }];
   })
-  inspectPack(
-    @TypedParam('packId') packId: string & tags.Format<'uuid'>,
-  ): Promise<PackShopItemDto> {
+  inspectPack(@Param('packId', new ParseUUIDPipe()) packId: string): Promise<PackShopItemDto> {
     return this.shop.inspect(packId);
   }
 
@@ -56,8 +73,8 @@ export class PacksController {
     route.security = [{ bearer: [] }];
   })
   purchasePack(
-    @TypedParam('packId') packId: string & tags.Format<'uuid'>,
-    @TypedBody() request: PackActionRequest,
+    @Param('packId', new ParseUUIDPipe()) packId: string,
+    @Body({ schema: PackActionRequestSchema }) request: PackActionRequest,
   ): Promise<PurchasePackResponse> {
     return this.purchase.execute(request.identity, packId);
   }
@@ -69,8 +86,8 @@ export class PacksController {
     route.security = [{ bearer: [] }];
   })
   async openPack(
-    @TypedParam('packId') packId: string & tags.Format<'uuid'>,
-    @TypedBody() request: PackActionRequest,
+    @Param('packId', new ParseUUIDPipe()) packId: string,
+    @Body({ schema: PackActionRequestSchema }) request: PackActionRequest,
   ): Promise<OpenPackResponse> {
     const result = await this.open.execute(request.identity, packId);
     return { cards: [...result.cards], progression: result.progression };

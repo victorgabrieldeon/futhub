@@ -72,9 +72,14 @@ export async function packCanvasBlob(
   format: 'png' | 'webp' = 'png',
   multiplier = 1,
 ): Promise<Blob> {
-  const response = await fetch(
-    canvas.toDataURL({ enableRetinaScaling: false, format, multiplier, quality: 0.94 }),
-  );
+  const dataUrl = canvas.toDataURL({
+    enableRetinaScaling: false,
+    format,
+    multiplier,
+    quality: 0.94,
+  });
+  if (!dataUrl.startsWith('data:image/')) throw new Error('Canvas export returned an invalid URL.');
+  const response = await fetch(dataUrl);
   return response.blob();
 }
 

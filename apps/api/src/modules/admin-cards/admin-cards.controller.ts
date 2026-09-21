@@ -1,7 +1,8 @@
 import '@fastify/multipart';
-import { TypedBody, TypedQuery, TypedRoute } from '@nestia/core';
+import { TypedRoute } from '@nestia/core';
 import {
   BadRequestException,
+  Body,
   Controller,
   Delete,
   Get,
@@ -10,6 +11,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -19,31 +21,42 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import { AdminAuthGuard } from '../auth/admin-auth.guard.js';
 import { imageFile } from '../files/files.service.js';
-import type {
-  AdminCard,
-  AdminCollection,
-  AdminTeam,
-  CardCatalog,
-  CardInput,
-  CardListQuery,
-  CardPage,
-  CardTemplate,
-  CardUpdate,
-  CollectionArtworkSuggestion,
-  CollectionArtworkSuggestionsQuery,
-  CollectionInput,
-  CollectionListQuery,
-  CollectionPage,
-  ImportPreview,
-  PlayerPhotoSuggestion,
-  PlayerPhotoSuggestionsQuery,
-  TeamInput,
-  TeamListQuery,
-  TeamLogoDetails,
-  TeamLogoDetailsQuery,
-  TeamLogoSuggestion,
-  TeamLogoSuggestionsQuery,
-  TeamPage,
+import {
+  type AdminCard,
+  type AdminCollection,
+  type AdminTeam,
+  type CardCatalog,
+  type CardInput,
+  CardInputSchema,
+  type CardListQuery,
+  CardListQuerySchema,
+  type CardPage,
+  type CardTemplate,
+  type CardUpdate,
+  CardUpdateSchema,
+  type CollectionArtworkSuggestion,
+  type CollectionArtworkSuggestionsQuery,
+  CollectionArtworkSuggestionsQuerySchema,
+  type CollectionInput,
+  CollectionInputSchema,
+  type CollectionListQuery,
+  CollectionListQuerySchema,
+  type CollectionPage,
+  type ImportPreview,
+  type PlayerPhotoSuggestion,
+  type PlayerPhotoSuggestionsQuery,
+  PlayerPhotoSuggestionsQuerySchema,
+  type TeamInput,
+  TeamInputSchema,
+  type TeamListQuery,
+  TeamListQuerySchema,
+  type TeamLogoDetails,
+  type TeamLogoDetailsQuery,
+  TeamLogoDetailsQuerySchema,
+  type TeamLogoSuggestion,
+  type TeamLogoSuggestionsQuery,
+  TeamLogoSuggestionsQuerySchema,
+  type TeamPage,
 } from './admin-cards.dto.js';
 import { AdminCardsService } from './admin-cards.service.js';
 
@@ -60,13 +73,15 @@ export class AdminCardsController {
 
   @TypedRoute.Get('team-logo-suggestions')
   teamLogoSuggestions(
-    @TypedQuery() query: TeamLogoSuggestionsQuery,
+    @Query({ schema: TeamLogoSuggestionsQuerySchema }) query: TeamLogoSuggestionsQuery,
   ): Promise<TeamLogoSuggestion[]> {
     return this.cards.teamLogoSuggestions(query.q);
   }
 
   @TypedRoute.Get('team-logo-details')
-  teamLogoDetails(@TypedQuery() query: TeamLogoDetailsQuery): Promise<TeamLogoDetails> {
+  teamLogoDetails(
+    @Query({ schema: TeamLogoDetailsQuerySchema }) query: TeamLogoDetailsQuery,
+  ): Promise<TeamLogoDetails> {
     return this.cards.teamLogoDetails(query.slug);
   }
 
@@ -84,14 +99,15 @@ export class AdminCardsController {
   }
   @TypedRoute.Get('collection-artwork-suggestions')
   collectionArtworkSuggestions(
-    @TypedQuery() query: CollectionArtworkSuggestionsQuery,
+    @Query({ schema: CollectionArtworkSuggestionsQuerySchema })
+    query: CollectionArtworkSuggestionsQuery,
   ): Promise<CollectionArtworkSuggestion[]> {
     return this.cards.collectionArtworkSuggestions(query.q);
   }
 
   @TypedRoute.Get('player-photo-suggestions')
   playerPhotoSuggestions(
-    @TypedQuery() query: PlayerPhotoSuggestionsQuery,
+    @Query({ schema: PlayerPhotoSuggestionsQuerySchema }) query: PlayerPhotoSuggestionsQuery,
   ): Promise<PlayerPhotoSuggestion[]> {
     return this.cards.playerPhotoSuggestions(query.q);
   }
@@ -122,19 +138,23 @@ export class AdminCardsController {
   }
 
   @TypedRoute.Get('collections')
-  collections(@TypedQuery() query: CollectionListQuery): Promise<CollectionPage> {
+  collections(
+    @Query({ schema: CollectionListQuerySchema }) query: CollectionListQuery,
+  ): Promise<CollectionPage> {
     return this.cards.collections(query);
   }
 
   @TypedRoute.Post('collections')
-  createCollection(@TypedBody() input: CollectionInput): Promise<AdminCollection> {
+  createCollection(
+    @Body({ schema: CollectionInputSchema }) input: CollectionInput,
+  ): Promise<AdminCollection> {
     return this.cards.createCollection(input);
   }
 
   @TypedRoute.Put('collections/:collectionId')
   updateCollection(
     @Param('collectionId') collectionId: string,
-    @TypedBody() input: CollectionInput,
+    @Body({ schema: CollectionInputSchema }) input: CollectionInput,
   ): Promise<AdminCollection> {
     return this.cards.updateCollection(collectionId, input);
   }
@@ -146,17 +166,20 @@ export class AdminCardsController {
   }
 
   @TypedRoute.Get('teams')
-  teams(@TypedQuery() query: TeamListQuery): Promise<TeamPage> {
+  teams(@Query({ schema: TeamListQuerySchema }) query: TeamListQuery): Promise<TeamPage> {
     return this.cards.teams(query);
   }
 
   @TypedRoute.Post('teams')
-  createTeam(@TypedBody() input: TeamInput): Promise<AdminTeam> {
+  createTeam(@Body({ schema: TeamInputSchema }) input: TeamInput): Promise<AdminTeam> {
     return this.cards.createTeam(input);
   }
 
   @TypedRoute.Put('teams/:teamId')
-  updateTeam(@Param('teamId') teamId: string, @TypedBody() input: TeamInput): Promise<AdminTeam> {
+  updateTeam(
+    @Param('teamId') teamId: string,
+    @Body({ schema: TeamInputSchema }) input: TeamInput,
+  ): Promise<AdminTeam> {
     return this.cards.updateTeam(teamId, input);
   }
 
@@ -187,12 +210,12 @@ export class AdminCardsController {
   }
 
   @TypedRoute.Get()
-  list(@TypedQuery() query: CardListQuery): Promise<CardPage> {
+  list(@Query({ schema: CardListQuerySchema }) query: CardListQuery): Promise<CardPage> {
     return this.cards.list(query);
   }
 
   @TypedRoute.Post()
-  create(@TypedBody() input: CardInput): Promise<AdminCard> {
+  create(@Body({ schema: CardInputSchema }) input: CardInput): Promise<AdminCard> {
     return this.cards.create(input);
   }
 
@@ -202,7 +225,10 @@ export class AdminCardsController {
   }
 
   @TypedRoute.Put(':cardId')
-  update(@Param('cardId') cardId: string, @TypedBody() input: CardUpdate): Promise<AdminCard> {
+  update(
+    @Param('cardId') cardId: string,
+    @Body({ schema: CardUpdateSchema }) input: CardUpdate,
+  ): Promise<AdminCard> {
     return this.cards.update(cardId, input);
   }
 

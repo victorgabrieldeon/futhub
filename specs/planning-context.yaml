@@ -1,0 +1,19 @@
+feature_name: "Painel de gerenciamento do time no Discord"
+problem_statement: "O comando time só permitia vender cartas por IDs; jogadores precisam gerenciar inventário, escalação, formação, tática, capitão e vendas em um painel único."
+constraints:
+  - "O painel aberto por slash command é ephemeral; por prefixo é público."
+  - "Somente o autor pode usar os controles, que expiram após 15 minutos."
+  - "Cada alteração é persistida imediatamente."
+  - "Jogadores só podem ocupar posições compatíveis."
+out_of_scope:
+  - "Banco de reservas fixo."
+  - "Posicionamento livre no campo."
+  - "Táticas personalizadas além dos três presets."
+  - "Desbloqueio progressivo de formações."
+key_decisions:
+  - decision: "Oferecer visão geral, escalação, inventário, venda, formação e táticas no painel."
+    rationale: "Centraliza toda a gestão do elenco no comando time."
+  - decision: "Usar formações prontas e escalação automática ou manual."
+    rationale: "Mantém as posições válidas e a interação previsível."
+  - decision: "Aplicar -10%/+10% em ataque e defesa para táticas defensiva e ofensiva."
+    rationale: "Produz efeito real e simples de balancear na simulação."
