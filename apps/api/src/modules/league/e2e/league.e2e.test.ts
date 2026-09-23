@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, test } from 'vitest';
 
-import { internalToken, type E2eContext, startE2eContext } from '../../../test/e2e/context.js';
+import { type E2eContext, internalToken, startE2eContext } from '../../../test/e2e/context.js';
 import { createLeaguePlayer } from '../../../test/e2e/entities.js';
 
 const newcomer = { id: 'e2e-league-newcomer', name: 'New player', avatarUrl: null };
@@ -51,6 +51,21 @@ test('abre a liga, evita autocombate e permite nova busca após o resultado', as
 
   const homeUser = await createLeaguePlayer(database, home);
   const awayUser = await createLeaguePlayer(database, away);
+  const homeDefender = await database.db.query.userCards.findFirst({
+    where: database.and(
+      database.eq(database.schema.userCards.userId, homeUser.id),
+      database.eq(database.schema.userCards.holderPosition, 'LD'),
+    ),
+  });
+  if (!homeDefender) throw new Error('Home defender was not created.');
+  await database.db
+    .update(database.schema.cards)
+    .set({ position: 'MA' })
+    .where(database.eq(database.schema.cards.id, homeDefender.cardId));
+  await database.db.insert(database.schema.cardSecondaryPositions).values({
+    cardId: homeDefender.cardId,
+    position: 'LD',
+  });
   const firstQueue = await app.inject({
     method: 'POST',
     url: '/v1/ranked/queue',
@@ -96,6 +111,16 @@ test('abre a liga, evita autocombate e permite nova busca após o resultado', as
   expect(match.json<{ events: unknown[] }>().events).toEqual(
     expect.arrayContaining([expect.objectContaining({ minute: 0, type: 'kickoff' })]),
   );
+  for (const user of [homeUser, awayUser]) {
+    const holders = await database.db.query.userCards.findMany({
+      where: database.and(
+        database.eq(database.schema.userCards.userId, user.id),
+        database.eq(database.schema.userCards.holder, true),
+      ),
+    });
+    expect(holders).toHaveLength(11);
+    expect(holders.every(({ matches }) => matches === 1)).toBe(true);
+  }
 
   for (const identity of [home, away]) {
     const standing = await app.inject({

@@ -1,13 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { packDetailResponse, storeResponse } from '../src/modules/store/response.js';
 import {
   initialPacksState,
-  packDetailResponse,
-  storeResponse,
   storeSessionManager,
   toggleFavoritePack,
-} from '../src/store.js';
+} from '../src/modules/store/state.js';
 
 const packId = (index: number): string =>
   `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`;

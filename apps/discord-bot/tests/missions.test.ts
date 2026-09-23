@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { formatMissions } from '../src/missions.js';
+import { formatMissions } from '../src/modules/missions/format.js';
 
 test('formata ciclo, progresso e recompensa da missão', () => {
   assert.equal(

@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import { createMockBot } from '@slipher/testing';
 
-import ClubeCommand from '../../src/commands/clube.js';
+import ClubeCommand from '../../src/modules/team/commands/clube.js';
 import { type ApiRequest, mockApi } from '../support/api.js';
 
 const team = {

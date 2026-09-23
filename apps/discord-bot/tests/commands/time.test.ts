@@ -4,11 +4,12 @@ import test from 'node:test';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { createMockBot } from '@slipher/testing';
 
-import TimeCommand from '../../src/commands/time.js';
-import TimeButtonComponent from '../../src/components/time-button.js';
-import TimeSelectComponent from '../../src/components/time-select.js';
-import { renderTeamImage, type TeamImageTab } from '../../src/team-image.js';
-import type { TeamResponse } from '../../src/team-session.js';
+import TimeCommand from '../../src/modules/team/commands/time.js';
+import TimeButtonComponent from '../../src/modules/team/components/time-button.js';
+import TimeSelectComponent from '../../src/modules/team/components/time-select.js';
+import { type TeamImageTab, renderTeamImage } from '../../src/modules/team/image.js';
+import { updateTeamPanel } from '../../src/modules/team/panel.js';
+import { type TeamResponse, parseTeamAction } from '../../src/modules/team/session.js';
 import { type ApiRequest, mockApi } from '../support/api.js';
 
 const club = {
@@ -544,4 +545,72 @@ test('salva a tática imediatamente e atualiza o painel', async () => {
       { method: 'POST', path: '/v1/team' },
     ],
   );
+});
+
+test('vende uma carta somente depois da confirmação no painel', async () => {
+  const card: TeamResponse['inventory']['items'][number] = {
+    userCardId: 'card-for-sale',
+    name: 'Reserva',
+    imageUrl: null,
+    overall: 72,
+    position: 'CA',
+    secondaryPositions: [],
+    collection: { id: 'collection-1', name: 'Base', emoji: 'B' },
+    favorite: false,
+    holder: false,
+    holderPosition: null,
+    captain: false,
+    sellPrice: 150,
+    claimedAt: '2026-01-01T00:00:00.000Z',
+  };
+  const currentTeam: TeamResponse = {
+    ...team,
+    inventory: { ...team.inventory, items: [card], total: 1, totalPages: 1 },
+  } as TeamResponse;
+  const api = mockApi((request: ApiRequest) => {
+    if (request.path === '/v1/team') return currentTeam;
+    if (request.path === '/v1/cards/sell')
+      return { userCardIds: [card.userCardId], amount: 150, balance: 625 };
+    throw new Error(`Unexpected API request: ${request.path}`);
+  });
+  await using bot = await createMockBot({
+    commands: [TimeCommand],
+    components: [TimeButtonComponent, TimeSelectComponent],
+  });
+
+  const opened = await bot.slash(TimeCommand);
+  bot.reset();
+  const sale = await bot.selectMenu(selectId(opened.messages, 'Escolha uma aba'), ['sale']);
+  bot.reset();
+  const selected = await bot.selectMenu(selectId(sale.messages, 'Selecione um jogador'), [
+    card.userCardId,
+  ]);
+  const confirmId = buttonId(selected.messages, 'Vender');
+  const parsed = parseTeamAction(confirmId, '900000000000000005');
+  assert.equal(parsed.kind, 'owned');
+  if (parsed.kind !== 'owned') throw new Error('Team session missing.');
+  await assert.rejects(
+    updateTeamPanel(parsed.session, {
+      kind: 'button',
+      action: 'sell',
+      argument: card.userCardId,
+    }),
+    /Card is not available for sale/,
+  );
+  const forgedSellId = confirmId.replace(':sell-confirm:', ':sell:');
+  bot.reset();
+  const denied = await bot.clickButton(forgedSellId);
+  assert.equal(denied.content, 'Este painel expirou. Use `/time` ou `!time` novamente.');
+  assert.equal(
+    api.requests.some(({ path }) => path === '/v1/cards/sell'),
+    false,
+  );
+
+  bot.reset();
+  const confirmed = await bot.clickButton(confirmId);
+  assert.match(body(confirmed.messages), /Confirme a venda/);
+  bot.reset();
+  const sold = await bot.clickButton(buttonId(confirmed.messages, 'Confirmar venda por 150'));
+  assert.match(body(sold.messages), /Reserva vendido por 150/);
+  assert.equal(api.requests.filter(({ path }) => path === '/v1/cards/sell').length, 1);
 });

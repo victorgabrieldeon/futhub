@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import { createMockBot } from '@slipher/testing';
 
-import StatusApiCommand from '../../src/commands/status-api.js';
+import StatusApiCommand from '../../src/modules/system/commands/status-api.js';
 import { mockApi } from '../support/api.js';
 
 test('informa API online pelo pipeline real do Seyfert', async () => {
