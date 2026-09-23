@@ -3,10 +3,10 @@ import { mock, test } from 'node:test';
 
 import { createMockBot } from '@slipher/testing';
 
-import LojaCommand from '../../src/commands/loja.js';
-import LojaPackSelectComponent from '../../src/components/loja-pack-select.js';
-import LojaTabComponent from '../../src/components/loja-tab.js';
-import { storeSessionManager } from '../../src/store.js';
+import LojaCommand from '../../src/modules/store/commands/loja.js';
+import LojaPackSelectComponent from '../../src/modules/store/components/loja-pack-select.js';
+import LojaTabComponent from '../../src/modules/store/components/loja-tab.js';
+import { storeSessionManager } from '../../src/modules/store/state.js';
 import { type ApiRequest, mockApi } from '../support/api.js';
 
 function record(value: unknown): value is Record<string, unknown> {

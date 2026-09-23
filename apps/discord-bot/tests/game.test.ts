@@ -7,7 +7,7 @@ import {
   formatPackOpen,
   formatPackPurchase,
   formatPackStore,
-} from '../src/game.js';
+} from '../src/modules/store/format.js';
 
 test('formata resultados de packs e mercado', () => {
   assert.equal(

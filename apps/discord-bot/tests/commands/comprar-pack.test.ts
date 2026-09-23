@@ -4,7 +4,7 @@ import test from 'node:test';
 import { createMockBot } from '@slipher/testing';
 import { MessageFlags } from 'seyfert';
 
-import ComprarPackCommand from '../../src/commands/comprar-pack.js';
+import ComprarPackCommand from '../../src/modules/store/commands/comprar-pack.js';
 import { mockApi } from '../support/api.js';
 
 test('compra pack pelo pipeline real do Seyfert', async () => {

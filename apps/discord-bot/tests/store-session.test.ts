@@ -5,7 +5,7 @@ import {
   type StorePacks,
   type StoreSessionState,
   createStoreSessionManager,
-} from '../src/store-session.js';
+} from '../src/modules/store/session.js';
 
 const MINUTE = 60_000;
 const packsState = (): StorePacks => ({ tab: 'packs', page: 1, favoritePackIds: [] });

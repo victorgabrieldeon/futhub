@@ -253,35 +253,40 @@ export class TeamService {
     userId: string,
     formationId: string,
   ): Promise<void> {
-    const { and, eq, schema } = database;
-    const [slots, ownedCards] = await Promise.all([
-      tx.query.formationSlots.findMany({
-        where: eq(schema.formationSlots.formationId, formationId),
-      }),
-      tx.query.userCards.findMany({ where: eq(schema.userCards.userId, userId) }),
-    ]);
-    const candidates = await Promise.all(
-      ownedCards.map(async (owned) => {
-        const [card, secondary] = await Promise.all([
-          tx.query.cards.findFirst({ where: eq(schema.cards.id, owned.cardId) }),
-          tx.query.cardSecondaryPositions.findMany({
-            where: eq(schema.cardSecondaryPositions.cardId, owned.cardId),
-          }),
-        ]);
-        if (!card) throw new TeamInputError('Carta inválida no inventário.');
-        return {
-          userCardId: owned.id,
-          overall: card.overall,
-          claimedAt: owned.claimedAt.getTime(),
-          positions: [card.position, ...secondary.map(({ position }) => position)],
-        };
-      }),
-    );
+    const { and, eq, inArray, schema } = database;
+    const slots = await tx.query.formationSlots.findMany({
+      where: eq(schema.formationSlots.formationId, formationId),
+    });
+    const ownedCards = await tx
+      .select({ owned: schema.userCards, card: schema.cards })
+      .from(schema.userCards)
+      .innerJoin(schema.cards, eq(schema.cards.id, schema.userCards.cardId))
+      .where(eq(schema.userCards.userId, userId));
+    const secondary = ownedCards.length
+      ? await tx.query.cardSecondaryPositions.findMany({
+          where: inArray(
+            schema.cardSecondaryPositions.cardId,
+            ownedCards.map(({ card }) => card.id),
+          ),
+        })
+      : [];
+    const positionsByCard = new Map<string, (typeof secondary)[number]['position'][]>();
+    for (const { cardId, position } of secondary) {
+      const positions = positionsByCard.get(cardId) ?? [];
+      positions.push(position);
+      positionsByCard.set(cardId, positions);
+    }
+    const candidates = ownedCards.map(({ owned, card }) => ({
+      userCardId: owned.id,
+      overall: card.overall,
+      claimedAt: owned.claimedAt.getTime(),
+      positions: [card.position, ...(positionsByCard.get(card.id) ?? [])],
+    }));
     const assignments = selectAutomaticLineup(
       [...slots].sort((left, right) => left.y - right.y || left.x - right.x),
       candidates,
     );
-    const captainId = ownedCards.find(({ captain }) => captain)?.id;
+    const captainId = ownedCards.find(({ owned }) => owned.captain)?.owned.id;
     await tx
       .update(schema.userCards)
       .set({ holder: false, holderPosition: null, captain: false })
