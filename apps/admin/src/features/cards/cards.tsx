@@ -2996,16 +2996,6 @@ function PlayerDetailDialog({
   working: boolean;
 }>) {
   const isEditing = mode === 'edit';
-  const previewName = isEditing ? String(form.name || card?.name || '') : (card?.name ?? '');
-  const previewPosition = isEditing
-    ? String(form.position || card?.position || '')
-    : (card?.position ?? '');
-  const previewOverall = isEditing
-    ? Number(form.overall) || card?.overall || 0
-    : (card?.overall ?? 0);
-  const nameParts = previewName.trim().split(/\s+/).filter(Boolean);
-  const firstName = nameParts.slice(0, -1).join(' ') || previewName;
-  const lastName = nameParts.length > 1 ? nameParts.at(-1) : '';
   const secondaryPositions = String(form.secondaryPositions ?? '')
     .split(';')
     .map((position) => position.trim())
@@ -3035,33 +3025,19 @@ function PlayerDetailDialog({
     >
       {card && (
         <article className="player-detail-shell">
-          <section className="player-detail-stage" aria-label={`Card 3D de ${previewName}`}>
+          <section className="player-detail-stage" aria-label={`Card 3D de ${card.name}`}>
             <div className="player-detail-stage-label">
               <span>{isEditing ? 'Editando card' : 'Card de jogador'}</span>
               <span>{card.collection.name}</span>
             </div>
             <div className="player-detail-card-scene">
               <div className="player-detail-card-3d">
-                <div className="player-detail-card-grid" />
-                <div className="player-detail-card-rating">
-                  <strong>{previewOverall}</strong>
-                  <span>{previewPosition}</span>
-                </div>
-                <img alt="" className="player-detail-card-photo" src={card.imageUrl} />
-                <div className="player-detail-card-name">
-                  <span>{firstName}</span>
-                  <strong>{lastName}</strong>
-                </div>
-                <div className="player-detail-card-foot">
-                  <span>{card.team.name}</span>
-                  <i />
-                  <span>{card.collection.emoji}</span>
-                </div>
+                <img alt="" src={card.imageUrl} />
               </div>
             </div>
             <p className="player-detail-stage-note">
               {isEditing
-                ? 'A prévia acompanha nome, posição e overall antes de salvar.'
+                ? 'Imagem atual do card. Dados em edição aparecem no formulário.'
                 : 'Passe o cursor pelo card para inclinar a prévia.'}
             </p>
           </section>

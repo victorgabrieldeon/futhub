@@ -521,6 +521,22 @@ export function Studio() {
     setFocusMode(false);
   }
 
+  function openProofCheck(nextPanel: InspectorPanel) {
+    setActiveLayer(null);
+    setPanel(nextPanel);
+    setRightOpen(true);
+    setFocusMode(false);
+    window.setTimeout(() => {
+      const inspector = document.querySelector('.card-studio-page .studio-inspector');
+      if (window.matchMedia('(max-width: 980px)').matches) {
+        inspector?.scrollIntoView({ block: 'start' });
+      }
+      inspector
+        ?.querySelector<HTMLButtonElement>('.studio-inspector-tabs [aria-selected="true"]')
+        ?.focus({ preventScroll: true });
+    });
+  }
+
   function togglePlayground() {
     if (!playground) {
       playgroundBase.current = draft;
@@ -849,36 +865,86 @@ export function Studio() {
     activeLayer !== null && movableLayers.includes(activeLayer as MovableLayer);
   const photoHealth = healthChecks.find((check) => check.id === 'photo')?.status ?? 'blocked';
   const shieldHealth = healthChecks.find((check) => check.id === 'shield')?.status ?? 'blocked';
-  const dataHealth = healthChecks.some(
-    (check) => (check.id === 'name' || check.id === 'stats') && check.status === 'blocked',
-  )
+  const dataHealth = !selectedCardId
     ? 'blocked'
     : healthChecks.some(
-          (check) => (check.id === 'name' || check.id === 'stats') && check.status === 'warning',
+          (check) => (check.id === 'name' || check.id === 'stats') && check.status === 'blocked',
         )
-      ? 'warning'
-      : 'ready';
-  const visualHealth = healthChecks.some(
-    (check) =>
-      (check.id === 'collection' || check.id === 'contrast' || check.id === 'layers') &&
-      check.status === 'blocked',
-  )
+      ? 'blocked'
+      : healthChecks.some(
+            (check) => (check.id === 'name' || check.id === 'stats') && check.status === 'warning',
+          )
+        ? 'warning'
+        : 'ready';
+  const visualHealth = !selectedCardId
     ? 'blocked'
     : healthChecks.some(
           (check) =>
             (check.id === 'collection' || check.id === 'contrast' || check.id === 'layers') &&
-            check.status === 'warning',
+            check.status === 'blocked',
         )
-      ? 'warning'
-      : 'ready';
+      ? 'blocked'
+      : healthChecks.some(
+            (check) =>
+              (check.id === 'collection' || check.id === 'contrast' || check.id === 'layers') &&
+              check.status === 'warning',
+          )
+        ? 'warning'
+        : 'ready';
   const cardDna = [
-    { id: 'photo', label: 'Foto', panel: 'photo' as const, status: photoHealth },
-    { id: 'shield', label: 'Escudo', panel: 'data' as const, status: shieldHealth },
-    { id: 'data', label: 'Dados', panel: 'data' as const, status: dataHealth },
-    { id: 'visual', label: 'Visual', panel: 'visual' as const, status: visualHealth },
+    {
+      id: 'photo',
+      label: 'Foto',
+      detail: !selectedCardId
+        ? 'Escolha um jogador'
+        : playerPhotoReady
+          ? 'Recorte pronto'
+          : 'Padronizar recorte',
+      panel: 'photo' as const,
+      status: photoHealth,
+    },
+    {
+      id: 'shield',
+      label: 'Escudo',
+      detail: !selectedCardId
+        ? 'Escolha um jogador'
+        : teamLogoReady
+          ? 'SVG pronto'
+          : 'Corrigir no acervo',
+      panel: 'data' as const,
+      status: shieldHealth,
+    },
+    {
+      id: 'data',
+      label: 'Dados',
+      detail: !selectedCardId
+        ? 'Escolha um jogador'
+        : dataHealth === 'ready'
+          ? 'Campos revisados'
+          : 'Revisar campos',
+      panel: 'data' as const,
+      status: dataHealth,
+    },
+    {
+      id: 'visual',
+      label: 'Visual',
+      detail: !selectedCardId
+        ? 'Escolha um jogador'
+        : visualHealth === 'ready'
+          ? 'Composição pronta'
+          : 'Revisar composição',
+      panel: 'visual' as const,
+      status: visualHealth,
+    },
   ];
   const showRightPanel = rightOpen || (focusMode && focusReveal === 'right');
   const commandActions = [
+    {
+      id: 'advanced-management',
+      label: 'Gestão avançada',
+      detail: 'Abra o catálogo de cards para editar os dados de origem.',
+      run: () => navigate('/app/gerenciar/cards'),
+    },
     {
       id: 'search-player',
       label: 'Buscar jogador',
@@ -965,10 +1031,14 @@ export function Studio() {
         <div className="pack-studio-brand">
           <AdminIcon className="pack-studio-brand__mark" name="studio" />
           <div>
-            <p className="eyebrow">Studio de Cards</p>
-            <h1 id="studio-title">{draft.name || 'Novo card'}</h1>
+            <h1 id="studio-title">Studio de Cards</h1>
             <output className="pack-studio-save-state">
-              {autosaveState === 'saving' ? 'Salvando alterações' : 'Versão local'}
+              {draft.name || 'Novo card'} ·{' '}
+              {autosaveState === 'saving'
+                ? 'Salvando rascunho local'
+                : autosaveState === 'error'
+                  ? 'Falha ao salvar rascunho local'
+                  : 'Rascunho local salvo'}
             </output>
           </div>
         </div>
@@ -1032,220 +1102,7 @@ export function Studio() {
         </div>
       ) : (
         <StudioWorkspace className="card-studio-workspace" id="studio-cards-panel">
-          <StudioSidebar aria-labelledby="studio-card-picker-title" className="studio-card-picker">
-            <header>
-              <p className="eyebrow">Studio de cards</p>
-              <h2 id="studio-card-picker-title">Qual card quer editar?</h2>
-              <p>Escolha um card para carregar seus dados e começar a criação.</p>
-            </header>
-            <label className="studio-search">
-              <span className="sr-only">Buscar card</span>
-              <svg aria-hidden="true" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="6" />
-                <path d="m16 16 4 4" />
-              </svg>
-              <input
-                autoComplete="off"
-                ref={playerBrowserSearchRef}
-                onChange={(event) => setPlayerQuery(event.target.value)}
-                placeholder="Nome, time ou coleção"
-                type="search"
-                value={playerQuery}
-              />
-            </label>
-            <div className="studio-browser-filters" role="tablist" aria-label="Filtro de cards">
-              {(
-                [
-                  ['all', 'Todos'],
-                  ['recent', 'Recentes'],
-                  ['favorites', 'Favoritos'],
-                ] as const
-              ).map(([id, label]) => (
-                <button
-                  aria-selected={browserFilter === id}
-                  key={id}
-                  onClick={() => setBrowserFilter(id)}
-                  role="tab"
-                  type="button"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div aria-busy={playersLoading} className="studio-card-picker-list">
-              {playersLoading ? (
-                <div className="studio-list-state">Buscando cards…</div>
-              ) : visiblePlayers.length ? (
-                visiblePlayers.map((card) => (
-                  <button
-                    className="studio-card-picker-option"
-                    key={card.id}
-                    onClick={() => applyCard(card)}
-                    type="button"
-                  >
-                    <span className="studio-player-thumb">
-                      <img alt="" src={card.imageUrl} />
-                    </span>
-                    <span>
-                      <strong>{card.name}</strong>
-                      <small>
-                        {card.team.name} · {card.position}
-                      </small>
-                    </span>
-                    <b>{card.overall}</b>
-                  </button>
-                ))
-              ) : (
-                <div className="studio-list-state">
-                  {browserFilter === 'favorites'
-                    ? 'Nenhum favorito nesta busca.'
-                    : 'Nenhum card encontrado.'}
-                </div>
-              )}
-            </div>
-          </StudioSidebar>
           <StudioCanvas className="card-studio-canvas">
-            <div className="studio-commandbar">
-              <div className="studio-history-actions">
-                <button disabled={!historyPast.length} onClick={undoDraft} type="button">
-                  <span aria-hidden="true">←</span> Undo
-                </button>
-                <button disabled={!historyFuture.length} onClick={redoDraft} type="button">
-                  Redo <span aria-hidden="true">→</span>
-                </button>
-                <div className="studio-history-menu">
-                  <button
-                    aria-expanded={historyOpen}
-                    className={historyOpen ? 'is-active' : ''}
-                    onClick={() => setHistoryOpen((open) => !open)}
-                    type="button"
-                  >
-                    Histórico <b>{snapshots.length}</b>
-                  </button>
-                  {historyOpen && (
-                    <div className="studio-history-popover">
-                      <header>
-                        <div>
-                          <strong>Snapshots</strong>
-                          <small>Compare ou restaure versões desta criação.</small>
-                        </div>
-                        <button
-                          aria-label="Fechar histórico"
-                          onClick={() => setHistoryOpen(false)}
-                          type="button"
-                        >
-                          ×
-                        </button>
-                      </header>
-                      <form
-                        onSubmit={(event) => {
-                          event.preventDefault();
-                          createSnapshot();
-                        }}
-                      >
-                        <input
-                          maxLength={32}
-                          onChange={(event) => setSnapshotName(event.target.value)}
-                          placeholder={`Versão ${snapshots.length + 1}`}
-                          value={snapshotName}
-                        />
-                        <button type="submit">Salvar snapshot</button>
-                      </form>
-                      <div className="studio-snapshot-list">
-                        <div className="studio-snapshot-row">
-                          <span>
-                            <strong>Original do banco</strong>
-                            <small>Base do Smart Fill</small>
-                          </span>
-                          <button
-                            onClick={() => {
-                              setCompareDraft(originalDraft.current);
-                              setCompareLabel('Original do banco');
-                              setHistoryOpen(false);
-                            }}
-                            type="button"
-                          >
-                            Comparar
-                          </button>
-                          <button
-                            onClick={() =>
-                              commitDraft(originalDraft.current, 'Original do banco restaurado.')
-                            }
-                            type="button"
-                          >
-                            Restaurar
-                          </button>
-                        </div>
-                        {snapshots.map((snapshot) => (
-                          <div className="studio-snapshot-row" key={snapshot.id}>
-                            <span>
-                              <strong>{snapshot.name}</strong>
-                              <small>{formatTime(snapshot.createdAt)}</small>
-                            </span>
-                            <button
-                              onClick={() => {
-                                setCompareDraft(snapshot.draft);
-                                setCompareLabel(snapshot.name);
-                                setHistoryOpen(false);
-                              }}
-                              type="button"
-                            >
-                              Comparar
-                            </button>
-                            <button
-                              onClick={() =>
-                                commitDraft(
-                                  snapshot.draft,
-                                  `Snapshot “${snapshot.name}” restaurado.`,
-                                )
-                              }
-                              type="button"
-                            >
-                              Restaurar
-                            </button>
-                          </div>
-                        ))}
-                        {!snapshots.length && (
-                          <p>Salve uma versão antes de experimentar outro tratamento.</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="studio-mode-actions">
-                <button
-                  className="studio-command-palette-trigger"
-                  onClick={openCommandPalette}
-                  type="button"
-                >
-                  Ações <kbd>Ctrl K</kbd>
-                </button>
-                {playground && (
-                  <button
-                    className="studio-restore-button"
-                    onClick={restorePlaygroundBase}
-                    type="button"
-                  >
-                    Restaurar entrada
-                  </button>
-                )}
-                <button
-                  aria-pressed={playground}
-                  className={
-                    playground ? 'studio-playground-toggle is-active' : 'studio-playground-toggle'
-                  }
-                  onClick={togglePlayground}
-                  type="button"
-                >
-                  <i /> Playground
-                </button>
-                <button aria-pressed={focusMode} onClick={toggleFocusMode} type="button">
-                  {focusMode ? 'Sair do modo criação' : 'Modo criação'}
-                </button>
-              </div>
-            </div>
-
             <div
               className="studio-workbench"
               data-focus={focusMode}
@@ -1353,19 +1210,210 @@ export function Studio() {
                   )}
                 </div>
 
-                {!teamLogoReady && (
-                  <p className="studio-quality-warning">
-                    Saídas com card exigem escudo SVG.{' '}
-                    <Link to="/app/gerenciar/cards">Corrija em Gerenciamento</Link>; o recorte do
-                    jogador continua disponível.
-                  </p>
-                )}
+                <section aria-label="Conferência do card" className="card-studio-proof">
+                  <div className="card-studio-proof__heading">
+                    <strong>Conferência</strong>
+                    <span>
+                      {!selectedCardId
+                        ? 'Escolha um jogador'
+                        : qualityReady
+                          ? 'Pronto para salvar'
+                          : 'Revise antes de salvar'}
+                    </span>
+                  </div>
+                  <div className="card-studio-proof__checks">
+                    {cardDna.map((check) => {
+                      const content = (
+                        <span className="card-studio-proof__content" key={check.id}>
+                          <span className="card-studio-proof__status" aria-hidden="true">
+                            {check.status === 'ready' ? '✓' : '!'}
+                          </span>
+                          <span className="card-studio-proof__copy">
+                            <strong>{check.label}</strong>
+                            <small>{check.detail}</small>
+                          </span>
+                          <span className="sr-only">
+                            {check.status === 'ready'
+                              ? 'Pronto'
+                              : check.status === 'warning'
+                                ? 'Atenção'
+                                : 'Pendente'}
+                          </span>
+                        </span>
+                      );
+                      return check.id === 'shield' && selectedCardId && !teamLogoReady ? (
+                        <Link
+                          className="card-studio-proof__check"
+                          data-status={check.status}
+                          key={check.id}
+                          to="/app/gerenciar/cards"
+                        >
+                          {content}
+                        </Link>
+                      ) : (
+                        <button
+                          className="card-studio-proof__check"
+                          data-status={check.status}
+                          key={check.id}
+                          onClick={() =>
+                            selectedCardId ? openProofCheck(check.panel) : openPlayerBrowser()
+                          }
+                          type="button"
+                        >
+                          {content}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+
                 {notice && (
                   <p aria-live="polite" className="studio-notice">
                     {notice}
                   </p>
                 )}
               </main>
+
+              <div className="studio-commandbar">
+                <div className="studio-history-actions">
+                  <button disabled={!historyPast.length} onClick={undoDraft} type="button">
+                    <span aria-hidden="true">←</span> Undo
+                  </button>
+                  <button disabled={!historyFuture.length} onClick={redoDraft} type="button">
+                    Redo <span aria-hidden="true">→</span>
+                  </button>
+                  <div className="studio-history-menu">
+                    <button
+                      aria-expanded={historyOpen}
+                      className={historyOpen ? 'is-active' : ''}
+                      onClick={() => setHistoryOpen((open) => !open)}
+                      type="button"
+                    >
+                      Histórico <b>{snapshots.length}</b>
+                    </button>
+                    {historyOpen && (
+                      <div className="studio-history-popover">
+                        <header>
+                          <div>
+                            <strong>Snapshots</strong>
+                            <small>Compare ou restaure versões desta criação.</small>
+                          </div>
+                          <button
+                            aria-label="Fechar histórico"
+                            onClick={() => setHistoryOpen(false)}
+                            type="button"
+                          >
+                            ×
+                          </button>
+                        </header>
+                        <form
+                          onSubmit={(event) => {
+                            event.preventDefault();
+                            createSnapshot();
+                          }}
+                        >
+                          <input
+                            maxLength={32}
+                            onChange={(event) => setSnapshotName(event.target.value)}
+                            placeholder={`Versão ${snapshots.length + 1}`}
+                            value={snapshotName}
+                          />
+                          <button type="submit">Salvar snapshot</button>
+                        </form>
+                        <div className="studio-snapshot-list">
+                          <div className="studio-snapshot-row">
+                            <span>
+                              <strong>Original do banco</strong>
+                              <small>Base do Smart Fill</small>
+                            </span>
+                            <button
+                              onClick={() => {
+                                setCompareDraft(originalDraft.current);
+                                setCompareLabel('Original do banco');
+                                setHistoryOpen(false);
+                              }}
+                              type="button"
+                            >
+                              Comparar
+                            </button>
+                            <button
+                              onClick={() =>
+                                commitDraft(originalDraft.current, 'Original do banco restaurado.')
+                              }
+                              type="button"
+                            >
+                              Restaurar
+                            </button>
+                          </div>
+                          {snapshots.map((snapshot) => (
+                            <div className="studio-snapshot-row" key={snapshot.id}>
+                              <span>
+                                <strong>{snapshot.name}</strong>
+                                <small>{formatTime(snapshot.createdAt)}</small>
+                              </span>
+                              <button
+                                onClick={() => {
+                                  setCompareDraft(snapshot.draft);
+                                  setCompareLabel(snapshot.name);
+                                  setHistoryOpen(false);
+                                }}
+                                type="button"
+                              >
+                                Comparar
+                              </button>
+                              <button
+                                onClick={() =>
+                                  commitDraft(
+                                    snapshot.draft,
+                                    `Snapshot “${snapshot.name}” restaurado.`,
+                                  )
+                                }
+                                type="button"
+                              >
+                                Restaurar
+                              </button>
+                            </div>
+                          ))}
+                          {!snapshots.length && (
+                            <p>Salve uma versão antes de experimentar outro tratamento.</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="studio-mode-actions">
+                  <button
+                    className="studio-command-palette-trigger"
+                    onClick={openCommandPalette}
+                    type="button"
+                  >
+                    Ações <kbd>Ctrl K</kbd>
+                  </button>
+                  {playground && (
+                    <button
+                      className="studio-restore-button"
+                      onClick={restorePlaygroundBase}
+                      type="button"
+                    >
+                      Restaurar entrada
+                    </button>
+                  )}
+                  <button
+                    aria-pressed={playground}
+                    className={
+                      playground ? 'studio-playground-toggle is-active' : 'studio-playground-toggle'
+                    }
+                    onClick={togglePlayground}
+                    type="button"
+                  >
+                    <i /> Playground
+                  </button>
+                  <button aria-pressed={focusMode} onClick={toggleFocusMode} type="button">
+                    {focusMode ? 'Sair do modo criação' : 'Modo criação'}
+                  </button>
+                </div>
+              </div>
 
               {showRightPanel && (
                 <StudioSidebar
@@ -1378,11 +1426,6 @@ export function Studio() {
                 >
                   <header>
                     <div>
-                      <p className="eyebrow">
-                        {activeLayerDefinition
-                          ? `Contexto · ${activeLayerDefinition.label}`
-                          : 'Direção de produção'}
-                      </p>
                       <h2>
                         {activeLayerDefinition?.label ??
                           (playground ? 'Edição livre' : 'Card em criação')}
@@ -1918,6 +1961,78 @@ export function Studio() {
               )}
             </div>
           </StudioCanvas>
+          <StudioSidebar aria-labelledby="studio-card-picker-title" className="studio-card-picker">
+            <header>
+              <h2 id="studio-card-picker-title">Acervo</h2>
+              <p>Escolha um jogador para começar.</p>
+            </header>
+            <label className="studio-search">
+              <span className="sr-only">Buscar card</span>
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="6" />
+                <path d="m16 16 4 4" />
+              </svg>
+              <input
+                autoComplete="off"
+                ref={playerBrowserSearchRef}
+                onChange={(event) => setPlayerQuery(event.target.value)}
+                placeholder="Nome, time ou coleção"
+                type="search"
+                value={playerQuery}
+              />
+            </label>
+            <div className="studio-browser-filters" role="tablist" aria-label="Filtro de cards">
+              {(
+                [
+                  ['all', 'Todos'],
+                  ['recent', 'Recentes'],
+                  ['favorites', 'Favoritos'],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  aria-selected={browserFilter === id}
+                  key={id}
+                  onClick={() => setBrowserFilter(id)}
+                  role="tab"
+                  type="button"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div aria-busy={playersLoading} className="studio-card-picker-list">
+              {playersLoading ? (
+                <div className="studio-list-state">Buscando cards…</div>
+              ) : visiblePlayers.length ? (
+                visiblePlayers.map((card) => (
+                  <button
+                    aria-pressed={selectedCardId === card.id}
+                    className="studio-card-picker-option"
+                    key={card.id}
+                    onClick={() => applyCard(card)}
+                    type="button"
+                  >
+                    <span className="studio-player-thumb">
+                      <img alt="" src={card.imageUrl} />
+                    </span>
+                    <span>
+                      <strong>{card.name}</strong>
+                      <small>
+                        {card.team.name} · {card.position}
+                      </small>
+                    </span>
+                    <b>{card.overall}</b>
+                  </button>
+                ))
+              ) : (
+                <div className="studio-list-state">
+                  {browserFilter === 'favorites'
+                    ? 'Nenhum favorito nesta busca.'
+                    : 'Nenhum card encontrado.'}
+                </div>
+              )}
+            </div>
+          </StudioSidebar>
 
           {commandPaletteOpen && (
             <div className="studio-dialog-backdrop">

@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "blender-modeler": {
+      "source": "arjun988/blender-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/blender-modeler/SKILL.md",
+      "computedHash": "4acafa9ce6d73d513d55af552d33f48617a15f16fd58eb64d74921d7f51b4377"
+    },
     "brainstorming": {
       "source": "obra/superpowers",
       "sourceType": "github",
