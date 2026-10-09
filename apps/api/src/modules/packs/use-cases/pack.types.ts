@@ -2,7 +2,7 @@ import type { ProgressionSummary } from '../../progression/progression.js';
 import type { PackCatalogItem } from '../packs.dto.js';
 
 export type DiscordIdentity = Readonly<{ id: string; name: string; avatarUrl: string | null }>;
-export type PackCard = Readonly<{ id: string; overall: number }>;
+export type PackCard = Readonly<{ id: string; overall: number; name: string; position: string }>;
 export type UserCard = Readonly<{ id: string; card: PackCard }>;
 export type PurchaseResult = Readonly<{ balance: number; quantity: number }>;
 export type OpenPackResult = Readonly<{

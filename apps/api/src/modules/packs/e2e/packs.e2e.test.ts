@@ -1,7 +1,11 @@
 import { afterAll, beforeAll, expect, test } from 'vitest';
 
 import { type E2eContext, internalToken, startE2eContext } from '../../../test/e2e/context.js';
-import { createPackFixture, createUser } from '../../../test/e2e/entities.js';
+import {
+  createPackCatalogImageFixture,
+  createPackFixture,
+  createUser,
+} from '../../../test/e2e/entities.js';
 
 const identity = { id: 'e2e-pack-user', name: 'Pack player', avatarUrl: null };
 let context: E2eContext | undefined;
@@ -38,7 +42,9 @@ test('compra e abre pack persistindo carta e progressão', async () => {
   });
   expect(open.statusCode).toBe(200);
   expect(open.json()).toMatchObject({
-    cards: [{ card: { id: cardId, overall: 80 } }],
+    cards: [
+      { card: { id: cardId, overall: 80, name: expect.any(String), position: expect.any(String) } },
+    ],
     progression: { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] },
   });
 
@@ -85,4 +91,32 @@ test('lista na loja apenas packs disponíveis para compra', async () => {
     }),
   );
   expect(response.json()).not.toContainEqual(expect.objectContaining({ id: hiddenPackId }));
+});
+
+test('lista no catálogo a arte do pack enviada ou externa', async () => {
+  if (!context) throw new Error('E2E context was not initialized.');
+  const { app, database } = context;
+  const { uploadedPackId, externalPackId, plainPackId, objectKey } =
+    await createPackCatalogImageFixture(database);
+
+  const response = await app.inject({
+    method: 'GET',
+    url: '/v1/packs',
+    headers: { authorization: `Bearer ${internalToken}` },
+  });
+
+  expect(response.statusCode).toBe(200);
+  const imageOf = (id: string) =>
+    (response.json() as { id: string; imageUrl: string | null }[]).find((pack) => pack.id === id)
+      ?.imageUrl;
+  expect(imageOf(uploadedPackId)).toBe(
+    `${process.env.MINIO_PUBLIC_URL}/${process.env.MINIO_BUCKET}/${objectKey}`,
+  );
+  expect(imageOf(externalPackId)).toBe('https://example.com/pack.png');
+  expect(imageOf(plainPackId)).toBeNull();
+
+  const stored = await database.db.query.packs.findFirst({
+    where: database.eq(database.schema.packs.id, uploadedPackId),
+  });
+  expect(stored?.imageFileId).toEqual(expect.any(String));
 });

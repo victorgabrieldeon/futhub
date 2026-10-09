@@ -5,10 +5,10 @@ import { createMockBot } from '@slipher/testing';
 import { MessageFlags } from 'seyfert';
 
 import ComprarPackCommand from '../../src/commands/comprar-pack.js';
-import { mockApi } from '../support/api.js';
+import { mockApi, withTemplates } from '../support/api.js';
 
 test('compra pack pelo pipeline real do Seyfert', async () => {
-  const api = mockApi({ quantity: 2, balance: 450 });
+  const api = mockApi(withTemplates({ quantity: 2, balance: 450 }));
 
   await using bot = await createMockBot({ commands: [ComprarPackCommand] });
 
@@ -27,7 +27,30 @@ test('compra pack pelo pipeline real do Seyfert', async () => {
         },
       },
     },
+    { method: 'GET', path: '/v1/bot-responses/pack.purchase', body: null },
   ]);
+});
+
+test('usa a resposta editada no painel, com filtros de variáveis', async () => {
+  mockApi(
+    withTemplates(
+      { quantity: 2, balance: 4500 },
+      {
+        'pack.purchase': {
+          mode: 'legacy',
+          content: 'Comprou! {quantity} no inventário · saldo {balance|number}',
+          embeds: [],
+          components: [],
+        },
+      },
+    ),
+  );
+
+  await using bot = await createMockBot({ commands: [ComprarPackCommand] });
+
+  const result = await bot.slash(ComprarPackCommand, { options: { pack_id: 'pack-1' } });
+
+  assert.equal(result.content, 'Comprou! 2 no inventário · saldo 4.500');
 });
 
 test('rejeita ID de pack vazio sem chamar API', async () => {

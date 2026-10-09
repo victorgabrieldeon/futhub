@@ -1,8 +1,9 @@
-import { createCanvas, loadImage } from '@napi-rs/canvas';
+import { createCanvas } from '@napi-rs/canvas';
 import type { Image, SKRSContext2D } from '@napi-rs/canvas';
 
 import { drawClubImage } from './club-image.js';
 import { imageFont } from './image-fonts.js';
+import { remoteImage } from './remote-image.js';
 import type { TeamCard, TeamResponse, TeamSession, TeamTab } from './team-session.js';
 
 export const teamImageName = 'futhub-team.png';
@@ -38,44 +39,6 @@ const tacticTitles: Record<TeamResponse['tactic'], string> = {
   balanced: 'EQUILIBRADA',
   offensive: 'OFENSIVA',
 };
-const imageCache = new Map<string, Promise<Image | undefined>>();
-
-function playerImage(url: string): Promise<Image | undefined> {
-  const cached = imageCache.get(url);
-  if (cached) return cached;
-  if (imageCache.size >= 256) {
-    const oldest = imageCache.keys().next().value;
-    if (oldest) imageCache.delete(oldest);
-  }
-  const pending = fetch(imageRequestUrl(url), { signal: AbortSignal.timeout(3_000) })
-    .then(async (response) => {
-      if (!response.ok) return undefined;
-      const bytes = await response.arrayBuffer();
-      if (bytes.byteLength > 10 * 1024 * 1024) return undefined;
-      return loadImage(bytes);
-    })
-    .catch(() => undefined);
-  imageCache.set(url, pending);
-  return pending;
-}
-
-function imageRequestUrl(value: string): string {
-  const publicOrigin = process.env.MINIO_PUBLIC_URL;
-  const internalOrigin =
-    process.env.MINIO_INTERNAL_URL ??
-    (process.env.MINIO_SERVICE_HOST && process.env.MINIO_SERVICE_PORT_API
-      ? `http://${process.env.MINIO_SERVICE_HOST}:${process.env.MINIO_SERVICE_PORT_API}`
-      : undefined);
-  if (!publicOrigin || !internalOrigin) return value;
-  try {
-    const url = new URL(value);
-    if (url.origin !== new URL(publicOrigin).origin) return value;
-    return new URL(`${url.pathname}${url.search}`, internalOrigin).toString();
-  } catch {
-    return value;
-  }
-}
-
 async function loadPlayerImages(session: TeamImageData): Promise<Map<string, Image>> {
   const cards =
     session.tab === 'club' || session.tab === 'packs'
@@ -86,7 +49,7 @@ async function loadPlayerImages(session: TeamImageData): Promise<Map<string, Ima
   const entries = await Promise.all(
     cards.map(
       async (card) =>
-        [card.userCardId, card.imageUrl ? await playerImage(card.imageUrl) : undefined] as const,
+        [card.userCardId, card.imageUrl ? await remoteImage(card.imageUrl) : undefined] as const,
     ),
   );
   return new Map(entries.filter((entry): entry is readonly [string, Image] => Boolean(entry[1])));

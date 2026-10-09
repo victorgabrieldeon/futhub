@@ -29,7 +29,7 @@ describe('PurchasePackUseCase', () => {
           cardCount: 0,
           maxCards: 10,
           cardsAmount: 1,
-          candidates: [{ id: 'card-1', overall: 80 }],
+          candidates: [{ id: 'card-1', overall: 80, name: 'Card', position: 'CA' }],
           probabilities: [{ overall: 80, weight: 1 }],
           commit: async (cards) => cards.map((card) => ({ id: 'owned-1', card })),
           grantProgression: async () => progression,

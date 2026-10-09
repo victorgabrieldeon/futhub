@@ -1,4 +1,5 @@
 import { configureApiClient } from '@futhub/api-client';
+import { definition } from '@futhub/bot-templates';
 
 export type ApiRequest = Readonly<{
   method: string;
@@ -38,4 +39,16 @@ export function mockApi(
   });
 
   return { requests, urls };
+}
+
+/** Answers bot response GETs with `templates` (or the catalog default) and everything else with `body`. */
+export function withTemplates(
+  body: unknown,
+  templates: Record<string, unknown> = {},
+): (request: ApiRequest) => unknown {
+  return (request) => {
+    const key = /^\/v1\/bot-responses\/(.+)$/.exec(request.path)?.[1];
+    if (!key) return body;
+    return templates[key] ?? definition(key)?.defaultTemplate;
+  };
 }

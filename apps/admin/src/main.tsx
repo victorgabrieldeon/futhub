@@ -5,7 +5,6 @@ import { BrowserRouter } from 'react-router-dom';
 import { App } from './app';
 import './globals.css';
 import './editorial.css';
-import './features/studio/card-studio.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing root element.');

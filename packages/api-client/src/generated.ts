@@ -191,6 +191,11 @@ export interface BotResponseButtonDto {
   /** @maxLength 512 */
   url: string;
   disabled: boolean;
+  /**
+   * Nome de um emoji do bot exibido antes do rótulo.
+   * @pattern ^([A-Za-z0-9_]{2,32})?$
+   */
+  emoji?: string;
 }
 
 /**
@@ -310,6 +315,49 @@ export type BotResponseDefinitionDtoVariablesItem = {
   example: string;
 };
 
+export type BotResponseDefinitionDtoListsItemFieldsItem = {
+  name: string;
+  description: string;
+};
+
+export interface Recordstringstring {
+  [key: string]: string;
+}
+
+export interface BotResponseListStyleDto {
+  /** @maxLength 1000 */
+  item: string;
+  /** @maxLength 20 */
+  separator: string;
+  /** @maxLength 500 */
+  empty: string;
+  /**
+   * @minimum 1
+   * @maximum 50
+   */
+  limit: number;
+  /** @maxLength 200 */
+  more: string;
+  /**
+   * Texto antes da lista, só quando ela tem itens.
+   * @maxLength 200
+   */
+  prefix?: string;
+  /**
+   * Texto depois da lista, só quando ela tem itens.
+   * @maxLength 200
+   */
+  suffix?: string;
+}
+
+export type BotResponseDefinitionDtoListsItem = {
+  name: string;
+  description: string;
+  fields: BotResponseDefinitionDtoListsItemFieldsItem[];
+  examples: Recordstringstring[];
+  defaultFormat: BotResponseListStyleDto;
+};
+
 export type BotResponseDefinitionDtoActionsItem = {
   id: string;
   label: string;
@@ -361,6 +409,312 @@ export interface BotResponseEmbedDto {
   fields: BotResponseEmbedDtoFieldsItem[];
 }
 
+/**
+ * Como uma variável de lista, como `{cards}`, vira texto.
+ */
+export interface BotResponseListFormatDto {
+  /** @maxLength 1000 */
+  item: string;
+  /** @maxLength 20 */
+  separator: string;
+  /** @maxLength 500 */
+  empty: string;
+  /**
+   * @minimum 1
+   * @maximum 50
+   */
+  limit: number;
+  /** @maxLength 200 */
+  more: string;
+  /**
+   * Texto antes da lista, só quando ela tem itens.
+   * @maxLength 200
+   */
+  prefix?: string;
+  /**
+   * Texto depois da lista, só quando ela tem itens.
+   * @maxLength 200
+   */
+  suffix?: string;
+  /** @maxLength 40 */
+  source: string;
+}
+
+/**
+ * Imagem remota ou de variável, recortada no quadro.
+ */
+export type BotResponseImageLayerDtoType =
+  (typeof BotResponseImageLayerDtoType)[keyof typeof BotResponseImageLayerDtoType];
+
+export const BotResponseImageLayerDtoType = {
+  image: "image",
+} as const;
+
+export type BotResponseImageLayerDtoFit =
+  (typeof BotResponseImageLayerDtoFit)[keyof typeof BotResponseImageLayerDtoFit];
+
+export const BotResponseImageLayerDtoFit = {
+  contain: "contain",
+  cover: "cover",
+} as const;
+
+export interface BotResponseImageLayerDto {
+  /** Imagem remota ou de variável, recortada no quadro. */
+  type: BotResponseImageLayerDtoType;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  x: number;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  y: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  w: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  h: number;
+  /** @maxLength 2048 */
+  url: string;
+  fit: BotResponseImageLayerDtoFit;
+  /**
+   * @minimum 0
+   * @maximum 2048
+   */
+  radius: number;
+  /**
+   * @minimum 0
+   * @maximum 1
+   */
+  opacity: number;
+}
+
+/**
+ * Repete as camadas filhas para cada item de uma lista, em grade.
+ */
+export type BotResponseListLayerDtoType =
+  (typeof BotResponseListLayerDtoType)[keyof typeof BotResponseListLayerDtoType];
+
+export const BotResponseListLayerDtoType = {
+  list: "list",
+} as const;
+
+/**
+ * Retângulo, com gradiente e borda opcionais.
+ */
+export type BotResponseRectLayerDtoType =
+  (typeof BotResponseRectLayerDtoType)[keyof typeof BotResponseRectLayerDtoType];
+
+export const BotResponseRectLayerDtoType = {
+  rect: "rect",
+} as const;
+
+export interface BotResponseRectLayerDto {
+  /** Retângulo, com gradiente e borda opcionais. */
+  type: BotResponseRectLayerDtoType;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  x: number;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  y: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  w: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  h: number;
+  /** @pattern ^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$ */
+  fill: string;
+  /** @pattern ^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$ */
+  fill2: string;
+  /**
+   * @minimum 0
+   * @maximum 2048
+   */
+  radius: number;
+  /** @pattern ^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$ */
+  stroke: string;
+  /**
+   * @minimum 0
+   * @maximum 64
+   */
+  strokeWidth: number;
+  /**
+   * @minimum 0
+   * @maximum 1
+   */
+  opacity: number;
+  /**
+   * Valor de 0 a 100, como `{percent}`, que encurta a largura (barra de progresso).
+   * @maxLength 100
+   */
+  progress: string;
+}
+
+/**
+ * Texto com variáveis, quebra de linha e alinhamento.
+ */
+export type BotResponseTextLayerDtoType =
+  (typeof BotResponseTextLayerDtoType)[keyof typeof BotResponseTextLayerDtoType];
+
+export const BotResponseTextLayerDtoType = {
+  text: "text",
+} as const;
+
+export type BotResponseTextLayerDtoWeight =
+  (typeof BotResponseTextLayerDtoWeight)[keyof typeof BotResponseTextLayerDtoWeight];
+
+export const BotResponseTextLayerDtoWeight = {
+  NUMBER_400: 400,
+  NUMBER_600: 600,
+  NUMBER_800: 800,
+} as const;
+
+export type BotResponseTextLayerDtoAlign =
+  (typeof BotResponseTextLayerDtoAlign)[keyof typeof BotResponseTextLayerDtoAlign];
+
+export const BotResponseTextLayerDtoAlign = {
+  center: "center",
+  left: "left",
+  right: "right",
+} as const;
+
+export interface BotResponseTextLayerDto {
+  /** Texto com variáveis, quebra de linha e alinhamento. */
+  type: BotResponseTextLayerDtoType;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  x: number;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  y: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  w: number;
+  /** @maxLength 500 */
+  text: string;
+  /**
+   * @minimum 8
+   * @maximum 240
+   */
+  size: number;
+  weight: BotResponseTextLayerDtoWeight;
+  /** @pattern ^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$ */
+  color: string;
+  align: BotResponseTextLayerDtoAlign;
+  uppercase: boolean;
+  /**
+   * @minimum 1
+   * @maximum 10
+   */
+  lines: number;
+  /**
+   * @minimum 0
+   * @maximum 1
+   */
+  opacity: number;
+}
+
+export interface BotResponseListLayerDto {
+  /** Repete as camadas filhas para cada item de uma lista, em grade. */
+  type: BotResponseListLayerDtoType;
+  /** @maxLength 40 */
+  source: string;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  x: number;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  y: number;
+  /**
+   * @minimum 1
+   * @maximum 10
+   */
+  columns: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  cellWidth: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  cellHeight: number;
+  /**
+   * @minimum 0
+   * @maximum 512
+   */
+  gapX: number;
+  /**
+   * @minimum 0
+   * @maximum 512
+   */
+  gapY: number;
+  /**
+   * @minimum 0
+   * @maximum 50
+   */
+  limit: number;
+  /** @maxItems 20 */
+  layers: (
+    BotResponseImageLayerDto | BotResponseRectLayerDto | BotResponseTextLayerDto
+  )[];
+}
+
+/**
+ * Imagem gerada pelo bot; mensagens a usam como `attachment://<id>.png`.
+ */
+export interface BotResponseImageDto {
+  /** @pattern ^[a-z0-9][a-z0-9-]{0,31}$ */
+  id: string;
+  /**
+   * @minimum 64
+   * @maximum 2048
+   */
+  width: number;
+  /**
+   * @minimum 64
+   * @maximum 2048
+   */
+  height: number;
+  /** @pattern ^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$ */
+  background: string;
+  /** @maxItems 60 */
+  layers: (
+    | BotResponseImageLayerDto
+    | BotResponseListLayerDto
+    | BotResponseRectLayerDto
+    | BotResponseTextLayerDto
+  )[];
+}
+
 export interface BotResponseTemplateDto {
   mode: BotResponseTemplateDtoMode;
   /** @maxLength 2000 */
@@ -375,6 +729,10 @@ export interface BotResponseTemplateDto {
     | BotResponseSeparatorDto
     | BotResponseTextDto
   )[];
+  /** @maxItems 10 */
+  lists?: BotResponseListFormatDto[];
+  /** @maxItems 4 */
+  images?: BotResponseImageDto[];
 }
 
 export interface BotResponseDefinitionDto {
@@ -383,8 +741,37 @@ export interface BotResponseDefinitionDto {
   label: string;
   description: string;
   variables: BotResponseDefinitionDtoVariablesItem[];
+  lists: BotResponseDefinitionDtoListsItem[];
   actions: BotResponseDefinitionDtoActionsItem[];
   defaultTemplate: BotResponseTemplateDto;
+}
+
+export interface BotEmojiDto {
+  id: string;
+  name: string;
+  animated: boolean;
+  imageUrl: string;
+}
+
+export interface BotEmojiListDto {
+  /** Limite de emojis por aplicação imposto pelo Discord. */
+  limit: number;
+  emojis: BotEmojiDto[];
+}
+
+export interface CreateBotEmojiDto {
+  /** @pattern ^[A-Za-z0-9_]{2,32}$ */
+  name: string;
+  /**
+   * Data URI PNG, JPEG, GIF ou WebP com até 256 KiB.
+   * @maxLength 360000
+   */
+  image: string;
+}
+
+export interface RenameBotEmojiDto {
+  /** @pattern ^[A-Za-z0-9_]{2,32}$ */
+  name: string;
 }
 
 export type ListPackCatalog200Item = {
@@ -394,6 +781,8 @@ export type ListPackCatalog200Item = {
   cardsAmount: number;
   price: number;
   limitPerUser: number;
+  /** @nullable */
+  imageUrl: string | null;
 };
 
 export type GetPackShopParams = {
@@ -430,6 +819,8 @@ export type OpenPackBody = {
 export type OpenPack200CardsItemCard = {
   id: string;
   overall: number;
+  name: string;
+  position: string;
 };
 
 export type OpenPack200CardsItem = {
@@ -1785,6 +2176,214 @@ export type GetV1AdminCardsPlayerPhotoSuggestions200Item = {
   imageUrl: string;
   sourceUrl: string;
   provider: string;
+};
+
+export type GetV1AdminCardsSquadImportClubsParams = {
+  q: string;
+};
+
+export type GetV1AdminCardsSquadImportClubs200Item = {
+  id: number;
+  name: string;
+  league: string;
+  imageUrl: string;
+};
+
+export type GetV1AdminCardsSquadImportLeagues200Item = {
+  id: number;
+  name: string;
+  imageUrl: string;
+  clubCount: number;
+};
+
+export type GetV1AdminCardsSquadImportLeagueClubsParams = {
+  leagueId: number;
+};
+
+export type GetV1AdminCardsSquadImportLeagueClubs200Item = {
+  id: number;
+  name: string;
+  league: string;
+  imageUrl: string;
+};
+
+export type GetV1AdminCardsSquadImportSquadParams = {
+  clubId?: number;
+  name?: string;
+};
+
+export type GetV1AdminCardsSquadImportSquad200Provider =
+  (typeof GetV1AdminCardsSquadImportSquad200Provider)[keyof typeof GetV1AdminCardsSquadImportSquad200Provider];
+
+export const GetV1AdminCardsSquadImportSquad200Provider = {
+  EA_SPORTS_FC: "EA SPORTS FC",
+  TheSportsDB: "TheSportsDB",
+} as const;
+
+export type GetV1AdminCardsSquadImportSquad200Team = {
+  slug: string;
+  name: string;
+  emoji: string;
+  color: string;
+  colors?: string[];
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+/**
+ * @nullable
+ */
+export type GetV1AdminCardsSquadImportSquad200ExistingTeam = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+} | null;
+
+export type GetV1AdminCardsSquadImportSquad200PlayersItemPosition =
+  (typeof GetV1AdminCardsSquadImportSquad200PlayersItemPosition)[keyof typeof GetV1AdminCardsSquadImportSquad200PlayersItemPosition];
+
+export const GetV1AdminCardsSquadImportSquad200PlayersItemPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type GetV1AdminCardsSquadImportSquad200PlayersItemSecondaryPositionsItem =
+  (typeof GetV1AdminCardsSquadImportSquad200PlayersItemSecondaryPositionsItem)[keyof typeof GetV1AdminCardsSquadImportSquad200PlayersItemSecondaryPositionsItem];
+
+export const GetV1AdminCardsSquadImportSquad200PlayersItemSecondaryPositionsItem =
+  {
+    CA: "CA",
+    GOL: "GOL",
+    LD: "LD",
+    LE: "LE",
+    MA: "MA",
+    MC: "MC",
+    PD: "PD",
+    PE: "PE",
+    VOL: "VOL",
+    ZAG: "ZAG",
+  } as const;
+
+export type GetV1AdminCardsSquadImportSquad200PlayersItem = {
+  name: string;
+  position: GetV1AdminCardsSquadImportSquad200PlayersItemPosition;
+  secondaryPositions?: GetV1AdminCardsSquadImportSquad200PlayersItemSecondaryPositionsItem[];
+  defense: number;
+  attack: number;
+  creation: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  /** @nullable */
+  photoUrl: string | null;
+  sourceId: string;
+  overall: number;
+};
+
+export type GetV1AdminCardsSquadImportSquad200 = {
+  provider: GetV1AdminCardsSquadImportSquad200Provider;
+  estimated: boolean;
+  sourceUrl: string;
+  team: GetV1AdminCardsSquadImportSquad200Team;
+  /** @nullable */
+  crestUrl: string | null;
+  /** @nullable */
+  existingTeam: GetV1AdminCardsSquadImportSquad200ExistingTeam;
+  players: GetV1AdminCardsSquadImportSquad200PlayersItem[];
+};
+
+export type PostV1AdminCardsSquadImportBodyTeam = {
+  slug: string;
+  name: string;
+  emoji: string;
+  color: string;
+  colors?: string[];
+  /** @nullable */
+  imageUrl?: string | null;
+};
+
+export type PostV1AdminCardsSquadImportBodyPlayersItemPosition =
+  (typeof PostV1AdminCardsSquadImportBodyPlayersItemPosition)[keyof typeof PostV1AdminCardsSquadImportBodyPlayersItemPosition];
+
+export const PostV1AdminCardsSquadImportBodyPlayersItemPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PostV1AdminCardsSquadImportBodyPlayersItemSecondaryPositionsItem =
+  (typeof PostV1AdminCardsSquadImportBodyPlayersItemSecondaryPositionsItem)[keyof typeof PostV1AdminCardsSquadImportBodyPlayersItemSecondaryPositionsItem];
+
+export const PostV1AdminCardsSquadImportBodyPlayersItemSecondaryPositionsItem =
+  {
+    CA: "CA",
+    GOL: "GOL",
+    LD: "LD",
+    LE: "LE",
+    MA: "MA",
+    MC: "MC",
+    PD: "PD",
+    PE: "PE",
+    VOL: "VOL",
+    ZAG: "ZAG",
+  } as const;
+
+export type PostV1AdminCardsSquadImportBodyPlayersItem = {
+  name: string;
+  position: PostV1AdminCardsSquadImportBodyPlayersItemPosition;
+  secondaryPositions?: PostV1AdminCardsSquadImportBodyPlayersItemSecondaryPositionsItem[];
+  defense: number;
+  attack: number;
+  creation: number;
+  overall: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  /** @nullable */
+  photoUrl: string | null;
+};
+
+export type PostV1AdminCardsSquadImportBody = {
+  collectionId: string;
+  /** @nullable */
+  teamId: string | null;
+  team: PostV1AdminCardsSquadImportBodyTeam;
+  players: PostV1AdminCardsSquadImportBodyPlayersItem[];
+  /** @nullable */
+  crestUrl?: string | null;
+  replaceImages?: boolean;
+};
+
+export type PostV1AdminCardsSquadImport200 = {
+  teamId: string;
+  createCount: number;
+  updateCount: number;
+  photoCount: number;
+  photoErrors: number;
 };
 
 export type GetV1AdminCardsCollectionsParams = {
@@ -3162,6 +3761,79 @@ export const getBotResponse = async (
   });
 };
 
+export const getListAdminBotEmojisUrl = () => {
+  return `/v1/admin/bot-emojis`;
+};
+
+export const listAdminBotEmojis = async (
+  options?: Parameters<typeof request>[1],
+): Promise<BotEmojiListDto> => {
+  return request<BotEmojiListDto>(getListAdminBotEmojisUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getCreateBotEmojiUrl = () => {
+  return `/v1/admin/bot-emojis`;
+};
+
+export const createBotEmoji = async (
+  createBotEmojiDto: CreateBotEmojiDto,
+  options?: Parameters<typeof request>[1],
+): Promise<BotEmojiDto> => {
+  return request<BotEmojiDto>(getCreateBotEmojiUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createBotEmojiDto),
+  });
+};
+
+export const getRenameBotEmojiUrl = (id: string) => {
+  return `/v1/admin/bot-emojis/${id}`;
+};
+
+export const renameBotEmoji = async (
+  id: string,
+  renameBotEmojiDto: RenameBotEmojiDto,
+  options?: Parameters<typeof request>[1],
+): Promise<BotEmojiDto> => {
+  return request<BotEmojiDto>(getRenameBotEmojiUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(renameBotEmojiDto),
+  });
+};
+
+export const getDeleteBotEmojiUrl = (id: string) => {
+  return `/v1/admin/bot-emojis/${id}`;
+};
+
+export const deleteBotEmoji = async (
+  id: string,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getDeleteBotEmojiUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getListBotEmojisUrl = () => {
+  return `/v1/bot-emojis`;
+};
+
+export const listBotEmojis = async (
+  options?: Parameters<typeof request>[1],
+): Promise<BotEmojiListDto> => {
+  return request<BotEmojiListDto>(getListBotEmojisUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export const getGetV1AdminPacksUrl = () => {
   return `/v1/admin/packs`;
 };
@@ -3418,6 +4090,134 @@ export const getV1AdminCardsPlayerPhotosKindFilename = async (
     {
       ...options,
       method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsSquadImportClubsUrl = (
+  params: GetV1AdminCardsSquadImportClubsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards/squad-import/clubs?${stringifiedParams}`
+    : `/v1/admin/cards/squad-import/clubs`;
+};
+
+export const getV1AdminCardsSquadImportClubs = async (
+  params: GetV1AdminCardsSquadImportClubsParams,
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminCardsSquadImportClubs200Item[]> => {
+  return request<GetV1AdminCardsSquadImportClubs200Item[]>(
+    getGetV1AdminCardsSquadImportClubsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsSquadImportLeaguesUrl = () => {
+  return `/v1/admin/cards/squad-import/leagues`;
+};
+
+export const getV1AdminCardsSquadImportLeagues = async (
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminCardsSquadImportLeagues200Item[]> => {
+  return request<GetV1AdminCardsSquadImportLeagues200Item[]>(
+    getGetV1AdminCardsSquadImportLeaguesUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsSquadImportLeagueClubsUrl = (
+  params: GetV1AdminCardsSquadImportLeagueClubsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards/squad-import/league-clubs?${stringifiedParams}`
+    : `/v1/admin/cards/squad-import/league-clubs`;
+};
+
+export const getV1AdminCardsSquadImportLeagueClubs = async (
+  params: GetV1AdminCardsSquadImportLeagueClubsParams,
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminCardsSquadImportLeagueClubs200Item[]> => {
+  return request<GetV1AdminCardsSquadImportLeagueClubs200Item[]>(
+    getGetV1AdminCardsSquadImportLeagueClubsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsSquadImportSquadUrl = (
+  params?: GetV1AdminCardsSquadImportSquadParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards/squad-import/squad?${stringifiedParams}`
+    : `/v1/admin/cards/squad-import/squad`;
+};
+
+export const getV1AdminCardsSquadImportSquad = async (
+  params?: GetV1AdminCardsSquadImportSquadParams,
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminCardsSquadImportSquad200> => {
+  return request<GetV1AdminCardsSquadImportSquad200>(
+    getGetV1AdminCardsSquadImportSquadUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getPostV1AdminCardsSquadImportUrl = () => {
+  return `/v1/admin/cards/squad-import`;
+};
+
+export const postV1AdminCardsSquadImport = async (
+  postV1AdminCardsSquadImportBody: PostV1AdminCardsSquadImportBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PostV1AdminCardsSquadImport200> => {
+  return request<PostV1AdminCardsSquadImport200>(
+    getPostV1AdminCardsSquadImportUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(postV1AdminCardsSquadImportBody),
     },
   );
 };

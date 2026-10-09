@@ -64,14 +64,24 @@ describe('PlayerPhotosService team players', () => {
     ]);
   });
 
-  it('rejects the free key instead of returning a partial roster', async () => {
-    vi.stubEnv('THESPORTSDB_API_KEY', '123');
-    const fetchMock = vi.fn();
+  it('falls back to the free key when none is configured', async () => {
+    vi.stubEnv('THESPORTSDB_API_KEY', '');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ teams: [{ idTeam: '133604', strTeam: 'Arsenal', strSport: 'Soccer' }] }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ player: null }), { status: 200 }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(new PlayerPhotosService().teamPlayers('Arsenal')).rejects.toThrow(
-      'Configure a premium THESPORTSDB_API_KEY to load the complete roster.',
-    );
-    expect(fetchMock).not.toHaveBeenCalled();
+    const result = await new PlayerPhotosService().teamPlayers('Arsenal');
+    expect(result.players).toEqual([]);
+    expect(fetchMock.mock.calls.map(([input]) => new URL(input).pathname)).toEqual([
+      '/api/v1/json/123/searchteams.php',
+      '/api/v1/json/123/lookup_all_players.php',
+    ]);
   });
 });

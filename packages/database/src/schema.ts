@@ -39,6 +39,18 @@ export const users = pgTable(
   ],
 );
 
+export const adminSessions = pgTable('admin_sessions', {
+  tokenHash: varchar('token_hash', { length: 64 }).primaryKey(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const adminLoginAttempts = pgTable('admin_login_attempts', {
+  clientIp: varchar('client_ip', { length: 64 }).primaryKey(),
+  failures: integer('failures').notNull(),
+  windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
+});
+
 export const userClubs = pgTable(
   'user_clubs',
   {

@@ -2,7 +2,8 @@ import { purchaseCard, purchasePack } from '@futhub/api-client';
 import { Declare, Options, createStringOption } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
-import { formatCardPurchase, formatPackPurchase } from '../game.js';
+import { botResponse, identityData } from '../bot-response.js';
+import { cardPurchaseData, packPurchaseData } from '../response-data.js';
 import { initialPacksState, storeResponse, storeSessionManager } from '../store.js';
 import { CommandInputError, FutHubCommand, identity, requiredText } from './shared.js';
 
@@ -28,18 +29,24 @@ export default class LojaCommand extends FutHubCommand {
       return;
     }
     await this.respond(context, 'loja', async () => {
+      const user = identity(context);
       if (context.options.aba === 'packs') {
         const packId = context.options.pack_id?.trim();
-        return packId
-          ? formatPackPurchase(await purchasePack(packId, { identity: identity(context) }))
-          : 'Use `!loja` para abrir a loja.';
+        if (!packId) return 'Use `!loja` para abrir a loja.';
+        const result = await purchasePack(packId, { identity: user });
+        return botResponse('pack.purchase', {
+          ...identityData(user),
+          ...packPurchaseData(packId, result),
+        });
       }
       if (context.options.aba === 'contratar') {
-        return formatCardPurchase(
-          await purchaseCard(requiredText(context.options.carta_id ?? '', 'carta_id'), {
-            identity: identity(context),
-          }),
+        const result = await purchaseCard(
+          requiredText(context.options.carta_id ?? '', 'carta_id'),
+          {
+            identity: user,
+          },
         );
+        return botResponse('card.purchase', { ...identityData(user), ...cardPurchaseData(result) });
       }
       throw new CommandInputError('Aba da loja inválida.');
     });

@@ -2,6 +2,7 @@ import { TypedRoute } from '@nestia/core';
 import {
   Body,
   Controller,
+  Header,
   HttpCode,
   Inject,
   Req,
@@ -11,48 +12,67 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
-import { AdminApiConfig, adminApiKeyFromHeaders, isValidAdminApiKey } from './admin-auth.guard.js';
+import { AdminApiConfig, isValidAdminApiKey } from './admin-auth.guard.js';
+import {
+  AdminSessionService,
+  adminSessionMaxAge,
+  cookieToken,
+  requireAdminRequestHeader,
+} from './admin-session.service.js';
 import {
   type AdminSessionInput,
   AdminSessionInputSchema,
   type AdminSessionResponse,
 } from './admin-session.dto.js';
 
-const sessionCookieName = 'admin_api_key';
-const sessionMaxAgeSeconds = 60 * 60 * 8;
-
 @ApiTags('Administração / Sessão')
 @Controller('v1/admin/session')
 export class AdminSessionController {
-  constructor(@Inject(AdminApiConfig) private readonly config: AdminApiConfig) {}
+  constructor(
+    @Inject(AdminApiConfig) private readonly config: AdminApiConfig,
+    @Inject(AdminSessionService) private readonly sessions: AdminSessionService,
+  ) {}
 
   @TypedRoute.Post()
-  create(
+  @Header('Cache-Control', 'no-store')
+  async create(
     @Body({ schema: AdminSessionInputSchema }) body: AdminSessionInput,
+    @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply,
-  ): AdminSessionResponse {
+  ): Promise<AdminSessionResponse> {
+    requireAdminRequestHeader(request.headers['x-admin-request']);
+    await this.sessions.checkAttempts(request.ip);
     const { apiKey } = body;
-    if (!isValidAdminApiKey(apiKey, this.config))
+    if (!isValidAdminApiKey(apiKey, this.config)) {
+      await this.sessions.failedAttempt(request.ip);
       throw new UnauthorizedException('API key inválida.');
-    reply.header('set-cookie', this.sessionCookie(apiKey, sessionMaxAgeSeconds));
+    }
+    await this.sessions.clearAttempts(request.ip);
+    await this.sessions.revoke(cookieToken(request.headers.cookie));
+    reply.header(
+      'set-cookie',
+      this.sessions.cookie(await this.sessions.create(), adminSessionMaxAge),
+    );
     return { ok: true };
   }
 
   @TypedRoute.Get()
-  status(@Req() request: FastifyRequest): AdminSessionResponse {
-    if (!isValidAdminApiKey(adminApiKeyFromHeaders(request.headers), this.config))
+  @Header('Cache-Control', 'no-store')
+  async status(@Req() request: FastifyRequest): Promise<AdminSessionResponse> {
+    if (!(await this.sessions.valid(cookieToken(request.headers.cookie))))
       throw new UnauthorizedException();
     return { ok: true };
   }
 
   @TypedRoute.Delete()
+  @Header('Cache-Control', 'no-store')
   @HttpCode(204)
-  destroy(@Res({ passthrough: true }) reply: FastifyReply): void {
-    reply.header('set-cookie', this.sessionCookie('', 0));
-  }
-
-  private sessionCookie(apiKey: string, maxAge: number): string {
-    const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-    return `${sessionCookieName}=${encodeURIComponent(apiKey)}; HttpOnly; Max-Age=${maxAge}; Path=/; SameSite=Strict${secure}`;
+  async destroy(
+    @Req() request: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<void> {
+    requireAdminRequestHeader(request.headers['x-admin-request']);
+    await this.sessions.revoke(cookieToken(request.headers.cookie));
+    reply.header('set-cookie', this.sessions.cookie('', 0));
   }
 }

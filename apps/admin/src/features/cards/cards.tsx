@@ -48,6 +48,7 @@ import {
   updateTeam,
   uploadCardImage,
 } from './actions';
+import { SquadImportDialog } from './squad-import-dialog';
 
 type FormValues = Record<string, string | boolean>;
 type ActiveView = 'players' | 'collections' | 'teams' | 'import';
@@ -239,6 +240,7 @@ export function Cards({
   const [referenceDetail, setReferenceDetail] = useState<ReferenceDetail | null>(null);
   const [editingCollection, setEditingCollection] = useState<Collection | 'new' | null>(null);
   const [editingTeam, setEditingTeam] = useState<Team | 'new' | null>(null);
+  const [squadImportOpen, setSquadImportOpen] = useState(false);
   const [collectionArtworkSuggestions, setCollectionArtworkSuggestions] = useState<
     CollectionArtworkSuggestion[]
   >([]);
@@ -1071,13 +1073,22 @@ export function Cards({
               </button>
             )}
             {activeView === 'teams' && (
-              <button
-                className="ops-button accent"
-                onClick={() => setEditingTeam('new')}
-                type="button"
-              >
-                Novo time
-              </button>
+              <>
+                <button
+                  className="ops-button secondary"
+                  onClick={() => setSquadImportOpen(true)}
+                  type="button"
+                >
+                  Importar do EA FC
+                </button>
+                <button
+                  className="ops-button accent"
+                  onClick={() => setEditingTeam('new')}
+                  type="button"
+                >
+                  Novo time
+                </button>
+              </>
             )}
             {activeView === 'import' && (
               <button
@@ -2094,6 +2105,23 @@ export function Cards({
               </footer>
             </form>
           </dialog>
+        )}
+
+        {squadImportOpen && (
+          <SquadImportDialog
+            collections={catalog?.collections ?? []}
+            teams={catalog?.teams ?? []}
+            onClose={() => setSquadImportOpen(false)}
+            onImported={async (result, teamName) => {
+              setSquadImportOpen(false);
+              await load();
+              if (catalogView === 'teams') await loadTeamsPage(1);
+              const cards = result.createCount + result.updateCount;
+              showNotice(
+                `${teamName}: ${cards} ${cards === 1 ? 'card importado' : 'cards importados'} (${result.createCount} novos, ${result.updateCount} atualizados, ${result.photoCount} com foto${result.photoErrors ? `, ${result.photoErrors} sem foto disponível` : ''}).`,
+              );
+            }}
+          />
         )}
 
         {editingTeam && (

@@ -11,6 +11,7 @@ import { adminApiOptions } from './api/admin-client';
 import { AdminIcon } from './components/admin-icon';
 import { ChapterNavigation } from './components/chapter-navigation';
 import { LoginScene } from './components/login-stadium';
+import { BotEmojisPage } from './features/bot-emojis/bot-emojis-page';
 import {
   BotResponseDraftScope,
   BotResponsesPage,
@@ -70,6 +71,7 @@ export function App() {
           <Route path="/app/comandos" element={<CommandsPage />} />
           <Route path="/app/comandos/lucro" element={<LucroPage />} />
           <Route path="/app/respostas" element={<BotResponsesPage />} />
+          <Route path="/app/emojis" element={<BotEmojisPage />} />
           <Route path="/app/gerenciar/cards" element={<Cards view="players" />} />
           <Route path="/app/gerenciar/times" element={<Cards view="teams" />} />
           <Route path="/app/gerenciar/colecoes" element={<Cards view="collections" />} />
@@ -151,7 +153,7 @@ function LoginPage() {
     setPending(true);
     const form = new FormData(event.currentTarget);
     const apiKey = form.get('apiKey');
-    if (typeof apiKey !== 'string') {
+    if (typeof apiKey !== 'string' || !apiKey.trim()) {
       setError('Informe uma API key.');
       setPending(false);
       return;
@@ -198,11 +200,18 @@ function LoginPage() {
           required
           type="password"
         />
-        {error ? <p className="form-error">{error}</p> : null}
+        {error ? (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        ) : null}
         <button className="button-primary" disabled={pending} type="submit">
           {pending ? 'Validando…' : 'Entrar no painel'}
         </button>
-        <p className="form-note">A chave fica somente em cookie de sessão HTTP-only.</p>
+        <p className="form-note">
+          A chave valida o acesso e não é salva no navegador. A sessão expira em 8 horas e pode ser
+          encerrada a qualquer momento.
+        </p>
       </form>
     </main>
   );

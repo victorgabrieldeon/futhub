@@ -162,6 +162,20 @@
       "when": 1789652540897,
       "tag": "0023_empty_havok",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790375445200,
+      "tag": "0024_aberrant_marvex",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791481433641,
+      "tag": "0025_lucro_closing_report",
+      "breakpoints": true
     }
   ]
 }

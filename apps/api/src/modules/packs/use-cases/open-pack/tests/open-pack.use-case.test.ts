@@ -29,7 +29,7 @@ describe('OpenPackUseCase', () => {
           cardCount: 0,
           maxCards: 10,
           cardsAmount: 1,
-          candidates: [{ id: 'card-1', overall: 80 }],
+          candidates: [{ id: 'card-1', overall: 80, name: 'Card', position: 'CA' }],
           probabilities: [{ overall: 80, weight: 1 }],
           commit: async (cards) => cards.map((card) => ({ id: 'owned-1', card })),
           grantProgression: async () => progression,
@@ -40,7 +40,7 @@ describe('OpenPackUseCase', () => {
     await expect(
       new OpenPackUseCase(repository, () => 0.5).execute(identity, 'pack-1'),
     ).resolves.toEqual({
-      cards: [{ id: 'owned-1', card: { id: 'card-1', overall: 80 } }],
+      cards: [{ id: 'owned-1', card: { id: 'card-1', overall: 80, name: 'Card', position: 'CA' } }],
       progression,
     });
     expect(received).toBe(0.5);
@@ -50,18 +50,23 @@ describe('OpenPackUseCase', () => {
 describe('selectPackCards', () => {
   it('selects only eligible cards and permits duplicates', () => {
     const cards = [
-      { id: 'low', overall: 70 },
-      { id: 'high', overall: 80 },
+      { id: 'low', overall: 70, name: 'Low', position: 'CA' },
+      { id: 'high', overall: 80, name: 'High', position: 'CA' },
     ];
     expect(selectPackCards(cards, [{ overall: 80, weight: 1 }], 2, () => 0)).toEqual([
-      { id: 'high', overall: 80 },
-      { id: 'high', overall: 80 },
+      { id: 'high', overall: 80, name: 'High', position: 'CA' },
+      { id: 'high', overall: 80, name: 'High', position: 'CA' },
     ]);
   });
 
   it('rejects a pack with no eligible weighted card', () => {
     expect(() =>
-      selectPackCards([{ id: 'card', overall: 70 }], [{ overall: 80, weight: 1 }], 1, () => 0),
+      selectPackCards(
+        [{ id: 'card', overall: 70, name: 'Card', position: 'CA' }],
+        [{ overall: 80, weight: 1 }],
+        1,
+        () => 0,
+      ),
     ).toThrow('Pack has no eligible probabilities.');
   });
 });

@@ -29,6 +29,9 @@ importers:
       '@futhub/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@futhub/bot-templates':
+        specifier: workspace:*
+        version: link:../../packages/bot-templates
       '@imgly/background-removal':
         specifier: ^1.7.0
         version: 1.7.0(onnxruntime-web@1.21.0)
@@ -96,6 +99,9 @@ importers:
       '@fastify/static':
         specifier: 10.1.2
         version: 10.1.2
+      '@futhub/bot-templates':
+        specifier: workspace:*
+        version: link:../../packages/bot-templates
       '@futhub/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -184,6 +190,9 @@ importers:
       '@futhub/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@futhub/bot-templates':
+        specifier: workspace:*
+        version: link:../../packages/bot-templates
       '@napi-rs/canvas':
         specifier: 0.1.95
         version: 0.1.95
@@ -252,6 +261,21 @@ importers:
       orval:
         specifier: 8.24.0
         version: 8.24.0(prettier@3.9.6)(typescript@6.0.3)
+      tsx:
+        specifier: 4.19.3
+        version: 4.19.3
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+
+  packages/bot-templates:
+    devDependencies:
+      '@futhub/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: 22.13.4
+        version: 22.13.4
       tsx:
         specifier: 4.19.3
         version: 4.19.3

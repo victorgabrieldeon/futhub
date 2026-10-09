@@ -37,6 +37,18 @@
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
       "computedHash": "bce096b49db40761adb1d5348f064c303fc152e4e50fc3fd81b79df8b6cf137f"
     },
+    "product-showcase": {
+      "source": "jezweb/claude-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend/skills/product-showcase/SKILL.md",
+      "computedHash": "ff1cb76865d567c8cee8876543e21bc41be323983d15eec3961c8517dca076ee"
+    },
+    "showcase-page-generator": {
+      "source": "kostja94/marketing-skills",
+      "sourceType": "github",
+      "skillPath": "skills/pages/marketing/showcase/SKILL.md",
+      "computedHash": "59aaf09eed179e53cf45248a3dc8734d54475ccfe1c68794f1aa9138ea826da5"
+    },
     "tdd": {
       "source": "mattpocock/skills",
       "sourceType": "github",

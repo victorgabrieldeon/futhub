@@ -64,6 +64,11 @@ dev:
               command: pnpm --filter @futhub/api-client build
               onChange:
                 - packages/api-client/src/**
+            - name: build-bot-templates-package
+              command: pnpm --filter @futhub/bot-templates build
+              onChange:
+                - packages/bot-templates/package.json
+                - packages/bot-templates/src/**
             - name: regenerate-api-contract
               command: pnpm --filter @futhub/api openapi:generate && pnpm --filter @futhub/api build
               onChange:

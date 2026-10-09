@@ -10,6 +10,7 @@ const defaultCardObjectKey = 'defaults/card.webp';
 const maxImageBytes = 10 * 1024 * 1024;
 const importHosts = new Set([
   'assets.footylogos.com',
+  'drop-assets.ea.com',
   'game-assets.fut.gg',
   'r2.fut.gg',
   'r2.thesportsdb.com',
@@ -145,6 +146,20 @@ export class FilesService {
       .from(database.schema.files)
       .where(database.inArray(database.schema.files.id, ids));
     return new Map(rows.map((file) => [file.id, fileUrl(file.objectKey)]));
+  }
+
+  async read(fileId: string): Promise<Buffer> {
+    const database = await this.database();
+    const [file] = await database.db
+      .select({ objectKey: database.schema.files.objectKey })
+      .from(database.schema.files)
+      .where(database.eq(database.schema.files.id, fileId));
+    if (!file) throw new Error('File not found.');
+    const chunks: Buffer[] = [];
+    for await (const chunk of await this.client().getObject(this.bucket(), file.objectKey)) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
   }
 
   async removeIfUnused(fileId: string | null): Promise<void> {

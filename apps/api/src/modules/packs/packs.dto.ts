@@ -18,6 +18,7 @@ export const PackCatalogItemSchema = z.object({
   cardsAmount: z.number().int().positive(),
   price: z.number().int().nonnegative(),
   limitPerUser: z.number().int().nonnegative(),
+  imageUrl: z.string().nullable(),
 });
 export type PackCatalogItem = z.infer<typeof PackCatalogItemSchema>;
 
@@ -48,7 +49,15 @@ export type PurchasePackResponse = z.infer<typeof PurchasePackResponseSchema>;
 
 export const OpenPackResponseSchema = z.object({
   cards: z.array(
-    z.object({ id: z.string(), card: z.object({ id: z.string(), overall: z.number() }) }),
+    z.object({
+      id: z.string(),
+      card: z.object({
+        id: z.string(),
+        overall: z.number(),
+        name: z.string(),
+        position: z.string(),
+      }),
+    }),
   ),
   progression: ProgressionDtoSchema,
 });

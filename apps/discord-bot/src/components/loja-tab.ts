@@ -2,7 +2,8 @@ import { ApiClientError, inspectPack, purchaseCard, purchasePack } from '@futhub
 import { ComponentCommand, MessageFlags } from 'seyfert';
 import type { ComponentContext } from 'seyfert';
 
-import { formatPackPurchase } from '../game.js';
+import { botResponse, identityData } from '../bot-response.js';
+import { packPurchaseData } from '../response-data.js';
 import {
   cardDetailResponse,
   loadHiringState,
@@ -149,14 +150,17 @@ export default class LojaTabComponent extends ComponentCommand {
   private async purchasePack(context: ComponentContext<'Button'>, packId: string): Promise<void> {
     try {
       refreshApiClient();
-      const result = await purchasePack(packId, {
-        identity: {
-          id: context.interaction.user.id,
-          name: context.interaction.user.username,
-          avatarUrl: context.interaction.user.avatarURL(),
-        },
+      const user = {
+        id: context.interaction.user.id,
+        name: context.interaction.user.username,
+        avatarUrl: context.interaction.user.avatarURL(),
+      };
+      const result = await purchasePack(packId, { identity: user });
+      const message = await botResponse('pack.purchase', {
+        ...identityData(user),
+        ...packPurchaseData(packId, result),
       });
-      await context.write({ content: formatPackPurchase(result), flags: MessageFlags.Ephemeral });
+      await context.write({ ...message, flags: (message.flags ?? 0) | MessageFlags.Ephemeral });
     } catch (error) {
       console.error('Failed to purchase pack.', error);
       await context.write({

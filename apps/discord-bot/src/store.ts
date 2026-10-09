@@ -282,7 +282,7 @@ export async function storeResponse(
   const packs = tab === 'packs' ? await packsBody(session.state, listPacks) : undefined;
   const hiring =
     tab === 'contratar' && session.state.tab === 'contratar' ? session.state : undefined;
-  const packsImage = packs ? renderPacksImage(packs) : undefined;
+  const packsImage = packs ? await renderPacksImage(packs) : undefined;
   const tabs = new ActionRow<Button>().setComponents(
     new Button()
       .setCustomId(storeSessionManager.sign(session.id, { action: 'tab', arg: 'packs' }))

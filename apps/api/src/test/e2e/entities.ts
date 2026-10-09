@@ -119,6 +119,18 @@ export async function createCardCatalog(
   return { collectionId: collection.id, teamId: team.id };
 }
 
+export async function createTeamFixture(
+  database: Database,
+  input: Readonly<{ name: string; slug: string }>,
+): Promise<{ id: string }> {
+  const [team] = await database.db
+    .insert(database.schema.teams)
+    .values({ ...input, emoji: '⚽', color: '#000000', colors: ['#000000'] })
+    .returning({ id: database.schema.teams.id });
+  if (!team) throw new Error('Failed to create test team.');
+  return team;
+}
+
 async function createCard(
   database: Database,
   catalog: { collectionId: string; teamId: string },
@@ -433,6 +445,22 @@ export async function createBotResponseMigrationFixture(database: Database) {
     .delete(database.schema.botResponseTemplates)
     .where(database.eq(database.schema.botResponseTemplates.key, 'lucro.success'));
   return embed;
+}
+
+export async function createPackCatalogImageFixture(database: Database) {
+  const { packId: uploadedPackId } = await createPackFixture(database);
+  const { packId: externalPackId } = await createPackFixture(database);
+  const { packId: plainPackId } = await createPackFixture(database);
+  const file = await createFileFixture(database, `packs/${uploadedPackId}.png`);
+  await database.db
+    .update(database.schema.packs)
+    .set({ imageFileId: file.id, imageUrl: 'https://example.com/legacy.png' })
+    .where(database.eq(database.schema.packs.id, uploadedPackId));
+  await database.db
+    .update(database.schema.packs)
+    .set({ imageUrl: 'https://example.com/pack.png' })
+    .where(database.eq(database.schema.packs.id, externalPackId));
+  return { uploadedPackId, externalPackId, plainPackId, objectKey: file.objectKey };
 }
 
 export async function createPackShopFixture(database: Database) {

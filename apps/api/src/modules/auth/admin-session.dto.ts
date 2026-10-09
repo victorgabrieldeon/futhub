@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const AdminSessionInputSchema = z.object({
-  apiKey: z.string().trim().min(1, 'Informe API key.'),
+  apiKey: z.string().trim().min(1, 'Informe API key.').max(512),
 });
 export type AdminSessionInput = z.infer<typeof AdminSessionInputSchema>;
 

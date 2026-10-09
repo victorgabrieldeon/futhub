@@ -17,6 +17,10 @@ export const swaggerConfig = {
       name: 'Respostas do bot',
       description: 'Templates configuráveis de resposta do bot Discord.',
     },
+    {
+      name: 'Emojis do bot',
+      description: 'Emojis da aplicação Discord usados nas respostas do bot.',
+    },
     { name: 'Clube', description: 'Gestão financeira e estrutura do clube.' },
     { name: 'Comandos', description: 'Comandos executados por jogadores.' },
     { name: 'Liga', description: 'Fila ranqueada, classificação e partidas.' },
@@ -45,6 +49,7 @@ export default {
     'src/modules/team/team.controller.ts',
     'src/modules/auth/admin-session.controller.ts',
     'src/modules/bot-responses/bot-responses.controller.ts',
+    'src/modules/bot-emojis/bot-emojis.controller.ts',
     'src/modules/admin-packs/admin-packs.controller.ts',
     'src/modules/admin-cards/admin-cards.controller.ts',
   ],

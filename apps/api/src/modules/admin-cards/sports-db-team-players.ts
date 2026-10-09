@@ -1,14 +1,11 @@
-import {
-  BadGatewayException,
-  BadRequestException,
-  PreconditionFailedException,
-} from '@nestjs/common';
+import { BadGatewayException, BadRequestException } from '@nestjs/common';
 
 const sportsDbOrigin = 'https://www.thesportsdb.com';
 
 type SportsDbTeam = Readonly<{ idTeam: string; strSport: string; strTeam: string }>;
 type SportsDbPlayer = Readonly<{
   idPlayer: string;
+  strCutout?: string | null;
   strPlayer: string;
   strPosition: string | null;
   strSport: string;
@@ -21,12 +18,8 @@ export async function searchSportsDbTeamPlayers(query: string) {
   if (teamName.length < 2 || teamName.length > 100 || /\p{Cc}/u.test(teamName)) {
     throw new BadRequestException('Team name must contain 2–100 valid characters.');
   }
-  const apiKey = process.env.THESPORTSDB_API_KEY?.trim();
-  if (!apiKey || apiKey === '123') {
-    throw new PreconditionFailedException(
-      'Configure a premium THESPORTSDB_API_KEY to load the complete roster.',
-    );
-  }
+  // '123' is TheSportsDB's public free key; a premium key returns the complete roster.
+  const apiKey = process.env.THESPORTSDB_API_KEY?.trim() || '123';
   try {
     const teamResponse = await fetch(sportsDbUrl(apiKey, 'searchteams.php', ['t', teamName]), {
       signal: AbortSignal.timeout(5_000),
@@ -57,6 +50,7 @@ export async function searchSportsDbTeamPlayers(query: string) {
         name: player.strPlayer,
         team: player.strTeam ?? team.strTeam,
         position: player.strPosition ?? '',
+        cutoutUrl: player.strCutout || null,
         sourceUrl: new URL(`/player/${player.idPlayer}`, sportsDbOrigin).toString(),
       }));
     return {
@@ -128,6 +122,7 @@ function isSportsDbPlayer(value: unknown): value is SportsDbPlayer {
     (value.strPosition === null || typeof value.strPosition === 'string') &&
     value.strSport === 'Soccer' &&
     (!('strStatus' in value) || value.strStatus === null || typeof value.strStatus === 'string') &&
+    (!('strCutout' in value) || value.strCutout === null || typeof value.strCutout === 'string') &&
     (value.strTeam === null || typeof value.strTeam === 'string')
   );
 }

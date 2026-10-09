@@ -7,7 +7,7 @@ import LojaCommand from '../../src/commands/loja.js';
 import LojaPackSelectComponent from '../../src/components/loja-pack-select.js';
 import LojaTabComponent from '../../src/components/loja-tab.js';
 import { storeSessionManager } from '../../src/store.js';
-import { type ApiRequest, mockApi } from '../support/api.js';
+import { type ApiRequest, mockApi, withTemplates } from '../support/api.js';
 
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -445,7 +445,7 @@ test('nega clique expirado sem atualizar a loja', async () => {
 });
 
 test('compra pack pela aba da loja', async () => {
-  const api = mockApi({ quantity: 2, balance: 450 });
+  const api = mockApi(withTemplates({ quantity: 2, balance: 450 }));
 
   await using bot = await createMockBot({ commands: [LojaCommand] });
 
@@ -466,11 +466,12 @@ test('compra pack pela aba da loja', async () => {
         },
       },
     },
+    { method: 'GET', path: '/v1/bot-responses/pack.purchase', body: null },
   ]);
 });
 
 test('contrata carta pela aba da loja', async () => {
-  const api = mockApi({ userCardId: 'user-card-1', price: 100, balance: 350 });
+  const api = mockApi(withTemplates({ userCardId: 'user-card-1', price: 100, balance: 350 }));
 
   await using bot = await createMockBot({ commands: [LojaCommand] });
 
@@ -494,6 +495,7 @@ test('contrata carta pela aba da loja', async () => {
         },
       },
     },
+    { method: 'GET', path: '/v1/bot-responses/card.purchase', body: null },
   ]);
 });
 

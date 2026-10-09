@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import { mock, test } from 'node:test';
+
+import { createCanvas, loadImage } from '@napi-rs/canvas';
 
 import {
   initialPacksState,
@@ -15,7 +17,15 @@ const packId = (index: number): string =>
 test('renders the packs tab as Components V2', async () => {
   const session = storeSessionManager.create('owner-1', initialPacksState());
   const response = await storeResponse(session, 'packs', async () => [
-    { id: 'pack-1', name: 'Pack Ouro', emoji: '📦', cardsAmount: 3, price: 50, limitPerUser: 2 },
+    {
+      id: 'pack-1',
+      name: 'Pack Ouro',
+      emoji: '📦',
+      cardsAmount: 3,
+      price: 50,
+      limitPerUser: 2,
+      imageUrl: null,
+    },
   ]);
 
   assert.equal(response.flags, 32768);
@@ -35,6 +45,44 @@ test('renders the packs tab as Components V2', async () => {
   assert.doesNotMatch(payload, /Abra para expandir/);
 });
 
+test('draws the pack art published by the API', async () => {
+  const art = createCanvas(600, 800);
+  const artContext = art.getContext('2d');
+  artContext.fillStyle = '#ff00ff';
+  artContext.fillRect(0, 0, 600, 800);
+  const imageUrl = 'https://minio.test/futhub/packs/pack-art.png';
+  const fetchMock = mock.method(
+    globalThis,
+    'fetch',
+    async () => new Response(art.toBuffer('image/png')),
+  );
+  try {
+    const session = storeSessionManager.create('owner-1', initialPacksState());
+    const response = await storeResponse(session, 'packs', async () => [
+      {
+        id: 'pack-art',
+        name: 'Pack Arte',
+        emoji: 'P',
+        cardsAmount: 3,
+        price: 15,
+        limitPerUser: 2,
+        imageUrl,
+      },
+    ]);
+
+    assert.equal(String(fetchMock.mock.calls[0]?.arguments[0]), imageUrl);
+    const rendered = response.files[0]?.data.resolvable;
+    assert.ok(Buffer.isBuffer(rendered));
+    const output = createCanvas(1_200, 675);
+    const outputContext = output.getContext('2d');
+    outputContext.drawImage(await loadImage(rendered), 0, 0);
+    // Center of the single tile's art box.
+    assert.deepEqual([...outputContext.getImageData(600, 330, 1, 1).data], [255, 0, 255, 255]);
+  } finally {
+    fetchMock.mock.restore();
+  }
+});
+
 test('paginates packs and puts session favorites first', async () => {
   const favorite = packId(6);
   const session = storeSessionManager.create(
@@ -49,6 +97,7 @@ test('paginates packs and puts session favorites first', async () => {
       cardsAmount: 1,
       price: 10,
       limitPerUser: 1,
+      imageUrl: null,
     })),
   );
 

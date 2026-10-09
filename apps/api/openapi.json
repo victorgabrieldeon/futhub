@@ -306,6 +306,11 @@
           },
           "disabled": {
             "type": "boolean"
+          },
+          "emoji": {
+            "description": "Nome de um emoji do bot exibido antes do rótulo.",
+            "pattern": "^([A-Za-z0-9_]{2,32})?$",
+            "type": "string"
           }
         },
         "required": ["action", "label", "style", "url", "disabled"],
@@ -392,6 +397,47 @@
             },
             "type": "array"
           },
+          "lists": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "fields": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["name", "description"],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "examples": {
+                  "items": {
+                    "$ref": "#/components/schemas/Recordstringstring"
+                  },
+                  "type": "array"
+                },
+                "defaultFormat": {
+                  "$ref": "#/components/schemas/BotResponseListStyleDto"
+                }
+              },
+              "required": ["name", "description", "fields", "examples", "defaultFormat"],
+              "type": "object"
+            },
+            "type": "array"
+          },
           "actions": {
             "items": {
               "additionalProperties": false,
@@ -421,6 +467,7 @@
           "label",
           "description",
           "variables",
+          "lists",
           "actions",
           "defaultTemplate"
         ],
@@ -501,6 +548,287 @@
         ],
         "type": "object"
       },
+      "BotResponseImageDto": {
+        "additionalProperties": false,
+        "description": "Imagem gerada pelo bot; mensagens a usam como `attachment://<id>.png`.",
+        "properties": {
+          "id": {
+            "pattern": "^[a-z0-9][a-z0-9-]{0,31}$",
+            "type": "string"
+          },
+          "width": {
+            "maximum": 2048,
+            "minimum": 64,
+            "type": "integer"
+          },
+          "height": {
+            "maximum": 2048,
+            "minimum": 64,
+            "type": "integer"
+          },
+          "background": {
+            "pattern": "^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$",
+            "type": "string"
+          },
+          "layers": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/BotResponseImageLayerDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseListLayerDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseRectLayerDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseTextLayerDto"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "image": "#/components/schemas/BotResponseImageLayerDto",
+                  "list": "#/components/schemas/BotResponseListLayerDto",
+                  "rect": "#/components/schemas/BotResponseRectLayerDto",
+                  "text": "#/components/schemas/BotResponseTextLayerDto"
+                }
+              }
+            },
+            "maxItems": 60,
+            "type": "array"
+          }
+        },
+        "required": ["id", "width", "height", "background", "layers"],
+        "type": "object"
+      },
+      "BotResponseImageLayerDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["image"],
+            "title": "Tipo da camada",
+            "description": "Imagem remota ou de variável, recortada no quadro."
+          },
+          "x": {
+            "maximum": 4096,
+            "minimum": -2048,
+            "type": "integer"
+          },
+          "y": {
+            "maximum": 4096,
+            "minimum": -2048,
+            "type": "integer"
+          },
+          "w": {
+            "maximum": 4096,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "h": {
+            "maximum": 4096,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "url": {
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "fit": {
+            "type": "string",
+            "enum": ["contain", "cover"]
+          },
+          "radius": {
+            "maximum": 2048,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "opacity": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": ["type", "x", "y", "w", "h", "url", "fit", "radius", "opacity"],
+        "type": "object"
+      },
+      "BotResponseListFormatDto": {
+        "additionalProperties": false,
+        "description": "Como uma variável de lista, como `{cards}`, vira texto.",
+        "properties": {
+          "item": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "separator": {
+            "maxLength": 20,
+            "type": "string"
+          },
+          "empty": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "limit": {
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "more": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "prefix": {
+            "description": "Texto antes da lista, só quando ela tem itens.",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "suffix": {
+            "description": "Texto depois da lista, só quando ela tem itens.",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "source": {
+            "maxLength": 40,
+            "type": "string"
+          }
+        },
+        "required": ["item", "separator", "empty", "limit", "more", "source"],
+        "type": "object"
+      },
+      "BotResponseListLayerDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["list"],
+            "title": "Tipo da camada",
+            "description": "Repete as camadas filhas para cada item de uma lista, em grade."
+          },
+          "source": {
+            "maxLength": 40,
+            "type": "string"
+          },
+          "x": {
+            "maximum": 4096,
+            "minimum": -2048,
+            "type": "integer"
+          },
+          "y": {
+            "maximum": 4096,
+            "minimum": -2048,
+            "type": "integer"
+          },
+          "columns": {
+            "maximum": 10,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "cellWidth": {
+            "maximum": 4096,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "cellHeight": {
+            "maximum": 4096,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "gapX": {
+            "maximum": 512,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "gapY": {
+            "maximum": 512,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "limit": {
+            "maximum": 50,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "layers": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/BotResponseImageLayerDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseRectLayerDto"
+                },
+                {
+                  "$ref": "#/components/schemas/BotResponseTextLayerDto"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "image": "#/components/schemas/BotResponseImageLayerDto",
+                  "rect": "#/components/schemas/BotResponseRectLayerDto",
+                  "text": "#/components/schemas/BotResponseTextLayerDto"
+                }
+              }
+            },
+            "maxItems": 20,
+            "type": "array"
+          }
+        },
+        "required": [
+          "type",
+          "source",
+          "x",
+          "y",
+          "columns",
+          "cellWidth",
+          "cellHeight",
+          "gapX",
+          "gapY",
+          "limit",
+          "layers"
+        ],
+        "type": "object"
+      },
+      "BotResponseListStyleDto": {
+        "additionalProperties": false,
+        "properties": {
+          "item": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "separator": {
+            "maxLength": 20,
+            "type": "string"
+          },
+          "empty": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "limit": {
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "more": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "prefix": {
+            "description": "Texto antes da lista, só quando ela tem itens.",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "suffix": {
+            "description": "Texto depois da lista, só quando ela tem itens.",
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "required": ["item", "separator", "empty", "limit", "more"],
+        "type": "object"
+      },
       "BotResponseMediaDto": {
         "additionalProperties": false,
         "properties": {
@@ -520,6 +848,84 @@
           }
         },
         "required": ["type", "url", "description"],
+        "type": "object"
+      },
+      "BotResponseRectLayerDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["rect"],
+            "title": "Tipo da camada",
+            "description": "Retângulo, com gradiente e borda opcionais."
+          },
+          "x": {
+            "maximum": 4096,
+            "minimum": -2048,
+            "type": "integer"
+          },
+          "y": {
+            "maximum": 4096,
+            "minimum": -2048,
+            "type": "integer"
+          },
+          "w": {
+            "maximum": 4096,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "h": {
+            "maximum": 4096,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "fill": {
+            "pattern": "^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$",
+            "type": "string"
+          },
+          "fill2": {
+            "pattern": "^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$",
+            "type": "string"
+          },
+          "radius": {
+            "maximum": 2048,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "stroke": {
+            "pattern": "^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$",
+            "type": "string"
+          },
+          "strokeWidth": {
+            "maximum": 64,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "opacity": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "progress": {
+            "description": "Valor de 0 a 100, como `{percent}`, que encurta a largura (barra de progresso).",
+            "maxLength": 100,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "x",
+          "y",
+          "w",
+          "h",
+          "fill",
+          "fill2",
+          "radius",
+          "stroke",
+          "strokeWidth",
+          "opacity",
+          "progress"
+        ],
         "type": "object"
       },
       "BotResponseRowDto": {
@@ -613,6 +1019,20 @@
             },
             "maxItems": 40,
             "type": "array"
+          },
+          "lists": {
+            "items": {
+              "$ref": "#/components/schemas/BotResponseListFormatDto"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/BotResponseImageDto"
+            },
+            "maxItems": 4,
+            "type": "array"
           }
         },
         "required": ["mode", "content", "embeds", "components"],
@@ -634,6 +1054,150 @@
           }
         },
         "required": ["type", "content"],
+        "type": "object"
+      },
+      "BotResponseTextLayerDto": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["text"],
+            "title": "Tipo da camada",
+            "description": "Texto com variáveis, quebra de linha e alinhamento."
+          },
+          "x": {
+            "maximum": 4096,
+            "minimum": -2048,
+            "type": "integer"
+          },
+          "y": {
+            "maximum": 4096,
+            "minimum": -2048,
+            "type": "integer"
+          },
+          "w": {
+            "maximum": 4096,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "text": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "size": {
+            "maximum": 240,
+            "minimum": 8,
+            "type": "integer"
+          },
+          "weight": {
+            "type": "number",
+            "enum": [400, 600, 800]
+          },
+          "color": {
+            "pattern": "^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$",
+            "type": "string"
+          },
+          "align": {
+            "type": "string",
+            "enum": ["center", "left", "right"]
+          },
+          "uppercase": {
+            "type": "boolean"
+          },
+          "lines": {
+            "maximum": 10,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "opacity": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "x",
+          "y",
+          "w",
+          "text",
+          "size",
+          "weight",
+          "color",
+          "align",
+          "uppercase",
+          "lines",
+          "opacity"
+        ],
+        "type": "object"
+      },
+      "Recordstringstring": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "BotEmojiDto": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "animated": {
+            "type": "boolean"
+          },
+          "imageUrl": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "name", "animated", "imageUrl"],
+        "type": "object"
+      },
+      "BotEmojiListDto": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "description": "Limite de emojis por aplicação imposto pelo Discord.",
+            "type": "number"
+          },
+          "emojis": {
+            "items": {
+              "$ref": "#/components/schemas/BotEmojiDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["limit", "emojis"],
+        "type": "object"
+      },
+      "CreateBotEmojiDto": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "pattern": "^[A-Za-z0-9_]{2,32}$",
+            "type": "string"
+          },
+          "image": {
+            "description": "Data URI PNG, JPEG, GIF ou WebP com até 256 KiB.",
+            "maxLength": 360000,
+            "type": "string"
+          }
+        },
+        "required": ["name", "image"],
+        "type": "object"
+      },
+      "RenameBotEmojiDto": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "pattern": "^[A-Za-z0-9_]{2,32}$",
+            "type": "string"
+          }
+        },
+        "required": ["name"],
         "type": "object"
       }
     }
@@ -670,9 +1234,21 @@
                       },
                       "limitPerUser": {
                         "type": "number"
+                      },
+                      "imageUrl": {
+                        "type": "string",
+                        "nullable": true
                       }
                     },
-                    "required": ["id", "name", "emoji", "cardsAmount", "price", "limitPerUser"],
+                    "required": [
+                      "id",
+                      "name",
+                      "emoji",
+                      "cardsAmount",
+                      "price",
+                      "limitPerUser",
+                      "imageUrl"
+                    ],
                     "type": "object"
                   },
                   "type": "array",
@@ -905,9 +1481,15 @@
                               },
                               "overall": {
                                 "type": "number"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "position": {
+                                "type": "string"
                               }
                             },
-                            "required": ["id", "overall"],
+                            "required": ["id", "overall", "name", "position"],
                             "type": "object"
                           }
                         },
@@ -3606,6 +4188,163 @@
         "x-samchon-controller": "BotResponsesController"
       }
     },
+    "/v1/admin/bot-emojis": {
+      "get": {
+        "tags": ["Emojis do bot"],
+        "operationId": "listAdminBotEmojis",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotEmojiListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "admin", "bot_emojis", "list"],
+        "x-samchon-controller": "AdminBotEmojisController"
+      },
+      "post": {
+        "tags": ["Emojis do bot"],
+        "operationId": "createBotEmoji",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBotEmojiDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotEmojiDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "admin", "bot_emojis", "create"],
+        "x-samchon-controller": "AdminBotEmojisController"
+      }
+    },
+    "/v1/admin/bot-emojis/{id}": {
+      "patch": {
+        "tags": ["Emojis do bot"],
+        "operationId": "renameBotEmoji",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameBotEmojiDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotEmojiDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "admin", "bot_emojis", "rename"],
+        "x-samchon-controller": "AdminBotEmojisController"
+      },
+      "delete": {
+        "tags": ["Emojis do bot"],
+        "operationId": "deleteBotEmoji",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "admin", "bot_emojis", "remove"],
+        "x-samchon-controller": "AdminBotEmojisController"
+      }
+    },
+    "/v1/bot-emojis": {
+      "get": {
+        "tags": ["Emojis do bot"],
+        "operationId": "listBotEmojis",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BotEmojiListDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "bot_emojis", "list"],
+        "x-samchon-controller": "BotEmojisController"
+      }
+    },
     "/v1/admin/packs": {
       "get": {
         "tags": ["Administração / Packs"],
@@ -5052,6 +5791,526 @@
           }
         },
         "x-samchon-accessor": ["v1", "admin", "cards", "player_photos", "playerPhotoVariant"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/squad-import/clubs": {
+      "get": {
+        "tags": ["Administração / Cards"],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "number"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "league": {
+                        "type": "string"
+                      },
+                      "imageUrl": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["id", "name", "league", "imageUrl"],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "squad_import", "clubs", "squadImportClubs"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/squad-import/leagues": {
+      "get": {
+        "tags": ["Administração / Cards"],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "number"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "imageUrl": {
+                        "type": "string"
+                      },
+                      "clubCount": {
+                        "type": "number"
+                      }
+                    },
+                    "required": ["id", "name", "imageUrl", "clubCount"],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": [
+          "v1",
+          "admin",
+          "cards",
+          "squad_import",
+          "leagues",
+          "squadImportLeagues"
+        ],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/squad-import/league-clubs": {
+      "get": {
+        "tags": ["Administração / Cards"],
+        "parameters": [
+          {
+            "name": "leagueId",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "number"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "league": {
+                        "type": "string"
+                      },
+                      "imageUrl": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["id", "name", "league", "imageUrl"],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": [
+          "v1",
+          "admin",
+          "cards",
+          "squad_import",
+          "league_clubs",
+          "squadImportLeagueClubs"
+        ],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/squad-import/squad": {
+      "get": {
+        "tags": ["Administração / Cards"],
+        "parameters": [
+          {
+            "name": "clubId",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "provider": {
+                      "type": "string",
+                      "enum": ["EA SPORTS FC", "TheSportsDB"]
+                    },
+                    "estimated": {
+                      "type": "boolean"
+                    },
+                    "sourceUrl": {
+                      "type": "string"
+                    },
+                    "team": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "slug": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "emoji": {
+                          "type": "string"
+                        },
+                        "color": {
+                          "type": "string"
+                        },
+                        "colors": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "imageUrl": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["slug", "name", "emoji", "color", "imageUrl"],
+                      "type": "object"
+                    },
+                    "crestUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "existingTeam": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "emoji": {
+                          "type": "string"
+                        },
+                        "imageUrl": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["id", "name", "slug", "emoji", "imageUrl"],
+                      "type": "object",
+                      "nullable": true
+                    },
+                    "players": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "position": {
+                            "type": "string",
+                            "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+                          },
+                          "secondaryPositions": {
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "CA",
+                                "GOL",
+                                "LD",
+                                "LE",
+                                "MA",
+                                "MC",
+                                "PD",
+                                "PE",
+                                "VOL",
+                                "ZAG"
+                              ]
+                            },
+                            "type": "array"
+                          },
+                          "defense": {
+                            "type": "number"
+                          },
+                          "attack": {
+                            "type": "number"
+                          },
+                          "creation": {
+                            "type": "number"
+                          },
+                          "passing": {
+                            "type": "number"
+                          },
+                          "control": {
+                            "type": "number"
+                          },
+                          "marking": {
+                            "type": "number"
+                          },
+                          "pace": {
+                            "type": "number"
+                          },
+                          "dribbling": {
+                            "type": "number"
+                          },
+                          "finishing": {
+                            "type": "number"
+                          },
+                          "photoUrl": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "sourceId": {
+                            "type": "string"
+                          },
+                          "overall": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "position",
+                          "defense",
+                          "attack",
+                          "creation",
+                          "passing",
+                          "control",
+                          "marking",
+                          "pace",
+                          "dribbling",
+                          "finishing",
+                          "photoUrl",
+                          "sourceId",
+                          "overall"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "provider",
+                    "estimated",
+                    "sourceUrl",
+                    "team",
+                    "crestUrl",
+                    "existingTeam",
+                    "players"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "squad_import", "squad", "squadImportSquad"],
+        "x-samchon-controller": "AdminCardsController"
+      }
+    },
+    "/v1/admin/cards/squad-import": {
+      "post": {
+        "tags": ["Administração / Cards"],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "collectionId": {
+                    "type": "string"
+                  },
+                  "teamId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "team": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "slug": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "emoji": {
+                        "type": "string"
+                      },
+                      "color": {
+                        "type": "string"
+                      },
+                      "colors": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "imageUrl": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": ["slug", "name", "emoji", "color"],
+                    "type": "object"
+                  },
+                  "players": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "position": {
+                          "type": "string",
+                          "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+                        },
+                        "secondaryPositions": {
+                          "items": {
+                            "type": "string",
+                            "enum": ["CA", "GOL", "LD", "LE", "MA", "MC", "PD", "PE", "VOL", "ZAG"]
+                          },
+                          "type": "array"
+                        },
+                        "defense": {
+                          "type": "number"
+                        },
+                        "attack": {
+                          "type": "number"
+                        },
+                        "creation": {
+                          "type": "number"
+                        },
+                        "overall": {
+                          "type": "number"
+                        },
+                        "passing": {
+                          "type": "number"
+                        },
+                        "control": {
+                          "type": "number"
+                        },
+                        "marking": {
+                          "type": "number"
+                        },
+                        "pace": {
+                          "type": "number"
+                        },
+                        "dribbling": {
+                          "type": "number"
+                        },
+                        "finishing": {
+                          "type": "number"
+                        },
+                        "photoUrl": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "position",
+                        "defense",
+                        "attack",
+                        "creation",
+                        "overall",
+                        "passing",
+                        "control",
+                        "marking",
+                        "pace",
+                        "dribbling",
+                        "finishing",
+                        "photoUrl"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "crestUrl": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "replaceImages": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["collectionId", "teamId", "team", "players"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "teamId": {
+                      "type": "string"
+                    },
+                    "createCount": {
+                      "type": "number"
+                    },
+                    "updateCount": {
+                      "type": "number"
+                    },
+                    "photoCount": {
+                      "type": "number"
+                    },
+                    "photoErrors": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["teamId", "createCount", "updateCount", "photoCount", "photoErrors"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "cards", "squad_import", "importSquad"],
         "x-samchon-controller": "AdminCardsController"
       }
     },
@@ -7054,6 +8313,10 @@
     {
       "name": "Respostas do bot",
       "description": "Templates configuráveis de resposta do bot Discord."
+    },
+    {
+      "name": "Emojis do bot",
+      "description": "Emojis da aplicação Discord usados nas respostas do bot."
     },
     {
       "name": "Clube",

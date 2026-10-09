@@ -1,5 +1,6 @@
 import type * as DatabaseModule from '@futhub/database';
 
+import { fileUrl } from '../../files/files.service.js';
 import { advanceMissions } from '../../missions/missions.service.js';
 import { grantCommandXp } from '../../progression/progression.js';
 import { cardInventoryCapacity, upsertDiscordUser } from '../../users/user.repository.js';
@@ -20,7 +21,7 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
 
   async listAvailable(): Promise<readonly PackCatalogItem[]> {
     const { asc, db, eq, schema } = await this.loadDatabase();
-    return db
+    const rows = await db
       .select({
         id: schema.packs.id,
         name: schema.packs.name,
@@ -28,10 +29,18 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
         cardsAmount: schema.packs.cardsAmount,
         price: schema.packs.price,
         limitPerUser: schema.packs.limitPerUser,
+        imageUrl: schema.packs.imageUrl,
+        imageObjectKey: schema.files.objectKey,
       })
       .from(schema.packs)
+      .leftJoin(schema.files, eq(schema.files.id, schema.packs.imageFileId))
       .where(eq(schema.packs.canBuy, true))
       .orderBy(asc(schema.packs.name));
+    // Uploaded art wins over the legacy external URL, matching PackShopService.
+    return rows.map(({ imageObjectKey, imageUrl, ...pack }) => ({
+      ...pack,
+      imageUrl: imageObjectKey ? fileUrl(imageObjectKey) : imageUrl || null,
+    }));
   }
 
   async runPurchase<T>(
@@ -193,7 +202,12 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
       if (excludedPositionValues.length)
         conditions.push(notInArray(schema.cards.position, excludedPositionValues));
       const candidates = await tx
-        .select({ id: schema.cards.id, overall: schema.cards.overall })
+        .select({
+          id: schema.cards.id,
+          overall: schema.cards.overall,
+          name: schema.cards.name,
+          position: schema.cards.position,
+        })
         .from(schema.cards)
         .where(and(...conditions))
         .orderBy(asc(schema.cards.id));

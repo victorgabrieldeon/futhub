@@ -28,6 +28,7 @@ const chapters = [
       { label: 'Comandos', to: '/app/comandos' },
       { label: 'Economia', to: '/app/comandos/lucro' },
       { label: 'Respostas do bot', to: '/app/respostas' },
+      { label: 'Emojis do bot', to: '/app/emojis' },
       { label: 'Assistente IA', to: '/app/assistente' },
     ],
   },

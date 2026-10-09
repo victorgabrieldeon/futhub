@@ -1202,7 +1202,7 @@ export class AdminCardsService {
   }
 }
 
-function stats(
+export function stats(
   input: Pick<CardInput, 'passing' | 'control' | 'marking' | 'pace' | 'dribbling' | 'finishing'>,
 ) {
   return {
@@ -1215,7 +1215,7 @@ function stats(
   };
 }
 
-function cardValues(input: Omit<CardInput, 'slug'>) {
+export function cardValues(input: Omit<CardInput, 'slug'>) {
   return {
     name: input.name,
     collectionId: input.collectionId,

@@ -6,6 +6,8 @@ export interface BotResponseButtonDto {
   style: 'primary' | 'secondary' | 'success' | 'danger' | 'link';
   url: string & tags.MaxLength<512>;
   disabled: boolean;
+  /** Nome de um emoji do bot exibido antes do rótulo. */
+  emoji?: string & tags.Pattern<'^([A-Za-z0-9_]{2,32})?$'>;
 }
 
 export interface BotResponseTextDto {
@@ -83,11 +85,122 @@ export interface BotResponseEmbedDto {
     tags.MaxItems<25>;
 }
 
+type Coordinate = number & tags.Type<'int32'> & tags.Minimum<-2048> & tags.Maximum<4096>;
+type Size = number & tags.Type<'int32'> & tags.Minimum<1> & tags.Maximum<4096>;
+type Opacity = number & tags.Minimum<0> & tags.Maximum<1>;
+type CanvasColor = string & tags.Pattern<'^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$'>;
+
+export interface BotResponseListStyleDto {
+  item: string & tags.MaxLength<1000>;
+  separator: string & tags.MaxLength<20>;
+  empty: string & tags.MaxLength<500>;
+  limit: number & tags.Type<'uint32'> & tags.Minimum<1> & tags.Maximum<50>;
+  more: string & tags.MaxLength<200>;
+  /** Texto antes da lista, só quando ela tem itens. */
+  prefix?: string & tags.MaxLength<200>;
+  /** Texto depois da lista, só quando ela tem itens. */
+  suffix?: string & tags.MaxLength<200>;
+}
+
+/** Como uma variável de lista, como `{cards}`, vira texto. */
+export interface BotResponseListFormatDto extends BotResponseListStyleDto {
+  source: string & tags.MaxLength<40>;
+}
+
+export interface BotResponseRectLayerDto {
+  /**
+   * Retângulo, com gradiente e borda opcionais.
+   * @title Tipo da camada
+   */
+  type: 'rect';
+  x: Coordinate;
+  y: Coordinate;
+  w: Size;
+  h: Size;
+  fill: CanvasColor;
+  fill2: CanvasColor;
+  radius: number & tags.Type<'uint32'> & tags.Maximum<2048>;
+  stroke: CanvasColor;
+  strokeWidth: number & tags.Type<'uint32'> & tags.Maximum<64>;
+  opacity: Opacity;
+  /** Valor de 0 a 100, como `{percent}`, que encurta a largura (barra de progresso). */
+  progress: string & tags.MaxLength<100>;
+}
+
+export interface BotResponseTextLayerDto {
+  /**
+   * Texto com variáveis, quebra de linha e alinhamento.
+   * @title Tipo da camada
+   */
+  type: 'text';
+  x: Coordinate;
+  y: Coordinate;
+  w: Size;
+  text: string & tags.MaxLength<500>;
+  size: number & tags.Type<'uint32'> & tags.Minimum<8> & tags.Maximum<240>;
+  weight: 400 | 600 | 800;
+  color: CanvasColor;
+  align: 'left' | 'center' | 'right';
+  uppercase: boolean;
+  lines: number & tags.Type<'uint32'> & tags.Minimum<1> & tags.Maximum<10>;
+  opacity: Opacity;
+}
+
+export interface BotResponseImageLayerDto {
+  /**
+   * Imagem remota ou de variável, recortada no quadro.
+   * @title Tipo da camada
+   */
+  type: 'image';
+  x: Coordinate;
+  y: Coordinate;
+  w: Size;
+  h: Size;
+  url: string & tags.MaxLength<2048>;
+  fit: 'cover' | 'contain';
+  radius: number & tags.Type<'uint32'> & tags.Maximum<2048>;
+  opacity: Opacity;
+}
+
+export type BotResponseItemLayerDto =
+  | BotResponseRectLayerDto
+  | BotResponseTextLayerDto
+  | BotResponseImageLayerDto;
+
+export interface BotResponseListLayerDto {
+  /**
+   * Repete as camadas filhas para cada item de uma lista, em grade.
+   * @title Tipo da camada
+   */
+  type: 'list';
+  source: string & tags.MaxLength<40>;
+  x: Coordinate;
+  y: Coordinate;
+  columns: number & tags.Type<'uint32'> & tags.Minimum<1> & tags.Maximum<10>;
+  cellWidth: Size;
+  cellHeight: Size;
+  gapX: number & tags.Type<'uint32'> & tags.Maximum<512>;
+  gapY: number & tags.Type<'uint32'> & tags.Maximum<512>;
+  limit: number & tags.Type<'uint32'> & tags.Maximum<50>;
+  layers: BotResponseItemLayerDto[] & tags.MaxItems<20>;
+}
+
+/** Imagem gerada pelo bot; mensagens a usam como `attachment://<id>.png`. */
+export interface BotResponseImageDto {
+  id: string & tags.Pattern<'^[a-z0-9][a-z0-9-]{0,31}$'>;
+  width: number & tags.Type<'uint32'> & tags.Minimum<64> & tags.Maximum<2048>;
+  height: number & tags.Type<'uint32'> & tags.Minimum<64> & tags.Maximum<2048>;
+  background: CanvasColor;
+  layers: (BotResponseItemLayerDto | BotResponseListLayerDto)[] & tags.MaxItems<60>;
+}
+
 export interface BotResponseTemplateDto {
   mode: 'legacy' | 'components_v2';
   content: string & tags.MaxLength<2000>;
   embeds: BotResponseEmbedDto[] & tags.MaxItems<10>;
   components: BotResponseComponentDto[] & tags.MaxItems<40>;
+  lists?: BotResponseListFormatDto[] & tags.MaxItems<10>;
+  images?: BotResponseImageDto[] & tags.MaxItems<4>;
 }
 
 export interface BotResponseDefinitionDto {
@@ -96,6 +209,13 @@ export interface BotResponseDefinitionDto {
   label: string;
   description: string;
   variables: { token: string; description: string; example: string }[];
+  lists: {
+    name: string;
+    description: string;
+    fields: { name: string; description: string }[];
+    examples: Record<string, string>[];
+    defaultFormat: BotResponseListStyleDto;
+  }[];
   actions: { id: string; label: string; description: string }[];
   defaultTemplate: BotResponseTemplateDto;
 }
