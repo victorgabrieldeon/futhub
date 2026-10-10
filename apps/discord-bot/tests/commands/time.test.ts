@@ -7,6 +7,7 @@ import { createMockBot } from '@slipher/testing';
 import TimeCommand from '../../src/commands/time.js';
 import TimeButtonComponent from '../../src/components/time-button.js';
 import TimeSelectComponent from '../../src/components/time-select.js';
+import { EMOJI } from '../../src/emojis.js';
 import { type TeamImageTab, renderTeamImage } from '../../src/team-image.js';
 import type { TeamResponse } from '../../src/team-session.js';
 import { type ApiRequest, mockApi } from '../support/api.js';
@@ -304,7 +305,7 @@ test('executa campanha, fila, resultado e nova busca na aba Liga', async (contex
   assert.match(body(result.messages), /ÚLTIMA PARTIDA/);
   assert.match(body(result.messages), /slipher-tester 2 × 1 Rival/);
   assert.match(body(result.messages), /Resultado:.*Vitória/);
-  assert.match(body(result.messages), /42' · Titular 1 abriu o placar/);
+  assert.match(body(result.messages), /42'` \S+ Titular 1 abriu o placar/);
 
   bot.reset();
   const requeued = await bot.clickButton(buttonId(result.messages, 'Buscar nova partida'));
@@ -340,7 +341,7 @@ test('abre o painel público por prefixo, restringe os controles e mostra o club
     userId: '900000000000000006',
   });
   assert.equal(foreign.ephemeral, true);
-  assert.equal(foreign.content, 'Este painel pertence a outro jogador.');
+  assert.equal(foreign.content, `${EMOJI.alerta} Este painel pertence a outro jogador.`);
 
   bot.reset();
   const switched = await bot.selectMenu(tabs, ['inventory']);

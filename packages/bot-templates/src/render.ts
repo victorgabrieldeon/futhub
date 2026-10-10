@@ -151,6 +151,7 @@ export function render(
           const label = text(button.label, 80, 'O rótulo do botão');
           if (!url || !label.trim()) return [];
           const emoji = button.emoji ? findEmoji(scope, button.emoji) : undefined;
+          const fallback = button.emoji && !emoji ? scope.emojiFallback?.(button.emoji) : undefined;
           return [
             {
               type: 2,
@@ -160,7 +161,9 @@ export function render(
               disabled: button.disabled,
               ...(emoji
                 ? { emoji: { id: emoji.id, name: emoji.name, animated: emoji.animated } }
-                : {}),
+                : fallback
+                  ? { emoji: { name: fallback } }
+                  : {}),
             },
           ];
         });

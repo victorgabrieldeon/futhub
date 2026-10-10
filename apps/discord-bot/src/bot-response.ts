@@ -12,6 +12,7 @@ import {
 import { type Image, createCanvas, loadImage } from '@napi-rs/canvas';
 import type { CommandContext } from 'seyfert';
 
+import { EMOJI_FALLBACK, isEmojiName, registeredEmojis } from './emojis.js';
 import { imageFont } from './image-fonts.js';
 
 export type BotMessage = Parameters<CommandContext['write']>[0];
@@ -41,10 +42,7 @@ function cachedImage(url: string): Promise<Image | null> {
 
 let emojiCache: { at: number; emojis: Promise<readonly BotEmoji[]> } | undefined;
 
-// Only templates that mention emojis pay for the lookup; the list is cached for a minute.
-function emojisFor(template: Template): Promise<readonly BotEmoji[]> {
-  const json = JSON.stringify(template);
-  if (!json.includes('{emoji:') && !json.includes('"emoji":"')) return Promise.resolve([]);
+function applicationEmojis(): Promise<readonly BotEmoji[]> {
   if (emojiCache && Date.now() - emojiCache.at < 60_000) return emojiCache.emojis;
   const emojis = request<{ emojis: BotEmoji[] }>('/v1/bot-emojis', { method: 'GET' })
     .then((result) => result.emojis)
@@ -57,12 +55,31 @@ function emojisFor(template: Template): Promise<readonly BotEmoji[]> {
   return emojis;
 }
 
+// The bot's own emojis are already registered at startup; only emojis uploaded through the
+// admin panel need the API lookup, which is cached for a minute.
+async function emojisFor(entry: Definition, template: Template): Promise<readonly BotEmoji[]> {
+  const json = JSON.stringify([template, entry.lists.map((list) => list.defaultFormat)]);
+  const names = [
+    ...json.matchAll(/\{emoji:([A-Za-z0-9_]{2,32})\}|"emoji":"([A-Za-z0-9_]{2,32})"/g),
+  ].map((match) => match[1] ?? match[2] ?? '');
+  const own = registeredEmojis().map((emoji) => ({ ...emoji, animated: emoji.animated === true }));
+  if (names.every(isEmojiName)) return own;
+  return [...(await applicationEmojis()), ...own];
+}
+
+function emojiFallback(name: string): string | undefined {
+  return isEmojiName(name) ? EMOJI_FALLBACK[name] : undefined;
+}
+
 async function build(
   entry: Definition,
   template: Template,
   data: TemplateData,
 ): Promise<BotMessage> {
-  const scope = createScope(template, data, entry, await emojisFor(template));
+  const scope = {
+    ...createScope(template, data, entry, await emojisFor(entry, template)),
+    emojiFallback,
+  };
   const { body, images: generated } = render(template, scope);
   const files = await Promise.all(
     generated.map(async (image) => {

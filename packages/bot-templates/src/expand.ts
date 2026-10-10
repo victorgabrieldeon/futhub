@@ -70,8 +70,10 @@ export type Scope = {
   /** Formats for list tokens; lists without one use `fallback`. */
   formats: readonly ListFormat[];
   fallback: (source: string) => Omit<ListFormat, 'source'> | undefined;
-  /** Renders `{emoji:name}`; unknown emojis fall back to `:name:`. */
+  /** Renders `{emoji:name}`; unknown emojis use `emojiFallback`, then `:name:`. */
   emojis?: ReadonlyMap<string, BotEmoji>;
+  /** Unicode stand-in for emojis the application does not have yet. */
+  emojiFallback?: (name: string) => string | undefined;
   /** Images cannot draw Discord emojis, so canvas text drops them. */
   stripEmojis?: boolean;
 };
@@ -131,7 +133,7 @@ export function expand(text: string, scope: Scope): string {
     if (token?.emoji) {
       if (scope.stripEmojis) return '';
       const emoji = findEmoji(scope, token.name);
-      return emoji ? emojiMention(emoji) : `:${token.name}:`;
+      return emoji ? emojiMention(emoji) : (scope.emojiFallback?.(token.name) ?? `:${token.name}:`);
     }
     if (!token || !Object.hasOwn(scope.data, token.name)) return raw;
     const value = scope.data[token.name];

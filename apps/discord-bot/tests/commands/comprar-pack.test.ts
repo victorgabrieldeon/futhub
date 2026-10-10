@@ -5,6 +5,7 @@ import { createMockBot } from '@slipher/testing';
 import { MessageFlags } from 'seyfert';
 
 import ComprarPackCommand from '../../src/commands/comprar-pack.js';
+import { EMOJI } from '../../src/emojis.js';
 import { mockApi, withTemplates } from '../support/api.js';
 
 test('compra pack pelo pipeline real do Seyfert', async () => {
@@ -72,7 +73,10 @@ test('oculta erro da API ao comprar pack', async (context) => {
 
   const result = await bot.slash(ComprarPackCommand, { options: { pack_id: 'pack-1' } });
 
-  assert.equal(result.content, 'Não foi possível executar /comprar-pack. Tente novamente.');
+  assert.equal(
+    result.content,
+    `${EMOJI.erro} Não foi possível executar /comprar-pack. Tente novamente.`,
+  );
   assert.equal(result.messages[0]?.flags, MessageFlags.Ephemeral);
   assert.equal(api.requests.length, 1);
 });

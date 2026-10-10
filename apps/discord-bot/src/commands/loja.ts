@@ -3,6 +3,7 @@ import { Declare, Options, createStringOption } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
 import { botResponse, identityData } from '../bot-response.js';
+import { EMOJI } from '../emojis.js';
 import { cardPurchaseData, packPurchaseData } from '../response-data.js';
 import { initialPacksState, storeResponse, storeSessionManager } from '../store.js';
 import {
@@ -38,7 +39,7 @@ export default class LojaCommand extends FutHubCommand {
       const user = identity(context);
       if (context.options.aba === 'packs') {
         const packId = context.options.pack_id?.trim();
-        if (!packId) return 'Use `!loja` para abrir a loja.';
+        if (!packId) return `${EMOJI.loja} Use \`!loja\` para abrir a loja.`;
         const result = await purchasePack(packId, { identity: user });
         return new MissionReply(
           await botResponse('pack.purchase', {

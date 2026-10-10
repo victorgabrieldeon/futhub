@@ -6,6 +6,7 @@ import { createMockBot } from '@slipher/testing';
 import LojaCommand from '../../src/commands/loja.js';
 import LojaPackSelectComponent from '../../src/components/loja-pack-select.js';
 import LojaTabComponent from '../../src/components/loja-tab.js';
+import { EMOJI } from '../../src/emojis.js';
 import { storeSessionManager } from '../../src/store.js';
 import { type ApiRequest, mockApi, withTemplates } from '../support/api.js';
 
@@ -126,7 +127,7 @@ test('abre uma loja assinada e alterna para contratar pelo dono', async () => {
   assert.match(contratar, /^ls1:/);
   bot.reset();
   const switched = await bot.clickButton(contratar);
-  assert.match(storeBody(switched.messages), /# MERCADO DE CARTAS/);
+  assert.match(storeBody(switched.messages), /MERCADO DE CARTAS/);
   assert.match(storeBody(switched.messages), /Camisa 10/);
   const persisted = storeSessionManager.parse(contratar, '900000000000000005');
   assert.equal(persisted.kind, 'owned');
@@ -184,7 +185,7 @@ test('lista, seleciona e contrata uma carta pelo fluxo interativo', async () => 
 
   bot.reset();
   const duplicate = await bot.clickButton(buy);
-  assert.equal(duplicate.content, 'Esta contratação já foi concluída.');
+  assert.equal(duplicate.content, `${EMOJI.sucesso} Esta contratação já foi concluída.`);
   const filteredUrl = new URL(api.urls[3] ?? '', 'https://api.test');
   assert.deepEqual(filteredUrl.searchParams.getAll('positions'), ['MA']);
   assert.equal(filteredUrl.searchParams.get('sort'), 'recent');
@@ -248,7 +249,10 @@ test('não contrata outra carta por um detalhe antigo', async () => {
 
   bot.reset();
   const stale = await bot.clickButton(staleBuy);
-  assert.equal(stale.content, 'Esta carta não está mais selecionada. Abra os detalhes novamente.');
+  assert.equal(
+    stale.content,
+    `${EMOJI.alerta} Esta carta não está mais selecionada. Abra os detalhes novamente.`,
+  );
   assert.equal(api.requests.filter(({ method }) => method === 'POST').length, 0);
 });
 
@@ -259,7 +263,7 @@ test('informa falha ao abrir a loja sem vazar o erro da API', async () => {
   const result = await bot.slash(LojaCommand);
 
   assert.equal(result.ephemeral, true);
-  assert.equal(result.content, 'Não foi possível executar /loja. Tente novamente.');
+  assert.equal(result.content, `${EMOJI.erro} Não foi possível executar /loja. Tente novamente.`);
   assert.deepEqual(api.requests, [{ method: 'GET', path: '/v1/packs', body: null }]);
 });
 
@@ -283,7 +287,7 @@ test('abre a loja por comando de mensagem', async () => {
 
   const result = await bot.say('!loja');
 
-  assert.equal(result.textDisplays.join('\n'), '# FUTHUB STORE');
+  assert.equal(result.textDisplays.join('\n'), `# ${EMOJI.loja} FUTHUB STORE`);
   assert.match(JSON.stringify(result.messages), /Selecione um pack para ver os detalhes/);
   assert.match(JSON.stringify(result.messages), /Pack Ouro/);
   assert.deepEqual(api.requests, [{ method: 'GET', path: '/v1/packs', body: null }]);
@@ -390,7 +394,7 @@ test('nega clique estrangeiro ou adulterado sem atualizar a loja', async () => {
   bot.reset();
   const foreign = await bot.clickButton(contratar, { userId: '900000000000000006' });
   assert.equal(foreign.ephemeral, true);
-  assert.equal(foreign.content, 'Esta loja pertence a outro jogador.');
+  assert.equal(foreign.content, `${EMOJI.alerta} Esta loja pertence a outro jogador.`);
   assert.deepEqual(foreign.edits, []);
   assert.equal(storeSessionManager.size, beforeSize);
   const after = storeSessionManager.parse(contratar, '900000000000000005');
@@ -404,7 +408,7 @@ test('nega clique estrangeiro ou adulterado sem atualizar a loja', async () => {
   bot.reset();
   const tampered = await bot.clickButton(tamperedId);
   assert.equal(tampered.ephemeral, true);
-  assert.equal(tampered.content, 'Esta loja expirou. Use `/loja` novamente.');
+  assert.equal(tampered.content, `${EMOJI.relogio} Esta loja expirou. Use \`/loja\` novamente.`);
   assert.deepEqual(tampered.edits, []);
   assert.deepEqual(api.requests, [{ method: 'GET', path: '/v1/packs', body: null }]);
 });
@@ -436,7 +440,7 @@ test('nega clique expirado sem atualizar a loja', async () => {
     const expired = await bot.clickButton(contratar);
 
     assert.equal(expired.ephemeral, true);
-    assert.equal(expired.content, 'Esta loja expirou. Use `/loja` novamente.');
+    assert.equal(expired.content, `${EMOJI.relogio} Esta loja expirou. Use \`/loja\` novamente.`);
     assert.deepEqual(expired.edits, []);
     assert.deepEqual(api.requests, [{ method: 'GET', path: '/v1/packs', body: null }]);
   } finally {

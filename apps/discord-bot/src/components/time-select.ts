@@ -32,15 +32,18 @@ export default class TimeSelectComponent extends ComponentCommand {
       await context.write({
         content:
           parsed.kind === 'foreign'
-            ? 'Este painel pertence a outro jogador.'
-            : 'Este painel expirou. Use `/time` ou `!time` novamente.',
+            ? `${EMOJI.alerta} Este painel pertence a outro jogador.`
+            : `${EMOJI.relogio} Este painel expirou. Use \`/time\` ou \`!time\` novamente.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
     }
     const value = context.interaction.values[0];
     if (!value) {
-      await context.write({ content: 'Seleção inválida.', flags: MessageFlags.Ephemeral });
+      await context.write({
+        content: `${EMOJI.alerta} Seleção inválida.`,
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 

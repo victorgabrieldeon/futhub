@@ -13,7 +13,7 @@ import {
   TextDisplay,
 } from 'seyfert';
 
-import { EMOJI } from './emojis.js';
+import { EMOJI, positionEmoji, selectEmoji } from './emojis.js';
 import { noMentions } from './responses.js';
 import { packsImageName, renderPacksImage } from './store-packs-image.js';
 import { createStoreSessionManager } from './store-session.js';
@@ -155,8 +155,8 @@ export function packDetailResponse(
   const cardLabel = pack.cardsPerPack === 1 ? 'carta' : 'cartas';
   const content =
     tab === 'overview'
-      ? `# ${pack.name.toUpperCase()}\n**${pack.price} moedas** · **${pack.cardsPerPack} ${cardLabel}**\nAbra este pack para expandir seu elenco.`
-      : `# CONFIGURAÇÃO · ${pack.name.toUpperCase()}\n**Cartas concedidas:** ${pack.cardsPerPack}\n**Preço:** ${pack.price} moedas\n**Arte:** ${pack.imageUrl ? 'configurada' : 'não configurada'}`;
+      ? `# ${EMOJI.pack} ${pack.name.toUpperCase()}\n${EMOJI.moeda} **${pack.price} moedas** · ${EMOJI.carta} **${pack.cardsPerPack} ${cardLabel}**\nAbra este pack para expandir seu elenco.`
+      : `# ${EMOJI.config} CONFIGURAÇÃO · ${pack.name.toUpperCase()}\n${EMOJI.carta} **Cartas concedidas:** ${pack.cardsPerPack}\n${EMOJI.moeda} **Preço:** ${pack.price} moedas\n${pack.imageUrl ? EMOJI.sucesso : EMOJI.alerta} **Arte:** ${pack.imageUrl ? 'configurada' : 'não configurada'}`;
   const imageName = `pack-${pack.id}.png`;
   return {
     flags: 32768,
@@ -187,18 +187,21 @@ export function packDetailResponse(
               storeSessionManager.sign(sessionId, { action: 'detail-overview', arg: pack.id }),
             )
             .setLabel('Visão geral')
+            .setEmoji(EMOJI.visao_geral)
             .setStyle(tab === 'overview' ? ButtonStyle.Primary : ButtonStyle.Secondary),
           new Button()
             .setCustomId(
               storeSessionManager.sign(sessionId, { action: 'detail-config', arg: pack.id }),
             )
             .setLabel('Configuração')
+            .setEmoji(EMOJI.config)
             .setStyle(tab === 'config' ? ButtonStyle.Primary : ButtonStyle.Secondary),
           new Button()
             .setCustomId(
               storeSessionManager.sign(sessionId, { action: 'purchase-pack', arg: pack.id }),
             )
             .setLabel('Comprar')
+            .setEmoji(EMOJI.moeda)
             .setStyle(ButtonStyle.Success),
         ),
       ),
@@ -218,11 +221,11 @@ export function cardDetailResponse(sessionId: StoreSessionId, state: HiringState
       ? `${EMOJI.sucesso} **Contratado por ${state.purchase.price.toLocaleString('pt-BR')} moedas.** Saldo: ${state.purchase.balance.toLocaleString('pt-BR')}.`
       : undefined;
   const content = [
-    `# ${card.name.toUpperCase()} · ${card.overall} OVR`,
+    `# ${EMOJI.carta} ${card.name.toUpperCase()} · ${card.overall} OVR`,
     `${card.team.emoji} **${card.team.name}** · ${card.position} · ${card.collection.emoji} ${card.collection.name}`,
-    `**${card.price.toLocaleString('pt-BR')} moedas**`,
+    `${EMOJI.moeda} **${card.price.toLocaleString('pt-BR')} moedas**`,
     '',
-    `ATA ${card.attack} · DEF ${card.defense} · PAS ${card.passing} · CON ${card.control}`,
+    `${EMOJI.forca} ATA ${card.attack} · DEF ${card.defense} · PAS ${card.passing} · CON ${card.control}`,
     `VEL ${card.pace} · DRI ${card.dribbling} · FIN ${card.finishing}`,
     ...(purchaseStatus ? ['', purchaseStatus] : []),
     ...(notice ? ['', notice] : []),
@@ -254,6 +257,7 @@ export function cardDetailResponse(sessionId: StoreSessionId, state: HiringState
           new Button()
             .setCustomId(storeSessionManager.sign(sessionId, { action: 'buy', arg: card.id }))
             .setLabel(purchased ? 'Contratado' : 'Contratar')
+            .setEmoji(purchased ? EMOJI.sucesso : EMOJI.contratar)
             .setStyle(ButtonStyle.Success)
             .setDisabled(purchased || state.purchase.kind === 'purchasing'),
         ),
@@ -269,7 +273,9 @@ export function storeErrorResponse(message: string) {
     components: [
       new Container()
         .setColor('#8b1d3d')
-        .setComponents(new TextDisplay().setContent(`## Loja indisponível\n${message}`)),
+        .setComponents(
+          new TextDisplay().setContent(`## ${EMOJI.erro} Loja indisponível\n${message}`),
+        ),
     ],
     allowedMentions: noMentions,
   };
@@ -288,10 +294,12 @@ export async function storeResponse(
     new Button()
       .setCustomId(storeSessionManager.sign(session.id, { action: 'tab', arg: 'packs' }))
       .setLabel('Packs')
+      .setEmoji(EMOJI.pack)
       .setStyle(tab === 'packs' ? ButtonStyle.Primary : ButtonStyle.Secondary),
     new Button()
       .setCustomId(storeSessionManager.sign(session.id, { action: 'tab', arg: 'contratar' }))
       .setLabel('Contratar')
+      .setEmoji(EMOJI.contratar)
       .setStyle(tab === 'contratar' ? ButtonStyle.Primary : ButtonStyle.Secondary),
   );
   const packPicker =
@@ -302,8 +310,9 @@ export async function storeResponse(
             .setPlaceholder('Selecione um pack para ver os detalhes')
             .setOptions(
               packs.items.map((pack) => ({
-                label: `${pack.favorite ? '★ ' : ''}${pack.name}`.slice(0, 100),
+                label: pack.name.slice(0, 100),
                 value: pack.id,
+                emoji: selectEmoji(pack.favorite ? 'favorito' : 'pack'),
                 description:
                   `${pack.price} moedas · ${pack.cardsAmount} ${pack.cardsAmount === 1 ? 'carta' : 'cartas'} · Limite ${pack.limitPerUser}`.slice(
                     0,
@@ -323,6 +332,7 @@ export async function storeResponse(
               hiring.items.map((card) => ({
                 label: `${card.overall} · ${card.name}`.slice(0, 100),
                 value: card.id,
+                emoji: selectEmoji(positionEmoji(card.position)),
                 description:
                   `${card.position} · ${card.team.name} · ${card.price.toLocaleString('pt-BR')} moedas`.slice(
                     0,
@@ -344,12 +354,14 @@ export async function storeResponse(
               {
                 label: 'Todas as posições',
                 value: 'all',
+                emoji: selectEmoji('filtro'),
                 default: hiring.filters.positions.length === 0,
               },
               ...(['GOL', 'LD', 'LE', 'ZAG', 'VOL', 'MA', 'MC', 'PD', 'PE', 'CA'] as const).map(
                 (position) => ({
                   label: position,
                   value: position,
+                  emoji: selectEmoji(positionEmoji(position)),
                   default: hiring.filters.positions.includes(position),
                 }),
               ),
@@ -363,14 +375,21 @@ export async function storeResponse(
               {
                 label: 'Mais recentes',
                 value: 'recent',
+                emoji: selectEmoji('relogio'),
                 default: hiring.filters.sort === 'recent',
               },
               {
                 label: 'Maior overall',
                 value: 'overall',
+                emoji: selectEmoji('forca'),
                 default: hiring.filters.sort === 'overall',
               },
-              { label: 'Nome', value: 'name', default: hiring.filters.sort === 'name' },
+              {
+                label: 'Nome',
+                value: 'name',
+                emoji: selectEmoji('ordenar'),
+                default: hiring.filters.sort === 'name',
+              },
             ),
         ),
       ]
@@ -396,7 +415,7 @@ export async function storeResponse(
         .setColor(tab === 'packs' ? '#8b1d3d' : '#176b5b')
         .setComponents(
           tabs,
-          ...(packs ? [new TextDisplay().setContent('# FUTHUB STORE')] : []),
+          ...(packs ? [new TextDisplay().setContent(`# ${EMOJI.loja} FUTHUB STORE`)] : []),
           ...(packsImage
             ? [
                 new MediaGallery().addItems(
@@ -432,6 +451,7 @@ function paginationRow(
         }),
       )
       .setLabel('Anterior')
+      .setEmoji(EMOJI.anterior)
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(page === 1),
     new Button()
@@ -447,6 +467,7 @@ function paginationRow(
         }),
       )
       .setLabel('Próxima')
+      .setEmoji(EMOJI.proxima)
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(page === totalPages),
   );
@@ -463,7 +484,7 @@ function hiringBody(state: HiringState): string {
       300,
     ),
   );
-  return ['# MERCADO DE CARTAS', summary, ...cards].join('\n');
+  return [`# ${EMOJI.mercado} MERCADO DE CARTAS`, summary, ...cards].join('\n');
 }
 
 async function configuredListPacks(): Promise<readonly PackCatalogItem[]> {

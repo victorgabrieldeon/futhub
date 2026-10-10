@@ -36,8 +36,8 @@ export default class TimeButtonComponent extends ComponentCommand {
       await context.write({
         content:
           parsed.kind === 'foreign'
-            ? 'Este painel pertence a outro jogador.'
-            : 'Este painel expirou. Use `/time` ou `!time` novamente.',
+            ? `${EMOJI.alerta} Este painel pertence a outro jogador.`
+            : `${EMOJI.relogio} Este painel expirou. Use \`/time\` ou \`!time\` novamente.`,
         flags: MessageFlags.Ephemeral,
       });
       return;

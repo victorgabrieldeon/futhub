@@ -1,20 +1,12 @@
 import type { SimulateTestMatch200 } from '@futhub/api-client';
 import { Container, Separator, TextDisplay } from 'seyfert';
 
-import { EMOJI, type EmojiName } from './emojis.js';
+import { EMOJI, MATCH_EVENT_EMOJI } from './emojis.js';
 import { noMentions } from './responses.js';
 
 export type TestMatch = SimulateTestMatch200;
 type TestMatchTeam = TestMatch['home'];
 type TestMatchEvent = TestMatch['events'][number];
-
-const eventIcons: Record<TestMatchEvent['type'], EmojiName> = {
-  kickoff: 'apito',
-  goal: 'gol',
-  yellow_card: 'cartao_amarelo',
-  red_card: 'cartao_vermelho',
-  fulltime: 'fim_de_jogo',
-};
 
 /** Renders the match with the first `revealed` events, from kickoff up to full time. */
 export function testMatchResponse(match: TestMatch, revealed: number) {
@@ -27,16 +19,16 @@ export function testMatchResponse(match: TestMatch, revealed: number) {
     ? `${EMOJI.fim_de_jogo} **FIM DE JOGO · ${result(homeGoals, awayGoals)}**`
     : `${EMOJI.ao_vivo} **AO VIVO · ${current?.minute ?? 0}'**`;
   const lines = [
-    '# PARTIDA DE TESTE',
+    `# ${EMOJI.estadio} PARTIDA DE TESTE`,
     `## ${match.home.name} ${homeGoals} × ${awayGoals} ${match.away.name}`,
     `-# ${teamInfo(match.home)} · contra · ${teamInfo(match.away)}`,
     status,
     '',
-    '### LANCES',
+    `### ${EMOJI.apito} LANCES`,
     ...events.map((event) => eventLine(match, event)),
   ];
   const footer = [
-    '### ESCALAÇÕES',
+    `### ${EMOJI.escalacao} ESCALAÇÕES`,
     lineupLine(match.home),
     lineupLine(match.away),
     `-# Amistoso de teste: não altera liga, missões nem estatísticas · seed ${match.seed}`,
@@ -57,7 +49,7 @@ export function testMatchResponse(match: TestMatch, revealed: number) {
 }
 
 function eventLine(match: TestMatch, event: TestMatchEvent): string {
-  const line = `\`${String(event.minute).padStart(2, '0')}'\` ${EMOJI[eventIcons[event.type]]} ${event.description}`;
+  const line = `\`${String(event.minute).padStart(2, '0')}'\` ${EMOJI[MATCH_EVENT_EMOJI[event.type]]} ${event.description}`;
   if (event.type !== 'goal') return line;
   return `${line} **${match.home.name} ${event.homeGoals} × ${event.awayGoals} ${match.away.name}**`;
 }

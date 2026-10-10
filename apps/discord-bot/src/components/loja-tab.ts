@@ -33,14 +33,14 @@ export default class LojaTabComponent extends ComponentCommand {
     const parsed = storeSessionManager.parse(context.customId, userId);
     if (parsed.kind === 'foreign') {
       await context.write({
-        content: 'Esta loja pertence a outro jogador.',
+        content: `${EMOJI.alerta} Esta loja pertence a outro jogador.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
     }
     if (parsed.kind !== 'owned') {
       await context.write({
-        content: 'Esta loja expirou. Use `/loja` novamente.',
+        content: `${EMOJI.relogio} Esta loja expirou. Use \`/loja\` novamente.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -73,7 +73,7 @@ export default class LojaTabComponent extends ComponentCommand {
       parsed.session.state.purchase.kind === 'purchasing'
     ) {
       await context.write({
-        content: 'Aguarde a contratação atual terminar antes de navegar na loja.',
+        content: `${EMOJI.relogio} Aguarde a contratação atual terminar antes de navegar na loja.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -81,7 +81,7 @@ export default class LojaTabComponent extends ComponentCommand {
 
     if (!['tab', 'page', 'favorite'].includes(parsed.action.action)) {
       await context.write({
-        content: 'Esta ação não está disponível na loja.',
+        content: `${EMOJI.alerta} Esta ação não está disponível na loja.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -174,8 +174,8 @@ export default class LojaTabComponent extends ComponentCommand {
       await context.write({
         content:
           error instanceof ApiClientError && error.message.includes('Insufficient balance')
-            ? 'Saldo insuficiente para comprar este pack.'
-            : 'Não foi possível comprar este pack. Tente novamente.',
+            ? `${EMOJI.erro} Saldo insuficiente para comprar este pack.`
+            : `${EMOJI.erro} Não foi possível comprar este pack. Tente novamente.`,
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -195,7 +195,7 @@ export default class LojaTabComponent extends ComponentCommand {
       access.session.state.selection.cardId !== cardId
     ) {
       await context.write({
-        content: 'Esta carta não está mais selecionada. Abra os detalhes novamente.',
+        content: `${EMOJI.alerta} Esta carta não está mais selecionada. Abra os detalhes novamente.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -205,8 +205,8 @@ export default class LojaTabComponent extends ComponentCommand {
       await context.write({
         content:
           state.purchase.kind === 'purchased'
-            ? 'Esta contratação já foi concluída.'
-            : 'Esta contratação já está sendo processada.',
+            ? `${EMOJI.sucesso} Esta contratação já foi concluída.`
+            : `${EMOJI.relogio} Esta contratação já está sendo processada.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -215,7 +215,7 @@ export default class LojaTabComponent extends ComponentCommand {
     const started = storeSessionManager.replaceStateIf(sessionId, userId, state, pending);
     if (started.kind !== 'owned') {
       await context.write({
-        content: 'A loja mudou. Abra os detalhes da carta e tente novamente.',
+        content: `${EMOJI.alerta} A loja mudou. Abra os detalhes da carta e tente novamente.`,
         flags: MessageFlags.Ephemeral,
       });
       return;

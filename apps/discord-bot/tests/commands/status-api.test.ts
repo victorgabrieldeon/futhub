@@ -4,6 +4,7 @@ import test from 'node:test';
 import { createMockBot } from '@slipher/testing';
 
 import StatusApiCommand from '../../src/commands/status-api.js';
+import { EMOJI } from '../../src/emojis.js';
 import { mockApi } from '../support/api.js';
 
 test('informa API online pelo pipeline real do Seyfert', async () => {
@@ -13,7 +14,7 @@ test('informa API online pelo pipeline real do Seyfert', async () => {
 
   const result = await bot.slash(StatusApiCommand);
 
-  assert.equal(result.content, 'API online.');
+  assert.equal(result.content, `${EMOJI.sucesso} API online.`);
   assert.deepEqual(api.requests, [{ method: 'GET', path: '/health', body: null }]);
 });
 
@@ -24,5 +25,5 @@ test('informa API indisponível para status diferente de ok', async () => {
 
   const result = await bot.slash(StatusApiCommand);
 
-  assert.equal(result.content, 'API indisponível.');
+  assert.equal(result.content, `${EMOJI.erro} API indisponível.`);
 });

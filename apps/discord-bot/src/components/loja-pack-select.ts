@@ -3,6 +3,7 @@ import { ComponentCommand, MessageFlags } from 'seyfert';
 import type { ComponentContext } from 'seyfert';
 
 import { refreshApiClient } from '../commands/shared.js';
+import { EMOJI } from '../emojis.js';
 import {
   cardDetailResponse,
   isCardPosition,
@@ -33,14 +34,14 @@ export default class LojaPackSelectComponent extends ComponentCommand {
     const parsed = storeSessionManager.parse(context.customId, userId);
     if (parsed.kind === 'foreign') {
       await context.write({
-        content: 'Esta loja pertence a outro jogador.',
+        content: `${EMOJI.alerta} Esta loja pertence a outro jogador.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
     }
     if (parsed.kind !== 'owned') {
       await context.write({
-        content: 'Esta loja expirou. Use `/loja` novamente.',
+        content: `${EMOJI.relogio} Esta loja expirou. Use \`/loja\` novamente.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -49,7 +50,7 @@ export default class LojaPackSelectComponent extends ComponentCommand {
     const value = context.interaction.values[0];
     if (!value) {
       await context.write({
-        content: 'Selecione uma opção válida.',
+        content: `${EMOJI.alerta} Selecione uma opção válida.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -74,14 +75,14 @@ export default class LojaPackSelectComponent extends ComponentCommand {
     const current = parsed.session.state;
     if (current.tab !== 'contratar') {
       await context.write({
-        content: 'Esta opção não está disponível nesta aba.',
+        content: `${EMOJI.alerta} Esta opção não está disponível nesta aba.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
     }
     if (current.purchase.kind === 'purchasing') {
       await context.write({
-        content: 'Aguarde a contratação atual terminar antes de alterar a loja.',
+        content: `${EMOJI.relogio} Aguarde a contratação atual terminar antes de alterar a loja.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -90,7 +91,7 @@ export default class LojaPackSelectComponent extends ComponentCommand {
       const state = withHiringSelection(current, value);
       if (state.selection.kind !== 'selected' || state.selection.cardId !== value) {
         await context.write({
-          content: 'Esta carta não está mais disponível. Atualize a loja.',
+          content: `${EMOJI.alerta} Esta carta não está mais disponível. Atualize a loja.`,
           flags: MessageFlags.Ephemeral,
         });
         return;
@@ -98,7 +99,7 @@ export default class LojaPackSelectComponent extends ComponentCommand {
       const updated = storeSessionManager.replaceStateIf(parsed.session.id, userId, current, state);
       if (updated.kind !== 'owned' || updated.session.state.tab !== 'contratar') {
         await context.write({
-          content: 'Esta loja expirou. Use `/loja` novamente.',
+          content: `${EMOJI.relogio} Esta loja expirou. Use \`/loja\` novamente.`,
           flags: MessageFlags.Ephemeral,
         });
         return;
@@ -111,7 +112,7 @@ export default class LojaPackSelectComponent extends ComponentCommand {
       } catch (error) {
         console.error('Failed to show selected card.', error);
         await context.write({
-          content: 'Não foi possível abrir esta carta. Tente novamente.',
+          content: `${EMOJI.erro} Não foi possível abrir esta carta. Tente novamente.`,
           flags: MessageFlags.Ephemeral,
         });
       }
@@ -128,7 +129,7 @@ export default class LojaPackSelectComponent extends ComponentCommand {
         filters = withHiringFilter(current, { sort: value });
       } else {
         await context.write({
-          content: 'Esta ação não está disponível na loja.',
+          content: `${EMOJI.alerta} Esta ação não está disponível na loja.`,
           flags: MessageFlags.Ephemeral,
         });
         return;

@@ -3,6 +3,7 @@ import { mock, test } from 'node:test';
 
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 
+import { EMOJI } from '../src/emojis.js';
 import {
   initialPacksState,
   packDetailResponse,
@@ -36,7 +37,7 @@ test('renders the packs tab as Components V2', async () => {
   const container = response.components[0]?.toJSON();
   const title = container?.components.find((component) => component.type === 10);
   assert.ok(title && title.type === 10);
-  assert.equal(title.content, '# FUTHUB STORE');
+  assert.equal(title.content, `# ${EMOJI.loja} FUTHUB STORE`);
   const payload = JSON.stringify(container);
   assert.match(payload, /attachment:\/\/futhub-packs\.png/);
   assert.match(payload, /Selecione um pack para ver os detalhes/);
@@ -104,7 +105,7 @@ test('paginates packs and puts session favorites first', async () => {
   const container = response.components[0]?.toJSON();
   const payload = JSON.stringify(container);
   assert.match(payload, /Página 1 de 2/);
-  assert.match(payload, /"label":"★ Pack 6"/);
+  assert.match(payload, /"label":"Pack 6","value":"[^"]+","emoji":\{"name":"⭐"\}/);
   assert.doesNotMatch(payload, /Pack 5/);
   assert.match(payload, /"label":"Anterior".*"disabled":true/);
   assert.match(payload, /"label":"Próxima".*"disabled":false/);

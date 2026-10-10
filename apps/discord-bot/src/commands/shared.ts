@@ -6,6 +6,7 @@ import {
 import { Command, MessageFlags } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
+import { EMOJI } from '../emojis.js';
 import { sendMissionNotice } from '../mission-notice.js';
 
 type CommandResponse = string | Parameters<CommandContext['write']>[0];
@@ -71,7 +72,7 @@ export abstract class FutHubCommand extends Command {
         content:
           error instanceof CommandInputError
             ? error.message
-            : `Não foi possível executar /${commandName}. Tente novamente.`,
+            : `${EMOJI.erro} Não foi possível executar /${commandName}. Tente novamente.`,
         flags: MessageFlags.Ephemeral,
       });
       return;
