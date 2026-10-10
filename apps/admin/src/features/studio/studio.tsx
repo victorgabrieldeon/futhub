@@ -1819,7 +1819,8 @@ export function Studio() {
                       </label>
                       <label className="studio-field">
                         <span className="studio-field__label">
-                          Horizontal <span className="studio-field__value">{Math.round(draft.photoX)}</span>
+                          Horizontal{' '}
+                          <span className="studio-field__value">{Math.round(draft.photoX)}</span>
                         </span>
                         <input
                           max={160}
@@ -1831,7 +1832,8 @@ export function Studio() {
                       </label>
                       <label className="studio-field">
                         <span className="studio-field__label">
-                          Vertical <span className="studio-field__value">{Math.round(draft.photoY)}</span>
+                          Vertical{' '}
+                          <span className="studio-field__value">{Math.round(draft.photoY)}</span>
                         </span>
                         <input
                           max={160}

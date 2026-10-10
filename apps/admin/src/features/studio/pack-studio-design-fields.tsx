@@ -191,7 +191,8 @@ function PackStudioBackgroundFields({
         </label>
         <label className="studio-field">
           <span className="studio-field__label">
-            Intensidade da decoração <span className="studio-field__value">{draft.textureOpacity}</span>
+            Intensidade da decoração{' '}
+            <span className="studio-field__value">{draft.textureOpacity}</span>
           </span>
           <input
             max="65"
