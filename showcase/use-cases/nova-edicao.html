@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Caso: lançar uma edição nova: FutHub Admin</title>
+<meta name="description" content="Como lançar uma edição nova no FutHub numa tarde: importar um elenco, criar a coleção, desenhar cards e publicar um pack temático.">
+<meta property="og:title" content="Caso: lançar uma edição nova: FutHub Admin">
+<meta property="og:description" content="Como lançar uma edição nova no FutHub numa tarde: importar um elenco, criar a coleção, desenhar cards e publicar um pack temático.">
+<meta property="og:image" content="https://victorgabrieldeon.github.io/futhub/admin/assets/og.png">
+<meta property="og:url" content="https://victorgabrieldeon.github.io/futhub/admin/use-cases/nova-edicao.html">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://victorgabrieldeon.github.io/futhub/admin/use-cases/nova-edicao.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23111'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23d99a2b'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<script src="../assets/site.js"></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../index.html" aria-label="FutHub Admin — início">
+      <span class="brand-mark" aria-hidden="true"></span><strong>FutHub</strong><small>ADMIN</small>
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="site-nav" id="site-nav" aria-label="Principal"><a href="../index.html">Início</a><a href="../features/index.html">Recursos</a><a href="../how-it-works.html">Como funciona</a><a href="../use-cases/index.html" aria-current="page">Casos de uso</a></nav>
+    <div class="header-actions">
+      <button class="theme-toggle" type="button">Tema: auto</button>
+      <a class="btn btn-primary btn-sm" href="https://victorgabrieldeon.github.io/futhub/">Documentação <span class="arrow">→</span></a>
+    </div>
+  </div>
+</header>
+<main>
+
+<section class="page-hero"><div class="wrap">
+  <p class="crumbs"><a href="../index.html">Início</a> / <a href="index.html">Casos de uso</a> / Nova edição</p>
+  <p class="eyebrow">Caso 01</p>
+  <h1>Edição nova até sexta à noite.</h1>
+  <p class="lede">A janela de transferências fechou, o servidor quer cards novos e o fim de semana está chegando. É hora de transformar um elenco real numa edição jogável.</p>
+</div></section>
+<section style="padding-top:0"><div class="wrap story">
+  <div class="beat"><div class="time">14h00<small>ACERVO / TIMES</small></div><div class="body">
+    <p>Você abre <strong>Times</strong> e clica em “Importar do EA FC”. Digita “Liverpool”, escolhe o clube e o elenco aparece com 28 jogadores e o overall de cada um. Deixa todos marcados, escolhe “Criar novo time: Liverpool” e a coleção de destino.</p>
+    <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/gerenciar/times</span></div><img src="../assets/screens/eafc-squad.webp" alt="Elenco do Liverpool pronto para importar" loading="lazy" width="1440" height="900"></div></figure>
+  </div></div>
+  <div class="beat"><div class="time">14h20<small>ACERVO / COLEÇÕES</small></div><div class="body">
+    <p>A edição precisa de identidade. Em <strong>Coleções</strong>, “+ Nova coleção” cria o grupo, e o editor sugere a arte. É essa coleção que vai limitar o que sai no pack.</p>
+    <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/gerenciar/colecoes</span></div><img src="../assets/screens/colecoes.webp" alt="Coleções" loading="lazy" width="1440" height="900"></div></figure>
+  </div></div>
+  <div class="beat"><div class="time">14h40<small>STUDIO</small></div><div class="body">
+    <p>No <strong>Banco de jogadores</strong>, você escolhe o primeiro card e clica em “Abrir no Studio”. O Smart Fill já preencheu os dados, então falta a foto: duas buscas no TheSportsDB e um clique. Você escolhe uma paleta, a superfície holográfica e passa pelas prévias Discord e Mobile. Com <kbd>Ctrl</kbd> <kbd>K</kbd>, segue para o próximo jogador.</p>
+    <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio</span></div><img src="../assets/workflows/studio-workflow.gif" alt="Fluxo do Studio" loading="lazy" width="960" height="600"></div></figure>
+  </div></div>
+  <div class="beat"><div class="time">16h30<small>STUDIO / PACKS</small></div><div class="body">
+    <p>Os cards estão prontos. No <strong>Studio de packs</strong>, o preset Gold dá cara de edição especial. Você muda o título, testa a abertura duas vezes e clica em “Salvar e publicar”.</p>
+    <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio/packs</span></div><img src="../assets/workflows/pack-presets.gif" alt="Presets do pack" loading="lazy" width="960" height="600"></div></figure>
+  </div></div>
+  <div class="beat"><div class="time">17h00<small>PACKS</small></div><div class="body">
+    <p>Em <strong>Packs</strong>, você define 3 cartas por 15 moedas e um limite por jogador. Na elegibilidade, deixa só a nova coleção. Assim só sai card da edição nova.</p>
+    <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/gerenciar/packs</span></div><img src="../assets/screens/pack-edit.webp" alt="Editar oferta" loading="lazy" width="1440" height="900"></div></figure>
+  </div></div>
+  <div class="beat"><div class="time">17h10<small>STUDIO / EXPORTAR</small></div><div class="body">
+    <p>Para o anúncio, você exporta a imagem social e o item EA FC do card principal e posta no canal de novidades.</p>
+    <div class="outcome"><p><strong>Resultado:</strong> a edição foi ao ar numa tarde, sem abrir o banco nem o código, com o pack testado e cada card conferido nas prévias.</p></div>
+  </div></div>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap">
+  <a class="next" href="../use-cases/economia-do-servidor.html"><div><p class="eyebrow plain">Próximo caso</p><span class="display">O servidor está com moeda demais</span></div><span class="arrow">→</span></a>
+</div></section>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><strong>FutHub</strong><small>ADMIN</small></a>
+        <p style="margin-top:18px;max-width:36ch">O painel que opera o FutHub: cards, packs, economia e cada resposta do bot no Discord.</p>
+      </div>
+      <div><h4>Criar</h4><ul>
+        <li><a href="../features/card-studio.html">Studio de cards</a></li>
+        <li><a href="../features/pack-studio.html">Studio de packs</a></li>
+        <li><a href="../features/acervo.html">Acervo e importação</a></li>
+      </ul></div>
+      <div><h4>Operar</h4><ul>
+        <li><a href="../features/packs.html">Gestão de packs</a></li>
+        <li><a href="../features/economia.html">Economia e /lucro</a></li>
+        <li><a href="../features/respostas-do-bot.html">Respostas do bot</a></li>
+        <li><a href="../features/assistente-ia.html">Assistente IA</a></li>
+      </ul></div>
+      <div><h4>Entender</h4><ul>
+        <li><a href="../how-it-works.html">Como funciona</a></li>
+        <li><a href="../use-cases/index.html">Casos de uso</a></li>
+        <li><a href="https://victorgabrieldeon.github.io/futhub/">Documentação</a></li>
+      </ul></div>
+    </div>
+    <div class="footer-base"><span>FutHub · Futebol. Em coleção.</span><span>Telas reais do painel</span></div>
+  </div>
+</footer>
+</body>
+</html>

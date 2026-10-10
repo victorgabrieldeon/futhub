@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio de cards: FutHub Admin</title>
+<meta name="description" content="Monte cards de jogador com dados do banco, foto do TheSportsDB, recorte por IA, paletas e acabamentos, e exporte o kit de imagens.">
+<meta property="og:title" content="Studio de cards: FutHub Admin">
+<meta property="og:description" content="Monte cards de jogador com dados do banco, foto do TheSportsDB, recorte por IA, paletas e acabamentos, e exporte o kit de imagens.">
+<meta property="og:image" content="https://victorgabrieldeon.github.io/futhub/admin/assets/og.png">
+<meta property="og:url" content="https://victorgabrieldeon.github.io/futhub/admin/features/card-studio.html">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://victorgabrieldeon.github.io/futhub/admin/features/card-studio.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23111'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23d99a2b'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<script src="../assets/site.js"></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../index.html" aria-label="FutHub Admin — início">
+      <span class="brand-mark" aria-hidden="true"></span><strong>FutHub</strong><small>ADMIN</small>
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="site-nav" id="site-nav" aria-label="Principal"><a href="../index.html">Início</a><a href="../features/index.html" aria-current="page">Recursos</a><a href="../how-it-works.html">Como funciona</a><a href="../use-cases/index.html">Casos de uso</a></nav>
+    <div class="header-actions">
+      <button class="theme-toggle" type="button">Tema: auto</button>
+      <a class="btn btn-primary btn-sm" href="https://victorgabrieldeon.github.io/futhub/">Documentação <span class="arrow">→</span></a>
+    </div>
+  </div>
+</header>
+<main>
+
+<section class="page-hero"><div class="wrap">
+  <p class="crumbs"><a href="../index.html">Início</a> / <a href="index.html">Recursos</a> / Studio de cards</p>
+  <p class="eyebrow">01 · Studio de cards</p>
+  <h1>Do nome do jogador ao card pronto.</h1>
+  <p class="lede">A tela tem três colunas: a biblioteca de jogadores à esquerda, o card no centro e o inspetor à direita. O que você muda no inspetor aparece no card na mesma hora, e dá para ver o resultado como card, mensagem no Discord, tela de celular ou arte de divulgação.</p>
+</div></section>
+<section style="padding-top:0"><div class="wrap">
+  <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio</span></div><img class="theme-light-only" src="../assets/screens/studio-card.webp" alt="Studio de cards com o card do Joshua Kimmich" loading="lazy" width="1440" height="900"><img class="theme-dark-only" src="../assets/screens/studio-card-dark.webp" alt="Studio de cards com o card do Joshua Kimmich" loading="lazy" width="1440" height="900"></div><figcaption><strong>Studio de cards.</strong> Biblioteca, prévia e inspetor na mesma tela.</figcaption></figure>
+</div></section>
+
+<section class="band"><div class="wrap split">
+  <div class="prose">
+    <p class="eyebrow">O que faz</p>
+    <h2>Você escolhe, o Studio preenche.</h2>
+    <p>Quando você escolhe um jogador na biblioteca, o <strong>Smart Fill</strong> busca o que já existe no banco (nome, overall, posição, os seis atributos, time e coleção) e avisa quantos campos encontrou. Sobra para você só a parte criativa.</p>
+    <p>A foto vem do <strong>TheSportsDB</strong>: busque pelo nome, escolha um dos recortes e ajuste escala e posição. Se precisar de mais, o <strong>laboratório de imagem</strong> remove o fundo com IA no próprio navegador e aplica filtros prontos.</p>
+  </div>
+  <div class="prose">
+    <p class="eyebrow">Por que importa</p>
+    <h2>Um card errado no Discord todo mundo vê.</h2>
+    <p>O card aparece numa mensagem do bot, num celular e em posts de divulgação. Com as prévias você vê esses lugares antes de salvar. A barra de <strong>Conferência</strong> marca se Foto, Escudo, Dados e Visual estão prontos.</p>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="section-head"><div><p class="eyebrow">Como funciona</p><h2>Cinco passos, uma tela.</h2></div></div>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-copy"><span class="num">PASSO 01</span><h3>Escolha o jogador</h3><p>Busque por nome, time ou coleção, ou filtre por Recentes e Favoritos. O Smart Fill traz do banco os campos que já existem.</p>
+        <ul><li>Overall, posição e os seis atributos (RIT, FIN, PAS, DRI, MAR, CON)</li><li>“Sugerir por posição” propõe atributos coerentes com a função</li></ul></div>
+      <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio</span></div><img src="../assets/screens/studio-empty.webp" alt="Card do Kimmich com dados preenchidos pelo Smart Fill, ainda sem foto" loading="lazy" width="1440" height="900"></div><figcaption>Smart Fill concluído: 14 campos encontrados no banco.</figcaption></figure>
+    </div>
+    <div class="flow-step">
+      <div class="flow-copy"><span class="num">PASSO 02</span><h3>Aplique a foto</h3><p>A aba Foto busca recortes PNG e fotos do TheSportsDB pelo nome do jogador. Um clique aplica, e o enquadramento se ajusta com escala e posição.</p>
+        <ul><li>No Playground, dá para arrastar a foto direto para o card</li><li>A fonte da foto aparece com link</li></ul></div>
+      <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio</span></div><img src="../assets/screens/studio-photo-search.webp" alt="Aba Foto com quatro sugestões do TheSportsDB para Joshua Kimmich" loading="lazy" width="1440" height="900"></div><figcaption>Sugestões de foto do TheSportsDB.</figcaption></figure>
+    </div>
+    <div class="flow-step">
+      <div class="flow-copy"><span class="num">PASSO 03</span><h3>Defina o visual</h3><p>Escolha entre as paletas prontas, como Elite Aqua, Neon Azul, Gold Icon, Night Shift e Crimson Heat, ou ajuste a cor principal e a de contraste. Depois vêm o tratamento e a superfície.</p>
+        <ul><li>Superfícies: Matte, Foil, Holographic e Chrome</li><li>Tratamentos: Elite Aqua, Assinatura, Noturno e Velocidade</li><li>O botão “Randomizar” sorteia uma combinação</li></ul></div>
+      <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio</span></div><img src="../assets/screens/studio-visual.webp" alt="Aba Visual com paletas, cores e acabamento holográfico selecionado" loading="lazy" width="1440" height="900"></div><figcaption>Paletas, cores e acabamentos.</figcaption></figure>
+    </div>
+    <div class="flow-step">
+      <div class="flow-copy"><span class="num">PASSO 04</span><h3>Confira onde ele vai aparecer</h3><p>Quatro prévias: <strong>Card</strong>, <strong>Discord</strong> (dentro da mensagem do bot), <strong>Mobile</strong> (numa tela de celular) e <strong>Arte</strong> (a peça de divulgação “The game is yours”).</p></div>
+      <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio</span></div><img src="../assets/workflows/studio-workflow.gif" alt="Animação passando pelas prévias Card, Discord, Mobile e Arte" loading="lazy" width="960" height="600"></div><figcaption>O mesmo card nas quatro prévias.</figcaption></figure>
+    </div>
+    <div class="flow-step">
+      <div class="flow-copy"><span class="num">PASSO 05</span><h3>Exporte o kit de imagens</h3><p>O diálogo de exportação gera as imagens do jogador a partir do mesmo card:</p>
+        <ul><li>Item EA FC e item FUTGG, com fundo transparente</li><li>Card simples, imagem social e imagem de compartilhamento</li><li>Recorte do jogador em PNG transparente de 1200 × 1200</li><li>PNG ou WebP, em 600 × 800, 1200 × 1600 ou largura personalizada</li></ul></div>
+      <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio</span></div><img src="../assets/screens/studio-export.webp" alt="Diálogo Exportar imagens com seis tipos de saída e opções de formato" loading="lazy" width="1440" height="900"></div><figcaption>Kit de imagens do jogador.</figcaption></figure>
+    </div>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <div class="section-head"><div><p class="eyebrow">Ferramentas</p><h2>Também no Studio.</h2></div></div>
+  <div class="grid-2">
+    <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio</span></div><img src="../assets/screens/studio-treat.webp" alt="Laboratório de imagem: prepare recortes para o card" loading="lazy" width="1440" height="900"></div><figcaption><strong>Tratar imagem.</strong> Remoção de fundo com IA no navegador, comparação entre original e recorte, filtros prontos e ajustes finos.</figcaption></figure>
+    <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio</span></div><img src="../assets/screens/studio-palette.webp" alt="Paleta de ações do Studio com atalhos de criação" loading="lazy" width="1440" height="900"></div><figcaption><strong>Ctrl K.</strong> Buscar jogador, gerar card aleatório, sugerir stats, randomizar visual, duplicar.</figcaption></figure>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="section-head"><div><p class="eyebrow">Dicas</p><h2>Para quem usa todo dia.</h2></div></div>
+  <div class="tips">
+    <div><h3><kbd>Ctrl</kbd> <kbd>K</kbd> abre as ações</h3><p>Troque de jogador, gere um card aleatório ou aplique um tratamento sem tirar a mão do teclado.</p></div>
+    <div><h3>Versões antes de arriscar</h3><p>O menu “Versões” guarda até 8 snapshots do card. Experimente outra paleta e volte se não gostar. Desfazer e refazer também funcionam.</p></div>
+    <div><h3>Modo criação</h3><p>Recolha a biblioteca e o inspetor para trabalhar só com o card na tela, sem distrações.</p></div>
+    <div><h3>Camadas clicáveis</h3><p>Clique na foto, no overall, no nome ou nos stats do card para ir direto ao ajuste daquela camada.</p></div>
+    <div><h3>Comece pelo acervo</h3><p>No Banco de jogadores, “Abrir no Studio” já carrega o card escolhido com tudo preenchido.</p></div>
+    <div><h3>Salvar imagem</h3><p>Quando a Conferência estiver toda marcada, “Salvar imagem” grava a arte no card e o bot passa a usá-la.</p></div>
+  </div>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap">
+  <a class="next" href="../features/pack-studio.html"><div><p class="eyebrow plain">Próximo recurso</p><span class="display">Studio de packs</span></div><span class="arrow">→</span></a>
+</div></section>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><strong>FutHub</strong><small>ADMIN</small></a>
+        <p style="margin-top:18px;max-width:36ch">O painel que opera o FutHub: cards, packs, economia e cada resposta do bot no Discord.</p>
+      </div>
+      <div><h4>Criar</h4><ul>
+        <li><a href="../features/card-studio.html">Studio de cards</a></li>
+        <li><a href="../features/pack-studio.html">Studio de packs</a></li>
+        <li><a href="../features/acervo.html">Acervo e importação</a></li>
+      </ul></div>
+      <div><h4>Operar</h4><ul>
+        <li><a href="../features/packs.html">Gestão de packs</a></li>
+        <li><a href="../features/economia.html">Economia e /lucro</a></li>
+        <li><a href="../features/respostas-do-bot.html">Respostas do bot</a></li>
+        <li><a href="../features/assistente-ia.html">Assistente IA</a></li>
+      </ul></div>
+      <div><h4>Entender</h4><ul>
+        <li><a href="../how-it-works.html">Como funciona</a></li>
+        <li><a href="../use-cases/index.html">Casos de uso</a></li>
+        <li><a href="https://victorgabrieldeon.github.io/futhub/">Documentação</a></li>
+      </ul></div>
+    </div>
+    <div class="footer-base"><span>FutHub · Futebol. Em coleção.</span><span>Telas reais do painel</span></div>
+  </div>
+</footer>
+</body>
+</html>
