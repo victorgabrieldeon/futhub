@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, expect, test } from 'vitest';
 
 import {
-  internalToken,
   type E2eContext,
+  internalToken,
   startE2eContext,
 } from '../../../../../test/e2e/context.js';
 

@@ -1,7 +1,7 @@
 import type * as DatabaseModule from '@futhub/database';
 
 import { fileUrl } from '../../files/files.service.js';
-import { advanceMissions } from '../../missions/missions.service.js';
+import { advanceMissions, missionRewardBalance } from '../../missions/missions.service.js';
 import { grantCommandXp } from '../../progression/progression.js';
 import { cardInventoryCapacity, upsertDiscordUser } from '../../users/user.repository.js';
 import type { PackCatalogItem } from '../packs.dto.js';
@@ -50,11 +50,12 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
   ): Promise<T> {
     const database = await this.loadDatabase();
     const { db, eq, sql, schema } = database;
+    const now = new Date();
     return db.transaction(async (tx) => {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtext(${`pack:${identity.id}:${packId}`}))`,
       );
-      const user = await upsertDiscordUser(tx, schema, identity, new Date());
+      const user = await upsertDiscordUser(tx, schema, identity, now);
       const [pack] = await tx
         .select({
           id: schema.packs.id,
@@ -81,7 +82,7 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
         commit: async () => {
           const [credited] = await tx
             .update(schema.users)
-            .set({ saldo: sql`${schema.users.saldo} - ${pack.price}`, atualizadoEm: new Date() })
+            .set({ saldo: sql`${schema.users.saldo} - ${pack.price}`, atualizadoEm: now })
             .where(eq(schema.users.id, user.id))
             .returning({ balance: schema.users.saldo });
           if (!credited) throw new Error('Failed to debit user.');
@@ -97,7 +98,21 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
           await tx
             .insert(schema.transactionHistory)
             .values({ userId: user.id, type: 'purchase', amount: -pack.price });
-          return { balance: credited.balance, quantity: inventory.quantity };
+          const completedMissions = [
+            ...(await advanceMissions(database, tx, user.id, 'buy_pack', now)),
+            ...(await advanceMissions(database, tx, user.id, 'spend_balance', now, pack.price)),
+          ];
+          const rewardedPacks = completedMissions.reduce(
+            (total, { reward }) =>
+              total +
+              (reward.type === 'pack' && reward.resourceId === pack.id ? reward.quantity : 0),
+            0,
+          );
+          return {
+            balance: credited.balance + missionRewardBalance(completedMissions),
+            quantity: inventory.quantity + rewardedPacks,
+            completedMissions,
+          };
         },
       });
     });
@@ -240,12 +255,13 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
             .update(schema.userPacks)
             .set({ quantity: sql`${schema.userPacks.quantity} - 1` })
             .where(and(eq(schema.userPacks.userId, user.id), eq(schema.userPacks.packId, pack.id)));
-          await advanceMissions(database, tx, user.id, 'open_pack', now);
-          return created.map((userCard, index) => {
+          const completedMissions = await advanceMissions(database, tx, user.id, 'open_pack', now);
+          const cards = created.map((userCard, index) => {
             const card = selected[index];
             if (!card) throw new Error('Failed to map created card.');
             return { id: userCard.id, card };
           });
+          return { cards, completedMissions };
         },
       });
     });

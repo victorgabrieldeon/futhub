@@ -13,6 +13,7 @@ import {
   TextDisplay,
 } from 'seyfert';
 
+import { EMOJI } from './emojis.js';
 import { noMentions } from './responses.js';
 import { packsImageName, renderPacksImage } from './store-packs-image.js';
 import { createStoreSessionManager } from './store-session.js';
@@ -214,7 +215,7 @@ export function cardDetailResponse(sessionId: StoreSessionId, state: HiringState
   const purchased = state.purchase.kind === 'purchased' && state.purchase.cardId === card.id;
   const purchaseStatus =
     purchased && state.purchase.kind === 'purchased'
-      ? `✅ **Contratado por ${state.purchase.price.toLocaleString('pt-BR')} moedas.** Saldo: ${state.purchase.balance.toLocaleString('pt-BR')}.`
+      ? `${EMOJI.sucesso} **Contratado por ${state.purchase.price.toLocaleString('pt-BR')} moedas.** Saldo: ${state.purchase.balance.toLocaleString('pt-BR')}.`
       : undefined;
   const content = [
     `# ${card.name.toUpperCase()} · ${card.overall} OVR`,

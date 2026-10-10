@@ -32,7 +32,7 @@ test('compra e abre pack persistindo carta e progressão', async () => {
     payload: { identity },
   });
   expect(purchase.statusCode).toBe(200);
-  expect(purchase.json()).toEqual({ balance: 80, quantity: 1 });
+  expect(purchase.json()).toEqual({ balance: 80, quantity: 1, completedMissions: [] });
 
   const open = await app.inject({
     method: 'POST',

@@ -1,5 +1,5 @@
-import { GlobalFonts } from '@napi-rs/canvas';
 import { fileURLToPath } from 'node:url';
+import { GlobalFonts } from '@napi-rs/canvas';
 
 export const imageFont = 'Fira Sans';
 export const displayFont = 'Barlow Condensed';

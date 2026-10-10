@@ -58,7 +58,12 @@ test('compra e vende card, persistindo inventário, saldo e histórico', async (
     payload: { identity, userCardIds: [userCardId] },
   });
   expect(sale.statusCode).toBe(200);
-  expect(sale.json()).toEqual({ userCardIds: [userCardId], balance: 120, amount: 20 });
+  expect(sale.json()).toEqual({
+    userCardIds: [userCardId],
+    balance: 120,
+    amount: 20,
+    completedMissions: [],
+  });
 
   const sold = await database.db.query.userCards.findFirst({
     where: database.eq(database.schema.userCards.id, userCardId),

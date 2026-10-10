@@ -20,6 +20,9 @@ const variables = {
   quantity: ['Quantidade de packs no inventário após a compra', '2'],
   userCardId: ['ID da carta no elenco', '9f1c2d3e-0000-4000-8000-000000000001'],
   price: ['Preço pago', '1200'],
+  code: ['Código de resgate digitado, em maiúsculas', 'BEMVINDO'],
+  rewardLabel: ['Item recebido no resgate, já formatado', '+500 moedas'],
+  reason: ['Motivo da recusa do resgate', 'Você já resgatou este código.'],
 } satisfies Record<string, [string, string]>;
 type Variable = keyof typeof variables;
 
@@ -125,6 +128,42 @@ const lists = {
       separator: '\n',
       empty: 'Nenhuma missão ativa agora.',
       limit: 50,
+      more: '',
+    },
+  },
+  completedMissions: {
+    description: 'Missões concluídas pela ação, com a recompensa já entregue',
+    fields: [
+      ['title', 'Título da missão'],
+      ['cadence', 'Diária, Semanal ou Mensal'],
+      ['reward', 'Recompensa formatada (+25 moedas)'],
+      ['type', 'Tipo da recompensa (balance, card, pack…)'],
+      ['label', 'Tipo em português (moedas, carta, pack…)'],
+      ['quantity', 'Quantidade da recompensa'],
+    ],
+    examples: [
+      {
+        title: 'Resgate o lucro',
+        cadence: 'Diária',
+        reward: '+300 moedas',
+        type: 'balance',
+        label: 'moedas',
+        quantity: '300',
+      },
+      {
+        title: 'Abra 5 packs',
+        cadence: 'Semanal',
+        reward: '+1 pack',
+        type: 'pack',
+        label: 'pack',
+        quantity: '1',
+      },
+    ],
+    defaultFormat: {
+      item: '🎯 **{cadence}** — {title}: **{reward}**',
+      separator: '\n',
+      empty: '',
+      limit: 20,
       more: '',
     },
   },
@@ -248,6 +287,16 @@ const definitions: {
     defaultTemplate: text('{missions}'),
   },
   {
+    key: 'missoes.completed',
+    command: 'missoes',
+    label: 'Missão concluída',
+    description:
+      'Aviso enviado após /lucro, packs, contratações e vendas que concluem missões (recompensa já entregue).',
+    variables: ['userName', 'avatarUrl'],
+    lists: ['completedMissions'],
+    defaultTemplate: text('Missão concluída!\n{completedMissions}'),
+  },
+  {
     key: 'pack.purchase',
     command: 'pack',
     label: 'Pack comprado',
@@ -277,6 +326,26 @@ const definitions: {
     defaultTemplate: text(
       'Carta comprada. ID no elenco: `{userCardId}`. Preço: {price}. Saldo: {balance}.',
     ),
+  },
+  {
+    key: 'resgatar.success',
+    command: 'resgatar',
+    label: 'Código resgatado',
+    description: 'Resgate de Código de resgate concluído por /resgatar.',
+    variables: ['code', 'rewardLabel', 'balance', 'userName', 'avatarUrl'],
+    lists: [],
+    defaultTemplate: text(
+      'Código **{code}** resgatado! Você recebeu {rewardLabel}. Saldo: {balance}.',
+    ),
+  },
+  {
+    key: 'resgatar.rejected',
+    command: 'resgatar',
+    label: 'Resgate recusado',
+    description: 'Código inexistente, desativado, expirado, esgotado ou já resgatado.',
+    variables: ['code', 'reason', 'userName', 'avatarUrl'],
+    lists: [],
+    defaultTemplate: text('{reason}'),
   },
 ];
 

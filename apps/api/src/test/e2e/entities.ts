@@ -479,3 +479,87 @@ export async function createPackShopFixture(database: Database) {
   }
   return ids;
 }
+
+export async function createRedeemCodeFixture(
+  database: Database,
+  input: Readonly<{
+    code: string;
+    reward: Readonly<{
+      type: 'balance' | 'card' | 'pack';
+      amount: number;
+      cardId?: string;
+      packId?: string;
+    }>;
+    maxClaims?: number | null;
+    expiresAt?: Date | null;
+    active?: boolean;
+  }>,
+): Promise<{ redeemId: string; itemId: string }> {
+  const [item] = await database.db
+    .insert(database.schema.items)
+    .values({
+      type: input.reward.type,
+      amount: input.reward.amount,
+      cardId: input.reward.cardId ?? null,
+      packId: input.reward.packId ?? null,
+    })
+    .returning({ id: database.schema.items.id });
+  if (!item) throw new Error('Failed to create test redeem item.');
+  const [redeem] = await database.db
+    .insert(database.schema.redeems)
+    .values({
+      code: input.code,
+      itemId: item.id,
+      maxClaims: input.maxClaims ?? null,
+      expiresAt: input.expiresAt ?? null,
+      active: input.active ?? true,
+    })
+    .returning({ id: database.schema.redeems.id });
+  if (!redeem) throw new Error('Failed to create test redeem code.');
+  return { redeemId: redeem.id, itemId: item.id };
+}
+
+export async function createMissionFixture(
+  database: Database,
+  input: Readonly<{
+    title: string;
+    type: Database['schema']['missionType']['enumValues'][number];
+    cadence: 'daily' | 'weekly' | 'monthly';
+    goal?: number;
+    tier?: number;
+    reward?: Readonly<{ type: 'balance' | 'pack'; amount: number; packId?: string }>;
+  }>,
+): Promise<{ missionId: string; itemId: string }> {
+  const [text] = await database.db
+    .insert(database.schema.localizedTexts)
+    .values({})
+    .returning({ id: database.schema.localizedTexts.id });
+  if (!text) throw new Error('Failed to create mission title.');
+  await database.db.insert(database.schema.localizedTextTranslations).values({
+    localizedTextId: text.id,
+    locale: 'pt-BR',
+    content: input.title,
+  });
+  const reward = input.reward ?? { type: 'balance', amount: 25 };
+  const [item] = await database.db
+    .insert(database.schema.items)
+    .values({ type: reward.type, amount: reward.amount, packId: reward.packId ?? null })
+    .returning({ id: database.schema.items.id });
+  if (!item) throw new Error('Failed to create mission reward.');
+  const tier = input.tier ?? 1;
+  const [mission] = await database.db
+    .insert(database.schema.missions)
+    .values({
+      titleTextId: text.id,
+      type: input.type,
+      cadence: input.cadence,
+      tier,
+      goal: input.goal ?? 1,
+    })
+    .returning({ id: database.schema.missions.id });
+  if (!mission) throw new Error('Failed to create mission.');
+  await database.db
+    .insert(database.schema.missionRewards)
+    .values({ missionId: mission.id, itemId: item.id, tier });
+  return { missionId: mission.id, itemId: item.id };
+}

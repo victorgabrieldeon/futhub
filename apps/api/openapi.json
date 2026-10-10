@@ -223,6 +223,34 @@
         "required": ["id", "name", "emoji", "quantity"],
         "type": "object"
       },
+      "TeamProfile": {
+        "additionalProperties": false,
+        "properties": {
+          "level": {
+            "type": "number"
+          },
+          "xp": {
+            "type": "number"
+          },
+          "nextLevelXp": {
+            "type": "number"
+          }
+        },
+        "required": ["level", "xp", "nextLevelXp"],
+        "type": "object"
+      },
+      "TeamProfit": {
+        "additionalProperties": false,
+        "properties": {
+          "availableAt": {
+            "type": "string",
+            "nullable": true,
+            "description": "Quando o próximo lucro libera; `null` se já pode ser resgatado."
+          }
+        },
+        "required": ["availableAt"],
+        "type": "object"
+      },
       "TeamResponse": {
         "additionalProperties": false,
         "properties": {
@@ -268,6 +296,12 @@
               "$ref": "#/components/schemas/TeamCollection"
             },
             "type": "array"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/TeamProfile"
+          },
+          "profit": {
+            "$ref": "#/components/schemas/TeamProfit"
           }
         },
         "required": [
@@ -280,7 +314,9 @@
           "lineup",
           "inventory",
           "packs",
-          "collections"
+          "collections",
+          "profile",
+          "profit"
         ],
         "type": "object"
       },
@@ -1395,9 +1431,50 @@
                     },
                     "quantity": {
                       "type": "number"
+                    },
+                    "completedMissions": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "cadence": {
+                            "type": "string",
+                            "enum": ["daily", "monthly", "weekly"]
+                          },
+                          "reward": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": ["balance", "card", "field", "pack"]
+                              },
+                              "quantity": {
+                                "type": "number"
+                              },
+                              "resourceId": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            },
+                            "required": ["itemId", "type", "quantity", "resourceId"],
+                            "type": "object"
+                          }
+                        },
+                        "required": ["id", "title", "cadence", "reward"],
+                        "type": "object"
+                      },
+                      "type": "array"
                     }
                   },
-                  "required": ["balance", "quantity"],
+                  "required": ["balance", "quantity", "completedMissions"],
                   "type": "object"
                 }
               }
@@ -1540,9 +1617,50 @@
                       },
                       "required": ["gainedXp", "level", "xp", "nextLevelXp", "rewards"],
                       "type": "object"
+                    },
+                    "completedMissions": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "cadence": {
+                            "type": "string",
+                            "enum": ["daily", "monthly", "weekly"]
+                          },
+                          "reward": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": ["balance", "card", "field", "pack"]
+                              },
+                              "quantity": {
+                                "type": "number"
+                              },
+                              "resourceId": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            },
+                            "required": ["itemId", "type", "quantity", "resourceId"],
+                            "type": "object"
+                          }
+                        },
+                        "required": ["id", "title", "cadence", "reward"],
+                        "type": "object"
+                      },
+                      "type": "array"
                     }
                   },
-                  "required": ["cards", "progression"],
+                  "required": ["cards", "progression", "completedMissions"],
                   "type": "object"
                 }
               }
@@ -1607,7 +1725,16 @@
                           },
                           "type": {
                             "type": "string",
-                            "enum": ["claim_profit", "open_pack", "play_match", "sell_player"]
+                            "enum": [
+                              "buy_pack",
+                              "buy_player",
+                              "claim_profit",
+                              "open_pack",
+                              "play_match",
+                              "sell_player",
+                              "spend_balance",
+                              "win_match"
+                            ]
                           },
                           "cadence": {
                             "type": "string",
@@ -1686,6 +1813,635 @@
         ],
         "x-samchon-accessor": ["v1", "missions", "list"],
         "x-samchon-controller": "MissionsController"
+      }
+    },
+    "/v1/admin/missions": {
+      "get": {
+        "tags": ["Administração / Missões"],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "buy_pack",
+                          "buy_player",
+                          "claim_profit",
+                          "open_pack",
+                          "play_match",
+                          "sell_player",
+                          "spend_balance",
+                          "win_match"
+                        ]
+                      },
+                      "cadence": {
+                        "type": "string",
+                        "enum": ["daily", "monthly", "weekly"]
+                      },
+                      "tier": {
+                        "type": "number"
+                      },
+                      "goal": {
+                        "type": "number"
+                      },
+                      "active": {
+                        "type": "boolean"
+                      },
+                      "assignments": {
+                        "type": "number"
+                      },
+                      "locked": {
+                        "description": "Type, cadence, tier and goal are immutable once a player received the mission.",
+                        "type": "boolean"
+                      },
+                      "rewards": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "itemId": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": ["balance", "card", "field", "pack"]
+                            },
+                            "amount": {
+                              "type": "number"
+                            },
+                            "resourceId": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "resourceName": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          },
+                          "required": ["itemId", "type", "amount", "resourceId", "resourceName"],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "title",
+                      "type",
+                      "cadence",
+                      "tier",
+                      "goal",
+                      "active",
+                      "assignments",
+                      "locked",
+                      "rewards"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "missions", "list"],
+        "x-samchon-controller": "AdminMissionsController"
+      },
+      "post": {
+        "tags": ["Administração / Missões"],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "buy_pack",
+                      "buy_player",
+                      "claim_profit",
+                      "open_pack",
+                      "play_match",
+                      "sell_player",
+                      "spend_balance",
+                      "win_match"
+                    ]
+                  },
+                  "cadence": {
+                    "type": "string",
+                    "enum": ["daily", "monthly", "weekly"]
+                  },
+                  "tier": {
+                    "description": "Slot of the cycle: each player gets one random active mission per cadence and tier.",
+                    "type": "number"
+                  },
+                  "goal": {
+                    "type": "number"
+                  },
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "rewards": {
+                    "description": "Pool drawn from when the mission is assigned; one reward is picked at random.",
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": ["balance", "card", "field", "pack"]
+                        },
+                        "amount": {
+                          "type": "number"
+                        },
+                        "resourceId": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["type", "amount", "resourceId"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["title", "type", "cadence", "tier", "goal", "active", "rewards"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "buy_pack",
+                        "buy_player",
+                        "claim_profit",
+                        "open_pack",
+                        "play_match",
+                        "sell_player",
+                        "spend_balance",
+                        "win_match"
+                      ]
+                    },
+                    "cadence": {
+                      "type": "string",
+                      "enum": ["daily", "monthly", "weekly"]
+                    },
+                    "tier": {
+                      "type": "number"
+                    },
+                    "goal": {
+                      "type": "number"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "assignments": {
+                      "type": "number"
+                    },
+                    "locked": {
+                      "description": "Type, cadence, tier and goal are immutable once a player received the mission.",
+                      "type": "boolean"
+                    },
+                    "rewards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": ["balance", "card", "field", "pack"]
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "resourceId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "resourceName": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        },
+                        "required": ["itemId", "type", "amount", "resourceId", "resourceName"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "type",
+                    "cadence",
+                    "tier",
+                    "goal",
+                    "active",
+                    "assignments",
+                    "locked",
+                    "rewards"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "missions", "create"],
+        "x-samchon-controller": "AdminMissionsController"
+      }
+    },
+    "/v1/admin/missions/options": {
+      "get": {
+        "tags": ["Administração / Missões"],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "cards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "packs": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": ["cards", "packs", "fields"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "missions", "options"],
+        "x-samchon-controller": "AdminMissionsController"
+      }
+    },
+    "/v1/admin/missions/{id}": {
+      "put": {
+        "tags": ["Administração / Missões"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "buy_pack",
+                      "buy_player",
+                      "claim_profit",
+                      "open_pack",
+                      "play_match",
+                      "sell_player",
+                      "spend_balance",
+                      "win_match"
+                    ]
+                  },
+                  "cadence": {
+                    "type": "string",
+                    "enum": ["daily", "monthly", "weekly"]
+                  },
+                  "tier": {
+                    "description": "Slot of the cycle: each player gets one random active mission per cadence and tier.",
+                    "type": "number"
+                  },
+                  "goal": {
+                    "type": "number"
+                  },
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "rewards": {
+                    "description": "Pool drawn from when the mission is assigned; one reward is picked at random.",
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": ["balance", "card", "field", "pack"]
+                        },
+                        "amount": {
+                          "type": "number"
+                        },
+                        "resourceId": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["type", "amount", "resourceId"],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": ["title", "type", "cadence", "tier", "goal", "active", "rewards"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "buy_pack",
+                        "buy_player",
+                        "claim_profit",
+                        "open_pack",
+                        "play_match",
+                        "sell_player",
+                        "spend_balance",
+                        "win_match"
+                      ]
+                    },
+                    "cadence": {
+                      "type": "string",
+                      "enum": ["daily", "monthly", "weekly"]
+                    },
+                    "tier": {
+                      "type": "number"
+                    },
+                    "goal": {
+                      "type": "number"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "assignments": {
+                      "type": "number"
+                    },
+                    "locked": {
+                      "description": "Type, cadence, tier and goal are immutable once a player received the mission.",
+                      "type": "boolean"
+                    },
+                    "rewards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": ["balance", "card", "field", "pack"]
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "resourceId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "resourceName": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        },
+                        "required": ["itemId", "type", "amount", "resourceId", "resourceName"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "type",
+                    "cadence",
+                    "tier",
+                    "goal",
+                    "active",
+                    "assignments",
+                    "locked",
+                    "rewards"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "missions", "update"],
+        "x-samchon-controller": "AdminMissionsController"
+      },
+      "delete": {
+        "tags": ["Administração / Missões"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "buy_pack",
+                        "buy_player",
+                        "claim_profit",
+                        "open_pack",
+                        "play_match",
+                        "sell_player",
+                        "spend_balance",
+                        "win_match"
+                      ]
+                    },
+                    "cadence": {
+                      "type": "string",
+                      "enum": ["daily", "monthly", "weekly"]
+                    },
+                    "tier": {
+                      "type": "number"
+                    },
+                    "goal": {
+                      "type": "number"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "assignments": {
+                      "type": "number"
+                    },
+                    "locked": {
+                      "description": "Type, cadence, tier and goal are immutable once a player received the mission.",
+                      "type": "boolean"
+                    },
+                    "rewards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": ["balance", "card", "field", "pack"]
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "resourceId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "resourceName": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        },
+                        "required": ["itemId", "type", "amount", "resourceId", "resourceName"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "type",
+                    "cadence",
+                    "tier",
+                    "goal",
+                    "active",
+                    "assignments",
+                    "locked",
+                    "rewards"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "missions", "remove"],
+        "x-samchon-controller": "AdminMissionsController"
       }
     },
     "/v1/commands/lucro": {
@@ -1831,6 +2587,47 @@
                           "required": ["gainedXp", "level", "xp", "nextLevelXp", "rewards"],
                           "type": "object"
                         },
+                        "completedMissions": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "cadence": {
+                                "type": "string",
+                                "enum": ["daily", "monthly", "weekly"]
+                              },
+                              "reward": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "itemId": {
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "enum": ["balance", "card", "field", "pack"]
+                                  },
+                                  "quantity": {
+                                    "type": "number"
+                                  },
+                                  "resourceId": {
+                                    "type": "string",
+                                    "nullable": true
+                                  }
+                                },
+                                "required": ["itemId", "type", "quantity", "resourceId"],
+                                "type": "object"
+                              }
+                            },
+                            "required": ["id", "title", "cadence", "reward"],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
                         "embed": {
                           "additionalProperties": false,
                           "properties": {
@@ -1858,6 +2655,7 @@
                         "balance",
                         "availableAt",
                         "progression",
+                        "completedMissions",
                         "embed"
                       ],
                       "type": "object"
@@ -2718,6 +3516,190 @@
         "x-samchon-controller": "LeagueController"
       }
     },
+    "/v1/matches/test": {
+      "post": {
+        "tags": ["Liga"],
+        "operationId": "simulateTestMatch",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "identity": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "avatarUrl": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": ["id", "name", "avatarUrl"],
+                    "type": "object"
+                  },
+                  "opponentId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "seed": {
+                    "type": "number",
+                    "nullable": true
+                  }
+                },
+                "required": ["identity", "opponentId", "seed"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "seed": {
+                      "type": "number"
+                    },
+                    "home": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "avatarUrl": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "cpu": {
+                          "type": "boolean"
+                        },
+                        "tactic": {
+                          "type": "string",
+                          "enum": ["balanced", "defensive", "offensive"]
+                        },
+                        "rating": {
+                          "type": "number"
+                        },
+                        "lineup": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "position": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["name", "position"],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": ["name", "avatarUrl", "cpu", "tactic", "rating", "lineup"],
+                      "type": "object"
+                    },
+                    "away": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "avatarUrl": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "cpu": {
+                          "type": "boolean"
+                        },
+                        "tactic": {
+                          "type": "string",
+                          "enum": ["balanced", "defensive", "offensive"]
+                        },
+                        "rating": {
+                          "type": "number"
+                        },
+                        "lineup": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "position": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["name", "position"],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": ["name", "avatarUrl", "cpu", "tactic", "rating", "lineup"],
+                      "type": "object"
+                    },
+                    "homeGoals": {
+                      "type": "number"
+                    },
+                    "awayGoals": {
+                      "type": "number"
+                    },
+                    "events": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "minute": {
+                            "type": "number"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": ["fulltime", "goal", "kickoff", "red_card", "yellow_card"]
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "homeGoals": {
+                            "type": "number"
+                          },
+                          "awayGoals": {
+                            "type": "number"
+                          }
+                        },
+                        "required": ["minute", "type", "description", "homeGoals", "awayGoals"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": ["seed", "home", "away", "homeGoals", "awayGoals", "events"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "matches", "test", "testMatch"],
+        "x-samchon-controller": "LeagueController"
+      }
+    },
     "/v1/matches/{matchId}": {
       "get": {
         "tags": ["Liga"],
@@ -3239,9 +4221,50 @@
                     },
                     "price": {
                       "type": "number"
+                    },
+                    "completedMissions": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "cadence": {
+                            "type": "string",
+                            "enum": ["daily", "monthly", "weekly"]
+                          },
+                          "reward": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": ["balance", "card", "field", "pack"]
+                              },
+                              "quantity": {
+                                "type": "number"
+                              },
+                              "resourceId": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            },
+                            "required": ["itemId", "type", "quantity", "resourceId"],
+                            "type": "object"
+                          }
+                        },
+                        "required": ["id", "title", "cadence", "reward"],
+                        "type": "object"
+                      },
+                      "type": "array"
                     }
                   },
-                  "required": ["userCardId", "balance", "price"],
+                  "required": ["userCardId", "balance", "price", "completedMissions"],
                   "type": "object"
                 }
               }
@@ -3318,9 +4341,50 @@
                     },
                     "amount": {
                       "type": "number"
+                    },
+                    "completedMissions": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "cadence": {
+                            "type": "string",
+                            "enum": ["daily", "monthly", "weekly"]
+                          },
+                          "reward": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "itemId": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": ["balance", "card", "field", "pack"]
+                              },
+                              "quantity": {
+                                "type": "number"
+                              },
+                              "resourceId": {
+                                "type": "string",
+                                "nullable": true
+                              }
+                            },
+                            "required": ["itemId", "type", "quantity", "resourceId"],
+                            "type": "object"
+                          }
+                        },
+                        "required": ["id", "title", "cadence", "reward"],
+                        "type": "object"
+                      },
+                      "type": "array"
                     }
                   },
-                  "required": ["userCardIds", "balance", "amount"],
+                  "required": ["userCardIds", "balance", "amount", "completedMissions"],
                   "type": "object"
                 }
               }
@@ -8291,6 +9355,659 @@
         "x-samchon-accessor": ["v1", "admin", "cards", "image", "removeImage"],
         "x-samchon-controller": "AdminCardsController"
       }
+    },
+    "/v1/commands/resgatar": {
+      "post": {
+        "summary": "Resgata um Código de resgate para o jogador",
+        "description": "Resgata um Código de resgate para o jogador.",
+        "tags": ["Comandos"],
+        "operationId": "redeemCode",
+        "parameters": [],
+        "requestBody": {
+          "description": "Identidade Discord e código digitado.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "identity": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "avatarUrl": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": ["id", "name", "avatarUrl"],
+                    "type": "object"
+                  },
+                  "code": {
+                    "type": "string"
+                  }
+                },
+                "required": ["identity", "code"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Item concedido ou motivo da recusa.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": ["success"]
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "reward": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "itemId": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": ["balance", "card", "field", "pack"]
+                            },
+                            "quantity": {
+                              "type": "number"
+                            },
+                            "resourceId": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "resourceName": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          },
+                          "required": ["itemId", "type", "quantity", "resourceId", "resourceName"],
+                          "type": "object"
+                        },
+                        "balance": {
+                          "type": "number"
+                        }
+                      },
+                      "required": ["kind", "code", "reward", "balance"],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": ["rejected"]
+                        },
+                        "reason": {
+                          "type": "string",
+                          "enum": [
+                            "already_redeemed",
+                            "exhausted",
+                            "expired",
+                            "inactive",
+                            "inventory_full",
+                            "not_found"
+                          ]
+                        }
+                      },
+                      "required": ["kind", "reason"],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "x-samchon-accessor": ["v1", "commands", "resgatar", "execute"],
+        "x-samchon-controller": "RedeemCodesController"
+      }
+    },
+    "/v1/admin/redeem-codes": {
+      "get": {
+        "tags": ["Administração / Códigos de resgate"],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string"
+                      },
+                      "active": {
+                        "type": "boolean"
+                      },
+                      "maxClaims": {
+                        "type": "number",
+                        "nullable": true
+                      },
+                      "expiresAt": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "createdAt": {
+                        "type": "string"
+                      },
+                      "claims": {
+                        "type": "number"
+                      },
+                      "locked": {
+                        "description": "Code and reward are immutable once the first Resgate happened.",
+                        "type": "boolean"
+                      },
+                      "reward": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "itemId": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": ["balance", "card", "field", "pack"]
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "resourceId": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "resourceName": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        },
+                        "required": ["itemId", "type", "amount", "resourceId", "resourceName"],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "code",
+                      "active",
+                      "maxClaims",
+                      "expiresAt",
+                      "createdAt",
+                      "claims",
+                      "locked",
+                      "reward"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "redeem_codes", "list"],
+        "x-samchon-controller": "AdminRedeemCodesController"
+      },
+      "post": {
+        "tags": ["Administração / Códigos de resgate"],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "reward": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["balance", "card", "field", "pack"]
+                      },
+                      "amount": {
+                        "type": "number"
+                      },
+                      "resourceId": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": ["type", "amount", "resourceId"],
+                    "type": "object"
+                  },
+                  "maxClaims": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["code", "reward", "maxClaims", "expiresAt", "active"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "maxClaims": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "claims": {
+                      "type": "number"
+                    },
+                    "locked": {
+                      "description": "Code and reward are immutable once the first Resgate happened.",
+                      "type": "boolean"
+                    },
+                    "reward": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": ["balance", "card", "field", "pack"]
+                        },
+                        "amount": {
+                          "type": "number"
+                        },
+                        "resourceId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "resourceName": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["itemId", "type", "amount", "resourceId", "resourceName"],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "code",
+                    "active",
+                    "maxClaims",
+                    "expiresAt",
+                    "createdAt",
+                    "claims",
+                    "locked",
+                    "reward"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "redeem_codes", "create"],
+        "x-samchon-controller": "AdminRedeemCodesController"
+      }
+    },
+    "/v1/admin/redeem-codes/options": {
+      "get": {
+        "tags": ["Administração / Códigos de resgate"],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "cards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "packs": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": ["cards", "packs", "fields"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "redeem_codes", "options"],
+        "x-samchon-controller": "AdminRedeemCodesController"
+      }
+    },
+    "/v1/admin/redeem-codes/{id}": {
+      "put": {
+        "tags": ["Administração / Códigos de resgate"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "reward": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["balance", "card", "field", "pack"]
+                      },
+                      "amount": {
+                        "type": "number"
+                      },
+                      "resourceId": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "required": ["type", "amount", "resourceId"],
+                    "type": "object"
+                  },
+                  "maxClaims": {
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "active": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["code", "reward", "maxClaims", "expiresAt", "active"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "maxClaims": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "claims": {
+                      "type": "number"
+                    },
+                    "locked": {
+                      "description": "Code and reward are immutable once the first Resgate happened.",
+                      "type": "boolean"
+                    },
+                    "reward": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": ["balance", "card", "field", "pack"]
+                        },
+                        "amount": {
+                          "type": "number"
+                        },
+                        "resourceId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "resourceName": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["itemId", "type", "amount", "resourceId", "resourceName"],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "code",
+                    "active",
+                    "maxClaims",
+                    "expiresAt",
+                    "createdAt",
+                    "claims",
+                    "locked",
+                    "reward"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "redeem_codes", "update"],
+        "x-samchon-controller": "AdminRedeemCodesController"
+      },
+      "delete": {
+        "tags": ["Administração / Códigos de resgate"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "active": {
+                      "type": "boolean"
+                    },
+                    "maxClaims": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "claims": {
+                      "type": "number"
+                    },
+                    "locked": {
+                      "description": "Code and reward are immutable once the first Resgate happened.",
+                      "type": "boolean"
+                    },
+                    "reward": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "itemId": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": ["balance", "card", "field", "pack"]
+                        },
+                        "amount": {
+                          "type": "number"
+                        },
+                        "resourceId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "resourceName": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["itemId", "type", "amount", "resourceId", "resourceName"],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "code",
+                    "active",
+                    "maxClaims",
+                    "expiresAt",
+                    "createdAt",
+                    "claims",
+                    "locked",
+                    "reward"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "redeem_codes", "remove"],
+        "x-samchon-controller": "AdminRedeemCodesController"
+      }
     }
   },
   "tags": [
@@ -8305,6 +10022,14 @@
     {
       "name": "Administração / Packs",
       "description": "Gerenciamento de packs e imagens."
+    },
+    {
+      "name": "Administração / Códigos de resgate",
+      "description": "Códigos promocionais e o Item concedido por eles."
+    },
+    {
+      "name": "Administração / Missões",
+      "description": "Missões diárias, semanais e mensais e o pool de recompensas."
     },
     {
       "name": "Administração / Sessão",

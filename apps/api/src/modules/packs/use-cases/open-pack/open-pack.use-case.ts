@@ -13,7 +13,7 @@ export class OpenPackUseCase {
       if (transaction.ownedQuantity < 1) throw new Error('User does not own this pack.');
       if (transaction.cardCount + transaction.cardsAmount > transaction.maxCards)
         throw new Error('Card inventory capacity exceeded.');
-      const cards = await transaction.commit(
+      const opened = await transaction.commit(
         selectPackCards(
           transaction.candidates,
           transaction.probabilities,
@@ -21,7 +21,7 @@ export class OpenPackUseCase {
           this.random,
         ),
       );
-      return { cards, progression: await transaction.grantProgression() };
+      return { ...opened, progression: await transaction.grantProgression() };
     });
   }
 }

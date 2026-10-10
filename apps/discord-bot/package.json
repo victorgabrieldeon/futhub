@@ -8,7 +8,8 @@
     "dev": "SEYFERT_BASE=src node --env-file=../../.env --import tsx --watch-path=src src/index.ts",
     "start": "node --env-file=../../.env dist/index.js",
     "test": "tsx --test 'tests/**/*.test.ts'",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
+    "emojis:sync": "node --env-file=../../.env --import tsx scripts/sync-emojis.ts"
   },
   "dependencies": {
     "@futhub/api-client": "workspace:*",

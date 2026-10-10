@@ -1,4 +1,10 @@
-import { getLeague, getV1MatchesMatchId, joinRankedQueue, request } from '@futhub/api-client';
+import {
+  type SellCardsResponse,
+  getLeague,
+  getV1MatchesMatchId,
+  joinRankedQueue,
+  request,
+} from '@futhub/api-client';
 
 import { refreshApiClient } from './commands/shared.js';
 import type {
@@ -16,6 +22,16 @@ export async function loadLeague(identity: Identity): Promise<LeaguePanelState> 
   const match =
     status.queue?.kind === 'matched' ? await getV1MatchesMatchId(status.queue.matchId) : null;
   return { status, match };
+}
+
+/** Liga na visão geral é complementar: uma falha não deve derrubar o painel inteiro. */
+export async function loadOverviewLeague(identity: Identity): Promise<LeaguePanelState | null> {
+  try {
+    return await loadLeague(identity);
+  } catch (error) {
+    console.error('Failed to load league for team overview.', error);
+    return null;
+  }
 }
 
 export async function queueLeagueMatch(identity: Identity): Promise<LeaguePanelState> {
@@ -95,10 +111,7 @@ export function toggleFavorite(identity: Identity, userCardId: string): Promise<
   return mutate(`/v1/team/cards/${userCardId}/favorite`, 'PUT', { identity });
 }
 
-export function sellTeamCard(
-  identity: Identity,
-  userCardId: string,
-): Promise<{ userCardIds: string[]; balance: number; amount: number }> {
+export function sellTeamCard(identity: Identity, userCardId: string): Promise<SellCardsResponse> {
   refreshApiClient();
   return request('/v1/cards/sell', {
     method: 'POST',

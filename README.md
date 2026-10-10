@@ -50,6 +50,16 @@ http://s3console.futhub.localhost
 
 Abra painel Tilt para logs e estado dos resources. `discord-bot` inicia manualmente pelo painel depois de preencher `DISCORD_TOKEN` e `DISCORD_CLIENT_ID` em `.env`.
 
+Ao iniciar, o bot sobe para a aplicação do Discord os emojis de `apps/discord-bot/assets/emojis/*.svg` que ainda não existirem; eles aparecem no painel em **Emojis do bot**. No código, use `EMOJI.<nome>` de `apps/discord-bot/src/emojis.ts`. Para publicar sem subir o bot, ou recriar após editar um SVG:
+
+```bash
+pnpm --filter @futhub/discord-bot emojis:sync           # cria os que faltam
+pnpm --filter @futhub/discord-bot emojis:sync --force   # recria todos
+pnpm --filter @futhub/discord-bot emojis:sync --preview # PNGs em apps/discord-bot/.emoji-preview
+```
+
+Novo emoji: adicione `assets/emojis/<nome>.svg` (128×128) e a entrada em `EMOJI_FALLBACK`.
+
 Para encerrar:
 
 ```bash

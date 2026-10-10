@@ -3,7 +3,11 @@ import { ComponentCommand, MessageFlags } from 'seyfert';
 import type { ComponentContext } from 'seyfert';
 
 import { botResponse, identityData } from '../bot-response.js';
+import { refreshApiClient } from '../commands/shared.js';
+import { EMOJI } from '../emojis.js';
+import { sendMissionNotice } from '../mission-notice.js';
 import { packPurchaseData } from '../response-data.js';
+import type { StoreSessionId } from '../store-session.js';
 import {
   cardDetailResponse,
   loadHiringState,
@@ -16,8 +20,6 @@ import {
   withStoreTab,
 } from '../store.js';
 import type { PackDetailTab } from '../store.js';
-import type { StoreSessionId } from '../store-session.js';
-import { refreshApiClient } from '../commands/shared.js';
 
 export default class LojaTabComponent extends ComponentCommand {
   componentType = 'Button' as const;
@@ -161,6 +163,12 @@ export default class LojaTabComponent extends ComponentCommand {
         ...packPurchaseData(packId, result),
       });
       await context.write({ ...message, flags: (message.flags ?? 0) | MessageFlags.Ephemeral });
+      await sendMissionNotice(
+        (notice) =>
+          context.followup({ ...notice, flags: (notice.flags ?? 0) | MessageFlags.Ephemeral }),
+        user,
+        result.completedMissions,
+      );
     } catch (error) {
       console.error('Failed to purchase pack.', error);
       await context.write({
@@ -239,8 +247,8 @@ export default class LojaTabComponent extends ComponentCommand {
       console.error('Failed to purchase card.', error);
       const notice =
         error instanceof ApiClientError && error.message.includes('Insufficient balance')
-          ? '❌ Saldo insuficiente para contratar esta carta.'
-          : '❌ Não foi possível contratar esta carta. Tente novamente.';
+          ? `${EMOJI.erro} Saldo insuficiente para contratar esta carta.`
+          : `${EMOJI.erro} Não foi possível contratar esta carta. Tente novamente.`;
       await context.editOrReply(
         restored.kind === 'owned' && restored.session.state.tab === 'contratar'
           ? cardDetailResponse(sessionId, restored.session.state, notice)
@@ -277,5 +285,11 @@ export default class LojaTabComponent extends ComponentCommand {
         ),
       );
     }
+    await sendMissionNotice(
+      (notice) =>
+        context.followup({ ...notice, flags: (notice.flags ?? 0) | MessageFlags.Ephemeral }),
+      { name: context.interaction.user.username, avatarUrl: context.interaction.user.avatarURL() },
+      result.completedMissions,
+    );
   }
 }

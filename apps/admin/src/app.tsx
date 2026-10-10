@@ -17,7 +17,9 @@ import {
   BotResponsesPage,
 } from './features/bot-responses/bot-responses-page';
 import { Cards } from './features/cards/cards';
+import { MissionsPage } from './features/missions/missions-page';
 import { Packs } from './features/packs/packs';
+import { RedeemCodesPage } from './features/redeem-codes/redeem-codes-page';
 import { PackStudio } from './features/studio/pack-studio';
 import { Studio } from './features/studio/studio';
 import type { LucroConfig } from './lib/lucro';
@@ -72,6 +74,8 @@ export function App() {
           <Route path="/app/comandos/lucro" element={<LucroPage />} />
           <Route path="/app/respostas" element={<BotResponsesPage />} />
           <Route path="/app/emojis" element={<BotEmojisPage />} />
+          <Route path="/app/codigos" element={<RedeemCodesPage />} />
+          <Route path="/app/missoes" element={<MissionsPage />} />
           <Route path="/app/gerenciar/cards" element={<Cards view="players" />} />
           <Route path="/app/gerenciar/times" element={<Cards view="teams" />} />
           <Route path="/app/gerenciar/colecoes" element={<Cards view="collections" />} />

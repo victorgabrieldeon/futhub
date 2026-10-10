@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, expect, test } from 'vitest';
 
-import { adminToken, type E2eContext, startE2eContext } from '../../../test/e2e/context.js';
+import { type E2eContext, adminToken, startE2eContext } from '../../../test/e2e/context.js';
 
 let context: E2eContext;
 

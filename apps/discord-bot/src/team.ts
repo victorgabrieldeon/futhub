@@ -10,6 +10,7 @@ import {
   TextDisplay,
 } from 'seyfert';
 
+import { EMOJI } from './emojis.js';
 import { noMentions } from './responses.js';
 import { renderTeamImage, teamImageName } from './team-image.js';
 import {
@@ -41,6 +42,7 @@ export async function teamResponse(session: TeamSession, notice?: string) {
     tab: session.tab,
     team: session.team,
     club: session.club,
+    league: session.league,
   });
   const components = [
     tabMenu(session),
@@ -417,17 +419,15 @@ function tacticControls(session: TeamSession) {
 function teamBody(session: TeamSession, notice?: string): string {
   const heading = `# MEU TIME · ${tabs.find(([tab]) => tab === session.tab)?.[1].toUpperCase()}`;
   const message = notice ? `\n${notice}` : '';
-  if (session.tab === 'overview') {
-    const captain =
-      session.team.lineup.find((card: TeamCard) => card.captain)?.name ?? 'Não definido';
-    return `${heading}\n**Força:** ${session.team.strength} · **Titulares:** ${session.team.lineup.length}/11\n**Formação:** ${session.team.formation.name} · **Tática:** ${tacticName(session.team.tactic)}\n**Capitão:** ${captain} · **Elenco:** ${session.team.inventoryCount}\n**Saldo:** ${session.team.balance.toLocaleString('pt-BR')}${message}`;
-  }
+  if (session.tab === 'overview') return overviewBody(session, heading, notice);
   if (session.tab === 'lineup') {
     const missing = session.team.formation.slots.length - session.team.lineup.length;
     return [
       heading,
       `**Formação:** ${session.team.formation.name} · **Tática:** ${tacticName(session.team.tactic)}`,
-      missing > 0 ? `⚠️ Faltam ${missing} titular(es).` : '✅ Time completo.',
+      missing > 0
+        ? `${EMOJI.alerta} Faltam ${missing} titular(es).`
+        : `${EMOJI.sucesso} Time completo.`,
       message,
     ]
       .filter(Boolean)
@@ -436,7 +436,7 @@ function teamBody(session: TeamSession, notice?: string): string {
   if (session.tab === 'club') {
     const club = session.club;
     if (!club) return `${heading}\nCarregando gestão do clube...${message}`;
-    const sponsor = club.sponsor.completed ? '✅ Meta concluída' : 'Em andamento';
+    const sponsor = club.sponsor.completed ? `${EMOJI.sucesso} Meta concluída` : 'Em andamento';
     return [
       heading,
       `**Estádio:** nível ${club.stadium.level}/${club.stadium.maxLevel} · **Saldo:** ${club.balance.toLocaleString('pt-BR')}`,
@@ -472,6 +472,49 @@ function teamBody(session: TeamSession, notice?: string): string {
       .join('\n');
   }
   return heading;
+}
+
+function overviewBody(session: TeamSession, heading: string, notice?: string): string {
+  const { balance, inventoryCount, packs, profile, profit } = session.team;
+  const packCount = packs.reduce((total, pack) => total + pack.quantity, 0);
+  const lines = [
+    heading,
+    `**Saldo:** ${balance.toLocaleString('pt-BR')} moedas · **Nível:** ${profile.level} (${profile.xp}/${profile.nextLevelXp} XP)`,
+    `**Elenco:** ${inventoryCount} jogador(es) · **Packs:** ${packCount}`,
+    '',
+    '## LIGA',
+    ...overviewLeague(session),
+    '',
+    '## RECOMPENSAS',
+    profit.availableAt
+      ? `⏳ Próximo lucro <t:${Math.floor(new Date(profit.availableAt).getTime() / 1_000)}:R>.`
+      : `${EMOJI.lucro} **Lucro disponível!** Use \`/lucro\` para resgatar.`,
+  ];
+  if (notice) lines.push('', notice);
+  return lines.join('\n');
+}
+
+function overviewLeague(session: TeamSession): string[] {
+  const league = session.league;
+  if (!league) return ['Informações da liga indisponíveis no momento.'];
+  const { status, match } = league;
+  const summary = [
+    `${status.division.emoji} **${status.division.name}** · **${status.points.toLocaleString('pt-BR')} pontos**`,
+    `**V** ${status.wins} · **E** ${status.draws} · **D** ${status.losses}`,
+  ];
+  if (status.queue?.kind === 'waiting')
+    return [...summary, `${EMOJI.buscar} Buscando adversário...`];
+  if (match) {
+    const home = match.home.id === session.identity.id;
+    const own = home ? match.homeGoals : match.awayGoals;
+    const opponent = home ? match.awayGoals : match.homeGoals;
+    const result = own === opponent ? 'Empate' : own > opponent ? 'Vitória' : 'Derrota';
+    return [
+      ...summary,
+      `**Última partida:** ${result} · ${match.home.name} ${match.homeGoals} × ${match.awayGoals} ${match.away.name}`,
+    ];
+  }
+  return [...summary, 'Pronto para buscar partida na aba **Liga**.'];
 }
 
 function tacticName(tactic: TeamSession['team']['tactic']): string {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { CompletedMission } from '../../../../missions/missions.service.js';
 import type {
   Clock,
   CommandConfig,
@@ -37,7 +38,9 @@ const club = {
   projectedNet: 150,
 };
 
-function memoryRepository(): ResgatarLucroRepository {
+function memoryRepository(
+  completedMissions: readonly CompletedMission[] = [],
+): ResgatarLucroRepository {
   let balance = 0;
   let availableAt: Date | null = null;
   return {
@@ -50,7 +53,7 @@ function memoryRepository(): ResgatarLucroRepository {
           return balance;
         },
         grantProgression: async () => progression,
-        advanceMission: async () => undefined,
+        advanceMission: async () => completedMissions,
         setAvailableAt: async (value) => {
           availableAt = value;
         },
@@ -107,6 +110,7 @@ describe('ResgatarLucroUseCase.execute', () => {
       balance: 200,
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
       progression,
+      completedMissions: [],
       embed: lucroCommand.embed,
     });
   });
@@ -155,7 +159,31 @@ describe('ResgatarLucroUseCase.execute', () => {
       balance: 450,
       availableAt: new Date('2026-08-15T12:00:20.000Z'),
       progression,
+      completedMissions: [],
       embed: lucroCommand.embed,
     });
+  });
+
+  it('reports balance including coins granted by completed missions', async () => {
+    const mission: CompletedMission = {
+      id: '00000000-0000-4000-8000-000000000001',
+      title: 'Resgate o lucro',
+      cadence: 'daily',
+      reward: {
+        itemId: '00000000-0000-4000-8000-000000000002',
+        type: 'balance',
+        quantity: 25,
+        resourceId: null,
+      },
+    };
+
+    const result = await useCase(memoryRepository([mission])).execute(
+      identity,
+      command,
+      new Date('2026-08-15T12:00:00.000Z'),
+      0,
+    );
+
+    expect(result).toMatchObject({ kind: 'success', balance: 225, completedMissions: [mission] });
   });
 });

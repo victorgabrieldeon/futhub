@@ -39,6 +39,8 @@ export type TeamResponse = {
   inventory: { items: TeamCard[]; total: number; page: number; pageSize: 10; totalPages: number };
   packs: { id: string; name: string; emoji: string; quantity: number }[];
   collections: { id: string; name: string; emoji: string }[];
+  profile: { level: number; xp: number; nextLevelXp: number };
+  profit: { availableAt: string | null };
 };
 export type ClubResponse = {
   balance: number;

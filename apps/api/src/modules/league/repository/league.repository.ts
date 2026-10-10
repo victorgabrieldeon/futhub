@@ -8,7 +8,10 @@ import type {
   MatchEventDto,
   MatchResponse,
   QueueResponse,
+  TestMatchResponse,
+  TestMatchTeamDto,
 } from '../league.dto.js';
+import { buildCpuLineup, lineupRating } from '../use-cases/league/league.cpu.js';
 import { simulateMatch, validateLineup } from '../use-cases/league/league.simulator.js';
 import type { LineupCard, TeamTactic } from '../use-cases/league/league.types.js';
 import {
@@ -23,6 +26,7 @@ type DatabaseLoader = () => Promise<Database>;
 type Transaction = Parameters<Parameters<Database['db']['transaction']>[0]>[0];
 const INVALID_LINEUP_MESSAGE =
   'Complete a escalação com 11 titulares em posições compatíveis antes de buscar uma partida.';
+const CPU_NAME = 'FutHub CPU';
 
 export class DrizzleLeagueRepository implements LeagueRepository {
   constructor(private readonly loadDatabase: DatabaseLoader) {}
@@ -194,6 +198,14 @@ export class DrizzleLeagueRepository implements LeagueRepository {
       );
       await advanceMissions(database, tx, queued.userId, 'play_match', now);
       await advanceMissions(database, tx, current.userId, 'play_match', now);
+      if (simulated.homeGoals !== simulated.awayGoals)
+        await advanceMissions(
+          database,
+          tx,
+          simulated.homeGoals > simulated.awayGoals ? queued.userId : current.userId,
+          'win_match',
+          now,
+        );
       return { kind: 'matched', matchId: room.id };
     });
   }
@@ -301,6 +313,87 @@ export class DrizzleLeagueRepository implements LeagueRepository {
     return events
       .sort((left, right) => left.sequence - right.sequence)
       .map((event) => ({ ...event }));
+  }
+
+  async testMatch(
+    identity: DiscordIdentity,
+    opponentId: string | null,
+    seed: number,
+  ): Promise<TestMatchResponse> {
+    const database = await this.loadDatabase();
+    const { db, eq, schema } = database;
+    const owner = await db.query.users.findFirst({
+      columns: { id: true },
+      where: eq(schema.users.discordUserId, identity.id),
+    });
+    if (!owner) throw new LeagueInputError(INVALID_LINEUP_MESSAGE);
+    const home = await this.loadLineup(database, owner.id);
+
+    let awayTeam: Omit<TestMatchTeamDto, 'lineup' | 'rating'>;
+    let away: { cards: LineupCard[]; tactic: TeamTactic };
+    if (opponentId) {
+      const opponent = await db.query.users.findFirst({
+        columns: { id: true, nome: true, urlAvatar: true },
+        where: eq(schema.users.discordUserId, opponentId),
+      });
+      if (!opponent) throw new LeagueNotFoundError('Adversário não encontrado no FutHub.');
+      away = await this.loadLineup(database, opponent.id).catch((error: unknown) => {
+        if (error instanceof LeagueInputError)
+          throw new LeagueInputError('O adversário ainda não tem 11 titulares escalados.');
+        throw error;
+      });
+      awayTeam = {
+        name: opponent.nome,
+        avatarUrl: opponent.urlAvatar,
+        cpu: false,
+        tactic: away.tactic,
+      };
+    } else {
+      const pool = await db
+        .select({
+          name: schema.cards.name,
+          position: schema.cards.position,
+          overall: schema.cards.overall,
+          attack: schema.cards.attack,
+          creation: schema.cards.creation,
+          defense: schema.cards.defense,
+          finishing: schema.cardStats.finishing,
+          passing: schema.cardStats.passing,
+          control: schema.cardStats.control,
+          marking: schema.cardStats.marking,
+        })
+        .from(schema.cards)
+        .innerJoin(schema.cardStats, eq(schema.cardStats.id, schema.cards.statsId))
+        .orderBy(schema.cards.id);
+      away = { cards: buildCpuLineup(pool, home.cards, seed), tactic: 'balanced' };
+      awayTeam = { name: CPU_NAME, avatarUrl: null, cpu: true, tactic: away.tactic };
+    }
+
+    const simulated = simulateMatch(home.cards, away.cards, seed, home.tactic, away.tactic);
+    const team = (cards: readonly LineupCard[]) => ({
+      rating: lineupRating(cards),
+      lineup: cards.map((card) => ({ name: card.name, position: card.assignedPosition })),
+    });
+    return {
+      seed,
+      home: {
+        name: identity.name,
+        avatarUrl: identity.avatarUrl,
+        cpu: false,
+        tactic: home.tactic,
+        ...team(home.cards),
+      },
+      away: { ...awayTeam, ...team(away.cards) },
+      homeGoals: simulated.homeGoals,
+      awayGoals: simulated.awayGoals,
+      events: simulated.events.map(({ minute, type, description, homeGoals, awayGoals }) => ({
+        minute,
+        type,
+        description,
+        homeGoals,
+        awayGoals,
+      })),
+    };
   }
 
   private async ensureStanding(

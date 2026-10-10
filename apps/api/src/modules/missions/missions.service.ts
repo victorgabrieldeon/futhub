@@ -1,11 +1,19 @@
 import type * as DatabaseModule from '@futhub/database';
 
-import { grantReward } from '../progression/progression.js';
+import { type ProgressionReward, grantReward } from '../progression/progression.js';
 import { upsertDiscordUser } from '../users/user.repository.js';
 import { type MissionCadence, missionCycle } from './mission-period.js';
 
 export type DiscordIdentity = Readonly<{ id: string; name: string; avatarUrl: string | null }>;
-export type MissionEventType = 'open_pack' | 'sell_player' | 'claim_profit' | 'play_match';
+export type MissionEventType =
+  | 'open_pack'
+  | 'sell_player'
+  | 'claim_profit'
+  | 'play_match'
+  | 'buy_pack'
+  | 'buy_player'
+  | 'win_match'
+  | 'spend_balance';
 export type MissionReward = Readonly<{
   itemId: string;
   type: 'card' | 'pack' | 'balance' | 'field' | 'premium';
@@ -25,6 +33,13 @@ export type MissionSummary = Readonly<{
   expiresAt: Date;
   reward: MissionReward | null;
 }>;
+/** Mission completed (and rewarded) by the event that just happened. */
+export type CompletedMission = Readonly<{
+  id: string;
+  title: string;
+  cadence: MissionCadence;
+  reward: ProgressionReward;
+}>;
 
 type Database = typeof DatabaseModule;
 type Transaction = Parameters<Parameters<Database['db']['transaction']>[0]>[0];
@@ -42,6 +57,42 @@ function itemResourceId(item: {
   premiumId: string | null;
 }): string | null {
   return item.cardId ?? item.packId ?? item.soccerFieldId ?? item.premiumId;
+}
+
+/** Coins credited by mission rewards, for responses that report the balance after the event. */
+export function missionRewardBalance(completed: readonly CompletedMission[]): number {
+  return completed.reduce(
+    (total, mission) => total + (mission.reward.type === 'balance' ? mission.reward.quantity : 0),
+    0,
+  );
+}
+
+async function missionTitles(
+  database: Database,
+  tx: Transaction,
+  locale: string,
+  titleIds: readonly string[],
+): Promise<Map<string, string>> {
+  const { and, inArray, schema } = database;
+  if (titleIds.length === 0) return new Map();
+  const translations = await tx
+    .select({
+      id: schema.localizedTextTranslations.localizedTextId,
+      locale: schema.localizedTextTranslations.locale,
+      content: schema.localizedTextTranslations.content,
+    })
+    .from(schema.localizedTextTranslations)
+    .where(
+      and(
+        inArray(schema.localizedTextTranslations.locale, [locale, 'pt-BR']),
+        inArray(schema.localizedTextTranslations.localizedTextId, [...titleIds]),
+      ),
+    );
+  const titles = new Map<string, string>();
+  for (const translation of translations)
+    if (translation.locale === locale || !titles.has(translation.id))
+      titles.set(translation.id, translation.content);
+  return titles;
 }
 
 async function ensureCurrentMissions(
@@ -114,9 +165,10 @@ export async function advanceMissions(
   type: MissionEventType,
   now: Date,
   increase = 1,
-): Promise<void> {
-  if (!Number.isSafeInteger(increase) || increase < 1)
-    throw new Error('Mission increase must be positive.');
+): Promise<CompletedMission[]> {
+  if (!Number.isSafeInteger(increase) || increase < 0)
+    throw new Error('Mission increase must not be negative.');
+  if (increase === 0) return [];
   const { and, eq, schema, sql } = database;
   await ensureCurrentMissions(database, tx, userId, now);
   const missions = await tx
@@ -124,6 +176,9 @@ export async function advanceMissions(
       id: schema.userMissions.id,
       progress: schema.userMissions.progress,
       claimedAt: schema.userMissions.claimedAt,
+      cadence: schema.userMissions.cadence,
+      titleTextId: schema.missions.titleTextId,
+      type: schema.missions.type,
       goal: schema.missions.goal,
       itemId: schema.items.id,
       itemType: schema.items.type,
@@ -144,6 +199,8 @@ export async function advanceMissions(
       ),
     );
 
+  const completed: Array<Omit<CompletedMission, 'title'> & { titleTextId: string; type: string }> =
+    [];
   for (const mission of missions) {
     if (mission.claimedAt) continue;
     const progress = Math.min(mission.goal, mission.progress + increase);
@@ -152,7 +209,7 @@ export async function advanceMissions(
       .set({ progress })
       .where(eq(schema.userMissions.id, mission.id));
     if (progress < mission.goal) continue;
-    await grantReward(
+    const reward = await grantReward(
       database,
       tx,
       userId,
@@ -171,7 +228,29 @@ export async function advanceMissions(
       .update(schema.userMissions)
       .set({ claimedAt: now })
       .where(eq(schema.userMissions.id, mission.id));
+    completed.push({
+      id: mission.id,
+      cadence: mission.cadence,
+      titleTextId: mission.titleTextId,
+      type: mission.type,
+      reward,
+    });
   }
+  if (completed.length === 0) return [];
+  const user = await tx.query.users.findFirst({
+    columns: { language: true },
+    where: eq(schema.users.id, userId),
+  });
+  const titles = await missionTitles(
+    database,
+    tx,
+    user?.language ?? 'pt-BR',
+    completed.map((mission) => mission.titleTextId),
+  );
+  return completed.map(({ titleTextId, type, ...mission }) => ({
+    ...mission,
+    title: titles.get(titleTextId) ?? type,
+  }));
 }
 
 export class MissionsService {
@@ -179,7 +258,7 @@ export class MissionsService {
 
   async list(identity: DiscordIdentity, now = new Date()): Promise<readonly MissionSummary[]> {
     const database = await this.loadDatabase();
-    const { and, asc, eq, inArray, schema, sql } = database;
+    const { and, asc, eq, schema, sql } = database;
     return database.db.transaction(async (tx) => {
       const user = await upsertDiscordUser(tx, schema, identity, now);
       await ensureCurrentMissions(database, tx, user.id, now);
@@ -212,24 +291,9 @@ export class MissionsService {
           ),
         )
         .orderBy(asc(schema.userMissions.expiresAt), asc(schema.userMissions.tier));
-      const titleIds = [...new Set(rows.map((row) => row.titleTextId))];
-      const translations = titleIds.length
-        ? await tx
-            .select({
-              id: schema.localizedTextTranslations.localizedTextId,
-              content: schema.localizedTextTranslations.content,
-            })
-            .from(schema.localizedTextTranslations)
-            .where(
-              and(
-                eq(schema.localizedTextTranslations.locale, user.language),
-                inArray(schema.localizedTextTranslations.localizedTextId, titleIds),
-              ),
-            )
-        : [];
-      const titles = new Map(
-        translations.map((translation) => [translation.id, translation.content]),
-      );
+      const titles = await missionTitles(database, tx, user.language, [
+        ...new Set(rows.map((row) => row.titleTextId)),
+      ]);
       return rows.map((row) => ({
         id: row.id,
         title: titles.get(row.titleTextId) ?? row.type,

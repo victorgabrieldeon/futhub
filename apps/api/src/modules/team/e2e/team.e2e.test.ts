@@ -107,3 +107,39 @@ test('gerencia inventário, escalação, capitão e tática por HTTP e persiste 
     captain: true,
   });
 });
+
+test('expõe progressão e disponibilidade do lucro na visão do time', async () => {
+  if (!context) throw new Error('E2E context was not initialized.');
+  const { app, database } = context;
+  const player = { id: 'e2e-team-profit', name: 'Team profit', avatarUrl: null };
+  const fixture = await createTeamPlayer(database, player);
+  const headers = { authorization: `Bearer ${internalToken}` };
+  const view = () =>
+    app.inject({ method: 'POST', url: '/v1/team', headers, payload: { identity: player } });
+
+  const before = await view();
+  expect(before.statusCode).toBe(200);
+  expect(before.json()).toMatchObject({
+    profile: { level: 1, xp: 0, nextLevelXp: 100 },
+    profit: { availableAt: null },
+  });
+
+  const lucro = await app.inject({
+    method: 'POST',
+    url: '/v1/commands/lucro',
+    headers,
+    payload: player,
+  });
+  expect(lucro.statusCode).toBe(200);
+
+  const after = await view();
+  const [cooldown] = await database.db
+    .select({ availableAt: database.schema.userCooldowns.availableAt })
+    .from(database.schema.userCooldowns)
+    .where(database.eq(database.schema.userCooldowns.userId, fixture.userId));
+  expect(cooldown).toBeDefined();
+  expect(after.json()).toMatchObject({
+    profile: { level: 1, xp: 10 },
+    profit: { availableAt: cooldown?.availableAt.toISOString() },
+  });
+});

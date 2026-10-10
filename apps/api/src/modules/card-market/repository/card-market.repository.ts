@@ -1,7 +1,7 @@
 import type * as DatabaseModule from '@futhub/database';
 
 import type { FilesService } from '../../files/files.service.js';
-import { advanceMissions } from '../../missions/missions.service.js';
+import { advanceMissions, missionRewardBalance } from '../../missions/missions.service.js';
 import { cardInventoryCapacity, upsertDiscordUser } from '../../users/user.repository.js';
 import { CardMarketRepository } from '../use-cases/card-market.types.js';
 import type {
@@ -282,7 +282,17 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
           await tx
             .insert(schema.transactionHistory)
             .values({ userId: user.id, type: 'purchase', amount: -price });
-          return { userCardId: userCard.id, balance: debited.balance, price };
+          const now = new Date();
+          const completedMissions = [
+            ...(await advanceMissions(database, tx, user.id, 'buy_player', now)),
+            ...(await advanceMissions(database, tx, user.id, 'spend_balance', now, price)),
+          ];
+          return {
+            userCardId: userCard.id,
+            balance: debited.balance + missionRewardBalance(completedMissions),
+            price,
+            completedMissions,
+          };
         },
       });
     });
@@ -355,7 +365,7 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
           await tx
             .insert(schema.transactionHistory)
             .values({ userId: user.id, type: 'sale', amount });
-          await advanceMissions(
+          const completedMissions = await advanceMissions(
             database,
             tx,
             user.id,
@@ -363,7 +373,12 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
             new Date(),
             userCardIds.length,
           );
-          return { userCardIds: deleted.map((card) => card.id), balance: credited.balance, amount };
+          return {
+            userCardIds: deleted.map((card) => card.id),
+            balance: credited.balance + missionRewardBalance(completedMissions),
+            amount,
+            completedMissions,
+          };
         },
       });
     });

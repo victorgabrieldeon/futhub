@@ -20,7 +20,7 @@ describe('OpenPackUseCase', () => {
           cardCount: 0,
           maxCards: 10,
           price: 30,
-          commit: async () => ({ balance: 70, quantity: 2 }),
+          commit: async () => ({ balance: 70, quantity: 2, completedMissions: [] }),
         }),
       runOpen: async (_identity, _packId, operation) => {
         received = 0.5;
@@ -31,7 +31,10 @@ describe('OpenPackUseCase', () => {
           cardsAmount: 1,
           candidates: [{ id: 'card-1', overall: 80, name: 'Card', position: 'CA' }],
           probabilities: [{ overall: 80, weight: 1 }],
-          commit: async (cards) => cards.map((card) => ({ id: 'owned-1', card })),
+          commit: async (cards) => ({
+            cards: cards.map((card) => ({ id: 'owned-1', card })),
+            completedMissions: [],
+          }),
           grantProgression: async () => progression,
         });
       },
@@ -41,6 +44,7 @@ describe('OpenPackUseCase', () => {
       new OpenPackUseCase(repository, () => 0.5).execute(identity, 'pack-1'),
     ).resolves.toEqual({
       cards: [{ id: 'owned-1', card: { id: 'card-1', overall: 80, name: 'Card', position: 'CA' } }],
+      completedMissions: [],
       progression,
     });
     expect(received).toBe(0.5);

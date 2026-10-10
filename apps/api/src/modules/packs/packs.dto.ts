@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CompletedMissionDtoSchema } from '../missions/missions.dto.js';
 import { ProgressionDtoSchema } from '../progression/progression.dto.js';
 
 const packIdentitySchema = z.object({
@@ -44,6 +45,7 @@ export type PackShopQuery = z.infer<typeof PackShopQuerySchema>;
 export const PurchasePackResponseSchema = z.object({
   balance: z.number(),
   quantity: z.number(),
+  completedMissions: z.array(CompletedMissionDtoSchema),
 });
 export type PurchasePackResponse = z.infer<typeof PurchasePackResponseSchema>;
 
@@ -60,5 +62,6 @@ export const OpenPackResponseSchema = z.object({
     }),
   ),
   progression: ProgressionDtoSchema,
+  completedMissions: z.array(CompletedMissionDtoSchema),
 });
 export type OpenPackResponse = z.infer<typeof OpenPackResponseSchema>;

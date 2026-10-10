@@ -27,6 +27,8 @@ const chapters = [
     links: [
       { label: 'Comandos', to: '/app/comandos' },
       { label: 'Economia', to: '/app/comandos/lucro' },
+      { label: 'Códigos de resgate', to: '/app/codigos' },
+      { label: 'Missões', to: '/app/missoes' },
       { label: 'Respostas do bot', to: '/app/respostas' },
       { label: 'Emojis do bot', to: '/app/emojis' },
       { label: 'Assistente IA', to: '/app/assistente' },

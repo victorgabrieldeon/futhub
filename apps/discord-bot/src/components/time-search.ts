@@ -1,6 +1,7 @@
 import { MessageFlags, ModalCommand } from 'seyfert';
 import type { ModalContext } from 'seyfert';
 
+import { EMOJI } from '../emojis.js';
 import { reloadTeam } from '../team-api.js';
 import { parseTeamAction, updateTeamSession } from '../team-session.js';
 import { teamResponse } from '../team.js';
@@ -40,7 +41,7 @@ export default class TimeSearchComponent extends ModalCommand {
       await context.editOrReply(
         await teamResponse(
           parsed.session,
-          '❌ Não foi possível buscar o jogador. Tente novamente.',
+          `${EMOJI.erro} Não foi possível buscar o jogador. Tente novamente.`,
         ),
       );
     }

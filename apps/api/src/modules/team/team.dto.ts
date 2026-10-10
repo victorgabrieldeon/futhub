@@ -88,6 +88,15 @@ export interface TeamPack {
   emoji: string;
   quantity: number;
 }
+export interface TeamProfile {
+  level: number;
+  xp: number;
+  nextLevelXp: number;
+}
+export interface TeamProfit {
+  /** Quando o próximo lucro libera; `null` se já pode ser resgatado. */
+  availableAt: string | null;
+}
 export interface TeamResponse {
   balance: number;
   strength: number;
@@ -99,6 +108,8 @@ export interface TeamResponse {
   inventory: TeamInventory;
   packs: TeamPack[];
   collections: TeamCollection[];
+  profile: TeamProfile;
+  profit: TeamProfit;
 }
 
 export type TeamIdentity = CardMarketIdentity;

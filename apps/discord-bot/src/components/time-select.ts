@@ -1,9 +1,11 @@
 import { ComponentCommand, MessageFlags } from 'seyfert';
 import type { ComponentContext } from 'seyfert';
 
+import { EMOJI } from '../emojis.js';
 import {
   loadClub,
   loadLeague,
+  loadOverviewLeague,
   reloadTeam,
   setCaptain,
   setFormation,
@@ -47,12 +49,23 @@ export default class TimeSelectComponent extends ComponentCommand {
       const { session, action, argument } = parsed;
       if (action === 'tab') {
         if (!isTab(value)) throw new Error('Invalid team tab.');
+        const overview = value === 'overview';
+        const [team, club, league] = await Promise.all([
+          overview ? reloadTeam(session, session.team.inventory.page) : session.team,
+          value === 'club' ? loadClub(session.identity) : session.club,
+          value === 'league'
+            ? loadLeague(session.identity)
+            : overview
+              ? loadOverviewLeague(session.identity)
+              : session.league,
+        ]);
         const updated = updateTeamSession(session, {
           tab: value,
           selectedCardId: null,
           confirmSale: false,
-          club: value === 'club' ? await loadClub(session.identity) : session.club,
-          league: value === 'league' ? await loadLeague(session.identity) : session.league,
+          team,
+          club,
+          league,
         });
         await context.editOrReply(await teamResponse(updated));
         return;
@@ -105,15 +118,15 @@ export default class TimeSelectComponent extends ComponentCommand {
       let notice: string;
       if (action === 'formation') {
         await setFormation(session.identity, value);
-        notice = '✅ Formação e escalação atualizadas.';
+        notice = `${EMOJI.sucesso} Formação e escalação atualizadas.`;
       } else if (action === 'captain') {
         await setCaptain(session.identity, value);
-        notice = '✅ Capitão definido.';
+        notice = `${EMOJI.sucesso} Capitão definido.`;
       } else if (action === 'lineup') {
         if (!isPosition(value) || session.selectedCardId !== argument)
           throw new Error('Invalid lineup selection.');
         await setLineupCard(session.identity, argument, value);
-        notice = '✅ Jogador escalado.';
+        notice = `${EMOJI.sucesso} Jogador escalado.`;
       } else {
         throw new Error('Unsupported team selection action.');
       }
@@ -125,7 +138,7 @@ export default class TimeSelectComponent extends ComponentCommand {
       await context.editOrReply(
         await teamResponse(
           parsed.session,
-          '❌ Não foi possível atualizar o time. Tente novamente.',
+          `${EMOJI.erro} Não foi possível atualizar o time. Tente novamente.`,
         ),
       );
     }

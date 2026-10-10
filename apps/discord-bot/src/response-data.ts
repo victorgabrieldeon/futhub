@@ -1,10 +1,12 @@
 import type {
+  CompletedMissionDto,
   LucroResponse,
   MissionDtoCadence,
   MissionsResponse,
   OpenPackResponse,
   PurchaseCardResponse,
   PurchasePackResponse,
+  RedeemCodeResponse,
 } from '@futhub/api-client';
 import type { ListItem, TemplateData } from '@futhub/bot-templates';
 
@@ -106,6 +108,22 @@ export function missionsData(result: MissionsResponse): TemplateData {
   };
 }
 
+export function completedMissionsData(missions: readonly CompletedMissionDto[]): TemplateData {
+  return {
+    completedMissions: missions.map(({ title, cadence, reward }) => {
+      const label = REWARD_LABEL[reward.type] ?? reward.type;
+      return {
+        title,
+        cadence: CADENCE_LABEL[cadence],
+        reward: `+${reward.quantity} ${label}`,
+        type: reward.type,
+        label,
+        quantity: String(reward.quantity),
+      };
+    }),
+  };
+}
+
 export function packOpenData(packId: string, result: OpenPackResponse): TemplateData {
   const { gainedXp, level, nextLevelXp, xp } = result.progression;
   return {
@@ -133,5 +151,45 @@ export function cardPurchaseData(result: PurchaseCardResponse): TemplateData {
     userCardId: result.userCardId,
     price: String(result.price),
     balance: String(result.balance),
+  };
+}
+
+const REDEEM_REJECTION: Record<
+  Extract<RedeemCodeResponse, { kind: 'rejected' }>['reason'],
+  string
+> = {
+  not_found: 'Código inválido. Confira se digitou corretamente.',
+  inactive: 'Este código não está mais ativo.',
+  expired: 'Este código expirou.',
+  already_redeemed: 'Você já resgatou este código.',
+  exhausted: 'Este código atingiu o limite de resgates.',
+  inventory_full: 'Seu elenco está cheio. Venda cartas antes de resgatar este código.',
+};
+
+function redeemRewardLabel(
+  reward: Extract<RedeemCodeResponse, { kind: 'success' }>['reward'],
+): string {
+  if (reward.type === 'balance') return `+${reward.quantity} moedas`;
+  const name = reward.resourceName ? ` **${reward.resourceName}**` : '';
+  const label = REWARD_LABEL[reward.type] ?? reward.type;
+  return reward.quantity > 1 ? `${reward.quantity}× ${label}${name}` : `${label}${name}`;
+}
+
+export function redeemData(
+  typedCode: string,
+  result: RedeemCodeResponse,
+): { key: 'resgatar.success' | 'resgatar.rejected'; data: TemplateData } {
+  if (result.kind === 'rejected')
+    return {
+      key: 'resgatar.rejected',
+      data: { code: typedCode.trim().toUpperCase(), reason: REDEEM_REJECTION[result.reason] },
+    };
+  return {
+    key: 'resgatar.success',
+    data: {
+      code: result.code,
+      rewardLabel: redeemRewardLabel(result.reward),
+      balance: String(result.balance),
+    },
   };
 }

@@ -4,7 +4,7 @@ import type { CommandContext } from 'seyfert';
 
 import { botResponse, identityData } from '../bot-response.js';
 import { packPurchaseData } from '../response-data.js';
-import { FutHubCommand, identity, requiredText } from './shared.js';
+import { FutHubCommand, MissionReply, identity, requiredText } from './shared.js';
 
 const options = { pack_id: createStringOption({ description: 'ID do pack.', required: true }) };
 
@@ -16,10 +16,14 @@ export default class ComprarPackCommand extends FutHubCommand {
       const user = identity(context);
       const packId = requiredText(context.options.pack_id, 'pack_id');
       const result = await purchasePack(packId, { identity: user });
-      return botResponse('pack.purchase', {
-        ...identityData(user),
-        ...packPurchaseData(packId, result),
-      });
+      return new MissionReply(
+        await botResponse('pack.purchase', {
+          ...identityData(user),
+          ...packPurchaseData(packId, result),
+        }),
+        user,
+        result.completedMissions,
+      );
     });
   }
 }

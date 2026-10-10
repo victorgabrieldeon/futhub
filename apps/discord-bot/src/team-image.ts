@@ -11,7 +11,7 @@ export const teamImageName = 'futhub-team.png';
 export type TeamImageTab = Exclude<TeamTab, 'league'>;
 type TeamImageData = Pick<TeamSession, 'identity' | 'team'> &
   Readonly<{ tab: TeamImageTab }> &
-  Partial<Pick<TeamSession, 'club'>>;
+  Partial<Pick<TeamSession, 'club' | 'league'>>;
 
 const WIDTH = 1_200;
 const OUTPUT_SCALE = 2;
@@ -26,6 +26,7 @@ const CLOUD = '#242424';
 const MUTE = '#9e9ea0';
 const HAIRLINE = '#4b4b4d';
 const SALE = '#d30005';
+const READY = '#2fbf71';
 const titles: Record<TeamImageTab, string> = {
   overview: 'VISÃO GERAL',
   lineup: 'ESCALAÇÃO',
@@ -41,9 +42,9 @@ const tacticTitles: Record<TeamResponse['tactic'], string> = {
 };
 async function loadPlayerImages(session: TeamImageData): Promise<Map<string, Image>> {
   const cards =
-    session.tab === 'club' || session.tab === 'packs'
+    session.tab === 'club' || session.tab === 'packs' || session.tab === 'overview'
       ? []
-      : session.tab === 'overview' || session.tab === 'lineup'
+      : session.tab === 'lineup'
         ? session.team.lineup
         : session.team.inventory.items;
   const entries = await Promise.all(
@@ -123,7 +124,9 @@ function header(context: SKRSContext2D, session: TeamImageData, height: number):
     context,
     session.tab === 'club'
       ? `ESTÁDIO NÍVEL ${session.club?.stadium.level ?? '-'}`
-      : session.team.formation.name,
+      : session.tab === 'overview'
+        ? `NÍVEL ${session.team.profile.level}`
+        : session.team.formation.name,
     1_160,
     103,
     18,
@@ -250,24 +253,127 @@ function lineupPitch(
   }
 }
 
+function fit(context: SKRSContext2D, value: string, maxWidth: number, size: number): number {
+  context.font = `900 ${size}px ${imageFont}`;
+  const width = context.measureText(value).width;
+  return width <= maxWidth ? size : Math.max(18, Math.floor((size * maxWidth) / width));
+}
+
+function remaining(availableAt: string, now: number): string {
+  const minutes = Math.max(1, Math.ceil((new Date(availableAt).getTime() - now) / 60_000));
+  const hours = Math.floor(minutes / 60);
+  if (hours === 0) return `${minutes} MIN`;
+  return minutes % 60 ? `${hours}H ${minutes % 60}MIN` : `${hours}H`;
+}
+
 function overview(
   context: SKRSContext2D,
   team: TeamResponse,
-  images: ReadonlyMap<string, Image>,
+  league: TeamSession['league'] | undefined,
+  now: number,
 ): void {
-  context.fillStyle = CLOUD;
-  context.fillRect(40, 176, 390, 604);
-  text(context, 'FORÇA', 68, 212, 14, MUTE, 'left', 700);
-  text(context, String(team.strength), 68, 310, 116, INK, 'left', 900);
-  text(context, `${team.lineup.length}/11 TITULARES`, 70, 378, 16, INK, 'left', 700);
+  const width = 357;
+  const top = 176;
+  const height = 459;
+  const columns = [40, 421, 802] as const;
+  for (const x of columns) {
+    context.fillStyle = CLOUD;
+    context.fillRect(x, top, width, height);
+  }
+
+  const [clubX, leagueX, rewardX] = [columns[0] + 28, columns[1] + 28, columns[2] + 28];
+  const inner = width - 56;
+  const balance = team.balance.toLocaleString('pt-BR');
+  text(context, 'SALDO', clubX, 212, 14, MUTE, 'left', 700);
+  text(context, balance, clubX, 270, fit(context, balance, inner, 64), INK, 'left', 900);
+  text(context, 'MOEDAS', clubX, 318, 13, MUTE, 'left', 700);
   context.fillStyle = HAIRLINE;
-  context.fillRect(68, 414, 334, 1);
-  text(context, team.formation.name, 68, 462, 30, INK, 'left', 900);
-  text(context, 'FORMAÇÃO', 68, 494, 12, MUTE, 'left', 700);
-  text(context, tacticTitles[team.tactic], 68, 548, 22, INK, 'left', 900);
-  text(context, 'TÁTICA', 68, 576, 12, MUTE, 'left', 700);
-  text(context, `${team.balance.toLocaleString('pt-BR')} MOEDAS`, 68, 615, 13, INK, 'left', 700);
-  lineupPitch(context, team, images, 462, 176, 698, 604);
+  context.fillRect(clubX, 352, inner, 1);
+  text(context, `NÍVEL ${team.profile.level}`, clubX, 394, 28, INK, 'left', 900);
+  context.fillStyle = BACKGROUND;
+  context.fillRect(clubX, 426, inner, 10);
+  context.fillStyle = INK;
+  context.fillRect(
+    clubX,
+    426,
+    Math.round(inner * Math.min(1, team.profile.xp / team.profile.nextLevelXp)),
+    10,
+  );
+  text(
+    context,
+    `${team.profile.xp}/${team.profile.nextLevelXp} XP`,
+    clubX,
+    458,
+    12,
+    MUTE,
+    'left',
+    700,
+  );
+  const packCount = team.packs.reduce((total, pack) => total + pack.quantity, 0);
+  text(context, String(team.inventoryCount), clubX, 530, 36, INK, 'left', 900);
+  text(context, 'JOGADORES', clubX, 566, 12, MUTE, 'left', 700);
+  text(context, String(packCount), clubX + inner / 2, 530, 36, INK, 'left', 900);
+  text(context, 'PACKS', clubX + inner / 2, 566, 12, MUTE, 'left', 700);
+
+  text(context, 'LIGA', leagueX, 212, 14, MUTE, 'left', 700);
+  if (league) {
+    const { status } = league;
+    const division = status.division.name.toUpperCase();
+    text(context, crop(context, division, inner, 46), leagueX, 266, 46, INK, 'left', 900);
+    text(
+      context,
+      `${status.points.toLocaleString('pt-BR')} PONTOS`,
+      leagueX,
+      318,
+      18,
+      INK,
+      'left',
+      700,
+    );
+    context.fillStyle = HAIRLINE;
+    context.fillRect(leagueX, 352, inner, 1);
+    const record = [
+      ['V', status.wins],
+      ['E', status.draws],
+      ['D', status.losses],
+    ] as const;
+    record.forEach(([label, value], index) => {
+      const x = leagueX + (index * inner) / 3;
+      text(context, String(value), x, 410, 40, INK, 'left', 900);
+      text(context, label, x, 448, 12, MUTE, 'left', 700);
+    });
+    const queue =
+      status.queue?.kind === 'waiting'
+        ? 'BUSCANDO ADVERSÁRIO'
+        : league.match
+          ? 'ÚLTIMA PARTIDA'
+          : 'PRONTO PARA JOGAR';
+    text(context, queue, leagueX, 530, 13, MUTE, 'left', 700);
+    if (league.match && status.queue?.kind !== 'waiting') {
+      const match = league.match;
+      const score = `${match.homeGoals} × ${match.awayGoals}`;
+      text(context, score, leagueX, 566, 24, INK, 'left', 900);
+    }
+  } else text(context, 'INDISPONÍVEL', leagueX, 266, 30, MUTE, 'left', 900);
+
+  text(context, 'RECOMPENSAS', rewardX, 212, 14, MUTE, 'left', 700);
+  text(context, 'LUCRO', rewardX, 266, 30, INK, 'left', 900);
+  if (team.profit.availableAt) {
+    text(context, 'EM ESPERA', rewardX, 330, 36, MUTE, 'left', 900);
+    text(
+      context,
+      `LIBERA EM ${remaining(team.profit.availableAt, now)}`,
+      rewardX,
+      372,
+      14,
+      MUTE,
+      'left',
+      700,
+    );
+  } else {
+    text(context, 'DISPONÍVEL', rewardX, 330, 36, READY, 'left', 900);
+    text(context, 'USE /LUCRO PARA RESGATAR', rewardX, 372, 14, INK, 'left', 700);
+  }
 }
 
 function lineup(
@@ -360,12 +466,10 @@ function packs(context: SKRSContext2D, team: TeamResponse): void {
   });
 }
 
-export async function renderTeamImage(session: TeamImageData): Promise<Buffer> {
+export async function renderTeamImage(session: TeamImageData, now = Date.now()): Promise<Buffer> {
   const images = await loadPlayerImages(session);
   const height =
-    session.tab === 'overview' || session.tab === 'lineup' || session.tab === 'club'
-      ? LINEUP_HEIGHT
-      : COMPACT_HEIGHT;
+    session.tab === 'lineup' || session.tab === 'club' ? LINEUP_HEIGHT : COMPACT_HEIGHT;
   const canvas = createCanvas(WIDTH * OUTPUT_SCALE, height * OUTPUT_SCALE);
   const context = canvas.getContext('2d');
   context.scale(OUTPUT_SCALE, OUTPUT_SCALE);
@@ -373,7 +477,7 @@ export async function renderTeamImage(session: TeamImageData): Promise<Buffer> {
   context.imageSmoothingQuality = 'high';
   header(context, session, height);
 
-  if (session.tab === 'overview') overview(context, session.team, images);
+  if (session.tab === 'overview') overview(context, session.team, session.league, now);
   else if (session.tab === 'lineup') lineup(context, session.team, images);
   else if (session.tab === 'club' && session.club) drawClubImage(context, session.club, WIDTH);
   else if (session.tab === 'packs') packs(context, session.team);

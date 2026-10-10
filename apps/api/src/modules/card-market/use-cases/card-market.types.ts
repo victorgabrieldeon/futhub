@@ -1,3 +1,4 @@
+import type { CompletedMission } from '../../missions/missions.service.js';
 import type {
   CardMarketCatalog,
   CardMarketItem,
@@ -20,12 +21,14 @@ export type PurchaseCardResult = Readonly<{
   userCardId: string;
   balance: number;
   price: number;
+  completedMissions: readonly CompletedMission[];
 }>;
 
 export type SaleCardsResult = Readonly<{
   userCardIds: readonly string[];
   balance: number;
   amount: number;
+  completedMissions: readonly CompletedMission[];
 }>;
 
 export type PurchaseCardTransaction = Readonly<{

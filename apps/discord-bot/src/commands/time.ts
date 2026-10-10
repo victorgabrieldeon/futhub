@@ -1,8 +1,8 @@
 import { Declare } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
-import { loadClub, loadLeague, loadTeam } from '../team-api.js';
-import { createTeamSession, type TeamTab } from '../team-session.js';
+import { loadClub, loadLeague, loadOverviewLeague, loadTeam } from '../team-api.js';
+import { type TeamTab, createTeamSession } from '../team-session.js';
 import { teamResponse } from '../team.js';
 import { FutHubCommand, identity } from './shared.js';
 
@@ -17,7 +17,7 @@ export async function createTeamPanel(context: CommandContext, tab: TeamTab = 'o
       sort: 'overall',
     }),
     tab === 'club' ? loadClub(player) : null,
-    tab === 'league' ? loadLeague(player) : null,
+    tab === 'league' ? loadLeague(player) : tab === 'overview' ? loadOverviewLeague(player) : null,
   ]);
   const session = createTeamSession({
     ownerId: context.author.id,

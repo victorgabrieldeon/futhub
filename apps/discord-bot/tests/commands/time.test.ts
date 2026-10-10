@@ -7,7 +7,7 @@ import { createMockBot } from '@slipher/testing';
 import TimeCommand from '../../src/commands/time.js';
 import TimeButtonComponent from '../../src/components/time-button.js';
 import TimeSelectComponent from '../../src/components/time-select.js';
-import { renderTeamImage, type TeamImageTab } from '../../src/team-image.js';
+import { type TeamImageTab, renderTeamImage } from '../../src/team-image.js';
 import type { TeamResponse } from '../../src/team-session.js';
 import { type ApiRequest, mockApi } from '../support/api.js';
 
@@ -52,6 +52,8 @@ const team = {
   inventory: { items: [], total: 12, page: 1, pageSize: 10, totalPages: 2 },
   packs: [{ id: 'pack-1', name: 'Pack Ouro', emoji: '📦', quantity: 2 }],
   collections: [],
+  profile: { level: 3, xp: 40, nextLevelXp: 250 },
+  profit: { availableAt: null },
 };
 const leagueTeam = {
   ...team,
@@ -80,6 +82,19 @@ const leagueDivision = {
   color: '#123abc',
   imageUrl: 'https://cdn.test/bronze.png',
 };
+const idleLeague = {
+  points: 120,
+  wins: 4,
+  draws: 1,
+  losses: 2,
+  division: leagueDivision,
+  queue: null,
+};
+
+/** Responde a liga carregada pela visão geral e delega o resto para `fallback`. */
+function withLeague(fallback: (request: ApiRequest) => unknown) {
+  return (request: ApiRequest) => (request.path === '/v1/league' ? idleLeague : fallback(request));
+}
 
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -136,15 +151,20 @@ function body(messages: readonly { readonly components?: unknown[] }[]): string 
 }
 
 test('abre o painel privado do time por slash command', async () => {
-  const api = mockApi(team);
+  const api = mockApi(withLeague(() => team));
   await using bot = await createMockBot({ commands: [TimeCommand] });
 
   const result = await bot.slash(TimeCommand);
 
+  const home = body(result.messages);
   assert.equal(result.ephemeral, true);
-  assert.match(body(result.messages), /MEU TIME · VISÃO GERAL/);
-  assert.match(body(result.messages), /4-3-3/);
-  assert.match(body(result.messages), /Elenco:.*12/);
+  assert.match(home, /MEU TIME · VISÃO GERAL/);
+  assert.match(home, /Saldo:.*475 moedas.*Nível:.*3 \(40\/250 XP\)/);
+  assert.match(home, /Elenco:.*12.*Packs:.*2/);
+  assert.match(home, /Bronze.*120 pontos/);
+  assert.match(home, /V\*\* 4.*E\*\* 1.*D\*\* 2/);
+  assert.match(home, /Lucro disponível/);
+  assert.doesNotMatch(home, /4-3-3|Formação|Tática|Capitão|Titulares/);
   assert.deepEqual(api.requests, [
     {
       method: 'POST',
@@ -162,7 +182,32 @@ test('abre o painel privado do time por slash command', async () => {
         sort: 'overall',
       },
     },
+    {
+      method: 'POST',
+      path: '/v1/league',
+      body: {
+        id: '900000000000000005',
+        name: 'slipher-tester',
+        avatarUrl: 'https://cdn.discordapp.com/embed/avatars/1.png',
+      },
+    },
   ]);
+});
+
+test('mostra o próximo lucro e mantém a visão geral sem a liga', async () => {
+  const availableAt = '2026-10-10T15:00:00.000Z';
+  mockApi((request: ApiRequest) => {
+    if (request.path === '/v1/league') throw new Error('league offline');
+    return { ...team, profit: { availableAt } };
+  });
+  await using bot = await createMockBot({ commands: [TimeCommand] });
+
+  const result = await bot.slash(TimeCommand);
+
+  const home = body(result.messages);
+  assert.match(home, /Próximo lucro <t:1791644400:R>/);
+  assert.doesNotMatch(home, /Lucro disponível/);
+  assert.match(home, /Informações da liga indisponíveis/);
 });
 test('executa campanha, fila, resultado e nova busca na aba Liga', async (context) => {
   type Stage = 'idle' | 'waiting' | 'matched' | 'requeued';
@@ -269,6 +314,7 @@ test('executa campanha, fila, resultado e nova busca na aba Liga', async (contex
     [
       { method: 'POST', path: '/v1/team' },
       { method: 'POST', path: '/v1/league' },
+      { method: 'POST', path: '/v1/league' },
       { method: 'POST', path: '/v1/ranked/queue' },
       { method: 'POST', path: '/v1/league' },
       { method: 'POST', path: '/v1/league' },
@@ -280,7 +326,7 @@ test('executa campanha, fila, resultado e nova busca na aba Liga', async (contex
 });
 
 test('abre o painel público por prefixo, restringe os controles e mostra o clube', async () => {
-  const api = mockApi((request: ApiRequest) => (request.path === '/v1/club' ? club : team));
+  const api = mockApi(withLeague((request) => (request.path === '/v1/club' ? club : team)));
   await using bot = await createMockBot({
     commands: [TimeCommand],
     components: [TimeButtonComponent, TimeSelectComponent],
@@ -313,6 +359,7 @@ test('abre o painel público por prefixo, restringe os controles e mostra o club
     api.requests.map(({ method, path }) => ({ method, path })),
     [
       { method: 'POST', path: '/v1/team' },
+      { method: 'POST', path: '/v1/league' },
       { method: 'POST', path: '/v1/club' },
     ],
   );
@@ -320,23 +367,25 @@ test('abre o painel público por prefixo, restringe os controles e mostra o club
 
 test('melhora o estádio dentro do painel do time', async () => {
   let currentClub = club;
-  const api = mockApi((request: ApiRequest) => {
-    if (request.path === '/v1/club/stadium/upgrade') {
-      currentClub = {
-        ...currentClub,
-        balance: 500,
-        stadium: {
-          ...currentClub.stadium,
-          level: 3,
-          nextUpgradeCost: 3_000,
-          ticketRevenue: 600,
-          maintenance: 150,
-        },
-        projectedNet: 370,
-      };
-    }
-    return request.path.startsWith('/v1/club') ? currentClub : team;
-  });
+  const api = mockApi(
+    withLeague((request) => {
+      if (request.path === '/v1/club/stadium/upgrade') {
+        currentClub = {
+          ...currentClub,
+          balance: 500,
+          stadium: {
+            ...currentClub.stadium,
+            level: 3,
+            nextUpgradeCost: 3_000,
+            ticketRevenue: 600,
+            maintenance: 150,
+          },
+          projectedNet: 370,
+        };
+      }
+      return request.path.startsWith('/v1/club') ? currentClub : team;
+    }),
+  );
   await using bot = await createMockBot({
     commands: [TimeCommand],
     components: [TimeButtonComponent, TimeSelectComponent],
@@ -355,6 +404,7 @@ test('melhora o estádio dentro do painel do time', async () => {
     api.requests.map(({ method, path }) => ({ method, path })),
     [
       { method: 'POST', path: '/v1/team' },
+      { method: 'POST', path: '/v1/league' },
       { method: 'POST', path: '/v1/club' },
       { method: 'POST', path: '/v1/club/stadium/upgrade' },
     ],
@@ -370,6 +420,7 @@ test('gera uma imagem diferente para cada aba do time', async () => {
         tab,
         team: team as TeamResponse,
         club,
+        league: { status: idleLeague, match: null },
       }),
     ),
   );
@@ -380,7 +431,7 @@ test('gera uma imagem diferente para cada aba do time', async () => {
   assert.deepEqual(
     decoded.map((image) => [image.width, image.height]),
     [
-      [2_400, 1_640],
+      [2_400, 1_350],
       [2_400, 1_640],
       [2_400, 1_350],
       [2_400, 1_350],
@@ -515,13 +566,15 @@ test('carrega cartas do MinIO pelo endereço interno no cluster', async () => {
 
 test('salva a tática imediatamente e atualiza o painel', async () => {
   let current = team;
-  const api = mockApi((request: ApiRequest) => {
-    if (request.path === '/v1/team/tactic') {
-      current = { ...current, tactic: 'offensive' };
-      return {};
-    }
-    return current;
-  });
+  const api = mockApi(
+    withLeague((request) => {
+      if (request.path === '/v1/team/tactic') {
+        current = { ...current, tactic: 'offensive' };
+        return {};
+      }
+      return current;
+    }),
+  );
   await using bot = await createMockBot({
     commands: [TimeCommand],
     components: [TimeButtonComponent, TimeSelectComponent],
@@ -540,6 +593,7 @@ test('salva a tática imediatamente e atualiza o painel', async () => {
     api.requests.map(({ method, path }) => ({ method, path })),
     [
       { method: 'POST', path: '/v1/team' },
+      { method: 'POST', path: '/v1/league' },
       { method: 'PUT', path: '/v1/team/tactic' },
       { method: 'POST', path: '/v1/team' },
     ],

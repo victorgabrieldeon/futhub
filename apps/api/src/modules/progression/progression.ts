@@ -94,7 +94,7 @@ export async function grantReward(
   userId: string,
   item: RewardItem,
   now: Date,
-  claimedBy: 'mission' | 'reward' = 'reward',
+  claimedBy: 'mission' | 'reward' | 'redeem' = 'reward',
 ): Promise<ProgressionReward> {
   const { eq, schema, sql } = database;
   if (!Number.isSafeInteger(item.amount) || item.amount < 1)
@@ -108,9 +108,11 @@ export async function grantReward(
         .where(eq(schema.users.id, userId))
         .returning({ id: schema.users.id });
       if (!updated) throw new Error('Failed to credit level reward balance.');
-      await tx
-        .insert(schema.transactionHistory)
-        .values({ userId, type: 'reward', amount: item.amount });
+      await tx.insert(schema.transactionHistory).values({
+        userId,
+        type: claimedBy === 'redeem' ? 'redeem' : 'reward',
+        amount: item.amount,
+      });
       return { itemId: item.itemId, type: item.type, quantity: item.amount, resourceId: null };
     }
     case 'card': {

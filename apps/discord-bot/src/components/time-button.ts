@@ -1,8 +1,10 @@
-import { ApiClientError } from '@futhub/api-client';
+import { ApiClientError, type CompletedMissionDto } from '@futhub/api-client';
 
 import { ComponentCommand, Label, MessageFlags, Modal, TextInput } from 'seyfert';
 import type { ComponentContext } from 'seyfert';
 
+import { EMOJI } from '../emojis.js';
+import { sendMissionNotice } from '../mission-notice.js';
 import {
   autoLineup,
   loadLeague,
@@ -71,8 +73,8 @@ export default class TimeButtonComponent extends ComponentCommand {
           console.error('Failed to update league panel.', error);
           const notice =
             action === 'league-queue' && error instanceof ApiClientError && error.status === 400
-              ? '⚠️ Complete sua escalação com 11 titulares compatíveis antes de buscar partida.'
-              : '❌ Não foi possível atualizar a liga. Tente novamente.';
+              ? `${EMOJI.alerta} Complete sua escalação com 11 titulares compatíveis antes de buscar partida.`
+              : `${EMOJI.erro} Não foi possível atualizar a liga. Tente novamente.`;
           await context.editOrReply(await teamResponse(session, notice));
         }
         return;
@@ -109,30 +111,33 @@ export default class TimeButtonComponent extends ComponentCommand {
       }
 
       let notice: string | undefined;
+      let completedMissions: readonly CompletedMissionDto[] = [];
       if (action === 'stadium-upgrade') {
         const club = await upgradeClubStadium(session.identity);
         const updated = updateTeamSession(session, {
           club,
           team: { ...session.team, balance: club.balance },
         });
-        await context.editOrReply(await teamResponse(updated, '✅ Estádio melhorado.'));
+        await context.editOrReply(
+          await teamResponse(updated, `${EMOJI.sucesso} Estádio melhorado.`),
+        );
         return;
       }
       if (action === 'auto') {
         await autoLineup(session.identity);
-        notice = '✅ Melhor escalação compatível aplicada.';
+        notice = `${EMOJI.sucesso} Melhor escalação compatível aplicada.`;
       } else if (action === 'tactic') {
         if (!isTactic(argument)) throw new Error('Invalid tactic.');
         await setTactic(session.identity, argument);
-        notice = '✅ Tática atualizada.';
+        notice = `${EMOJI.sucesso} Tática atualizada.`;
       } else if (action === 'favorite') {
         await toggleFavorite(session.identity, argument);
-        notice = '✅ Favorito atualizado.';
+        notice = `${EMOJI.sucesso} Favorito atualizado.`;
       } else if (action === 'sell-confirm') {
         if (session.selectedCardId !== argument) throw new Error('Selected card changed.');
         const updated = updateTeamSession(session, { confirmSale: true });
         await context.editOrReply(
-          await teamResponse(updated, '⚠️ Confirme a venda. Esta ação é definitiva.'),
+          await teamResponse(updated, `${EMOJI.alerta} Confirme a venda. Esta ação é definitiva.`),
         );
         return;
       } else if (action === 'sell') {
@@ -146,7 +151,8 @@ export default class TimeButtonComponent extends ComponentCommand {
         )
           throw new Error('Card is not available for sale.');
         const sale = await sellTeamCard(session.identity, argument);
-        notice = `✅ ${card.name} vendido por ${sale.amount}. Saldo: ${sale.balance}.`;
+        notice = `${EMOJI.sucesso} ${card.name} vendido por ${sale.amount}. Saldo: ${sale.balance}.`;
+        completedMissions = sale.completedMissions;
       } else {
         throw new Error('Unsupported team button action.');
       }
@@ -158,12 +164,18 @@ export default class TimeButtonComponent extends ComponentCommand {
         confirmSale: false,
       });
       await context.editOrReply(await teamResponse(updated, notice));
+      await sendMissionNotice(
+        (message) =>
+          context.followup({ ...message, flags: (message.flags ?? 0) | MessageFlags.Ephemeral }),
+        session.identity,
+        completedMissions,
+      );
     } catch (error) {
       console.error('Failed to update team panel.', error);
       await context.editOrReply(
         await teamResponse(
           parsed.session,
-          '❌ Não foi possível atualizar o time. Tente novamente.',
+          `${EMOJI.erro} Não foi possível atualizar o time. Tente novamente.`,
         ),
       );
     }
