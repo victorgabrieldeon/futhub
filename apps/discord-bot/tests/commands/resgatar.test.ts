@@ -29,7 +29,7 @@ test('resgata código pelo pipeline real do Seyfert', async () => {
 
   assert.equal(
     result.content,
-    'Código **BEMVINDO** resgatado! Você recebeu +500 moedas. Saldo: 1500.',
+    '🎁 Código **BEMVINDO** resgatado! Você recebeu +500 moedas. 🪙 Saldo: 1500.',
   );
   assert.equal(result.messages[0]?.flags, MessageFlags.Ephemeral);
   assert.deepEqual(api.requests, [
@@ -65,7 +65,7 @@ test('descreve cartas e packs recebidos pelo nome', async () => {
 
   assert.equal(
     result.content,
-    'Código **CRAQUE** resgatado! Você recebeu 2× carta **Rafael Lima**. Saldo: 0.',
+    '🎁 Código **CRAQUE** resgatado! Você recebeu 2× carta **Rafael Lima**. 🪙 Saldo: 0.',
   );
 });
 
@@ -76,7 +76,7 @@ test('explica por que o resgate foi recusado', async () => {
 
   const result = await bot.slash(ResgatarCommand, { options: { codigo: 'bemvindo' } });
 
-  assert.equal(result.content, 'Você já resgatou este código.');
+  assert.equal(result.content, '❌ Você já resgatou este código.');
   assert.equal(result.messages[0]?.flags, MessageFlags.Ephemeral);
   assert.deepEqual(api.requests.at(-1), {
     method: 'GET',

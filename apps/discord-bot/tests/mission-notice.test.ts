@@ -39,7 +39,7 @@ test('anuncia missões concluídas com ciclo e recompensa', async () => {
 
   assert.equal(
     notice?.content,
-    'Missão concluída!\n🎯 **Diária** — Resgate o lucro: **+300 moedas**\n🎯 **Semanal** — Abra 5 packs: **+1 pack**',
+    '✅ Missão concluída!\n🎯 **Diária** — Resgate o lucro: **+300 moedas**\n🎯 **Semanal** — Abra 5 packs: **+1 pack**',
   );
 });
 

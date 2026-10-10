@@ -15,7 +15,7 @@ test('compra pack pelo pipeline real do Seyfert', async () => {
 
   const result = await bot.slash(ComprarPackCommand, { options: { pack_id: 'pack-1' } });
 
-  assert.equal(result.content, 'Pack comprado. Quantidade: 2. Saldo: 450.');
+  assert.equal(result.content, '📦 Pack comprado. Quantidade: 2. 🪙 Saldo: 450.');
   assert.deepEqual(api.requests, [
     {
       method: 'POST',

@@ -457,7 +457,7 @@ test('compra pack pela aba da loja', async () => {
     options: { aba: 'packs', pack_id: 'pack-1' },
   });
 
-  assert.equal(result.content, 'Pack comprado. Quantidade: 2. Saldo: 450.');
+  assert.equal(result.content, '📦 Pack comprado. Quantidade: 2. 🪙 Saldo: 450.');
   assert.deepEqual(api.requests, [
     {
       method: 'POST',
@@ -485,7 +485,7 @@ test('contrata carta pela aba da loja', async () => {
 
   assert.equal(
     result.content,
-    'Carta comprada. ID no elenco: `user-card-1`. Preço: 100. Saldo: 350.',
+    '🤝 Carta comprada. ID no elenco: `user-card-1`. Preço: 100. 🪙 Saldo: 350.',
   );
   assert.deepEqual(api.requests, [
     {

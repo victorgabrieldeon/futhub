@@ -10,6 +10,7 @@ import type {
 } from '@futhub/api-client';
 
 import { botResponse } from '../src/bot-response.js';
+import { EMOJI_FALLBACK } from '../src/emojis.js';
 import {
   cardPurchaseData,
   lucroData,
@@ -20,7 +21,23 @@ import {
 import { mockApi, withTemplates } from './support/api.js';
 
 // Verbatim copies of the formatters the bot used before responses became editable
-// (git: apps/discord-bot/src/{lucro,missions,game}.ts). Catalog defaults must match them.
+// (git: apps/discord-bot/src/{lucro,missions,game}.ts). Catalog defaults must match them,
+// apart from the emoji decorations added since (rendered as fallbacks here; the card bullet
+// became an emoji too), which `plain` strips from both sides.
+const decoration = new RegExp(
+  `(?:${['•', ...Object.values(EMOJI_FALLBACK)].map((emoji) => emoji.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')}) `,
+  'g',
+);
+function plain(text: string | null | undefined): string | undefined {
+  return text?.replace(decoration, '');
+}
+function plainEmbeds<T extends { title?: string; description?: string }>(embeds?: T[]) {
+  return embeds?.map((embed) => ({
+    ...embed,
+    title: plain(embed.title),
+    description: plain(embed.description),
+  }));
+}
 const legacy = {
   truncate(message: string): string {
     return message.length <= 2_000 ? message : `${message.slice(0, 1_997)}...`;
@@ -147,16 +164,20 @@ test('defaults reproduce the previous /lucro embeds and cooldown text', async ()
       availableAt: '2026-01-01T04:00:00.000Z',
       progression: progression([{ type: 'pack', quantity: 1 }]),
       embed,
+      completedMissions: [],
     };
     const { key, data } = lucroData(result, now);
     const message = await botResponse(key, { ...identity, ...data });
-    assert.deepEqual(message.embeds, legacy.lucro(result, now).embeds);
+    assert.deepEqual(
+      plainEmbeds(message.embeds as { title?: string; description?: string }[]),
+      plainEmbeds(legacy.lucro(result, now).embeds),
+    );
     assert.equal(message.content, undefined);
   }
   const cooldown: LucroResponse = { kind: 'cooldown', availableAt: '2026-01-01T02:10:00.000Z' };
   const { key, data } = lucroData(cooldown, now);
   assert.equal(
-    (await botResponse(key, { ...identity, ...data })).content,
+    plain((await botResponse(key, { ...identity, ...data })).content),
     legacy.lucro(cooldown, now).content,
   );
 });
@@ -185,7 +206,16 @@ test('defaults reproduce the previous /missoes text, including empty and long li
   ]) {
     const result: MissionsResponse = { missions };
     const message = await botResponse('missoes.list', { ...identity, ...missionsData(result) });
-    assert.equal(message.content, legacy.missions(result));
+    const expected = legacy.missions(result);
+    const actual = plain(message.content) ?? '';
+    if (!expected.endsWith('...')) {
+      assert.equal(actual, expected);
+      continue;
+    }
+    // Emojis count toward the 2000-char limit, so the cut lands earlier than before.
+    assert.ok(String(message.content).length <= 2_000);
+    assert.ok(actual.endsWith('...'));
+    assert.ok(expected.startsWith(actual.slice(0, -3)));
   }
 });
 
@@ -205,20 +235,23 @@ test('defaults reproduce the previous pack and card purchase texts', async () =>
           card: { id: `c-${i}`, overall: 70 + i, name: `Jogador ${i}`, position: 'CA' },
         })),
         progression: progression(rewards),
+        completedMissions: [],
       };
       const message = await botResponse('pack.open', { ...identity, ...packOpenData('p', result) });
-      assert.equal(message.content, legacy.packOpen(result));
+      assert.equal(plain(message.content), plain(legacy.packOpen(result)));
     }
   }
-  const purchase = { quantity: 2, balance: 450 };
+  const purchase = { quantity: 2, balance: 450, completedMissions: [] };
   assert.equal(
-    (await botResponse('pack.purchase', { ...identity, ...packPurchaseData('p', purchase) }))
-      .content,
+    plain(
+      (await botResponse('pack.purchase', { ...identity, ...packPurchaseData('p', purchase) }))
+        .content,
+    ),
     legacy.packPurchase(purchase),
   );
-  const card = { userCardId: 'uc-1', price: 100, balance: 350 };
+  const card = { userCardId: 'uc-1', price: 100, balance: 350, completedMissions: [] };
   assert.equal(
-    (await botResponse('card.purchase', { ...identity, ...cardPurchaseData(card) })).content,
+    plain((await botResponse('card.purchase', { ...identity, ...cardPurchaseData(card) })).content),
     legacy.cardPurchase(card),
   );
 });

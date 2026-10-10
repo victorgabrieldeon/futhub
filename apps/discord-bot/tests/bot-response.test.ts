@@ -19,6 +19,7 @@ const opened = {
     nextLevelXp: 100,
     rewards: [{ itemId: 'i', type: 'balance' as const, quantity: 500, resourceId: null }],
   },
+  completedMissions: [],
 };
 
 test('pack aberto usa a lista padrão com recompensas na mesma linha', async () => {
@@ -26,7 +27,7 @@ test('pack aberto usa a lista padrão com recompensas na mesma linha', async () 
   const message = await botResponse('pack.open', packOpenData('p-1', opened));
   assert.equal(
     message.content,
-    'Pack aberto.\n• `uc-1` — OVR 88\n• `uc-2` — OVR 79\nXP: +10 (40/100). Nível: 3. Recompensas: +500 balance.',
+    '📦 Pack aberto.\n🃏 `uc-1` — OVR 88\n🃏 `uc-2` — OVR 79\n⚡ XP: +10 (40/100). 🎖️ Nível: 3. Recompensas: 🎁 +500 balance.',
   );
 });
 
@@ -93,7 +94,7 @@ test('template salvo inválido cai no padrão do catálogo', async (context) => 
     ),
   );
   const message = await botResponse('pack.open', packOpenData('p-1', opened));
-  assert.match(String(message.content), /^Pack aberto\./);
+  assert.match(String(message.content), /^📦 Pack aberto\./);
 });
 
 test('lucro e missões viram variáveis e listas do catálogo', () => {
@@ -113,6 +114,7 @@ test('lucro e missões viram variáveis e listas do catálogo', () => {
       availableAt: '2026-01-01T00:00:00.000Z',
       progression: { gainedXp: 10, level: 2, xp: 30, nextLevelXp: 100, rewards: [] },
       embed: { title: '', description: '', color: '#000000', footer: '' },
+      completedMissions: [],
     },
     new Date('2025-12-31T23:00:00.000Z'),
   );
