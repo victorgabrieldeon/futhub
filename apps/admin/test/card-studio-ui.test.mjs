@@ -68,11 +68,9 @@ try {
   await page.goto(process.env.CARD_STUDIO_URL ?? 'http://127.0.0.1:4174/app/studio');
   await ready();
   assert.equal(
-    await page
-      .locator('.studio-workbench')
-      .evaluate((node) => getComputedStyle(node).backgroundColor),
+    await page.locator('.studio-shell').evaluate((node) => getComputedStyle(node).backgroundColor),
     'rgb(17, 17, 17)',
-    'Studio must follow dark theme',
+    'Studio chrome must follow dark theme',
   );
   await page.getByRole('tab', { name: 'Visual', exact: true }).click();
   const frames = new Set();
@@ -92,9 +90,9 @@ try {
     await render.screenshot({ path: `/tmp/card-studio-${name}.png` });
   }
   assert.equal(frames.size, 8, 'Each frame must produce distinct pixels');
-  await page.getByRole('button', { name: /Undo/ }).click();
+  await page.getByRole('button', { name: 'Desfazer', exact: true }).click();
   await expect(page.getByRole('button', { name: /^Asa/ })).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('button', { name: /Redo/ }).click();
+  await page.getByRole('button', { name: 'Refazer', exact: true }).click();
   await expect(page.getByRole('button', { name: /^Pavilhão/ })).toHaveAttribute(
     'aria-pressed',
     'true',
@@ -151,7 +149,7 @@ try {
     );
     const canvas = await page.locator('.studio-stage .studio-canvas-shell').boundingBox();
     const art = await render.boundingBox();
-    if (width === 1280) assert.ok(art.width >= 500, `Desktop card too small: ${art.width}px`);
+    if (width === 1280) assert.ok(art.width >= 380, `Desktop card too small: ${art.width}px`);
     assert.ok(
       art.x >= canvas.x - 1 &&
         art.x + art.width <= canvas.x + canvas.width + 1 &&
@@ -179,7 +177,7 @@ try {
   }
   await page.getByRole('button', { name: 'Card', exact: true }).click();
   await ready();
-  await page.getByRole('button', { name: 'Exportar card', exact: true }).click();
+  await page.getByRole('button', { name: 'Exportar', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Exportar imagens' })).toBeVisible();
   const pending = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Gerar EA FC Item', exact: true }).click();

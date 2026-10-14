@@ -58,22 +58,7 @@ export class FutGgRaritiesService {
   }
 
   private async loadRarities(): Promise<CollectionArtworkSuggestion[]> {
-    const manifestResponse = await fetch(new URL(`/${game}/manifest.json`, futGgDataOrigin), {
-      signal: AbortSignal.timeout(5_000),
-    });
-    if (!manifestResponse.ok) {
-      throw new BadGatewayException(`FUT.GG returned ${manifestResponse.status}.`);
-    }
-    const manifest: unknown = await manifestResponse.json();
-    const version = coreDataVersion(manifest);
-    if (!version) throw new BadGatewayException('FUT.GG returned an invalid manifest.');
-
-    const dataResponse = await fetch(
-      new URL(`/${game}/fc-core-data.v1.${version}.json`, futGgDataOrigin),
-      { signal: AbortSignal.timeout(5_000) },
-    );
-    if (!dataResponse.ok) throw new BadGatewayException(`FUT.GG returned ${dataResponse.status}.`);
-    const data: unknown = await dataResponse.json();
+    const data = await fetchFutGgCoreData();
     if (
       typeof data !== 'object' ||
       data === null ||
@@ -90,6 +75,25 @@ export class FutGgRaritiesService {
     }
     return [...suggestions.values()];
   }
+}
+
+export async function fetchFutGgCoreData(): Promise<unknown> {
+  const manifestResponse = await fetch(new URL(`/${game}/manifest.json`, futGgDataOrigin), {
+    signal: AbortSignal.timeout(5_000),
+  });
+  if (!manifestResponse.ok) {
+    throw new BadGatewayException(`FUT.GG returned ${manifestResponse.status}.`);
+  }
+  const manifest: unknown = await manifestResponse.json();
+  const version = coreDataVersion(manifest);
+  if (!version) throw new BadGatewayException('FUT.GG returned an invalid manifest.');
+
+  const dataResponse = await fetch(
+    new URL(`/${game}/fc-core-data.v1.${version}.json`, futGgDataOrigin),
+    { signal: AbortSignal.timeout(5_000) },
+  );
+  if (!dataResponse.ok) throw new BadGatewayException(`FUT.GG returned ${dataResponse.status}.`);
+  return dataResponse.json();
 }
 
 function coreDataVersion(value: unknown): string | null {

@@ -1,6 +1,8 @@
 import type * as DatabaseModule from '@futhub/database';
 
-import { advanceMissions } from '../../missions/missions.service.js';
+import { displayEmoji } from '../../bot-emojis/entity-emoji.js';
+import { fileUrl } from '../../files/files.service.js';
+import { advanceMissions, missionRewardBalance } from '../../missions/missions.service.js';
 import { grantCommandXp } from '../../progression/progression.js';
 import { cardInventoryCapacity, upsertDiscordUser } from '../../users/user.repository.js';
 import type { PackCatalogItem } from '../packs.dto.js';
@@ -19,19 +21,27 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
   constructor(private readonly loadDatabase: DatabaseLoader) {}
 
   async listAvailable(): Promise<readonly PackCatalogItem[]> {
-    const { asc, db, eq, schema } = await this.loadDatabase();
-    return db
+    const { asc, db, eq, schema, sql } = await this.loadDatabase();
+    const rows = await db
       .select({
         id: schema.packs.id,
         name: schema.packs.name,
-        emoji: schema.packs.emoji,
+        emoji: displayEmoji(sql, schema.packs),
         cardsAmount: schema.packs.cardsAmount,
         price: schema.packs.price,
         limitPerUser: schema.packs.limitPerUser,
+        imageUrl: schema.packs.imageUrl,
+        imageObjectKey: schema.files.objectKey,
       })
       .from(schema.packs)
+      .leftJoin(schema.files, eq(schema.files.id, schema.packs.imageFileId))
       .where(eq(schema.packs.canBuy, true))
       .orderBy(asc(schema.packs.name));
+    // Uploaded art wins over the legacy external URL, matching PackShopService.
+    return rows.map(({ imageObjectKey, imageUrl, ...pack }) => ({
+      ...pack,
+      imageUrl: imageObjectKey ? fileUrl(imageObjectKey) : imageUrl || null,
+    }));
   }
 
   async runPurchase<T>(
@@ -41,11 +51,12 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
   ): Promise<T> {
     const database = await this.loadDatabase();
     const { db, eq, sql, schema } = database;
+    const now = new Date();
     return db.transaction(async (tx) => {
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtext(${`pack:${identity.id}:${packId}`}))`,
       );
-      const user = await upsertDiscordUser(tx, schema, identity, new Date());
+      const user = await upsertDiscordUser(tx, schema, identity, now);
       const [pack] = await tx
         .select({
           id: schema.packs.id,
@@ -72,7 +83,7 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
         commit: async () => {
           const [credited] = await tx
             .update(schema.users)
-            .set({ saldo: sql`${schema.users.saldo} - ${pack.price}`, atualizadoEm: new Date() })
+            .set({ saldo: sql`${schema.users.saldo} - ${pack.price}`, atualizadoEm: now })
             .where(eq(schema.users.id, user.id))
             .returning({ balance: schema.users.saldo });
           if (!credited) throw new Error('Failed to debit user.');
@@ -88,7 +99,21 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
           await tx
             .insert(schema.transactionHistory)
             .values({ userId: user.id, type: 'purchase', amount: -pack.price });
-          return { balance: credited.balance, quantity: inventory.quantity };
+          const completedMissions = [
+            ...(await advanceMissions(database, tx, user.id, 'buy_pack', now)),
+            ...(await advanceMissions(database, tx, user.id, 'spend_balance', now, pack.price)),
+          ];
+          const rewardedPacks = completedMissions.reduce(
+            (total, { reward }) =>
+              total +
+              (reward.type === 'pack' && reward.resourceId === pack.id ? reward.quantity : 0),
+            0,
+          );
+          return {
+            balance: credited.balance + missionRewardBalance(completedMissions),
+            quantity: inventory.quantity + rewardedPacks,
+            completedMissions,
+          };
         },
       });
     });
@@ -192,11 +217,38 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
       const excludedPositionValues = excludedPositions.map((row) => row.id);
       if (excludedPositionValues.length)
         conditions.push(notInArray(schema.cards.position, excludedPositionValues));
-      const candidates = await tx
-        .select({ id: schema.cards.id, overall: schema.cards.overall })
-        .from(schema.cards)
-        .where(and(...conditions))
-        .orderBy(asc(schema.cards.id));
+      const candidates = (
+        await tx
+          .select({
+            id: schema.cards.id,
+            overall: schema.cards.overall,
+            name: schema.cards.name,
+            position: schema.cards.position,
+            imageObjectKey: schema.files.objectKey,
+            legacyImageUrl: schema.cards.imageUrl,
+            team: { name: schema.teams.name, emoji: displayEmoji(sql, schema.teams) },
+            collection: {
+              name: sql<string>`coalesce(${schema.localizedTextTranslations.content}, ${schema.collections.slug})`,
+              emoji: displayEmoji(sql, schema.collections),
+            },
+          })
+          .from(schema.cards)
+          .innerJoin(schema.teams, eq(schema.teams.id, schema.cards.teamId))
+          .innerJoin(schema.collections, eq(schema.collections.id, schema.cards.collectionId))
+          .leftJoin(
+            schema.localizedTextTranslations,
+            and(
+              eq(schema.localizedTextTranslations.localizedTextId, schema.collections.nameTextId),
+              eq(schema.localizedTextTranslations.locale, 'pt-BR'),
+            ),
+          )
+          .leftJoin(schema.files, eq(schema.files.id, schema.cards.imageFileId))
+          .where(and(...conditions))
+          .orderBy(asc(schema.cards.id))
+      ).map(({ imageObjectKey, legacyImageUrl, ...card }) => ({
+        ...card,
+        imageUrl: imageObjectKey ? fileUrl(imageObjectKey) : legacyImageUrl || null,
+      }));
       const probabilities = await tx
         .select({
           overall: schema.packProbabilities.overall,
@@ -226,12 +278,13 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
             .update(schema.userPacks)
             .set({ quantity: sql`${schema.userPacks.quantity} - 1` })
             .where(and(eq(schema.userPacks.userId, user.id), eq(schema.userPacks.packId, pack.id)));
-          await advanceMissions(database, tx, user.id, 'open_pack', now);
-          return created.map((userCard, index) => {
+          const completedMissions = await advanceMissions(database, tx, user.id, 'open_pack', now);
+          const cards = created.map((userCard, index) => {
             const card = selected[index];
             if (!card) throw new Error('Failed to map created card.');
             return { id: userCard.id, card };
           });
+          return { cards, completedMissions };
         },
       });
     });

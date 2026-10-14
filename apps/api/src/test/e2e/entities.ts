@@ -119,6 +119,18 @@ export async function createCardCatalog(
   return { collectionId: collection.id, teamId: team.id };
 }
 
+export async function createTeamFixture(
+  database: Database,
+  input: Readonly<{ name: string; slug: string }>,
+): Promise<{ id: string }> {
+  const [team] = await database.db
+    .insert(database.schema.teams)
+    .values({ ...input, emoji: '⚽', color: '#000000', colors: ['#000000'] })
+    .returning({ id: database.schema.teams.id });
+  if (!team) throw new Error('Failed to create test team.');
+  return team;
+}
+
 async function createCard(
   database: Database,
   catalog: { collectionId: string; teamId: string },
@@ -202,6 +214,7 @@ export async function createAdminPackFixture(database: Database): Promise<{
 
 export async function createPackFixture(
   database: Database,
+  options: Readonly<{ probabilities?: boolean; limitPerUser?: number }> = {},
 ): Promise<{ packId: string; cardId: string }> {
   const catalog = await createCardCatalog(database, 'pack');
   const card = await createCard(database, catalog, 'Pack card', 'CA');
@@ -219,13 +232,17 @@ export async function createPackFixture(
       emoji: '📦',
       cardsAmount: 1,
       price: 20,
+      ...(options.limitPerUser === undefined ? {} : { limitPerUser: options.limitPerUser }),
     })
     .returning({ id: database.schema.packs.id });
+  if (!pack) throw new Error('Failed to create test pack.');
+  // Packs created in the admin have no probabilities: any eligible card is drawn.
+  if (options.probabilities === false) return { packId: pack.id, cardId: card.id };
   const [probability] = await database.db
     .insert(database.schema.packProbabilities)
     .values({ name: `e2e ${randomUUID()}`, overall: 80, probability: 1 })
     .returning({ id: database.schema.packProbabilities.id });
-  if (!pack || !probability) throw new Error('Failed to create test pack.');
+  if (!probability) throw new Error('Failed to create test pack.');
   await database.db.insert(database.schema.packProbabilityLinks).values({
     packId: pack.id,
     probabilityId: probability.id,
@@ -386,6 +403,7 @@ export async function createTeamPlayer(database: Database, identity: DiscordIden
       configId: packConfig.id,
       color: '#111111',
       emoji: '📦',
+      imageUrl: 'https://example.com/team-pack.png',
       cardsAmount: 3,
       price: 10,
     })
@@ -435,6 +453,22 @@ export async function createBotResponseMigrationFixture(database: Database) {
   return embed;
 }
 
+export async function createPackCatalogImageFixture(database: Database) {
+  const { packId: uploadedPackId } = await createPackFixture(database);
+  const { packId: externalPackId } = await createPackFixture(database);
+  const { packId: plainPackId } = await createPackFixture(database);
+  const file = await createFileFixture(database, `packs/${uploadedPackId}.png`);
+  await database.db
+    .update(database.schema.packs)
+    .set({ imageFileId: file.id, imageUrl: 'https://example.com/legacy.png' })
+    .where(database.eq(database.schema.packs.id, uploadedPackId));
+  await database.db
+    .update(database.schema.packs)
+    .set({ imageUrl: 'https://example.com/pack.png' })
+    .where(database.eq(database.schema.packs.id, externalPackId));
+  return { uploadedPackId, externalPackId, plainPackId, objectKey: file.objectKey };
+}
+
 export async function createPackShopFixture(database: Database) {
   const ids: string[] = [];
   for (let index = 0; index < 7; index++) {
@@ -450,4 +484,153 @@ export async function createPackShopFixture(database: Database) {
     ids.push(pack.id);
   }
   return ids;
+}
+
+export async function createRedeemCodeFixture(
+  database: Database,
+  input: Readonly<{
+    code: string;
+    reward: Readonly<{
+      type: 'balance' | 'card' | 'pack';
+      amount: number;
+      cardId?: string;
+      packId?: string;
+    }>;
+    maxClaims?: number | null;
+    expiresAt?: Date | null;
+    active?: boolean;
+  }>,
+): Promise<{ redeemId: string; itemId: string }> {
+  const [item] = await database.db
+    .insert(database.schema.items)
+    .values({
+      type: input.reward.type,
+      amount: input.reward.amount,
+      cardId: input.reward.cardId ?? null,
+      packId: input.reward.packId ?? null,
+    })
+    .returning({ id: database.schema.items.id });
+  if (!item) throw new Error('Failed to create test redeem item.');
+  const [redeem] = await database.db
+    .insert(database.schema.redeems)
+    .values({
+      code: input.code,
+      itemId: item.id,
+      maxClaims: input.maxClaims ?? null,
+      expiresAt: input.expiresAt ?? null,
+      active: input.active ?? true,
+    })
+    .returning({ id: database.schema.redeems.id });
+  if (!redeem) throw new Error('Failed to create test redeem code.');
+  return { redeemId: redeem.id, itemId: item.id };
+}
+
+export async function createMissionFixture(
+  database: Database,
+  input: Readonly<{
+    title: string;
+    type: Database['schema']['missionType']['enumValues'][number];
+    cadence: 'daily' | 'weekly' | 'monthly';
+    goal?: number;
+    tier?: number;
+    reward?: Readonly<{ type: 'balance' | 'pack'; amount: number; packId?: string }>;
+  }>,
+): Promise<{ missionId: string; itemId: string }> {
+  const [text] = await database.db
+    .insert(database.schema.localizedTexts)
+    .values({})
+    .returning({ id: database.schema.localizedTexts.id });
+  if (!text) throw new Error('Failed to create mission title.');
+  await database.db.insert(database.schema.localizedTextTranslations).values({
+    localizedTextId: text.id,
+    locale: 'pt-BR',
+    content: input.title,
+  });
+  const reward = input.reward ?? { type: 'balance', amount: 25 };
+  const [item] = await database.db
+    .insert(database.schema.items)
+    .values({ type: reward.type, amount: reward.amount, packId: reward.packId ?? null })
+    .returning({ id: database.schema.items.id });
+  if (!item) throw new Error('Failed to create mission reward.');
+  const tier = input.tier ?? 1;
+  const [mission] = await database.db
+    .insert(database.schema.missions)
+    .values({
+      titleTextId: text.id,
+      type: input.type,
+      cadence: input.cadence,
+      tier,
+      goal: input.goal ?? 1,
+    })
+    .returning({ id: database.schema.missions.id });
+  if (!mission) throw new Error('Failed to create mission.');
+  await database.db
+    .insert(database.schema.missionRewards)
+    .values({ missionId: mission.id, itemId: item.id, tier });
+  return { missionId: mission.id, itemId: item.id };
+}
+
+export async function createSoccerFieldFixture(
+  database: Database,
+  name: string,
+): Promise<{ fieldId: string }> {
+  const [text] = await database.db
+    .insert(database.schema.localizedTexts)
+    .values({})
+    .returning({ id: database.schema.localizedTexts.id });
+  if (!text) throw new Error('Failed to create soccer field name.');
+  await database.db
+    .insert(database.schema.localizedTextTranslations)
+    .values({ localizedTextId: text.id, locale: 'pt-BR', content: name });
+  const [field] = await database.db
+    .insert(database.schema.soccerFields)
+    .values({ nameTextId: text.id, color: '#1f9d55' })
+    .returning({ id: database.schema.soccerFields.id });
+  if (!field) throw new Error('Failed to create soccer field.');
+  return { fieldId: field.id };
+}
+
+export async function createTradeFixture(
+  database: Database,
+  input: Readonly<{ senderId: string; recipientId: string; userCardId: string }>,
+): Promise<{ tradeId: string }> {
+  const [trade] = await database.db
+    .insert(database.schema.trades)
+    .values({ senderId: input.senderId, recipientId: input.recipientId })
+    .returning({ id: database.schema.trades.id });
+  if (!trade) throw new Error('Failed to create trade.');
+  await database.db.insert(database.schema.tradeCards).values({
+    tradeId: trade.id,
+    userCardId: input.userCardId,
+    ownerId: input.senderId,
+  });
+  return { tradeId: trade.id };
+}
+
+export async function createEntityEmojiFixture(database: Database) {
+  const catalog = await createCardCatalog(database, 'emoji');
+  const { packId } = await createPackFixture(database);
+  const plainTeam = await createTeamFixture(database, {
+    name: `Plain team ${randomUUID()}`,
+    slug: `plain-team-${randomUUID()}`,
+  });
+  const [teamFile, collectionFile, packFile] = await Promise.all(
+    ['team', 'collection', 'pack'].map((name) =>
+      createFileFixture(database, `emoji/${name}-${randomUUID()}.png`),
+    ),
+  );
+  if (!teamFile || !collectionFile || !packFile) throw new Error('Failed to create emoji files.');
+  await database.db
+    .update(database.schema.teams)
+    .set({ logoFileId: teamFile.id })
+    .where(database.eq(database.schema.teams.id, catalog.teamId));
+  await database.db
+    .update(database.schema.collections)
+    .set({ imageFileId: collectionFile.id })
+    .where(database.eq(database.schema.collections.id, catalog.collectionId));
+  await database.db
+    .update(database.schema.packs)
+    .set({ imageFileId: packFile.id, name: 'Pack Lendário' })
+    .where(database.eq(database.schema.packs.id, packId));
+  return { ...catalog, packId, plainTeamId: plainTeam.id, teamFile, collectionFile, packFile };
 }

@@ -6,16 +6,17 @@
  * OpenAPI spec version: 1.0
  */
 import { request } from "./request.js";
-export interface ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber {
+export interface ReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumber {
   id: string;
   name: string;
+  emoji: string;
   price: number;
   imageUrl: string;
   cardsPerPack: number;
 }
 
-export interface ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber {
-  packs: ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber[];
+export interface ReadonlypacksReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber {
+  packs: ReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumber[];
   page: number;
   totalPages: number;
 }
@@ -71,6 +72,14 @@ export const TeamCardHolderPosition = {
   ZAG: "ZAG",
 } as const;
 
+/**
+ * Time real da carta (clube do jogador), não o clube do usuário.
+ */
+export interface TeamClub {
+  name: string;
+  emoji: string;
+}
+
 export interface TeamCollection {
   id: string;
   name: string;
@@ -85,6 +94,7 @@ export interface TeamCard {
   overall: number;
   position: TeamCardPosition;
   secondaryPositions: TeamCardSecondaryPositionsItem[];
+  team: TeamClub;
   collection: TeamCollection;
   favorite: boolean;
   holder: boolean;
@@ -143,7 +153,24 @@ export interface TeamPack {
   id: string;
   name: string;
   emoji: string;
+  cardsAmount: number;
+  /** @nullable */
+  imageUrl: string | null;
   quantity: number;
+}
+
+export interface TeamProfile {
+  level: number;
+  xp: number;
+  nextLevelXp: number;
+}
+
+export interface TeamProfit {
+  /**
+   * Quando o próximo lucro libera; `null` se já pode ser resgatado.
+   * @nullable
+   */
+  availableAt: string | null;
 }
 
 export type TeamResponseTactic =
@@ -166,6 +193,8 @@ export interface TeamResponse {
   inventory: TeamInventory;
   packs: TeamPack[];
   collections: TeamCollection[];
+  profile: TeamProfile;
+  profit: TeamProfit;
 }
 
 export type BotResponseButtonDtoStyle =
@@ -191,6 +220,11 @@ export interface BotResponseButtonDto {
   /** @maxLength 512 */
   url: string;
   disabled: boolean;
+  /**
+   * Nome de um emoji do bot exibido antes do rótulo.
+   * @pattern ^([A-Za-z0-9_]{2,32})?$
+   */
+  emoji?: string;
 }
 
 /**
@@ -310,6 +344,49 @@ export type BotResponseDefinitionDtoVariablesItem = {
   example: string;
 };
 
+export type BotResponseDefinitionDtoListsItemFieldsItem = {
+  name: string;
+  description: string;
+};
+
+export interface Recordstringstring {
+  [key: string]: string;
+}
+
+export interface BotResponseListStyleDto {
+  /** @maxLength 1000 */
+  item: string;
+  /** @maxLength 20 */
+  separator: string;
+  /** @maxLength 500 */
+  empty: string;
+  /**
+   * @minimum 1
+   * @maximum 50
+   */
+  limit: number;
+  /** @maxLength 200 */
+  more: string;
+  /**
+   * Texto antes da lista, só quando ela tem itens.
+   * @maxLength 200
+   */
+  prefix?: string;
+  /**
+   * Texto depois da lista, só quando ela tem itens.
+   * @maxLength 200
+   */
+  suffix?: string;
+}
+
+export type BotResponseDefinitionDtoListsItem = {
+  name: string;
+  description: string;
+  fields: BotResponseDefinitionDtoListsItemFieldsItem[];
+  examples: Recordstringstring[];
+  defaultFormat: BotResponseListStyleDto;
+};
+
 export type BotResponseDefinitionDtoActionsItem = {
   id: string;
   label: string;
@@ -361,6 +438,312 @@ export interface BotResponseEmbedDto {
   fields: BotResponseEmbedDtoFieldsItem[];
 }
 
+/**
+ * Como uma variável de lista, como `{cards}`, vira texto.
+ */
+export interface BotResponseListFormatDto {
+  /** @maxLength 1000 */
+  item: string;
+  /** @maxLength 20 */
+  separator: string;
+  /** @maxLength 500 */
+  empty: string;
+  /**
+   * @minimum 1
+   * @maximum 50
+   */
+  limit: number;
+  /** @maxLength 200 */
+  more: string;
+  /**
+   * Texto antes da lista, só quando ela tem itens.
+   * @maxLength 200
+   */
+  prefix?: string;
+  /**
+   * Texto depois da lista, só quando ela tem itens.
+   * @maxLength 200
+   */
+  suffix?: string;
+  /** @maxLength 40 */
+  source: string;
+}
+
+/**
+ * Imagem remota ou de variável, recortada no quadro.
+ */
+export type BotResponseImageLayerDtoType =
+  (typeof BotResponseImageLayerDtoType)[keyof typeof BotResponseImageLayerDtoType];
+
+export const BotResponseImageLayerDtoType = {
+  image: "image",
+} as const;
+
+export type BotResponseImageLayerDtoFit =
+  (typeof BotResponseImageLayerDtoFit)[keyof typeof BotResponseImageLayerDtoFit];
+
+export const BotResponseImageLayerDtoFit = {
+  contain: "contain",
+  cover: "cover",
+} as const;
+
+export interface BotResponseImageLayerDto {
+  /** Imagem remota ou de variável, recortada no quadro. */
+  type: BotResponseImageLayerDtoType;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  x: number;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  y: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  w: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  h: number;
+  /** @maxLength 2048 */
+  url: string;
+  fit: BotResponseImageLayerDtoFit;
+  /**
+   * @minimum 0
+   * @maximum 2048
+   */
+  radius: number;
+  /**
+   * @minimum 0
+   * @maximum 1
+   */
+  opacity: number;
+}
+
+/**
+ * Repete as camadas filhas para cada item de uma lista, em grade.
+ */
+export type BotResponseListLayerDtoType =
+  (typeof BotResponseListLayerDtoType)[keyof typeof BotResponseListLayerDtoType];
+
+export const BotResponseListLayerDtoType = {
+  list: "list",
+} as const;
+
+/**
+ * Retângulo, com gradiente e borda opcionais.
+ */
+export type BotResponseRectLayerDtoType =
+  (typeof BotResponseRectLayerDtoType)[keyof typeof BotResponseRectLayerDtoType];
+
+export const BotResponseRectLayerDtoType = {
+  rect: "rect",
+} as const;
+
+export interface BotResponseRectLayerDto {
+  /** Retângulo, com gradiente e borda opcionais. */
+  type: BotResponseRectLayerDtoType;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  x: number;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  y: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  w: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  h: number;
+  /** @pattern ^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$ */
+  fill: string;
+  /** @pattern ^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$ */
+  fill2: string;
+  /**
+   * @minimum 0
+   * @maximum 2048
+   */
+  radius: number;
+  /** @pattern ^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$ */
+  stroke: string;
+  /**
+   * @minimum 0
+   * @maximum 64
+   */
+  strokeWidth: number;
+  /**
+   * @minimum 0
+   * @maximum 1
+   */
+  opacity: number;
+  /**
+   * Valor de 0 a 100, como `{percent}`, que encurta a largura (barra de progresso).
+   * @maxLength 100
+   */
+  progress: string;
+}
+
+/**
+ * Texto com variáveis, quebra de linha e alinhamento.
+ */
+export type BotResponseTextLayerDtoType =
+  (typeof BotResponseTextLayerDtoType)[keyof typeof BotResponseTextLayerDtoType];
+
+export const BotResponseTextLayerDtoType = {
+  text: "text",
+} as const;
+
+export type BotResponseTextLayerDtoWeight =
+  (typeof BotResponseTextLayerDtoWeight)[keyof typeof BotResponseTextLayerDtoWeight];
+
+export const BotResponseTextLayerDtoWeight = {
+  NUMBER_400: 400,
+  NUMBER_600: 600,
+  NUMBER_800: 800,
+} as const;
+
+export type BotResponseTextLayerDtoAlign =
+  (typeof BotResponseTextLayerDtoAlign)[keyof typeof BotResponseTextLayerDtoAlign];
+
+export const BotResponseTextLayerDtoAlign = {
+  center: "center",
+  left: "left",
+  right: "right",
+} as const;
+
+export interface BotResponseTextLayerDto {
+  /** Texto com variáveis, quebra de linha e alinhamento. */
+  type: BotResponseTextLayerDtoType;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  x: number;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  y: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  w: number;
+  /** @maxLength 500 */
+  text: string;
+  /**
+   * @minimum 8
+   * @maximum 240
+   */
+  size: number;
+  weight: BotResponseTextLayerDtoWeight;
+  /** @pattern ^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$ */
+  color: string;
+  align: BotResponseTextLayerDtoAlign;
+  uppercase: boolean;
+  /**
+   * @minimum 1
+   * @maximum 10
+   */
+  lines: number;
+  /**
+   * @minimum 0
+   * @maximum 1
+   */
+  opacity: number;
+}
+
+export interface BotResponseListLayerDto {
+  /** Repete as camadas filhas para cada item de uma lista, em grade. */
+  type: BotResponseListLayerDtoType;
+  /** @maxLength 40 */
+  source: string;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  x: number;
+  /**
+   * @minimum -2048
+   * @maximum 4096
+   */
+  y: number;
+  /**
+   * @minimum 1
+   * @maximum 10
+   */
+  columns: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  cellWidth: number;
+  /**
+   * @minimum 1
+   * @maximum 4096
+   */
+  cellHeight: number;
+  /**
+   * @minimum 0
+   * @maximum 512
+   */
+  gapX: number;
+  /**
+   * @minimum 0
+   * @maximum 512
+   */
+  gapY: number;
+  /**
+   * @minimum 0
+   * @maximum 50
+   */
+  limit: number;
+  /** @maxItems 20 */
+  layers: (
+    BotResponseImageLayerDto | BotResponseRectLayerDto | BotResponseTextLayerDto
+  )[];
+}
+
+/**
+ * Imagem gerada pelo bot; mensagens a usam como `attachment://<id>.png`.
+ */
+export interface BotResponseImageDto {
+  /** @pattern ^[a-z0-9][a-z0-9-]{0,31}$ */
+  id: string;
+  /**
+   * @minimum 64
+   * @maximum 2048
+   */
+  width: number;
+  /**
+   * @minimum 64
+   * @maximum 2048
+   */
+  height: number;
+  /** @pattern ^(#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)?$ */
+  background: string;
+  /** @maxItems 60 */
+  layers: (
+    | BotResponseImageLayerDto
+    | BotResponseListLayerDto
+    | BotResponseRectLayerDto
+    | BotResponseTextLayerDto
+  )[];
+}
+
 export interface BotResponseTemplateDto {
   mode: BotResponseTemplateDtoMode;
   /** @maxLength 2000 */
@@ -375,6 +758,10 @@ export interface BotResponseTemplateDto {
     | BotResponseSeparatorDto
     | BotResponseTextDto
   )[];
+  /** @maxItems 10 */
+  lists?: BotResponseListFormatDto[];
+  /** @maxItems 4 */
+  images?: BotResponseImageDto[];
 }
 
 export interface BotResponseDefinitionDto {
@@ -383,8 +770,37 @@ export interface BotResponseDefinitionDto {
   label: string;
   description: string;
   variables: BotResponseDefinitionDtoVariablesItem[];
+  lists: BotResponseDefinitionDtoListsItem[];
   actions: BotResponseDefinitionDtoActionsItem[];
   defaultTemplate: BotResponseTemplateDto;
+}
+
+export interface BotEmojiDto {
+  id: string;
+  name: string;
+  animated: boolean;
+  imageUrl: string;
+}
+
+export interface BotEmojiListDto {
+  /** Limite de emojis por aplicação imposto pelo Discord. */
+  limit: number;
+  emojis: BotEmojiDto[];
+}
+
+export interface CreateBotEmojiDto {
+  /** @pattern ^[A-Za-z0-9_]{2,32}$ */
+  name: string;
+  /**
+   * Data URI PNG, JPEG, GIF ou WebP com até 256 KiB.
+   * @maxLength 360000
+   */
+  image: string;
+}
+
+export interface RenameBotEmojiDto {
+  /** @pattern ^[A-Za-z0-9_]{2,32}$ */
+  name: string;
 }
 
 export type ListPackCatalog200Item = {
@@ -394,6 +810,8 @@ export type ListPackCatalog200Item = {
   cardsAmount: number;
   price: number;
   limitPerUser: number;
+  /** @nullable */
+  imageUrl: string | null;
 };
 
 export type GetPackShopParams = {
@@ -411,9 +829,44 @@ export type PurchasePackBody = {
   identity: PurchasePackBodyIdentity;
 };
 
+export type PurchasePack200CompletedMissionsItemCadence =
+  (typeof PurchasePack200CompletedMissionsItemCadence)[keyof typeof PurchasePack200CompletedMissionsItemCadence];
+
+export const PurchasePack200CompletedMissionsItemCadence = {
+  daily: "daily",
+  monthly: "monthly",
+  weekly: "weekly",
+} as const;
+
+export type PurchasePack200CompletedMissionsItemRewardType =
+  (typeof PurchasePack200CompletedMissionsItemRewardType)[keyof typeof PurchasePack200CompletedMissionsItemRewardType];
+
+export const PurchasePack200CompletedMissionsItemRewardType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type PurchasePack200CompletedMissionsItemReward = {
+  itemId: string;
+  type: PurchasePack200CompletedMissionsItemRewardType;
+  quantity: number;
+  /** @nullable */
+  resourceId: string | null;
+};
+
+export type PurchasePack200CompletedMissionsItem = {
+  id: string;
+  title: string;
+  cadence: PurchasePack200CompletedMissionsItemCadence;
+  reward: PurchasePack200CompletedMissionsItemReward;
+};
+
 export type PurchasePack200 = {
   balance: number;
   quantity: number;
+  completedMissions: PurchasePack200CompletedMissionsItem[];
 };
 
 export type OpenPackBodyIdentity = {
@@ -427,9 +880,25 @@ export type OpenPackBody = {
   identity: OpenPackBodyIdentity;
 };
 
+export type OpenPack200CardsItemCardTeam = {
+  name: string;
+  emoji: string;
+};
+
+export type OpenPack200CardsItemCardCollection = {
+  name: string;
+  emoji: string;
+};
+
 export type OpenPack200CardsItemCard = {
   id: string;
   overall: number;
+  name: string;
+  position: string;
+  /** @nullable */
+  imageUrl: string | null;
+  team: OpenPack200CardsItemCardTeam;
+  collection: OpenPack200CardsItemCardCollection;
 };
 
 export type OpenPack200CardsItem = {
@@ -463,9 +932,44 @@ export type OpenPack200Progression = {
   rewards: OpenPack200ProgressionRewardsItem[];
 };
 
+export type OpenPack200CompletedMissionsItemCadence =
+  (typeof OpenPack200CompletedMissionsItemCadence)[keyof typeof OpenPack200CompletedMissionsItemCadence];
+
+export const OpenPack200CompletedMissionsItemCadence = {
+  daily: "daily",
+  monthly: "monthly",
+  weekly: "weekly",
+} as const;
+
+export type OpenPack200CompletedMissionsItemRewardType =
+  (typeof OpenPack200CompletedMissionsItemRewardType)[keyof typeof OpenPack200CompletedMissionsItemRewardType];
+
+export const OpenPack200CompletedMissionsItemRewardType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type OpenPack200CompletedMissionsItemReward = {
+  itemId: string;
+  type: OpenPack200CompletedMissionsItemRewardType;
+  quantity: number;
+  /** @nullable */
+  resourceId: string | null;
+};
+
+export type OpenPack200CompletedMissionsItem = {
+  id: string;
+  title: string;
+  cadence: OpenPack200CompletedMissionsItemCadence;
+  reward: OpenPack200CompletedMissionsItemReward;
+};
+
 export type OpenPack200 = {
   cards: OpenPack200CardsItem[];
   progression: OpenPack200Progression;
+  completedMissions: OpenPack200CompletedMissionsItem[];
 };
 
 export type ListMissionsBody = {
@@ -479,10 +983,14 @@ export type ListMissions200MissionsItemType =
   (typeof ListMissions200MissionsItemType)[keyof typeof ListMissions200MissionsItemType];
 
 export const ListMissions200MissionsItemType = {
+  buy_pack: "buy_pack",
+  buy_player: "buy_player",
   claim_profit: "claim_profit",
   open_pack: "open_pack",
   play_match: "play_match",
   sell_player: "sell_player",
+  spend_balance: "spend_balance",
+  win_match: "win_match",
 } as const;
 
 export type ListMissions200MissionsItemCadence =
@@ -535,6 +1043,359 @@ export type ListMissions200 = {
   missions: ListMissions200MissionsItem[];
 };
 
+export type GetV1AdminMissions200ItemType =
+  (typeof GetV1AdminMissions200ItemType)[keyof typeof GetV1AdminMissions200ItemType];
+
+export const GetV1AdminMissions200ItemType = {
+  buy_pack: "buy_pack",
+  buy_player: "buy_player",
+  claim_profit: "claim_profit",
+  open_pack: "open_pack",
+  play_match: "play_match",
+  sell_player: "sell_player",
+  spend_balance: "spend_balance",
+  win_match: "win_match",
+} as const;
+
+export type GetV1AdminMissions200ItemCadence =
+  (typeof GetV1AdminMissions200ItemCadence)[keyof typeof GetV1AdminMissions200ItemCadence];
+
+export const GetV1AdminMissions200ItemCadence = {
+  daily: "daily",
+  monthly: "monthly",
+  weekly: "weekly",
+} as const;
+
+export type GetV1AdminMissions200ItemRewardsItemType =
+  (typeof GetV1AdminMissions200ItemRewardsItemType)[keyof typeof GetV1AdminMissions200ItemRewardsItemType];
+
+export const GetV1AdminMissions200ItemRewardsItemType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type GetV1AdminMissions200ItemRewardsItem = {
+  itemId: string;
+  type: GetV1AdminMissions200ItemRewardsItemType;
+  amount: number;
+  /** @nullable */
+  resourceId: string | null;
+  /** @nullable */
+  resourceName: string | null;
+};
+
+export type GetV1AdminMissions200Item = {
+  id: string;
+  title: string;
+  type: GetV1AdminMissions200ItemType;
+  cadence: GetV1AdminMissions200ItemCadence;
+  tier: number;
+  goal: number;
+  active: boolean;
+  assignments: number;
+  /** Type, cadence, tier and goal are immutable once a player received the mission. */
+  locked: boolean;
+  rewards: GetV1AdminMissions200ItemRewardsItem[];
+};
+
+export type PostV1AdminMissionsBodyType =
+  (typeof PostV1AdminMissionsBodyType)[keyof typeof PostV1AdminMissionsBodyType];
+
+export const PostV1AdminMissionsBodyType = {
+  buy_pack: "buy_pack",
+  buy_player: "buy_player",
+  claim_profit: "claim_profit",
+  open_pack: "open_pack",
+  play_match: "play_match",
+  sell_player: "sell_player",
+  spend_balance: "spend_balance",
+  win_match: "win_match",
+} as const;
+
+export type PostV1AdminMissionsBodyCadence =
+  (typeof PostV1AdminMissionsBodyCadence)[keyof typeof PostV1AdminMissionsBodyCadence];
+
+export const PostV1AdminMissionsBodyCadence = {
+  daily: "daily",
+  monthly: "monthly",
+  weekly: "weekly",
+} as const;
+
+export type PostV1AdminMissionsBodyRewardsItemType =
+  (typeof PostV1AdminMissionsBodyRewardsItemType)[keyof typeof PostV1AdminMissionsBodyRewardsItemType];
+
+export const PostV1AdminMissionsBodyRewardsItemType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type PostV1AdminMissionsBodyRewardsItem = {
+  type: PostV1AdminMissionsBodyRewardsItemType;
+  amount: number;
+  /** @nullable */
+  resourceId: string | null;
+};
+
+export type PostV1AdminMissionsBody = {
+  title: string;
+  type: PostV1AdminMissionsBodyType;
+  cadence: PostV1AdminMissionsBodyCadence;
+  /** Slot of the cycle: each player gets one random active mission per cadence and tier. */
+  tier: number;
+  goal: number;
+  active: boolean;
+  /** Pool drawn from when the mission is assigned; one reward is picked at random. */
+  rewards: PostV1AdminMissionsBodyRewardsItem[];
+};
+
+export type PostV1AdminMissions201Type =
+  (typeof PostV1AdminMissions201Type)[keyof typeof PostV1AdminMissions201Type];
+
+export const PostV1AdminMissions201Type = {
+  buy_pack: "buy_pack",
+  buy_player: "buy_player",
+  claim_profit: "claim_profit",
+  open_pack: "open_pack",
+  play_match: "play_match",
+  sell_player: "sell_player",
+  spend_balance: "spend_balance",
+  win_match: "win_match",
+} as const;
+
+export type PostV1AdminMissions201Cadence =
+  (typeof PostV1AdminMissions201Cadence)[keyof typeof PostV1AdminMissions201Cadence];
+
+export const PostV1AdminMissions201Cadence = {
+  daily: "daily",
+  monthly: "monthly",
+  weekly: "weekly",
+} as const;
+
+export type PostV1AdminMissions201RewardsItemType =
+  (typeof PostV1AdminMissions201RewardsItemType)[keyof typeof PostV1AdminMissions201RewardsItemType];
+
+export const PostV1AdminMissions201RewardsItemType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type PostV1AdminMissions201RewardsItem = {
+  itemId: string;
+  type: PostV1AdminMissions201RewardsItemType;
+  amount: number;
+  /** @nullable */
+  resourceId: string | null;
+  /** @nullable */
+  resourceName: string | null;
+};
+
+export type PostV1AdminMissions201 = {
+  id: string;
+  title: string;
+  type: PostV1AdminMissions201Type;
+  cadence: PostV1AdminMissions201Cadence;
+  tier: number;
+  goal: number;
+  active: boolean;
+  assignments: number;
+  /** Type, cadence, tier and goal are immutable once a player received the mission. */
+  locked: boolean;
+  rewards: PostV1AdminMissions201RewardsItem[];
+};
+
+export type GetV1AdminMissionsOptions200CardsItem = {
+  id: string;
+  name: string;
+};
+
+export type GetV1AdminMissionsOptions200PacksItem = {
+  id: string;
+  name: string;
+};
+
+export type GetV1AdminMissionsOptions200FieldsItem = {
+  id: string;
+  name: string;
+};
+
+export type GetV1AdminMissionsOptions200 = {
+  cards: GetV1AdminMissionsOptions200CardsItem[];
+  packs: GetV1AdminMissionsOptions200PacksItem[];
+  fields: GetV1AdminMissionsOptions200FieldsItem[];
+};
+
+export type PutV1AdminMissionsIdBodyType =
+  (typeof PutV1AdminMissionsIdBodyType)[keyof typeof PutV1AdminMissionsIdBodyType];
+
+export const PutV1AdminMissionsIdBodyType = {
+  buy_pack: "buy_pack",
+  buy_player: "buy_player",
+  claim_profit: "claim_profit",
+  open_pack: "open_pack",
+  play_match: "play_match",
+  sell_player: "sell_player",
+  spend_balance: "spend_balance",
+  win_match: "win_match",
+} as const;
+
+export type PutV1AdminMissionsIdBodyCadence =
+  (typeof PutV1AdminMissionsIdBodyCadence)[keyof typeof PutV1AdminMissionsIdBodyCadence];
+
+export const PutV1AdminMissionsIdBodyCadence = {
+  daily: "daily",
+  monthly: "monthly",
+  weekly: "weekly",
+} as const;
+
+export type PutV1AdminMissionsIdBodyRewardsItemType =
+  (typeof PutV1AdminMissionsIdBodyRewardsItemType)[keyof typeof PutV1AdminMissionsIdBodyRewardsItemType];
+
+export const PutV1AdminMissionsIdBodyRewardsItemType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type PutV1AdminMissionsIdBodyRewardsItem = {
+  type: PutV1AdminMissionsIdBodyRewardsItemType;
+  amount: number;
+  /** @nullable */
+  resourceId: string | null;
+};
+
+export type PutV1AdminMissionsIdBody = {
+  title: string;
+  type: PutV1AdminMissionsIdBodyType;
+  cadence: PutV1AdminMissionsIdBodyCadence;
+  /** Slot of the cycle: each player gets one random active mission per cadence and tier. */
+  tier: number;
+  goal: number;
+  active: boolean;
+  /** Pool drawn from when the mission is assigned; one reward is picked at random. */
+  rewards: PutV1AdminMissionsIdBodyRewardsItem[];
+};
+
+export type PutV1AdminMissionsId200Type =
+  (typeof PutV1AdminMissionsId200Type)[keyof typeof PutV1AdminMissionsId200Type];
+
+export const PutV1AdminMissionsId200Type = {
+  buy_pack: "buy_pack",
+  buy_player: "buy_player",
+  claim_profit: "claim_profit",
+  open_pack: "open_pack",
+  play_match: "play_match",
+  sell_player: "sell_player",
+  spend_balance: "spend_balance",
+  win_match: "win_match",
+} as const;
+
+export type PutV1AdminMissionsId200Cadence =
+  (typeof PutV1AdminMissionsId200Cadence)[keyof typeof PutV1AdminMissionsId200Cadence];
+
+export const PutV1AdminMissionsId200Cadence = {
+  daily: "daily",
+  monthly: "monthly",
+  weekly: "weekly",
+} as const;
+
+export type PutV1AdminMissionsId200RewardsItemType =
+  (typeof PutV1AdminMissionsId200RewardsItemType)[keyof typeof PutV1AdminMissionsId200RewardsItemType];
+
+export const PutV1AdminMissionsId200RewardsItemType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type PutV1AdminMissionsId200RewardsItem = {
+  itemId: string;
+  type: PutV1AdminMissionsId200RewardsItemType;
+  amount: number;
+  /** @nullable */
+  resourceId: string | null;
+  /** @nullable */
+  resourceName: string | null;
+};
+
+export type PutV1AdminMissionsId200 = {
+  id: string;
+  title: string;
+  type: PutV1AdminMissionsId200Type;
+  cadence: PutV1AdminMissionsId200Cadence;
+  tier: number;
+  goal: number;
+  active: boolean;
+  assignments: number;
+  /** Type, cadence, tier and goal are immutable once a player received the mission. */
+  locked: boolean;
+  rewards: PutV1AdminMissionsId200RewardsItem[];
+};
+
+export type DeleteV1AdminMissionsId200Type =
+  (typeof DeleteV1AdminMissionsId200Type)[keyof typeof DeleteV1AdminMissionsId200Type];
+
+export const DeleteV1AdminMissionsId200Type = {
+  buy_pack: "buy_pack",
+  buy_player: "buy_player",
+  claim_profit: "claim_profit",
+  open_pack: "open_pack",
+  play_match: "play_match",
+  sell_player: "sell_player",
+  spend_balance: "spend_balance",
+  win_match: "win_match",
+} as const;
+
+export type DeleteV1AdminMissionsId200Cadence =
+  (typeof DeleteV1AdminMissionsId200Cadence)[keyof typeof DeleteV1AdminMissionsId200Cadence];
+
+export const DeleteV1AdminMissionsId200Cadence = {
+  daily: "daily",
+  monthly: "monthly",
+  weekly: "weekly",
+} as const;
+
+export type DeleteV1AdminMissionsId200RewardsItemType =
+  (typeof DeleteV1AdminMissionsId200RewardsItemType)[keyof typeof DeleteV1AdminMissionsId200RewardsItemType];
+
+export const DeleteV1AdminMissionsId200RewardsItemType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type DeleteV1AdminMissionsId200RewardsItem = {
+  itemId: string;
+  type: DeleteV1AdminMissionsId200RewardsItemType;
+  amount: number;
+  /** @nullable */
+  resourceId: string | null;
+  /** @nullable */
+  resourceName: string | null;
+};
+
+export type DeleteV1AdminMissionsId200 = {
+  id: string;
+  title: string;
+  type: DeleteV1AdminMissionsId200Type;
+  cadence: DeleteV1AdminMissionsId200Cadence;
+  tier: number;
+  goal: number;
+  active: boolean;
+  assignments: number;
+  /** Type, cadence, tier and goal are immutable once a player received the mission. */
+  locked: boolean;
+  rewards: DeleteV1AdminMissionsId200RewardsItem[];
+};
+
 export type ExecuteLucroBody = {
   id: string;
   name: string;
@@ -573,6 +1434,18 @@ export type ExecuteLucro200 =
           resourceId: string | null;
         }[];
       };
+      completedMissions: {
+        id: string;
+        title: string;
+        cadence: "daily" | "monthly" | "weekly";
+        reward: {
+          itemId: string;
+          type: "balance" | "card" | "field" | "pack";
+          quantity: number;
+          /** @nullable */
+          resourceId: string | null;
+        };
+      }[];
       embed: {
         title: string;
         description: string;
@@ -834,6 +1707,97 @@ export type GetV1LeagueDiscordUserId200 = {
   queue: GetV1LeagueDiscordUserId200Queue;
 };
 
+export type SimulateTestMatchBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type SimulateTestMatchBody = {
+  identity: SimulateTestMatchBodyIdentity;
+  /** @nullable */
+  opponentId: string | null;
+  /** @nullable */
+  seed: number | null;
+};
+
+export type SimulateTestMatch200HomeTactic =
+  (typeof SimulateTestMatch200HomeTactic)[keyof typeof SimulateTestMatch200HomeTactic];
+
+export const SimulateTestMatch200HomeTactic = {
+  balanced: "balanced",
+  defensive: "defensive",
+  offensive: "offensive",
+} as const;
+
+export type SimulateTestMatch200HomeLineupItem = {
+  name: string;
+  position: string;
+};
+
+export type SimulateTestMatch200Home = {
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  cpu: boolean;
+  tactic: SimulateTestMatch200HomeTactic;
+  rating: number;
+  lineup: SimulateTestMatch200HomeLineupItem[];
+};
+
+export type SimulateTestMatch200AwayTactic =
+  (typeof SimulateTestMatch200AwayTactic)[keyof typeof SimulateTestMatch200AwayTactic];
+
+export const SimulateTestMatch200AwayTactic = {
+  balanced: "balanced",
+  defensive: "defensive",
+  offensive: "offensive",
+} as const;
+
+export type SimulateTestMatch200AwayLineupItem = {
+  name: string;
+  position: string;
+};
+
+export type SimulateTestMatch200Away = {
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  cpu: boolean;
+  tactic: SimulateTestMatch200AwayTactic;
+  rating: number;
+  lineup: SimulateTestMatch200AwayLineupItem[];
+};
+
+export type SimulateTestMatch200EventsItemType =
+  (typeof SimulateTestMatch200EventsItemType)[keyof typeof SimulateTestMatch200EventsItemType];
+
+export const SimulateTestMatch200EventsItemType = {
+  fulltime: "fulltime",
+  goal: "goal",
+  kickoff: "kickoff",
+  red_card: "red_card",
+  yellow_card: "yellow_card",
+} as const;
+
+export type SimulateTestMatch200EventsItem = {
+  minute: number;
+  type: SimulateTestMatch200EventsItemType;
+  description: string;
+  homeGoals: number;
+  awayGoals: number;
+};
+
+export type SimulateTestMatch200 = {
+  seed: number;
+  home: SimulateTestMatch200Home;
+  away: SimulateTestMatch200Away;
+  homeGoals: number;
+  awayGoals: number;
+  events: SimulateTestMatch200EventsItem[];
+};
+
 export type GetV1MatchesMatchId200Home = {
   id: string;
   name: string;
@@ -1036,10 +2000,45 @@ export type PurchaseCardBody = {
   identity: PurchaseCardBodyIdentity;
 };
 
+export type PurchaseCard200CompletedMissionsItemCadence =
+  (typeof PurchaseCard200CompletedMissionsItemCadence)[keyof typeof PurchaseCard200CompletedMissionsItemCadence];
+
+export const PurchaseCard200CompletedMissionsItemCadence = {
+  daily: "daily",
+  monthly: "monthly",
+  weekly: "weekly",
+} as const;
+
+export type PurchaseCard200CompletedMissionsItemRewardType =
+  (typeof PurchaseCard200CompletedMissionsItemRewardType)[keyof typeof PurchaseCard200CompletedMissionsItemRewardType];
+
+export const PurchaseCard200CompletedMissionsItemRewardType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type PurchaseCard200CompletedMissionsItemReward = {
+  itemId: string;
+  type: PurchaseCard200CompletedMissionsItemRewardType;
+  quantity: number;
+  /** @nullable */
+  resourceId: string | null;
+};
+
+export type PurchaseCard200CompletedMissionsItem = {
+  id: string;
+  title: string;
+  cadence: PurchaseCard200CompletedMissionsItemCadence;
+  reward: PurchaseCard200CompletedMissionsItemReward;
+};
+
 export type PurchaseCard200 = {
   userCardId: string;
   balance: number;
   price: number;
+  completedMissions: PurchaseCard200CompletedMissionsItem[];
 };
 
 export type SellCardsBodyIdentity = {
@@ -1054,10 +2053,45 @@ export type SellCardsBody = {
   userCardIds: string[];
 };
 
+export type SellCards200CompletedMissionsItemCadence =
+  (typeof SellCards200CompletedMissionsItemCadence)[keyof typeof SellCards200CompletedMissionsItemCadence];
+
+export const SellCards200CompletedMissionsItemCadence = {
+  daily: "daily",
+  monthly: "monthly",
+  weekly: "weekly",
+} as const;
+
+export type SellCards200CompletedMissionsItemRewardType =
+  (typeof SellCards200CompletedMissionsItemRewardType)[keyof typeof SellCards200CompletedMissionsItemRewardType];
+
+export const SellCards200CompletedMissionsItemRewardType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type SellCards200CompletedMissionsItemReward = {
+  itemId: string;
+  type: SellCards200CompletedMissionsItemRewardType;
+  quantity: number;
+  /** @nullable */
+  resourceId: string | null;
+};
+
+export type SellCards200CompletedMissionsItem = {
+  id: string;
+  title: string;
+  cadence: SellCards200CompletedMissionsItemCadence;
+  reward: SellCards200CompletedMissionsItemReward;
+};
+
 export type SellCards200 = {
   userCardIds: string[];
   balance: number;
   amount: number;
+  completedMissions: SellCards200CompletedMissionsItem[];
 };
 
 export type GetClubBody = {
@@ -1168,6 +2202,8 @@ export type GetTeamBody = {
   /** @nullable */
   collectionId: string | null;
   sort: GetTeamBodySort;
+  /** Mantém só cartas que podem ser vendidas: reservas não favoritas com preço. */
+  sellable: boolean;
 };
 
 export type SetTeamFormationBodyIdentity = {
@@ -1785,6 +2821,214 @@ export type GetV1AdminCardsPlayerPhotoSuggestions200Item = {
   imageUrl: string;
   sourceUrl: string;
   provider: string;
+};
+
+export type GetV1AdminCardsSquadImportClubsParams = {
+  q: string;
+};
+
+export type GetV1AdminCardsSquadImportClubs200Item = {
+  id: number;
+  name: string;
+  league: string;
+  imageUrl: string;
+};
+
+export type GetV1AdminCardsSquadImportLeagues200Item = {
+  id: number;
+  name: string;
+  imageUrl: string;
+  clubCount: number;
+};
+
+export type GetV1AdminCardsSquadImportLeagueClubsParams = {
+  leagueId: number;
+};
+
+export type GetV1AdminCardsSquadImportLeagueClubs200Item = {
+  id: number;
+  name: string;
+  league: string;
+  imageUrl: string;
+};
+
+export type GetV1AdminCardsSquadImportSquadParams = {
+  clubId?: number;
+  name?: string;
+};
+
+export type GetV1AdminCardsSquadImportSquad200Provider =
+  (typeof GetV1AdminCardsSquadImportSquad200Provider)[keyof typeof GetV1AdminCardsSquadImportSquad200Provider];
+
+export const GetV1AdminCardsSquadImportSquad200Provider = {
+  EA_SPORTS_FC: "EA SPORTS FC",
+  TheSportsDB: "TheSportsDB",
+} as const;
+
+export type GetV1AdminCardsSquadImportSquad200Team = {
+  slug: string;
+  name: string;
+  emoji: string;
+  color: string;
+  colors?: string[];
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+/**
+ * @nullable
+ */
+export type GetV1AdminCardsSquadImportSquad200ExistingTeam = {
+  id: string;
+  name: string;
+  slug: string;
+  emoji: string;
+  /** @nullable */
+  imageUrl: string | null;
+} | null;
+
+export type GetV1AdminCardsSquadImportSquad200PlayersItemPosition =
+  (typeof GetV1AdminCardsSquadImportSquad200PlayersItemPosition)[keyof typeof GetV1AdminCardsSquadImportSquad200PlayersItemPosition];
+
+export const GetV1AdminCardsSquadImportSquad200PlayersItemPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type GetV1AdminCardsSquadImportSquad200PlayersItemSecondaryPositionsItem =
+  (typeof GetV1AdminCardsSquadImportSquad200PlayersItemSecondaryPositionsItem)[keyof typeof GetV1AdminCardsSquadImportSquad200PlayersItemSecondaryPositionsItem];
+
+export const GetV1AdminCardsSquadImportSquad200PlayersItemSecondaryPositionsItem =
+  {
+    CA: "CA",
+    GOL: "GOL",
+    LD: "LD",
+    LE: "LE",
+    MA: "MA",
+    MC: "MC",
+    PD: "PD",
+    PE: "PE",
+    VOL: "VOL",
+    ZAG: "ZAG",
+  } as const;
+
+export type GetV1AdminCardsSquadImportSquad200PlayersItem = {
+  name: string;
+  position: GetV1AdminCardsSquadImportSquad200PlayersItemPosition;
+  secondaryPositions?: GetV1AdminCardsSquadImportSquad200PlayersItemSecondaryPositionsItem[];
+  defense: number;
+  attack: number;
+  creation: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  /** @nullable */
+  photoUrl: string | null;
+  sourceId: string;
+  overall: number;
+};
+
+export type GetV1AdminCardsSquadImportSquad200 = {
+  provider: GetV1AdminCardsSquadImportSquad200Provider;
+  estimated: boolean;
+  sourceUrl: string;
+  team: GetV1AdminCardsSquadImportSquad200Team;
+  /** @nullable */
+  crestUrl: string | null;
+  /** @nullable */
+  existingTeam: GetV1AdminCardsSquadImportSquad200ExistingTeam;
+  players: GetV1AdminCardsSquadImportSquad200PlayersItem[];
+};
+
+export type PostV1AdminCardsSquadImportBodyTeam = {
+  slug: string;
+  name: string;
+  emoji: string;
+  color: string;
+  colors?: string[];
+  /** @nullable */
+  imageUrl?: string | null;
+};
+
+export type PostV1AdminCardsSquadImportBodyPlayersItemPosition =
+  (typeof PostV1AdminCardsSquadImportBodyPlayersItemPosition)[keyof typeof PostV1AdminCardsSquadImportBodyPlayersItemPosition];
+
+export const PostV1AdminCardsSquadImportBodyPlayersItemPosition = {
+  CA: "CA",
+  GOL: "GOL",
+  LD: "LD",
+  LE: "LE",
+  MA: "MA",
+  MC: "MC",
+  PD: "PD",
+  PE: "PE",
+  VOL: "VOL",
+  ZAG: "ZAG",
+} as const;
+
+export type PostV1AdminCardsSquadImportBodyPlayersItemSecondaryPositionsItem =
+  (typeof PostV1AdminCardsSquadImportBodyPlayersItemSecondaryPositionsItem)[keyof typeof PostV1AdminCardsSquadImportBodyPlayersItemSecondaryPositionsItem];
+
+export const PostV1AdminCardsSquadImportBodyPlayersItemSecondaryPositionsItem =
+  {
+    CA: "CA",
+    GOL: "GOL",
+    LD: "LD",
+    LE: "LE",
+    MA: "MA",
+    MC: "MC",
+    PD: "PD",
+    PE: "PE",
+    VOL: "VOL",
+    ZAG: "ZAG",
+  } as const;
+
+export type PostV1AdminCardsSquadImportBodyPlayersItem = {
+  name: string;
+  position: PostV1AdminCardsSquadImportBodyPlayersItemPosition;
+  secondaryPositions?: PostV1AdminCardsSquadImportBodyPlayersItemSecondaryPositionsItem[];
+  defense: number;
+  attack: number;
+  creation: number;
+  overall: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  /** @nullable */
+  photoUrl: string | null;
+};
+
+export type PostV1AdminCardsSquadImportBody = {
+  collectionId: string;
+  /** @nullable */
+  teamId: string | null;
+  team: PostV1AdminCardsSquadImportBodyTeam;
+  players: PostV1AdminCardsSquadImportBodyPlayersItem[];
+  /** @nullable */
+  crestUrl?: string | null;
+  replaceImages?: boolean;
+};
+
+export type PostV1AdminCardsSquadImport200 = {
+  teamId: string;
+  createCount: number;
+  updateCount: number;
+  photoCount: number;
+  photoErrors: number;
 };
 
 export type GetV1AdminCardsCollectionsParams = {
@@ -2572,6 +3816,803 @@ export type DeleteV1AdminCardsCardIdImage200 = {
   imageUrl: string;
 };
 
+export type RedeemCodeBodyIdentity = {
+  id: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+};
+
+export type RedeemCodeBody = {
+  identity: RedeemCodeBodyIdentity;
+  code: string;
+};
+
+export type RedeemCode200 =
+  | {
+      kind: "success";
+      code: string;
+      reward: {
+        itemId: string;
+        type: "balance" | "card" | "field" | "pack";
+        quantity: number;
+        /** @nullable */
+        resourceId: string | null;
+        /** @nullable */
+        resourceName: string | null;
+      };
+      balance: number;
+    }
+  | {
+      kind: "rejected";
+      reason:
+        | "already_redeemed"
+        | "exhausted"
+        | "expired"
+        | "inactive"
+        | "inventory_full"
+        | "not_found";
+    };
+
+export type GetV1AdminRedeemCodes200ItemRewardType =
+  (typeof GetV1AdminRedeemCodes200ItemRewardType)[keyof typeof GetV1AdminRedeemCodes200ItemRewardType];
+
+export const GetV1AdminRedeemCodes200ItemRewardType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type GetV1AdminRedeemCodes200ItemReward = {
+  itemId: string;
+  type: GetV1AdminRedeemCodes200ItemRewardType;
+  amount: number;
+  /** @nullable */
+  resourceId: string | null;
+  /** @nullable */
+  resourceName: string | null;
+};
+
+export type GetV1AdminRedeemCodes200Item = {
+  id: string;
+  code: string;
+  active: boolean;
+  /** @nullable */
+  maxClaims: number | null;
+  /** @nullable */
+  expiresAt: string | null;
+  createdAt: string;
+  claims: number;
+  /** Code and reward are immutable once the first Resgate happened. */
+  locked: boolean;
+  reward: GetV1AdminRedeemCodes200ItemReward;
+};
+
+export type PostV1AdminRedeemCodesBodyRewardType =
+  (typeof PostV1AdminRedeemCodesBodyRewardType)[keyof typeof PostV1AdminRedeemCodesBodyRewardType];
+
+export const PostV1AdminRedeemCodesBodyRewardType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type PostV1AdminRedeemCodesBodyReward = {
+  type: PostV1AdminRedeemCodesBodyRewardType;
+  amount: number;
+  /** @nullable */
+  resourceId: string | null;
+};
+
+export type PostV1AdminRedeemCodesBody = {
+  code: string;
+  reward: PostV1AdminRedeemCodesBodyReward;
+  /** @nullable */
+  maxClaims: number | null;
+  /** @nullable */
+  expiresAt: string | null;
+  active: boolean;
+};
+
+export type PostV1AdminRedeemCodes201RewardType =
+  (typeof PostV1AdminRedeemCodes201RewardType)[keyof typeof PostV1AdminRedeemCodes201RewardType];
+
+export const PostV1AdminRedeemCodes201RewardType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type PostV1AdminRedeemCodes201Reward = {
+  itemId: string;
+  type: PostV1AdminRedeemCodes201RewardType;
+  amount: number;
+  /** @nullable */
+  resourceId: string | null;
+  /** @nullable */
+  resourceName: string | null;
+};
+
+export type PostV1AdminRedeemCodes201 = {
+  id: string;
+  code: string;
+  active: boolean;
+  /** @nullable */
+  maxClaims: number | null;
+  /** @nullable */
+  expiresAt: string | null;
+  createdAt: string;
+  claims: number;
+  /** Code and reward are immutable once the first Resgate happened. */
+  locked: boolean;
+  reward: PostV1AdminRedeemCodes201Reward;
+};
+
+export type GetV1AdminRedeemCodesOptions200CardsItem = {
+  id: string;
+  name: string;
+};
+
+export type GetV1AdminRedeemCodesOptions200PacksItem = {
+  id: string;
+  name: string;
+};
+
+export type GetV1AdminRedeemCodesOptions200FieldsItem = {
+  id: string;
+  name: string;
+};
+
+export type GetV1AdminRedeemCodesOptions200 = {
+  cards: GetV1AdminRedeemCodesOptions200CardsItem[];
+  packs: GetV1AdminRedeemCodesOptions200PacksItem[];
+  fields: GetV1AdminRedeemCodesOptions200FieldsItem[];
+};
+
+export type PutV1AdminRedeemCodesIdBodyRewardType =
+  (typeof PutV1AdminRedeemCodesIdBodyRewardType)[keyof typeof PutV1AdminRedeemCodesIdBodyRewardType];
+
+export const PutV1AdminRedeemCodesIdBodyRewardType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type PutV1AdminRedeemCodesIdBodyReward = {
+  type: PutV1AdminRedeemCodesIdBodyRewardType;
+  amount: number;
+  /** @nullable */
+  resourceId: string | null;
+};
+
+export type PutV1AdminRedeemCodesIdBody = {
+  code: string;
+  reward: PutV1AdminRedeemCodesIdBodyReward;
+  /** @nullable */
+  maxClaims: number | null;
+  /** @nullable */
+  expiresAt: string | null;
+  active: boolean;
+};
+
+export type PutV1AdminRedeemCodesId200RewardType =
+  (typeof PutV1AdminRedeemCodesId200RewardType)[keyof typeof PutV1AdminRedeemCodesId200RewardType];
+
+export const PutV1AdminRedeemCodesId200RewardType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type PutV1AdminRedeemCodesId200Reward = {
+  itemId: string;
+  type: PutV1AdminRedeemCodesId200RewardType;
+  amount: number;
+  /** @nullable */
+  resourceId: string | null;
+  /** @nullable */
+  resourceName: string | null;
+};
+
+export type PutV1AdminRedeemCodesId200 = {
+  id: string;
+  code: string;
+  active: boolean;
+  /** @nullable */
+  maxClaims: number | null;
+  /** @nullable */
+  expiresAt: string | null;
+  createdAt: string;
+  claims: number;
+  /** Code and reward are immutable once the first Resgate happened. */
+  locked: boolean;
+  reward: PutV1AdminRedeemCodesId200Reward;
+};
+
+export type DeleteV1AdminRedeemCodesId200RewardType =
+  (typeof DeleteV1AdminRedeemCodesId200RewardType)[keyof typeof DeleteV1AdminRedeemCodesId200RewardType];
+
+export const DeleteV1AdminRedeemCodesId200RewardType = {
+  balance: "balance",
+  card: "card",
+  field: "field",
+  pack: "pack",
+} as const;
+
+export type DeleteV1AdminRedeemCodesId200Reward = {
+  itemId: string;
+  type: DeleteV1AdminRedeemCodesId200RewardType;
+  amount: number;
+  /** @nullable */
+  resourceId: string | null;
+  /** @nullable */
+  resourceName: string | null;
+};
+
+export type DeleteV1AdminRedeemCodesId200 = {
+  id: string;
+  code: string;
+  active: boolean;
+  /** @nullable */
+  maxClaims: number | null;
+  /** @nullable */
+  expiresAt: string | null;
+  createdAt: string;
+  claims: number;
+  /** Code and reward are immutable once the first Resgate happened. */
+  locked: boolean;
+  reward: DeleteV1AdminRedeemCodesId200Reward;
+};
+
+export type GetV1AdminUsersParams = {
+  query?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export type GetV1AdminUsers200ItemsItem = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GetV1AdminUsers200 = {
+  items: GetV1AdminUsers200ItemsItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type GetV1AdminUsersOptions200CardsItem = {
+  id: string;
+  name: string;
+};
+
+export type GetV1AdminUsersOptions200PacksItem = {
+  id: string;
+  name: string;
+};
+
+export type GetV1AdminUsersOptions200FieldsItem = {
+  id: string;
+  name: string;
+};
+
+export type GetV1AdminUsersOptions200 = {
+  cards: GetV1AdminUsersOptions200CardsItem[];
+  packs: GetV1AdminUsersOptions200PacksItem[];
+  fields: GetV1AdminUsersOptions200FieldsItem[];
+};
+
+export type GetV1AdminUsersId200CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type GetV1AdminUsersId200PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type GetV1AdminUsersId200FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type GetV1AdminUsersId200TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type GetV1AdminUsersId200 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: GetV1AdminUsersId200CardsItem[];
+  packs: GetV1AdminUsersId200PacksItem[];
+  fields: GetV1AdminUsersId200FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: GetV1AdminUsersId200TransactionsItem[];
+};
+
+export type PutV1AdminUsersIdBody = {
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+};
+
+export type PutV1AdminUsersId200CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type PutV1AdminUsersId200PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type PutV1AdminUsersId200FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type PutV1AdminUsersId200TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type PutV1AdminUsersId200 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: PutV1AdminUsersId200CardsItem[];
+  packs: PutV1AdminUsersId200PacksItem[];
+  fields: PutV1AdminUsersId200FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: PutV1AdminUsersId200TransactionsItem[];
+};
+
+export type PostV1AdminUsersIdBalanceBody = {
+  /** Signed adjustment applied atomically on top of the current balance. */
+  amount: number;
+};
+
+export type PostV1AdminUsersIdBalance201CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type PostV1AdminUsersIdBalance201PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type PostV1AdminUsersIdBalance201FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type PostV1AdminUsersIdBalance201TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type PostV1AdminUsersIdBalance201 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: PostV1AdminUsersIdBalance201CardsItem[];
+  packs: PostV1AdminUsersIdBalance201PacksItem[];
+  fields: PostV1AdminUsersIdBalance201FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: PostV1AdminUsersIdBalance201TransactionsItem[];
+};
+
+export type PostV1AdminUsersIdCardsBody = {
+  cardId: string;
+  quantity: number;
+};
+
+export type PostV1AdminUsersIdCards201CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type PostV1AdminUsersIdCards201PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type PostV1AdminUsersIdCards201FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type PostV1AdminUsersIdCards201TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type PostV1AdminUsersIdCards201 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: PostV1AdminUsersIdCards201CardsItem[];
+  packs: PostV1AdminUsersIdCards201PacksItem[];
+  fields: PostV1AdminUsersIdCards201FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: PostV1AdminUsersIdCards201TransactionsItem[];
+};
+
+export type DeleteV1AdminUsersIdCardsUserCardId200CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type DeleteV1AdminUsersIdCardsUserCardId200PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type DeleteV1AdminUsersIdCardsUserCardId200FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type DeleteV1AdminUsersIdCardsUserCardId200TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type DeleteV1AdminUsersIdCardsUserCardId200 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: DeleteV1AdminUsersIdCardsUserCardId200CardsItem[];
+  packs: DeleteV1AdminUsersIdCardsUserCardId200PacksItem[];
+  fields: DeleteV1AdminUsersIdCardsUserCardId200FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: DeleteV1AdminUsersIdCardsUserCardId200TransactionsItem[];
+};
+
+export type PutV1AdminUsersIdPacksPackIdBody = {
+  /** Absolute quantity owned; zero removes the Pack from the inventory. */
+  quantity: number;
+};
+
+export type PutV1AdminUsersIdPacksPackId200CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type PutV1AdminUsersIdPacksPackId200PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type PutV1AdminUsersIdPacksPackId200FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type PutV1AdminUsersIdPacksPackId200TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type PutV1AdminUsersIdPacksPackId200 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: PutV1AdminUsersIdPacksPackId200CardsItem[];
+  packs: PutV1AdminUsersIdPacksPackId200PacksItem[];
+  fields: PutV1AdminUsersIdPacksPackId200FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: PutV1AdminUsersIdPacksPackId200TransactionsItem[];
+};
+
+export type PutV1AdminUsersIdFieldsFieldId200CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type PutV1AdminUsersIdFieldsFieldId200PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type PutV1AdminUsersIdFieldsFieldId200FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type PutV1AdminUsersIdFieldsFieldId200TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type PutV1AdminUsersIdFieldsFieldId200 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: PutV1AdminUsersIdFieldsFieldId200CardsItem[];
+  packs: PutV1AdminUsersIdFieldsFieldId200PacksItem[];
+  fields: PutV1AdminUsersIdFieldsFieldId200FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: PutV1AdminUsersIdFieldsFieldId200TransactionsItem[];
+};
+
+export type DeleteV1AdminUsersIdFieldsFieldId200CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type DeleteV1AdminUsersIdFieldsFieldId200PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type DeleteV1AdminUsersIdFieldsFieldId200FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type DeleteV1AdminUsersIdFieldsFieldId200TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type DeleteV1AdminUsersIdFieldsFieldId200 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: DeleteV1AdminUsersIdFieldsFieldId200CardsItem[];
+  packs: DeleteV1AdminUsersIdFieldsFieldId200PacksItem[];
+  fields: DeleteV1AdminUsersIdFieldsFieldId200FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: DeleteV1AdminUsersIdFieldsFieldId200TransactionsItem[];
+};
+
 export const getListPackCatalogUrl = () => {
   return `/v1/packs`;
 };
@@ -2604,8 +4645,8 @@ export const getGetPackShopUrl = (params?: GetPackShopParams) => {
 export const getPackShop = async (
   params?: GetPackShopParams,
   options?: Parameters<typeof request>[1],
-): Promise<ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber> => {
-  return request<ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber>(
+): Promise<ReadonlypacksReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber> => {
+  return request<ReadonlypacksReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber>(
     getGetPackShopUrl(params),
     {
       ...options,
@@ -2621,8 +4662,8 @@ export const getInspectPackUrl = (packId: string) => {
 export const inspectPack = async (
   packId: string,
   options?: Parameters<typeof request>[1],
-): Promise<ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber> => {
-  return request<ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber>(
+): Promise<ReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumber> => {
+  return request<ReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumber>(
     getInspectPackUrl(packId),
     {
       ...options,
@@ -2679,6 +4720,85 @@ export const listMissions = async (
     headers: { "Content-Type": "application/json", ...options?.headers },
     body: JSON.stringify(listMissionsBody),
   });
+};
+
+export const getGetV1AdminMissionsUrl = () => {
+  return `/v1/admin/missions`;
+};
+
+export const getV1AdminMissions = async (
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminMissions200Item[]> => {
+  return request<GetV1AdminMissions200Item[]>(getGetV1AdminMissionsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getPostV1AdminMissionsUrl = () => {
+  return `/v1/admin/missions`;
+};
+
+export const postV1AdminMissions = async (
+  postV1AdminMissionsBody: PostV1AdminMissionsBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PostV1AdminMissions201> => {
+  return request<PostV1AdminMissions201>(getPostV1AdminMissionsUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(postV1AdminMissionsBody),
+  });
+};
+
+export const getGetV1AdminMissionsOptionsUrl = () => {
+  return `/v1/admin/missions/options`;
+};
+
+export const getV1AdminMissionsOptions = async (
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminMissionsOptions200> => {
+  return request<GetV1AdminMissionsOptions200>(
+    getGetV1AdminMissionsOptionsUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getPutV1AdminMissionsIdUrl = (id: string) => {
+  return `/v1/admin/missions/${id}`;
+};
+
+export const putV1AdminMissionsId = async (
+  id: string,
+  putV1AdminMissionsIdBody: PutV1AdminMissionsIdBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PutV1AdminMissionsId200> => {
+  return request<PutV1AdminMissionsId200>(getPutV1AdminMissionsIdUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(putV1AdminMissionsIdBody),
+  });
+};
+
+export const getDeleteV1AdminMissionsIdUrl = (id: string) => {
+  return `/v1/admin/missions/${id}`;
+};
+
+export const deleteV1AdminMissionsId = async (
+  id: string,
+  options?: Parameters<typeof request>[1],
+): Promise<DeleteV1AdminMissionsId200> => {
+  return request<DeleteV1AdminMissionsId200>(
+    getDeleteV1AdminMissionsIdUrl(id),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
 };
 
 export const getExecuteLucroUrl = () => {
@@ -2807,6 +4927,22 @@ export const getV1LeagueDiscordUserId = async (
       method: "GET",
     },
   );
+};
+
+export const getSimulateTestMatchUrl = () => {
+  return `/v1/matches/test`;
+};
+
+export const simulateTestMatch = async (
+  simulateTestMatchBody: SimulateTestMatchBody,
+  options?: Parameters<typeof request>[1],
+): Promise<SimulateTestMatch200> => {
+  return request<SimulateTestMatch200>(getSimulateTestMatchUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(simulateTestMatchBody),
+  });
 };
 
 export const getGetV1MatchesMatchIdUrl = (matchId: string) => {
@@ -3162,6 +5298,79 @@ export const getBotResponse = async (
   });
 };
 
+export const getListAdminBotEmojisUrl = () => {
+  return `/v1/admin/bot-emojis`;
+};
+
+export const listAdminBotEmojis = async (
+  options?: Parameters<typeof request>[1],
+): Promise<BotEmojiListDto> => {
+  return request<BotEmojiListDto>(getListAdminBotEmojisUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getCreateBotEmojiUrl = () => {
+  return `/v1/admin/bot-emojis`;
+};
+
+export const createBotEmoji = async (
+  createBotEmojiDto: CreateBotEmojiDto,
+  options?: Parameters<typeof request>[1],
+): Promise<BotEmojiDto> => {
+  return request<BotEmojiDto>(getCreateBotEmojiUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createBotEmojiDto),
+  });
+};
+
+export const getRenameBotEmojiUrl = (id: string) => {
+  return `/v1/admin/bot-emojis/${id}`;
+};
+
+export const renameBotEmoji = async (
+  id: string,
+  renameBotEmojiDto: RenameBotEmojiDto,
+  options?: Parameters<typeof request>[1],
+): Promise<BotEmojiDto> => {
+  return request<BotEmojiDto>(getRenameBotEmojiUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(renameBotEmojiDto),
+  });
+};
+
+export const getDeleteBotEmojiUrl = (id: string) => {
+  return `/v1/admin/bot-emojis/${id}`;
+};
+
+export const deleteBotEmoji = async (
+  id: string,
+  options?: Parameters<typeof request>[1],
+): Promise<void> => {
+  return request<void>(getDeleteBotEmojiUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getListBotEmojisUrl = () => {
+  return `/v1/bot-emojis`;
+};
+
+export const listBotEmojis = async (
+  options?: Parameters<typeof request>[1],
+): Promise<BotEmojiListDto> => {
+  return request<BotEmojiListDto>(getListBotEmojisUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
 export const getGetV1AdminPacksUrl = () => {
   return `/v1/admin/packs`;
 };
@@ -3418,6 +5627,134 @@ export const getV1AdminCardsPlayerPhotosKindFilename = async (
     {
       ...options,
       method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsSquadImportClubsUrl = (
+  params: GetV1AdminCardsSquadImportClubsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards/squad-import/clubs?${stringifiedParams}`
+    : `/v1/admin/cards/squad-import/clubs`;
+};
+
+export const getV1AdminCardsSquadImportClubs = async (
+  params: GetV1AdminCardsSquadImportClubsParams,
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminCardsSquadImportClubs200Item[]> => {
+  return request<GetV1AdminCardsSquadImportClubs200Item[]>(
+    getGetV1AdminCardsSquadImportClubsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsSquadImportLeaguesUrl = () => {
+  return `/v1/admin/cards/squad-import/leagues`;
+};
+
+export const getV1AdminCardsSquadImportLeagues = async (
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminCardsSquadImportLeagues200Item[]> => {
+  return request<GetV1AdminCardsSquadImportLeagues200Item[]>(
+    getGetV1AdminCardsSquadImportLeaguesUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsSquadImportLeagueClubsUrl = (
+  params: GetV1AdminCardsSquadImportLeagueClubsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards/squad-import/league-clubs?${stringifiedParams}`
+    : `/v1/admin/cards/squad-import/league-clubs`;
+};
+
+export const getV1AdminCardsSquadImportLeagueClubs = async (
+  params: GetV1AdminCardsSquadImportLeagueClubsParams,
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminCardsSquadImportLeagueClubs200Item[]> => {
+  return request<GetV1AdminCardsSquadImportLeagueClubs200Item[]>(
+    getGetV1AdminCardsSquadImportLeagueClubsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetV1AdminCardsSquadImportSquadUrl = (
+  params?: GetV1AdminCardsSquadImportSquadParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/cards/squad-import/squad?${stringifiedParams}`
+    : `/v1/admin/cards/squad-import/squad`;
+};
+
+export const getV1AdminCardsSquadImportSquad = async (
+  params?: GetV1AdminCardsSquadImportSquadParams,
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminCardsSquadImportSquad200> => {
+  return request<GetV1AdminCardsSquadImportSquad200>(
+    getGetV1AdminCardsSquadImportSquadUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getPostV1AdminCardsSquadImportUrl = () => {
+  return `/v1/admin/cards/squad-import`;
+};
+
+export const postV1AdminCardsSquadImport = async (
+  postV1AdminCardsSquadImportBody: PostV1AdminCardsSquadImportBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PostV1AdminCardsSquadImport200> => {
+  return request<PostV1AdminCardsSquadImport200>(
+    getPostV1AdminCardsSquadImportUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(postV1AdminCardsSquadImportBody),
     },
   );
 };
@@ -3750,6 +6087,308 @@ export const deleteV1AdminCardsCardIdImage = async (
 ): Promise<DeleteV1AdminCardsCardIdImage200> => {
   return request<DeleteV1AdminCardsCardIdImage200>(
     getDeleteV1AdminCardsCardIdImageUrl(cardId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getRedeemCodeUrl = () => {
+  return `/v1/commands/resgatar`;
+};
+
+/**
+ * Resgata um Código de resgate para o jogador.
+ * @summary Resgata um Código de resgate para o jogador
+ */
+export const redeemCode = async (
+  redeemCodeBody: RedeemCodeBody,
+  options?: Parameters<typeof request>[1],
+): Promise<RedeemCode200> => {
+  return request<RedeemCode200>(getRedeemCodeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(redeemCodeBody),
+  });
+};
+
+export const getGetV1AdminRedeemCodesUrl = () => {
+  return `/v1/admin/redeem-codes`;
+};
+
+export const getV1AdminRedeemCodes = async (
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminRedeemCodes200Item[]> => {
+  return request<GetV1AdminRedeemCodes200Item[]>(
+    getGetV1AdminRedeemCodesUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getPostV1AdminRedeemCodesUrl = () => {
+  return `/v1/admin/redeem-codes`;
+};
+
+export const postV1AdminRedeemCodes = async (
+  postV1AdminRedeemCodesBody: PostV1AdminRedeemCodesBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PostV1AdminRedeemCodes201> => {
+  return request<PostV1AdminRedeemCodes201>(getPostV1AdminRedeemCodesUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(postV1AdminRedeemCodesBody),
+  });
+};
+
+export const getGetV1AdminRedeemCodesOptionsUrl = () => {
+  return `/v1/admin/redeem-codes/options`;
+};
+
+export const getV1AdminRedeemCodesOptions = async (
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminRedeemCodesOptions200> => {
+  return request<GetV1AdminRedeemCodesOptions200>(
+    getGetV1AdminRedeemCodesOptionsUrl(),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getPutV1AdminRedeemCodesIdUrl = (id: string) => {
+  return `/v1/admin/redeem-codes/${id}`;
+};
+
+export const putV1AdminRedeemCodesId = async (
+  id: string,
+  putV1AdminRedeemCodesIdBody: PutV1AdminRedeemCodesIdBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PutV1AdminRedeemCodesId200> => {
+  return request<PutV1AdminRedeemCodesId200>(
+    getPutV1AdminRedeemCodesIdUrl(id),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(putV1AdminRedeemCodesIdBody),
+    },
+  );
+};
+
+export const getDeleteV1AdminRedeemCodesIdUrl = (id: string) => {
+  return `/v1/admin/redeem-codes/${id}`;
+};
+
+export const deleteV1AdminRedeemCodesId = async (
+  id: string,
+  options?: Parameters<typeof request>[1],
+): Promise<DeleteV1AdminRedeemCodesId200> => {
+  return request<DeleteV1AdminRedeemCodesId200>(
+    getDeleteV1AdminRedeemCodesIdUrl(id),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getGetV1AdminUsersUrl = (params?: GetV1AdminUsersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/users?${stringifiedParams}`
+    : `/v1/admin/users`;
+};
+
+export const getV1AdminUsers = async (
+  params?: GetV1AdminUsersParams,
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminUsers200> => {
+  return request<GetV1AdminUsers200>(getGetV1AdminUsersUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetV1AdminUsersOptionsUrl = () => {
+  return `/v1/admin/users/options`;
+};
+
+export const getV1AdminUsersOptions = async (
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminUsersOptions200> => {
+  return request<GetV1AdminUsersOptions200>(getGetV1AdminUsersOptionsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetV1AdminUsersIdUrl = (id: string) => {
+  return `/v1/admin/users/${id}`;
+};
+
+export const getV1AdminUsersId = async (
+  id: string,
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminUsersId200> => {
+  return request<GetV1AdminUsersId200>(getGetV1AdminUsersIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getPutV1AdminUsersIdUrl = (id: string) => {
+  return `/v1/admin/users/${id}`;
+};
+
+export const putV1AdminUsersId = async (
+  id: string,
+  putV1AdminUsersIdBody: PutV1AdminUsersIdBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PutV1AdminUsersId200> => {
+  return request<PutV1AdminUsersId200>(getPutV1AdminUsersIdUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(putV1AdminUsersIdBody),
+  });
+};
+
+export const getPostV1AdminUsersIdBalanceUrl = (id: string) => {
+  return `/v1/admin/users/${id}/balance`;
+};
+
+export const postV1AdminUsersIdBalance = async (
+  id: string,
+  postV1AdminUsersIdBalanceBody: PostV1AdminUsersIdBalanceBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PostV1AdminUsersIdBalance201> => {
+  return request<PostV1AdminUsersIdBalance201>(
+    getPostV1AdminUsersIdBalanceUrl(id),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(postV1AdminUsersIdBalanceBody),
+    },
+  );
+};
+
+export const getPostV1AdminUsersIdCardsUrl = (id: string) => {
+  return `/v1/admin/users/${id}/cards`;
+};
+
+export const postV1AdminUsersIdCards = async (
+  id: string,
+  postV1AdminUsersIdCardsBody: PostV1AdminUsersIdCardsBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PostV1AdminUsersIdCards201> => {
+  return request<PostV1AdminUsersIdCards201>(
+    getPostV1AdminUsersIdCardsUrl(id),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(postV1AdminUsersIdCardsBody),
+    },
+  );
+};
+
+export const getDeleteV1AdminUsersIdCardsUserCardIdUrl = (
+  id: string,
+  userCardId: string,
+) => {
+  return `/v1/admin/users/${id}/cards/${userCardId}`;
+};
+
+export const deleteV1AdminUsersIdCardsUserCardId = async (
+  id: string,
+  userCardId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<DeleteV1AdminUsersIdCardsUserCardId200> => {
+  return request<DeleteV1AdminUsersIdCardsUserCardId200>(
+    getDeleteV1AdminUsersIdCardsUserCardIdUrl(id, userCardId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getPutV1AdminUsersIdPacksPackIdUrl = (
+  id: string,
+  packId: string,
+) => {
+  return `/v1/admin/users/${id}/packs/${packId}`;
+};
+
+export const putV1AdminUsersIdPacksPackId = async (
+  id: string,
+  packId: string,
+  putV1AdminUsersIdPacksPackIdBody: PutV1AdminUsersIdPacksPackIdBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PutV1AdminUsersIdPacksPackId200> => {
+  return request<PutV1AdminUsersIdPacksPackId200>(
+    getPutV1AdminUsersIdPacksPackIdUrl(id, packId),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(putV1AdminUsersIdPacksPackIdBody),
+    },
+  );
+};
+
+export const getPutV1AdminUsersIdFieldsFieldIdUrl = (
+  id: string,
+  fieldId: string,
+) => {
+  return `/v1/admin/users/${id}/fields/${fieldId}`;
+};
+
+export const putV1AdminUsersIdFieldsFieldId = async (
+  id: string,
+  fieldId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<PutV1AdminUsersIdFieldsFieldId200> => {
+  return request<PutV1AdminUsersIdFieldsFieldId200>(
+    getPutV1AdminUsersIdFieldsFieldIdUrl(id, fieldId),
+    {
+      ...options,
+      method: "PUT",
+    },
+  );
+};
+
+export const getDeleteV1AdminUsersIdFieldsFieldIdUrl = (
+  id: string,
+  fieldId: string,
+) => {
+  return `/v1/admin/users/${id}/fields/${fieldId}`;
+};
+
+export const deleteV1AdminUsersIdFieldsFieldId = async (
+  id: string,
+  fieldId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<DeleteV1AdminUsersIdFieldsFieldId200> => {
+  return request<DeleteV1AdminUsersIdFieldsFieldId200>(
+    getDeleteV1AdminUsersIdFieldsFieldIdUrl(id, fieldId),
     {
       ...options,
       method: "DELETE",

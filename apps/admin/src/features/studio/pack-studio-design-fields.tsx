@@ -1,6 +1,7 @@
 import type { ChangeEvent } from 'react';
 import type { PackStudioFieldsProps } from './pack-studio-inspector';
 import { packEffectOptions, packTextureOptions } from './pack-studio-model';
+import { StudioIcon } from './studio-icon';
 
 function numberValue(value: string, fallback: number): number {
   const number = Number(value);
@@ -36,10 +37,11 @@ export function PackStudioDesignFields({
     (event: ChangeEvent<HTMLInputElement>) =>
       onChange(key, numberValue(event.target.value, draft[key]));
   return (
-    <div className="pack-studio-fields">
-      <fieldset className="pack-studio-field-section">
-        <legend>Texto</legend>
-        <div className="pack-studio-text-switch" aria-label="Texto em edição">
+    <>
+      <fieldset className="studio-section">
+        <legend className="studio-section__title">Texto</legend>
+        <fieldset className="studio-segmented studio-segmented--block">
+          <legend className="sr-only">Texto em edição</legend>
           {(['headline', 'kicker'] as const).map((layer) => (
             <button
               aria-pressed={layer === (activeLayer === 'kicker' ? 'kicker' : 'headline')}
@@ -50,7 +52,7 @@ export function PackStudioDesignFields({
               {layer === 'headline' ? 'Título' : 'Subtítulo'}
             </button>
           ))}
-        </div>
+        </fieldset>
         <PackStudioTextFields
           activeLayer={activeLayer === 'kicker' ? 'kicker' : 'headline'}
           changeNumber={changeNumber}
@@ -61,7 +63,7 @@ export function PackStudioDesignFields({
         changeNumber={changeNumber}
         {...{ draft, onChange, onEditFrontImage }}
       />
-    </div>
+    </>
   );
 }
 
@@ -86,29 +88,36 @@ function PackStudioBackgroundFields({
 }: VisualFieldsProps) {
   return (
     <>
-      <fieldset className="pack-studio-field-section">
-        <legend>Foto frontal</legend>
-        <p className="pack-studio-field-help">
+      <fieldset className="studio-section">
+        <legend className="studio-section__title">Foto frontal</legend>
+        <p className="studio-section__lead">
           PNG obrigatório em 1024 × 1536. A textura acompanha contorno e dobras do foil.
         </p>
-        <button className="pack-studio-image-action" onClick={onEditFrontImage} type="button">
-          {draft.frontImage ? 'Ajustar foto frontal' : 'Adicionar foto frontal'}
-        </button>
-        {draft.frontImage && (
+        <div className="studio-button-row">
           <button
-            className="pack-studio-image-remove"
-            onClick={() => onChange('frontImage', '')}
+            className="studio-btn studio-btn--secondary studio-btn--block"
+            onClick={onEditFrontImage}
             type="button"
           >
-            Remover foto
+            <StudioIcon name="image" />
+            {draft.frontImage ? 'Ajustar foto frontal' : 'Adicionar foto frontal'}
           </button>
-        )}
+          {draft.frontImage && (
+            <button
+              className="studio-btn studio-btn--ghost"
+              onClick={() => onChange('frontImage', '')}
+              type="button"
+            >
+              Remover foto
+            </button>
+          )}
+        </div>
       </fieldset>
-      <fieldset className="pack-studio-field-section">
-        <legend>Cores</legend>
-        <div className="pack-studio-colors">
-          <label>
-            Base
+      <fieldset className="studio-section">
+        <legend className="studio-section__title">Cores</legend>
+        <div className="studio-field-row studio-field-row--3">
+          <label className="studio-field studio-color-field">
+            <span className="studio-field__label">Base</span>
             <input
               aria-label="Cor base"
               onChange={(event) => onChange('color', event.target.value)}
@@ -116,8 +125,8 @@ function PackStudioBackgroundFields({
               value={draft.color}
             />
           </label>
-          <label>
-            Brilho
+          <label className="studio-field studio-color-field">
+            <span className="studio-field__label">Brilho</span>
             <input
               aria-label="Cor de brilho"
               onChange={(event) => onChange('accentColor', event.target.value)}
@@ -125,8 +134,8 @@ function PackStudioBackgroundFields({
               value={draft.accentColor}
             />
           </label>
-          <label>
-            Texto
+          <label className="studio-field studio-color-field">
+            <span className="studio-field__label">Texto</span>
             <input
               aria-label="Cor do texto"
               onChange={(event) => onChange('textColor', event.target.value)}
@@ -136,10 +145,10 @@ function PackStudioBackgroundFields({
           </label>
         </div>
       </fieldset>
-      <fieldset className="pack-studio-field-section">
-        <legend>Acabamento</legend>
-        <label>
-          Efeito
+      <fieldset className="studio-section">
+        <legend className="studio-section__title">Acabamento</legend>
+        <label className="studio-field">
+          <span className="studio-field__label">Efeito</span>
           <select
             onChange={(event) =>
               onChange('effect', choose(packEffectOptions, event.target.value, draft.effect))
@@ -153,8 +162,10 @@ function PackStudioBackgroundFields({
             ))}
           </select>
         </label>
-        <label>
-          Luz
+        <label className="studio-field">
+          <span className="studio-field__label">
+            Luz <span className="studio-field__value">{draft.tintOpacity}</span>
+          </span>
           <input
             max="42"
             min="0"
@@ -163,8 +174,8 @@ function PackStudioBackgroundFields({
             value={draft.tintOpacity}
           />
         </label>
-        <label>
-          Decoração de fundo
+        <label className="studio-field">
+          <span className="studio-field__label">Decoração de fundo</span>
           <select
             onChange={(event) =>
               onChange('texture', choose(packTextureOptions, event.target.value, draft.texture))
@@ -178,8 +189,11 @@ function PackStudioBackgroundFields({
             ))}
           </select>
         </label>
-        <label>
-          Intensidade da decoração
+        <label className="studio-field">
+          <span className="studio-field__label">
+            Intensidade da decoração{' '}
+            <span className="studio-field__value">{draft.textureOpacity}</span>
+          </span>
           <input
             max="65"
             min="0"
@@ -201,16 +215,21 @@ function PackStudioTextFields({ activeLayer, changeNumber, draft, onChange }: Te
     <>
       {activeLayer === 'headline' && (
         <>
-          <label>
-            Título
-            <input
-              maxLength={18}
-              onChange={(event) => onChange('headline', event.target.value)}
-              value={draft.headline}
-            />
-          </label>
-          <label>
-            Posição horizontal
+          <div className="studio-field">
+            <label className="studio-field">
+              <span className="studio-field__label">Título</span>
+              <input
+                maxLength={18}
+                onChange={(event) => onChange('headline', event.target.value)}
+                value={draft.headline}
+              />
+            </label>
+            <small className="studio-field__hint">{draft.headline.length}/18 caracteres</small>
+          </div>
+          <label className="studio-field">
+            <span className="studio-field__label">
+              Posição horizontal <span className="studio-field__value">{draft.headlineX}</span>
+            </span>
             <input
               max="520"
               min="80"
@@ -219,8 +238,10 @@ function PackStudioTextFields({ activeLayer, changeNumber, draft, onChange }: Te
               value={draft.headlineX}
             />
           </label>
-          <label>
-            Posição vertical
+          <label className="studio-field">
+            <span className="studio-field__label">
+              Posição vertical <span className="studio-field__value">{draft.headlineY}</span>
+            </span>
             <input
               max="470"
               min="190"
@@ -233,16 +254,21 @@ function PackStudioTextFields({ activeLayer, changeNumber, draft, onChange }: Te
       )}
       {activeLayer === 'kicker' && (
         <>
-          <label>
-            Subtítulo
-            <input
-              maxLength={16}
-              onChange={(event) => onChange('kicker', event.target.value)}
-              value={draft.kicker}
-            />
-          </label>
-          <label>
-            Posição horizontal
+          <div className="studio-field">
+            <label className="studio-field">
+              <span className="studio-field__label">Subtítulo</span>
+              <input
+                maxLength={16}
+                onChange={(event) => onChange('kicker', event.target.value)}
+                value={draft.kicker}
+              />
+            </label>
+            <small className="studio-field__hint">{draft.kicker.length}/16 caracteres</small>
+          </div>
+          <label className="studio-field">
+            <span className="studio-field__label">
+              Posição horizontal <span className="studio-field__value">{draft.kickerX}</span>
+            </span>
             <input
               max="520"
               min="80"
@@ -251,8 +277,10 @@ function PackStudioTextFields({ activeLayer, changeNumber, draft, onChange }: Te
               value={draft.kickerX}
             />
           </label>
-          <label>
-            Posição vertical
+          <label className="studio-field">
+            <span className="studio-field__label">
+              Posição vertical <span className="studio-field__value">{draft.kickerY}</span>
+            </span>
             <input
               max="370"
               min="120"
@@ -264,8 +292,10 @@ function PackStudioTextFields({ activeLayer, changeNumber, draft, onChange }: Te
         </>
       )}
       {activeLayer === 'headline' && (
-        <label>
-          Tamanho
+        <label className="studio-field">
+          <span className="studio-field__label">
+            Tamanho <span className="studio-field__value">{draft.headlineSize}</span>
+          </span>
           <input
             max="84"
             min="12"
@@ -275,7 +305,9 @@ function PackStudioTextFields({ activeLayer, changeNumber, draft, onChange }: Te
           />
         </label>
       )}
-      <p className="form-note">Texto aplicado na face 3D. Ajuste posição sem sair da área útil.</p>
+      <small className="studio-field__hint">
+        Texto aplicado na face 3D. Ajuste posição sem sair da área útil.
+      </small>
     </>
   );
 }

@@ -8,6 +8,7 @@ resources:
   - k8s/api.yaml
   - k8s/admin.yaml
   - k8s/player.yaml
+  - k8s/discord-bot.yaml
   - k8s/caddy.yaml
 
 configMapGenerator:

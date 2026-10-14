@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import ExcelJS from 'exceljs';
 
+import { EntityEmojisService } from '../bot-emojis/entity-emojis.service.js';
 import {
   type FileDto,
   FilesService,
@@ -94,6 +95,7 @@ export class AdminCardsService {
     @Inject(FootyLogosService) private readonly footyLogos: FootyLogosService,
     @Inject(FutGgRaritiesService) private readonly futGgRarities: FutGgRaritiesService,
     @Inject(PlayerPhotosService) private readonly playerPhotos: PlayerPhotosService,
+    @Inject(EntityEmojisService) private readonly entityEmojis: EntityEmojisService,
   ) {}
   async catalog(): Promise<CardCatalog> {
     const catalog = await this.loadCatalog();
@@ -230,6 +232,7 @@ export class AdminCardsService {
         if (!collection) throw new Error('Failed to create collection.');
         return collection.id;
       });
+      await this.entityEmojis.sync('collection', collectionId);
       return this.collection(collectionId);
     } catch (error) {
       await this.removeFiles(image, overlay, banner);
@@ -292,6 +295,7 @@ export class AdminCardsService {
       collection.overlayFileId,
       collection.bannerFileId,
     );
+    await this.entityEmojis.sync('collection', collectionId);
     return this.collection(collectionId);
   }
 
@@ -303,6 +307,7 @@ export class AdminCardsService {
         imageFileId: database.schema.collections.imageFileId,
         overlayFileId: database.schema.collections.overlayFileId,
         bannerFileId: database.schema.collections.bannerFileId,
+        discordEmoji: database.schema.collections.discordEmoji,
       })
       .from(database.schema.collections)
       .where(database.eq(database.schema.collections.id, collectionId));
@@ -325,6 +330,7 @@ export class AdminCardsService {
       collection.overlayFileId,
       collection.bannerFileId,
     );
+    await this.entityEmojis.remove(collection.discordEmoji);
   }
 
   async teams(query: TeamListQuery): Promise<TeamPage> {
@@ -396,6 +402,7 @@ export class AdminCardsService {
           logoFileId: database.schema.teams.logoFileId,
         });
       if (!team) throw new Error('Failed to create team.');
+      await this.entityEmojis.sync('team', team.id);
       return {
         ...team,
         imageUrl: this.fileUrl(new Map(image ? [[image.id, image.url]] : []), team.logoFileId),
@@ -437,6 +444,7 @@ export class AdminCardsService {
         });
       if (!team) throw new NotFoundException('Team not found.');
       await this.removeFilesById(current.logoFileId);
+      await this.entityEmojis.sync('team', team.id);
       return {
         ...team,
         imageUrl: this.fileUrl(new Map(image ? [[image.id, image.url]] : []), team.logoFileId),
@@ -452,18 +460,24 @@ export class AdminCardsService {
   async removeTeam(teamId: string): Promise<void> {
     const database = await this.database();
     let logoFileId: string | null = null;
+    let discordEmoji: string | null = null;
     try {
       const [team] = await database.db
         .delete(database.schema.teams)
         .where(database.eq(database.schema.teams.id, teamId))
-        .returning({ id: database.schema.teams.id, logoFileId: database.schema.teams.logoFileId });
+        .returning({
+          id: database.schema.teams.id,
+          logoFileId: database.schema.teams.logoFileId,
+          discordEmoji: database.schema.teams.discordEmoji,
+        });
       if (!team) throw new NotFoundException('Team not found.');
-      logoFileId = team.logoFileId;
+      ({ logoFileId, discordEmoji } = team);
     } catch (error) {
       if (isForeignKeyViolation(error)) throw new ConflictException('Team is in use.');
       throw error;
     }
     await this.removeFilesById(logoFileId);
+    await this.entityEmojis.remove(discordEmoji);
   }
 
   async template(): Promise<Buffer> {
@@ -1202,7 +1216,7 @@ export class AdminCardsService {
   }
 }
 
-function stats(
+export function stats(
   input: Pick<CardInput, 'passing' | 'control' | 'marking' | 'pace' | 'dribbling' | 'finishing'>,
 ) {
   return {
@@ -1215,7 +1229,7 @@ function stats(
   };
 }
 
-function cardValues(input: Omit<CardInput, 'slug'>) {
+export function cardValues(input: Omit<CardInput, 'slug'>) {
   return {
     name: input.name,
     collectionId: input.collectionId,

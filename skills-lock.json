@@ -1,6 +1,18 @@
 {
   "version": 1,
   "skills": {
+    "anatomy": {
+      "source": "wheresryan22/anatomy",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "b8ced09c690eb178684c27d02d0d8aaa48b28d5ce5b0bb9ea3addf2187ffd8a6"
+    },
+    "blender-modeler": {
+      "source": "arjun988/blender-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/blender-modeler/SKILL.md",
+      "computedHash": "4acafa9ce6d73d513d55af552d33f48617a15f16fd58eb64d74921d7f51b4377"
+    },
     "brainstorming": {
       "source": "obra/superpowers",
       "sourceType": "github",
@@ -30,6 +42,18 @@
       "sourceType": "github",
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
       "computedHash": "bce096b49db40761adb1d5348f064c303fc152e4e50fc3fd81b79df8b6cf137f"
+    },
+    "product-showcase": {
+      "source": "jezweb/claude-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend/skills/product-showcase/SKILL.md",
+      "computedHash": "ff1cb76865d567c8cee8876543e21bc41be323983d15eec3961c8517dca076ee"
+    },
+    "showcase-page-generator": {
+      "source": "kostja94/marketing-skills",
+      "sourceType": "github",
+      "skillPath": "skills/pages/marketing/showcase/SKILL.md",
+      "computedHash": "59aaf09eed179e53cf45248a3dc8734d54475ccfe1c68794f1aa9138ea826da5"
     },
     "tdd": {
       "source": "mattpocock/skills",

@@ -21,6 +21,9 @@ import {
   type MatchEventDto,
   type MatchResponse,
   type QueueResponse,
+  type TestMatchRequest,
+  TestMatchRequestSchema,
+  type TestMatchResponse,
 } from './league.dto.js';
 import { LeagueUseCase } from './use-cases/league/league.use-case.js';
 import { LeagueInputError, LeagueNotFoundError } from './use-cases/league/league.use-case.types.js';
@@ -63,6 +66,18 @@ export class LeagueController {
   @TypedRoute.Get('league/:discordUserId')
   async standings(@Param('discordUserId') discordUserId: string): Promise<LeagueStatusResponse> {
     return this.handle(() => this.league.standings(discordUserId));
+  }
+
+  @TypedRoute.Post('matches/test')
+  @HttpCode(200)
+  @SwaggerCustomizer(({ route }) => {
+    route.operationId = 'simulateTestMatch';
+    route.security = [{ bearer: [] }];
+  })
+  async testMatch(
+    @Body({ schema: TestMatchRequestSchema }) input: TestMatchRequest,
+  ): Promise<TestMatchResponse> {
+    return this.handle(() => this.league.testMatch(input.identity, input.opponentId, input.seed));
   }
 
   @TypedRoute.Get('matches/:matchId')

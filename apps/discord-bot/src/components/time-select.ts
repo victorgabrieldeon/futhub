@@ -1,21 +1,26 @@
 import { ComponentCommand, MessageFlags } from 'seyfert';
 import type { ComponentContext } from 'seyfert';
 
+import type { BotMessage } from '../core/bot-response.js';
+import { EMOJI } from '../core/emojis.js';
+import { sessionNotice } from '../core/ui.js';
 import {
   loadClub,
   loadLeague,
+  loadOverviewLeague,
+  loadOverviewMissions,
   reloadTeam,
   setCaptain,
   setFormation,
   setLineupCard,
-} from '../team-api.js';
+} from '../features/team/team-api.js';
 import {
   type TeamPosition,
-  type TeamTab,
+  isTeamTab,
   parseTeamAction,
   updateTeamSession,
-} from '../team-session.js';
-import { teamResponse } from '../team.js';
+} from '../features/team/team-session.js';
+import { teamResponse } from '../features/team/team.js';
 
 export default class TimeSelectComponent extends ComponentCommand {
   componentType = 'StringSelect' as const;
@@ -27,18 +32,17 @@ export default class TimeSelectComponent extends ComponentCommand {
   async run(context: ComponentContext<'StringSelect'>): Promise<void> {
     const parsed = parseTeamAction(context.customId, context.interaction.user.id);
     if (parsed.kind !== 'owned') {
-      await context.write({
-        content:
-          parsed.kind === 'foreign'
-            ? 'Este painel pertence a outro jogador.'
-            : 'Este painel expirou. Use `/time` ou `!time` novamente.',
-        flags: MessageFlags.Ephemeral,
-      });
+      await context.write(
+        sessionNotice(parsed.kind === 'foreign' ? 'foreign' : 'expired', 'time') as BotMessage,
+      );
       return;
     }
     const value = context.interaction.values[0];
     if (!value) {
-      await context.write({ content: 'Seleção inválida.', flags: MessageFlags.Ephemeral });
+      await context.write({
+        content: `${EMOJI.alerta} Seleção inválida.`,
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
 
@@ -46,25 +50,41 @@ export default class TimeSelectComponent extends ComponentCommand {
     try {
       const { session, action, argument } = parsed;
       if (action === 'tab') {
-        if (!isTab(value)) throw new Error('Invalid team tab.');
+        if (!isTeamTab(value)) throw new Error('Invalid team tab.');
+        const overview = value === 'overview';
+        // A aba Venda lista só cartas vendáveis; entrar ou sair dela exige recarregar o elenco.
+        const sale = value === 'sale' || session.tab === 'sale';
+        const [team, club, league, missions] = await Promise.all([
+          overview
+            ? reloadTeam({ ...session, tab: value }, session.team.inventory.page)
+            : sale
+              ? reloadTeam({ ...session, tab: value })
+              : session.team,
+          value === 'club' ? loadClub(session.identity) : session.club,
+          value === 'league'
+            ? loadLeague(session.identity)
+            : overview
+              ? loadOverviewLeague(session.identity)
+              : session.league,
+          overview ? loadOverviewMissions(session.identity) : session.missions,
+        ]);
         const updated = updateTeamSession(session, {
           tab: value,
-          selectedCardId: null,
+          selectedCardIds: [],
           confirmSale: false,
-          club: value === 'club' ? await loadClub(session.identity) : session.club,
-          league: value === 'league' ? await loadLeague(session.identity) : session.league,
+          team,
+          club,
+          league,
+          missions,
         });
         await context.editOrReply(await teamResponse(updated));
         return;
       }
       if (action === 'card') {
-        const selectedCardId = session.team.inventory.items.some(
-          ({ userCardId }) => userCardId === value,
-        )
-          ? value
-          : null;
+        const owned = new Set(session.team.inventory.items.map(({ userCardId }) => userCardId));
+        const values = session.tab === 'sale' ? context.interaction.values : [value];
         const updated = updateTeamSession(session, {
-          selectedCardId,
+          selectedCardIds: values.filter((id) => owned.has(id)),
           confirmSale: false,
         });
         await context.editOrReply(await teamResponse(updated));
@@ -78,7 +98,7 @@ export default class TimeSelectComponent extends ComponentCommand {
         const updated = updateTeamSession(session, {
           filters,
           team,
-          selectedCardId: null,
+          selectedCardIds: [],
           confirmSale: false,
         });
         await context.editOrReply(await teamResponse(updated));
@@ -96,7 +116,7 @@ export default class TimeSelectComponent extends ComponentCommand {
         const updated = updateTeamSession(session, {
           filters,
           team,
-          selectedCardId: null,
+          selectedCardIds: [],
           confirmSale: false,
         });
         await context.editOrReply(await teamResponse(updated));
@@ -105,15 +125,15 @@ export default class TimeSelectComponent extends ComponentCommand {
       let notice: string;
       if (action === 'formation') {
         await setFormation(session.identity, value);
-        notice = '✅ Formação e escalação atualizadas.';
+        notice = `${EMOJI.sucesso} Formação e escalação atualizadas.`;
       } else if (action === 'captain') {
         await setCaptain(session.identity, value);
-        notice = '✅ Capitão definido.';
+        notice = `${EMOJI.sucesso} Capitão definido.`;
       } else if (action === 'lineup') {
-        if (!isPosition(value) || session.selectedCardId !== argument)
+        if (!isPosition(value) || session.selectedCardIds[0] !== argument)
           throw new Error('Invalid lineup selection.');
         await setLineupCard(session.identity, argument, value);
-        notice = '✅ Jogador escalado.';
+        notice = `${EMOJI.sucesso} Jogador escalado.`;
       } else {
         throw new Error('Unsupported team selection action.');
       }
@@ -125,15 +145,11 @@ export default class TimeSelectComponent extends ComponentCommand {
       await context.editOrReply(
         await teamResponse(
           parsed.session,
-          '❌ Não foi possível atualizar o time. Tente novamente.',
+          `${EMOJI.erro} Não foi possível atualizar o time. Tente novamente.`,
         ),
       );
     }
   }
-}
-
-function isTab(value: string): value is TeamTab {
-  return ['overview', 'lineup', 'inventory', 'packs', 'sale', 'club', 'league'].includes(value);
 }
 
 function isPosition(value: string): value is TeamPosition {

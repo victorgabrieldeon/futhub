@@ -1,7 +1,8 @@
 import type * as DatabaseModule from '@futhub/database';
 
+import { displayEmoji } from '../../bot-emojis/entity-emoji.js';
 import type { FilesService } from '../../files/files.service.js';
-import { advanceMissions } from '../../missions/missions.service.js';
+import { advanceMissions, missionRewardBalance } from '../../missions/missions.service.js';
 import { cardInventoryCapacity, upsertDiscordUser } from '../../users/user.repository.js';
 import { CardMarketRepository } from '../use-cases/card-market.types.js';
 import type {
@@ -99,10 +100,10 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
         basePrice: schema.cardPriceConfigs.price,
         teamId: schema.teams.id,
         teamName: schema.teams.name,
-        teamEmoji: schema.teams.emoji,
+        teamEmoji: displayEmoji(sql, schema.teams),
         collectionId: schema.collections.id,
         collectionName: schema.localizedTextTranslations.content,
-        collectionEmoji: schema.collections.emoji,
+        collectionEmoji: displayEmoji(sql, schema.collections),
       })
       .from(schema.cards)
       .innerJoin(schema.cardStats, eq(schema.cards.statsId, schema.cardStats.id))
@@ -176,7 +177,7 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
 
   async listCatalog(): Promise<ListCatalogResult> {
     const database = await this.loadDatabase();
-    const { and, asc, db, eq, schema } = database;
+    const { and, asc, db, eq, sql, schema } = database;
     const eligible = and(
       eq(schema.cards.contractsBlocked, false),
       eq(schema.collections.contractsBlocked, false),
@@ -187,7 +188,11 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
     );
     const [teams, collections] = await Promise.all([
       db
-        .selectDistinct({ id: schema.teams.id, name: schema.teams.name, emoji: schema.teams.emoji })
+        .selectDistinct({
+          id: schema.teams.id,
+          name: schema.teams.name,
+          emoji: displayEmoji(sql, schema.teams),
+        })
         .from(schema.cards)
         .innerJoin(schema.teams, eq(schema.cards.teamId, schema.teams.id))
         .innerJoin(schema.collections, eq(schema.cards.collectionId, schema.collections.id))
@@ -202,7 +207,7 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
         .selectDistinct({
           id: schema.collections.id,
           name: schema.localizedTextTranslations.content,
-          emoji: schema.collections.emoji,
+          emoji: displayEmoji(sql, schema.collections),
         })
         .from(schema.cards)
         .innerJoin(schema.collections, eq(schema.cards.collectionId, schema.collections.id))
@@ -282,7 +287,17 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
           await tx
             .insert(schema.transactionHistory)
             .values({ userId: user.id, type: 'purchase', amount: -price });
-          return { userCardId: userCard.id, balance: debited.balance, price };
+          const now = new Date();
+          const completedMissions = [
+            ...(await advanceMissions(database, tx, user.id, 'buy_player', now)),
+            ...(await advanceMissions(database, tx, user.id, 'spend_balance', now, price)),
+          ];
+          return {
+            userCardId: userCard.id,
+            balance: debited.balance + missionRewardBalance(completedMissions),
+            price,
+            completedMissions,
+          };
         },
       });
     });
@@ -355,7 +370,7 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
           await tx
             .insert(schema.transactionHistory)
             .values({ userId: user.id, type: 'sale', amount });
-          await advanceMissions(
+          const completedMissions = await advanceMissions(
             database,
             tx,
             user.id,
@@ -363,7 +378,12 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
             new Date(),
             userCardIds.length,
           );
-          return { userCardIds: deleted.map((card) => card.id), balance: credited.balance, amount };
+          return {
+            userCardIds: deleted.map((card) => card.id),
+            balance: credited.balance + missionRewardBalance(completedMissions),
+            amount,
+            completedMissions,
+          };
         },
       });
     });

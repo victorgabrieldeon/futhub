@@ -51,10 +51,10 @@ export const packStudioArtKeys = [
 export type PackStudioArt = Pick<PackStudioDraft, (typeof packStudioArtKeys)[number]>;
 
 export const defaultPackStudioArt = {
-  accentColor: '#d7a844',
-  color: '#10131b',
+  accentColor: '#765cff',
+  color: '#2d16d8',
   effect: 'foil',
-  textColor: '#f8f4ea',
+  textColor: '#ffffff',
   texture: 'aura',
   textureOpacity: 42,
   tintOpacity: 16,
@@ -65,14 +65,14 @@ export const packStudioPresets: readonly Readonly<{
   description: string;
   art: PackStudioArt;
 }>[] = [
-  { label: 'Padrão', description: 'Ônix · Foil', art: defaultPackStudioArt },
+  { label: 'Padrão', description: 'Violeta · Foil', art: defaultPackStudioArt },
   {
     label: 'Neon',
-    description: 'Violeta · Holográfico',
+    description: 'Azul elétrico · Holográfico',
     art: {
       ...defaultPackStudioArt,
-      color: '#3b20d8',
-      accentColor: '#9e8cff',
+      color: '#1236ce',
+      accentColor: '#79d9ff',
       effect: 'holographic',
     },
   },
@@ -103,12 +103,12 @@ export function defaultPackStudioDraft(): PackStudioDraft {
     cardsAmount: 3,
     frontImage: '',
     headline: '3 CARTAS',
-    headlineSize: 58,
+    headlineSize: 63,
     headlineX: 300,
-    headlineY: 320,
-    kicker: 'EDIÇÃO PADRÃO',
+    headlineY: 260,
+    kicker: 'FUTHUB',
     kickerX: 300,
-    kickerY: 230,
+    kickerY: 152,
     limitPerUser: 10,
     name: 'Pack padrão',
     price: 15,

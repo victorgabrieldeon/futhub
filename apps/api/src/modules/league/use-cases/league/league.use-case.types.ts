@@ -3,6 +3,7 @@ import type {
   MatchEventDto,
   MatchResponse,
   QueueResponse,
+  TestMatchResponse,
 } from '../../league.dto.js';
 
 export type DiscordIdentity = Readonly<{ id: string; name: string; avatarUrl: string | null }>;
@@ -17,4 +18,9 @@ export abstract class LeagueRepository {
   abstract standings(discordUserId: string): Promise<LeagueStatusResponse>;
   abstract match(matchId: string): Promise<MatchResponse>;
   abstract events(matchId: string): Promise<MatchEventDto[]>;
+  abstract testMatch(
+    identity: DiscordIdentity,
+    opponentId: string | null,
+    seed: number,
+  ): Promise<TestMatchResponse>;
 }

@@ -21,3 +21,5 @@ apps/*/.wrangler/
 .devspace/
 .stitch/
 .superpowers/
+.impeccable/
+apps/discord-bot/.emoji-preview/

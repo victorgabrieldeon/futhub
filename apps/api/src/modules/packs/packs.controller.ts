@@ -12,6 +12,7 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 
 import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
+import { PackShopService } from './pack-shop.service.js';
 import {
   type OpenPackResponse,
   type PackActionRequest,
@@ -23,7 +24,6 @@ import {
   PackShopQuerySchema,
   type PurchasePackResponse,
 } from './packs.dto.js';
-import { PackShopService } from './pack-shop.service.js';
 import { OpenPackUseCase } from './use-cases/open-pack/open-pack.use-case.js';
 import { PackCatalogRepository } from './use-cases/pack.types.js';
 import { PurchasePackUseCase } from './use-cases/purchase-pack/purchase-pack.use-case.js';
@@ -72,11 +72,12 @@ export class PacksController {
     route.operationId = 'purchasePack';
     route.security = [{ bearer: [] }];
   })
-  purchasePack(
+  async purchasePack(
     @Param('packId', new ParseUUIDPipe()) packId: string,
     @Body({ schema: PackActionRequestSchema }) request: PackActionRequest,
   ): Promise<PurchasePackResponse> {
-    return this.purchase.execute(request.identity, packId);
+    const result = await this.purchase.execute(request.identity, packId);
+    return { ...result, completedMissions: [...result.completedMissions] };
   }
 
   @TypedRoute.Post(':packId/open')
@@ -90,6 +91,10 @@ export class PacksController {
     @Body({ schema: PackActionRequestSchema }) request: PackActionRequest,
   ): Promise<OpenPackResponse> {
     const result = await this.open.execute(request.identity, packId);
-    return { cards: [...result.cards], progression: result.progression };
+    return {
+      cards: [...result.cards],
+      progression: result.progression,
+      completedMissions: [...result.completedMissions],
+    };
   }
 }

@@ -1,9 +1,15 @@
-import { configureApiClient, type DiscordIdentityDto } from '@futhub/api-client';
-import { Command, MessageFlags } from 'seyfert';
+import { type DiscordIdentityDto, configureApiClient } from '@futhub/api-client';
+import { Command } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
-type CommandResponse = string | Parameters<CommandContext['write']>[0];
+import type { BotMessage } from '../core/bot-response.js';
+import { stageOf } from '../core/juice.js';
+import { type ActionReply, deliver } from '../core/replies.js';
+import { friendlyError, notice } from '../core/ui.js';
 
+type CommandResponse = string | BotMessage;
+
+/** Erro do jogador (entrada inválida): a mensagem é mostrada como está, sem log. */
 export class CommandInputError extends Error {}
 
 export function identity(context: CommandContext): DiscordIdentityDto {
@@ -26,36 +32,50 @@ export function requiredText(value: string, name: string): string {
   return text;
 }
 
-export function cardIds(value: string): readonly string[] {
-  const ids = requiredText(value, 'ids')
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean);
-  if (ids.length === 0)
-    throw new CommandInputError('Informe ao menos um ID de carta separado por vírgula.');
-  return ids;
+function isActionReply(value: CommandResponse | ActionReply): value is ActionReply {
+  return typeof value === 'object' && 'afterSend' in value;
+}
+
+export function commandError(commandName: string, error: unknown): BotMessage {
+  if (error instanceof CommandInputError)
+    return notice(
+      'warning',
+      error.message,
+      undefined,
+      'Use /ajuda para ver como cada comando funciona.',
+    ) as BotMessage;
+  console.error(`Failed to execute /${commandName}.`, error);
+  return notice(
+    'error',
+    `Não foi possível concluir /${commandName}`,
+    friendlyError(error, 'Algo deu errado do nosso lado.'),
+    'Tente novamente em instantes.',
+  ) as BotMessage;
 }
 
 export abstract class FutHubCommand extends Command {
   protected async respond(
     context: CommandContext,
     commandName: string,
-    action: () => Promise<CommandResponse>,
+    action: () => Promise<CommandResponse | ActionReply>,
   ): Promise<void> {
+    let result: CommandResponse | ActionReply;
     try {
       refreshApiClient();
-      const response = await action();
-      await context.write(typeof response === 'string' ? { content: response } : response);
+      result = await action();
     } catch (error) {
-      if (!(error instanceof CommandInputError))
-        console.error(`Failed to execute /${commandName}.`, error);
-      await context.write({
-        content:
-          error instanceof CommandInputError
-            ? error.message
-            : `Não foi possível executar /${commandName}. Tente novamente.`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await context.write(commandError(commandName, error));
+      return;
+    }
+    if (!isActionReply(result)) {
+      await context.write(typeof result === 'string' ? { content: result } : result);
+      return;
+    }
+    try {
+      await deliver(stageOf(context), result);
+    } catch (error) {
+      // A ação já aconteceu na API; só a apresentação falhou.
+      console.error(`Failed to present /${commandName}.`, error);
     }
   }
 }

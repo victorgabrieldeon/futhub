@@ -4,7 +4,8 @@ import type {
   BotResponseEmbedDto,
   BotResponseTemplateDto,
 } from '@futhub/api-client';
-import { type MutableRefObject, useEffect, useId, useRef } from 'react';
+import { imageId, imageRef } from '@futhub/bot-templates';
+import { type MutableRefObject, createContext, useContext, useEffect, useId, useRef } from 'react';
 import { type BotResponseComponentDto, moveItem } from './helpers';
 
 export type TextFocus = MutableRefObject<{
@@ -12,7 +13,14 @@ export type TextFocus = MutableRefObject<{
   change: (value: string) => void;
 } | null>;
 
-function TextField({
+export type AdminEmoji = { id: string; name: string; animated: boolean; imageUrl: string };
+/** Generated image IDs and bot emojis available to the template being edited. */
+export const TemplateAssets = createContext<{ images: string[]; emojis: AdminEmoji[] }>({
+  images: [],
+  emojis: [],
+});
+
+export function TextField({
   label,
   value,
   onChange,
@@ -76,6 +84,43 @@ function TextField({
   );
 }
 
+/** Image slots accept a URL, a variable or one of the template's generated images. */
+function ImageField({
+  label,
+  value,
+  onChange,
+  focus,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  focus: TextFocus;
+}) {
+  const { images } = useContext(TemplateAssets);
+  const generated = imageId(value.trim());
+  return (
+    <div className="response-image-field">
+      <TextField label={label} value={value} maxLength={2048} focus={focus} onChange={onChange} />
+      {images.length > 0 && (
+        <label className="response-field">
+          Ou imagem gerada
+          <select
+            value={generated && images.includes(generated) ? generated : ''}
+            onChange={(event) => onChange(event.target.value ? imageRef(event.target.value) : '')}
+          >
+            <option value="">—</option>
+            {images.map((id) => (
+              <option key={id} value={id}>
+                {id}.png
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+    </div>
+  );
+}
+
 function OrderControls({
   index,
   count,
@@ -111,6 +156,27 @@ function OrderControls({
         Remover
       </button>
     </div>
+  );
+}
+
+function EmojiSelect({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const { emojis } = useContext(TemplateAssets);
+  if (!emojis.length && !value) return null;
+  return (
+    <label className="response-field">
+      Emoji do botão (opcional)
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
+        <option value="">Sem emoji</option>
+        {value && !emojis.some((emoji) => emoji.name === value) && (
+          <option value={value}>{value} (não encontrado)</option>
+        )}
+        {emojis.map((emoji) => (
+          <option key={emoji.id} value={emoji.name}>
+            :{emoji.name}:
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -193,6 +259,7 @@ function ButtonsEditor({
               ))}
             </select>
           </label>
+          <EmojiSelect value={button.emoji ?? ''} onChange={(emoji) => update(index, { emoji })} />
           {button.action === 'link' && (
             <TextField
               label="URL do link (HTTP ou HTTPS)"
@@ -337,10 +404,9 @@ export function ComponentsEditor({
           )}
           {component.type === 'media' && (
             <>
-              <TextField
-                label="URL da imagem (HTTP ou HTTPS)"
+              <ImageField
+                label="URL da imagem, variável ou imagem gerada"
                 value={component.url}
-                maxLength={2048}
                 focus={focus}
                 onChange={(url) => update(index, { ...component, url })}
               />
@@ -468,10 +534,9 @@ export function LegacyEditor({
             focus={focus}
             onChange={(authorUrl) => update(index, { authorUrl })}
           />
-          <TextField
+          <ImageField
             label="URL do ícone do autor (opcional)"
             value={embed.authorIconUrl ?? ''}
-            maxLength={2048}
             focus={focus}
             onChange={(authorIconUrl) => update(index, { authorIconUrl })}
           />
@@ -504,17 +569,15 @@ export function LegacyEditor({
             focus={focus}
             onChange={(footer) => update(index, { footer })}
           />
-          <TextField
+          <ImageField
             label="URL da imagem (opcional)"
             value={embed.imageUrl}
-            maxLength={2048}
             focus={focus}
             onChange={(imageUrl) => update(index, { imageUrl })}
           />
-          <TextField
+          <ImageField
             label="URL da miniatura (opcional)"
             value={embed.thumbnailUrl}
-            maxLength={2048}
             focus={focus}
             onChange={(thumbnailUrl) => update(index, { thumbnailUrl })}
           />

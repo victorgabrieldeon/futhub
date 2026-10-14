@@ -67,3 +67,38 @@ export const MatchResponseSchema = z.object({
   events: z.array(MatchEventDtoSchema),
 });
 export type MatchResponse = z.infer<typeof MatchResponseSchema>;
+
+export const TestMatchRequestSchema = z.object({
+  identity: DiscordIdentityDtoSchema,
+  opponentId: z.string().min(1).max(80).nullable().default(null),
+  seed: z.number().int().positive().max(2_147_483_647).nullable().default(null),
+});
+export type TestMatchRequest = z.infer<typeof TestMatchRequestSchema>;
+
+export const TestMatchTeamDtoSchema = z.object({
+  name: z.string(),
+  avatarUrl: z.string().nullable(),
+  cpu: z.boolean(),
+  tactic: z.enum(['defensive', 'balanced', 'offensive']),
+  rating: z.number(),
+  lineup: z.array(z.object({ name: z.string(), position: z.string() })),
+});
+export type TestMatchTeamDto = z.infer<typeof TestMatchTeamDtoSchema>;
+
+export const TestMatchResponseSchema = z.object({
+  seed: z.number(),
+  home: TestMatchTeamDtoSchema,
+  away: TestMatchTeamDtoSchema,
+  homeGoals: z.number(),
+  awayGoals: z.number(),
+  events: z.array(
+    MatchEventDtoSchema.pick({
+      minute: true,
+      type: true,
+      description: true,
+      homeGoals: true,
+      awayGoals: true,
+    }),
+  ),
+});
+export type TestMatchResponse = z.infer<typeof TestMatchResponseSchema>;

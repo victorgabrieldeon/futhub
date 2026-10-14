@@ -2,14 +2,15 @@ import { executeLucro } from '@futhub/api-client';
 import { Declare } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
-import { formatCommandResult } from '../lucro.js';
+import { lucroReply } from '../core/replies.js';
 import { FutHubCommand, identity } from './shared.js';
 
-@Declare({ name: 'lucro', description: 'Receba lucro e aumente seu saldo.' })
+@Declare({ name: 'lucro', description: 'Receba as moedas do caixa do clube.' })
 export default class LucroCommand extends FutHubCommand {
   async run(context: CommandContext): Promise<void> {
-    await this.respond(context, 'lucro', async () =>
-      formatCommandResult(await executeLucro(identity(context)), new Date()),
-    );
+    await this.respond(context, 'lucro', async () => {
+      const player = identity(context);
+      return lucroReply(player, await executeLucro(player), new Date());
+    });
   }
 }

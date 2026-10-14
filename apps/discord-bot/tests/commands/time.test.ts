@@ -4,12 +4,12 @@ import test from 'node:test';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { createMockBot } from '@slipher/testing';
 
+import { type TeamImageTab, renderTeamImage } from '../../src/art/team-image.js';
 import TimeCommand from '../../src/commands/time.js';
 import TimeButtonComponent from '../../src/components/time-button.js';
 import TimeSelectComponent from '../../src/components/time-select.js';
-import { renderTeamImage, type TeamImageTab } from '../../src/team-image.js';
-import type { TeamResponse } from '../../src/team-session.js';
-import { type ApiRequest, mockApi } from '../support/api.js';
+import type { TeamResponse } from '../../src/features/team/team-session.js';
+import { type ApiRequest, messageText, mockApi } from '../support/api.js';
 
 const club = {
   balance: 2_500,
@@ -50,8 +50,12 @@ const team = {
   ],
   lineup: [],
   inventory: { items: [], total: 12, page: 1, pageSize: 10, totalPages: 2 },
-  packs: [{ id: 'pack-1', name: 'Pack Ouro', emoji: '📦', quantity: 2 }],
+  packs: [
+    { id: 'pack-1', name: 'Pack Ouro', emoji: '📦', cardsAmount: 3, imageUrl: null, quantity: 2 },
+  ],
   collections: [],
+  profile: { level: 3, xp: 40, nextLevelXp: 250 },
+  profit: { availableAt: null },
 };
 const leagueTeam = {
   ...team,
@@ -62,6 +66,7 @@ const leagueTeam = {
     overall: 80,
     position: 'CA',
     secondaryPositions: [],
+    team: { name: 'Flamengo', emoji: '🔴' },
     collection: { id: 'collection-1', name: 'Base', emoji: '⚽' },
     favorite: false,
     holder: true,
@@ -80,6 +85,24 @@ const leagueDivision = {
   color: '#123abc',
   imageUrl: 'https://cdn.test/bronze.png',
 };
+const idleLeague = {
+  points: 120,
+  wins: 4,
+  draws: 1,
+  losses: 2,
+  division: leagueDivision,
+  queue: null,
+};
+
+/** Responde a liga e as missões carregadas pelo início e delega o resto para `fallback`. */
+function withLeague(fallback: (request: ApiRequest) => unknown) {
+  return (request: ApiRequest) =>
+    request.path === '/v1/league'
+      ? idleLeague
+      : request.path === '/v1/missions'
+        ? { missions: [] }
+        : fallback(request);
+}
 
 function record(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -136,15 +159,18 @@ function body(messages: readonly { readonly components?: unknown[] }[]): string 
 }
 
 test('abre o painel privado do time por slash command', async () => {
-  const api = mockApi(team);
+  const api = mockApi(withLeague(() => team));
   await using bot = await createMockBot({ commands: [TimeCommand] });
 
   const result = await bot.slash(TimeCommand);
 
+  // O início é a primeira aba: a arte do clube, o próximo passo e os atalhos.
   assert.equal(result.ephemeral, true);
-  assert.match(body(result.messages), /MEU TIME · VISÃO GERAL/);
-  assert.match(body(result.messages), /4-3-3/);
-  assert.match(body(result.messages), /Elenco:.*12/);
+  assert.equal(body(result.messages), '> **Próximo passo:** Seu lucro está pronto.');
+  assert.match(JSON.stringify(result.messages), /attachment:\/\/inicio\.png/);
+  assert.match(JSON.stringify(result.messages), /Clube de slipher-tester: nível 3, 475 moedas/);
+  assert.match(JSON.stringify(result.messages), /"label":"Início","value":"overview"/);
+  assert.equal(buttonId(result.messages, 'Abrir packs (2)').split(':')[1], 'packs');
   assert.deepEqual(api.requests, [
     {
       method: 'POST',
@@ -160,9 +186,45 @@ test('abre o painel privado do time por slash command', async () => {
         position: null,
         collectionId: null,
         sort: 'overall',
+        sellable: false,
+      },
+    },
+    {
+      method: 'POST',
+      path: '/v1/league',
+      body: {
+        id: '900000000000000005',
+        name: 'slipher-tester',
+        avatarUrl: 'https://cdn.discordapp.com/embed/avatars/1.png',
+      },
+    },
+    {
+      method: 'POST',
+      path: '/v1/missions',
+      body: {
+        id: '900000000000000005',
+        name: 'slipher-tester',
+        avatarUrl: 'https://cdn.discordapp.com/embed/avatars/1.png',
       },
     },
   ]);
+});
+
+test('abre o início mesmo sem liga e missões', async (context) => {
+  context.mock.method(console, 'error', () => undefined);
+  const availableAt = '2026-10-10T15:00:00.000Z';
+  mockApi((request: ApiRequest) => {
+    if (request.path === '/v1/league' || request.path === '/v1/missions')
+      throw new Error('offline');
+    return { ...team, profit: { availableAt } };
+  });
+  await using bot = await createMockBot({ commands: [TimeCommand] });
+
+  const result = await bot.slash(TimeCommand);
+
+  assert.equal(body(result.messages), '> **Próximo passo:** Você tem 2 packs fechados.');
+  assert.match(JSON.stringify(result.messages), /attachment:\/\/inicio\.png/);
+  assert.match(JSON.stringify(result.messages), /"label":"Lucro em espera"/);
 });
 test('executa campanha, fila, resultado e nova busca na aba Liga', async (context) => {
   type Stage = 'idle' | 'waiting' | 'matched' | 'requeued';
@@ -246,41 +308,48 @@ test('executa campanha, fila, resultado e nova busca na aba Liga', async (contex
   assert.match(body(league.messages), /Bronze.*0 pontos/);
   assert.match(body(league.messages), /Vitórias:.*0.*Empates:.*0.*Derrotas:.*0/);
   assert.match(leaguePayload, /1194684/);
-  assert.match(leaguePayload, /futhub-league\.png/);
+  assert.match(leaguePayload, /futhub-league-painel\.png/);
   assert.doesNotMatch(leaguePayload, /futhub-team\.png/);
 
   bot.reset();
   const waiting = await bot.clickButton(buttonId(league.messages, 'Buscar partida'));
-  assert.match(body(waiting.messages), /Buscando adversário/);
+  assert.match(body(waiting.messages), /Procurando adversário\./);
+  // Enquanto espera, o painel anima e confere a fila sozinho antes de pedir um clique.
+  assert.match(JSON.stringify(waiting.messages), /Procurando adversário\.\.\./);
 
   stage = 'matched';
   bot.reset();
   const result = await bot.clickButton(buttonId(waiting.messages, 'Atualizar'));
-  assert.match(body(result.messages), /ÚLTIMA PARTIDA/);
-  assert.match(body(result.messages), /slipher-tester 2 × 1 Rival/);
+  assert.match(body(result.messages), /# 🏆 VITÓRIA!/);
+  assert.match(body(result.messages), /## slipher-tester 2 × 1 Rival/);
   assert.match(body(result.messages), /Resultado:.*Vitória/);
-  assert.match(body(result.messages), /42' · Titular 1 abriu o placar/);
+  assert.match(JSON.stringify(result.messages), /"accent_color":2071893/);
+  assert.match(body(result.messages), /42'` \S+ Titular 1 abriu o placar/);
 
   bot.reset();
   const requeued = await bot.clickButton(buttonId(result.messages, 'Buscar nova partida'));
-  assert.match(body(requeued.messages), /Buscando adversário/);
+  assert.match(body(requeued.messages), /Procurando adversário/);
+  // Entrar na fila carrega a liga e confere mais 4 vezes enquanto anima a busca.
+  const searching = Array.from({ length: 5 }, () => ({ method: 'POST', path: '/v1/league' }));
   assert.deepEqual(
     api.requests.map(({ method, path }) => ({ method, path })),
     [
       { method: 'POST', path: '/v1/team' },
       { method: 'POST', path: '/v1/league' },
-      { method: 'POST', path: '/v1/ranked/queue' },
+      { method: 'POST', path: '/v1/missions' },
       { method: 'POST', path: '/v1/league' },
+      { method: 'POST', path: '/v1/ranked/queue' },
+      ...searching,
       { method: 'POST', path: '/v1/league' },
       { method: 'GET', path: `/v1/matches/${match.id}` },
       { method: 'POST', path: '/v1/ranked/queue' },
-      { method: 'POST', path: '/v1/league' },
+      ...searching,
     ],
   );
 });
 
 test('abre o painel público por prefixo, restringe os controles e mostra o clube', async () => {
-  const api = mockApi((request: ApiRequest) => (request.path === '/v1/club' ? club : team));
+  const api = mockApi(withLeague((request) => (request.path === '/v1/club' ? club : team)));
   await using bot = await createMockBot({
     commands: [TimeCommand],
     components: [TimeButtonComponent, TimeSelectComponent],
@@ -294,7 +363,7 @@ test('abre o painel público por prefixo, restringe os controles e mostra o club
     userId: '900000000000000006',
   });
   assert.equal(foreign.ephemeral, true);
-  assert.equal(foreign.content, 'Este painel pertence a outro jogador.');
+  assert.match(messageText(foreign.messages[0]), /Este painel não é seu/);
 
   bot.reset();
   const switched = await bot.selectMenu(tabs, ['inventory']);
@@ -313,6 +382,8 @@ test('abre o painel público por prefixo, restringe os controles e mostra o club
     api.requests.map(({ method, path }) => ({ method, path })),
     [
       { method: 'POST', path: '/v1/team' },
+      { method: 'POST', path: '/v1/league' },
+      { method: 'POST', path: '/v1/missions' },
       { method: 'POST', path: '/v1/club' },
     ],
   );
@@ -320,23 +391,25 @@ test('abre o painel público por prefixo, restringe os controles e mostra o club
 
 test('melhora o estádio dentro do painel do time', async () => {
   let currentClub = club;
-  const api = mockApi((request: ApiRequest) => {
-    if (request.path === '/v1/club/stadium/upgrade') {
-      currentClub = {
-        ...currentClub,
-        balance: 500,
-        stadium: {
-          ...currentClub.stadium,
-          level: 3,
-          nextUpgradeCost: 3_000,
-          ticketRevenue: 600,
-          maintenance: 150,
-        },
-        projectedNet: 370,
-      };
-    }
-    return request.path.startsWith('/v1/club') ? currentClub : team;
-  });
+  const api = mockApi(
+    withLeague((request) => {
+      if (request.path === '/v1/club/stadium/upgrade') {
+        currentClub = {
+          ...currentClub,
+          balance: 500,
+          stadium: {
+            ...currentClub.stadium,
+            level: 3,
+            nextUpgradeCost: 3_000,
+            ticketRevenue: 600,
+            maintenance: 150,
+          },
+          projectedNet: 370,
+        };
+      }
+      return request.path.startsWith('/v1/club') ? currentClub : team;
+    }),
+  );
   await using bot = await createMockBot({
     commands: [TimeCommand],
     components: [TimeButtonComponent, TimeSelectComponent],
@@ -350,11 +423,13 @@ test('melhora o estádio dentro do painel do time', async () => {
   const upgraded = await bot.clickButton(upgrade);
 
   assert.match(body(upgraded.messages), /Estádio:.*nível 3\/5/);
-  assert.match(body(upgraded.messages), /Estádio melhorado/);
+  assert.match(body(upgraded.messages), /## 🏟️ Estádio nível 3!/);
   assert.deepEqual(
     api.requests.map(({ method, path }) => ({ method, path })),
     [
       { method: 'POST', path: '/v1/team' },
+      { method: 'POST', path: '/v1/league' },
+      { method: 'POST', path: '/v1/missions' },
       { method: 'POST', path: '/v1/club' },
       { method: 'POST', path: '/v1/club/stadium/upgrade' },
     ],
@@ -362,7 +437,7 @@ test('melhora o estádio dentro do painel do time', async () => {
 });
 
 test('gera uma imagem diferente para cada aba do time', async () => {
-  const tabs: TeamImageTab[] = ['overview', 'lineup', 'inventory', 'packs', 'sale', 'club'];
+  const tabs: TeamImageTab[] = ['lineup', 'inventory', 'packs', 'sale', 'club'];
   const images = await Promise.all(
     tabs.map((tab) =>
       renderTeamImage({
@@ -380,7 +455,6 @@ test('gera uma imagem diferente para cada aba do time', async () => {
   assert.deepEqual(
     decoded.map((image) => [image.width, image.height]),
     [
-      [2_400, 1_640],
       [2_400, 1_640],
       [2_400, 1_350],
       [2_400, 1_350],
@@ -419,6 +493,7 @@ test('mostra a carta completa do jogador e mantém fallback sem imagem', async (
     overall: 91,
     position: 'CA',
     secondaryPositions: [],
+    team: { name: 'Flamengo', emoji: '🔴' },
     collection: { id: 'collection-1', name: 'Lendas', emoji: 'L' },
     favorite: false,
     holder: true,
@@ -493,6 +568,7 @@ test('carrega cartas do MinIO pelo endereço interno no cluster', async () => {
             overall: 91,
             position: 'CA',
             secondaryPositions: [],
+            team: { name: 'Flamengo', emoji: '🔴' },
             collection: { id: 'collection-1', name: 'Lendas', emoji: 'L' },
             favorite: false,
             holder: true,
@@ -513,15 +589,48 @@ test('carrega cartas do MinIO pelo endereço interno no cluster', async () => {
   assert.equal(requestedUrl, 'http://minio:9000/cards/player.png');
 });
 
+test('aba Packs desenha a arte salva de cada pack', async (context) => {
+  const nativeFetch = globalThis.fetch;
+  const art = createCanvas(60, 80);
+  const paint = art.getContext('2d');
+  paint.fillStyle = '#ff00ff';
+  paint.fillRect(0, 0, 60, 80);
+  const requested: string[] = [];
+  globalThis.fetch = async (input) => {
+    requested.push(String(input));
+    return new Response(art.toBuffer('image/png'), { headers: { 'content-type': 'image/png' } });
+  };
+  context.after(() => {
+    globalThis.fetch = nativeFetch;
+  });
+  const render = (imageUrl: string | null) =>
+    renderTeamImage({
+      identity: { id: 'player-1', name: 'slipher-tester', avatarUrl: null },
+      tab: 'packs',
+      team: {
+        ...team,
+        packs: [{ ...team.packs[0], imageUrl }],
+      } as TeamResponse,
+    });
+
+  const fallback = await render(null);
+  const saved = await render('https://cdn.test/packs/ouro.png');
+
+  assert.deepEqual(requested, ['https://cdn.test/packs/ouro.png']);
+  assert.notEqual(saved.toString('base64'), fallback.toString('base64'));
+});
+
 test('salva a tática imediatamente e atualiza o painel', async () => {
   let current = team;
-  const api = mockApi((request: ApiRequest) => {
-    if (request.path === '/v1/team/tactic') {
-      current = { ...current, tactic: 'offensive' };
-      return {};
-    }
-    return current;
-  });
+  const api = mockApi(
+    withLeague((request) => {
+      if (request.path === '/v1/team/tactic') {
+        current = { ...current, tactic: 'offensive' };
+        return {};
+      }
+      return current;
+    }),
+  );
   await using bot = await createMockBot({
     commands: [TimeCommand],
     components: [TimeButtonComponent, TimeSelectComponent],
@@ -540,8 +649,70 @@ test('salva a tática imediatamente e atualiza o painel', async () => {
     api.requests.map(({ method, path }) => ({ method, path })),
     [
       { method: 'POST', path: '/v1/team' },
+      { method: 'POST', path: '/v1/league' },
+      { method: 'POST', path: '/v1/missions' },
       { method: 'PUT', path: '/v1/team/tactic' },
       { method: 'POST', path: '/v1/team' },
     ],
   );
+});
+
+test('lista só vendáveis na aba Venda e vende vários jogadores de uma vez', async () => {
+  const reserve = (index: number) => ({
+    ...leagueTeam.lineup[0],
+    userCardId: `reserve-${index}`,
+    name: `Reserva ${index}`,
+    holder: false,
+    holderPosition: null,
+    captain: false,
+    sellPrice: 100 * index,
+  });
+  const saleTeam = {
+    ...team,
+    inventory: {
+      items: [reserve(1), reserve(2), reserve(3)],
+      total: 3,
+      page: 1,
+      pageSize: 10,
+      totalPages: 1,
+    },
+  } as TeamResponse;
+  const api = mockApi(
+    withLeague((request) => {
+      if (request.path === '/v1/cards/sell')
+        return { amount: 300, balance: 775, completedMissions: [] };
+      return record(request.body) && request.body.sellable ? saleTeam : team;
+    }),
+  );
+  await using bot = await createMockBot({
+    commands: [TimeCommand],
+    components: [TimeButtonComponent, TimeSelectComponent],
+  });
+
+  const opened = await bot.slash(TimeCommand);
+  bot.reset();
+  const sale = await bot.selectMenu(selectId(opened.messages, 'Escolha uma aba'), ['sale']);
+  assert.match(body(sale.messages), /3 jogador\(es\) disponível\(is\) para venda/);
+  bot.reset();
+  const picked = await bot.selectMenu(selectId(sale.messages, 'Selecione jogadores para vender'), [
+    'reserve-1',
+    'reserve-2',
+  ]);
+  assert.match(body(picked.messages), /2 selecionado\(s\)\*\* · Total: \*\*300\*\*/);
+  bot.reset();
+  const confirm = await bot.clickButton(buttonId(picked.messages, 'Vender 2 jogadores'));
+  bot.reset();
+  const sold = await bot.clickButton(buttonId(confirm.messages, 'Confirmar venda por 300'));
+
+  assert.match(body(sold.messages), /\*\*2 jogadores\*\* vendidos · saldo 775/);
+  const teamRequests = api.requests.filter(({ path }) => path === '/v1/team');
+  assert.deepEqual(
+    teamRequests.map(({ body }) => record(body) && body.sellable),
+    [false, true, true],
+  );
+  const saleRequest = api.requests.find(({ path }) => path === '/v1/cards/sell');
+  assert.deepEqual(record(saleRequest?.body) && saleRequest.body.userCardIds, [
+    'reserve-1',
+    'reserve-2',
+  ]);
 });

@@ -1,40 +1,54 @@
+import type { DiscordIdentityDto } from '@futhub/api-client';
 import { Declare } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
-import { loadClub, loadLeague, loadTeam } from '../team-api.js';
-import { createTeamSession, type TeamTab } from '../team-session.js';
-import { teamResponse } from '../team.js';
+import {
+  defaultTeamView,
+  loadClub,
+  loadLeague,
+  loadOverviewLeague,
+  loadOverviewMissions,
+  loadTeam,
+} from '../features/team/team-api.js';
+import { type TeamTab, createTeamSession } from '../features/team/team-session.js';
+import { teamResponse } from '../features/team/team.js';
 import { FutHubCommand, identity } from './shared.js';
 
-export async function createTeamPanel(context: CommandContext, tab: TeamTab = 'overview') {
-  const player = identity(context);
-  const [team, club, league] = await Promise.all([
-    loadTeam(player, {
-      page: 1,
-      name: '',
-      position: null,
-      collectionId: null,
-      sort: 'overall',
-    }),
+export async function openTeamPanel(
+  player: DiscordIdentityDto,
+  ephemeral: boolean,
+  tab: TeamTab = 'overview',
+) {
+  const [team, club, league, missions] = await Promise.all([
+    loadTeam(player, { ...defaultTeamView, sellable: tab === 'sale' }),
     tab === 'club' ? loadClub(player) : null,
-    tab === 'league' ? loadLeague(player) : null,
+    tab === 'league' ? loadLeague(player) : tab === 'overview' ? loadOverviewLeague(player) : null,
+    tab === 'overview' ? loadOverviewMissions(player) : null,
   ]);
   const session = createTeamSession({
-    ownerId: context.author.id,
+    ownerId: player.id,
     identity: player,
-    ephemeral: Boolean(context.interaction),
+    ephemeral,
     tab,
     filters: { name: '', position: null, collectionId: null, sort: 'overall' },
-    selectedCardId: null,
+    selectedCardIds: [],
     confirmSale: false,
     team,
     club,
     league,
+    missions,
   });
   return teamResponse(session);
 }
 
-@Declare({ name: 'time', description: 'Gerencie seu time e clube.' })
+export function createTeamPanel(context: CommandContext, tab: TeamTab = 'overview') {
+  return openTeamPanel(identity(context), Boolean(context.interaction), tab);
+}
+
+@Declare({
+  name: 'time',
+  description: 'Seu clube em um painel: início, escalação, elenco, packs, clube e liga.',
+})
 export default class TimeCommand extends FutHubCommand {
   async run(context: CommandContext): Promise<void> {
     await this.respond(context, 'time', () => createTeamPanel(context));

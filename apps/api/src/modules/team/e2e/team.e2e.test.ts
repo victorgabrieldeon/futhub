@@ -42,7 +42,16 @@ test('gerencia inventário, escalação, capitão e tática por HTTP e persiste 
   expect(view.json()).toMatchObject({
     tactic: 'balanced',
     formation: { id: fixture.formationId },
-    packs: [{ id: fixture.packId, name: 'Pack do time', emoji: '📦', quantity: 2 }],
+    packs: [
+      {
+        id: fixture.packId,
+        name: 'Pack do time',
+        emoji: '📦',
+        cardsAmount: 3,
+        imageUrl: 'https://example.com/team-pack.png',
+        quantity: 2,
+      },
+    ],
     inventory: {
       total: 1,
       items: [
@@ -51,6 +60,7 @@ test('gerencia inventário, escalação, capitão e tática por HTTP e persiste 
           imageUrl: expect.any(String),
           holder: false,
           overall: 95,
+          team: { name: expect.stringMatching(/-reserve team /), emoji: '⚽' },
         },
       ],
     },
@@ -106,4 +116,83 @@ test('gerencia inventário, escalação, capitão e tática por HTTP e persiste 
     favorite: true,
     captain: true,
   });
+});
+
+test('expõe progressão e disponibilidade do lucro na visão do time', async () => {
+  if (!context) throw new Error('E2E context was not initialized.');
+  const { app, database } = context;
+  const player = { id: 'e2e-team-profit', name: 'Team profit', avatarUrl: null };
+  const fixture = await createTeamPlayer(database, player);
+  const headers = { authorization: `Bearer ${internalToken}` };
+  const view = () =>
+    app.inject({ method: 'POST', url: '/v1/team', headers, payload: { identity: player } });
+
+  const before = await view();
+  expect(before.statusCode).toBe(200);
+  expect(before.json()).toMatchObject({
+    profile: { level: 1, xp: 0, nextLevelXp: 100 },
+    profit: { availableAt: null },
+  });
+
+  const lucro = await app.inject({
+    method: 'POST',
+    url: '/v1/commands/lucro',
+    headers,
+    payload: player,
+  });
+  expect(lucro.statusCode).toBe(200);
+
+  const after = await view();
+  const [cooldown] = await database.db
+    .select({ availableAt: database.schema.userCooldowns.availableAt })
+    .from(database.schema.userCooldowns)
+    .where(database.eq(database.schema.userCooldowns.userId, fixture.userId));
+  expect(cooldown).toBeDefined();
+  expect(after.json()).toMatchObject({
+    profile: { level: 1, xp: 10 },
+    profit: { availableAt: cooldown?.availableAt.toISOString() },
+  });
+});
+
+test('lista só cartas vendáveis quando o filtro de venda está ativo', async () => {
+  if (!context) throw new Error('E2E context was not initialized.');
+  const { app, database } = context;
+  const player = { id: 'e2e-team-sellable', name: 'Team sellable', avatarUrl: null };
+  const fixture = await createTeamPlayer(database, player);
+  const headers = { authorization: `Bearer ${internalToken}` };
+  const view = (sellable: boolean) =>
+    app.inject({
+      method: 'POST',
+      url: '/v1/team',
+      headers,
+      payload: { identity: player, sellable },
+    });
+
+  const all = await view(false);
+  const sellable = await view(true);
+  expect(all.statusCode).toBe(200);
+  expect(sellable.statusCode).toBe(200);
+  expect(all.json().inventory.total).toBeGreaterThan(1);
+  expect(sellable.json().inventory).toMatchObject({
+    total: 1,
+    items: [
+      { userCardId: fixture.reserveUserCardId, holder: false, favorite: false, captain: false },
+    ],
+  });
+  expect(sellable.json().inventory.items[0].sellPrice).toBeGreaterThan(0);
+
+  const favorite = await app.inject({
+    method: 'PUT',
+    url: `/v1/team/cards/${fixture.reserveUserCardId}/favorite`,
+    headers,
+    payload: { identity: player },
+  });
+  expect(favorite.statusCode).toBe(204);
+  const reserve = await database.db.query.userCards.findFirst({
+    where: database.eq(database.schema.userCards.id, fixture.reserveUserCardId),
+  });
+  expect(reserve).toMatchObject({ favorite: true, holder: false });
+
+  const afterFavorite = await view(true);
+  expect(afterFavorite.json().inventory).toMatchObject({ total: 0, items: [] });
 });

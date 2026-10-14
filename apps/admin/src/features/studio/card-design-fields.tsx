@@ -1,7 +1,6 @@
 import { useId } from 'react';
 import type { CardDesign } from './card-design';
 import { cardFramePaths, cardFrames, defaultCardDesign } from './card-design';
-import './card-design.css';
 
 type CardDesignFieldsProps = Readonly<{
   design: CardDesign;
@@ -42,9 +41,9 @@ const typography: readonly Readonly<{ id: CardDesign['typography']; label: strin
 
 export function CardDesignFields({ design, onChange }: CardDesignFieldsProps) {
   return (
-    <div className="card-design-fields">
-      <fieldset>
-        <legend>Moldura</legend>
+    <>
+      <fieldset className="studio-section card-design-fields">
+        <legend className="studio-section__title">Moldura</legend>
         <div className="card-design-frames">
           {cardFrames.map((frame) => (
             <button
@@ -61,9 +60,9 @@ export function CardDesignFields({ design, onChange }: CardDesignFieldsProps) {
             </button>
           ))}
         </div>
-        <label>
-          <span>
-            Cor do metal <span className="card-design-value">{design.metalColor}</span>
+        <label className="studio-field studio-color-field">
+          <span className="studio-field__label">
+            Cor do metal <span className="studio-field__value">{design.metalColor}</span>
           </span>
           <input
             type="color"
@@ -73,10 +72,10 @@ export function CardDesignFields({ design, onChange }: CardDesignFieldsProps) {
         </label>
         <DesignRanges fields={ranges.frame} design={design} onChange={onChange} />
       </fieldset>
-      <fieldset>
-        <legend>Superfície</legend>
-        <label>
-          Textura
+      <fieldset className="studio-section card-design-fields">
+        <legend className="studio-section__title">Superfície</legend>
+        <label className="studio-field">
+          <span className="studio-field__label">Textura</span>
           <select
             value={design.texture}
             onChange={(event) =>
@@ -97,10 +96,10 @@ export function CardDesignFields({ design, onChange }: CardDesignFieldsProps) {
         </label>
         <DesignRanges fields={ranges.surface} design={design} onChange={onChange} />
       </fieldset>
-      <fieldset>
-        <legend>Identidade</legend>
-        <label>
-          Tipografia do nome
+      <fieldset className="studio-section card-design-fields">
+        <legend className="studio-section__title">Tipografia e selo</legend>
+        <label className="studio-field">
+          <span className="studio-field__label">Tipografia do nome</span>
           <select
             value={design.typography}
             onChange={(event) =>
@@ -120,8 +119,8 @@ export function CardDesignFields({ design, onChange }: CardDesignFieldsProps) {
           </select>
         </label>
         <DesignRanges fields={ranges.identity} design={design} onChange={onChange} />
-        <label>
-          Texto da edição
+        <label className="studio-field">
+          <span className="studio-field__label">Texto da edição</span>
           <input
             type="text"
             maxLength={32}
@@ -129,7 +128,7 @@ export function CardDesignFields({ design, onChange }: CardDesignFieldsProps) {
             onChange={(event) => onChange({ ...design, edition: event.currentTarget.value })}
           />
         </label>
-        <label className="card-design-toggle">
+        <label className="studio-switch">
           <input
             type="checkbox"
             checked={design.showNameplate}
@@ -139,7 +138,7 @@ export function CardDesignFields({ design, onChange }: CardDesignFieldsProps) {
           />
           Mostrar placa do nome
         </label>
-        <label className="card-design-toggle">
+        <label className="studio-switch">
           <input
             type="checkbox"
             checked={design.showStatBars}
@@ -148,10 +147,14 @@ export function CardDesignFields({ design, onChange }: CardDesignFieldsProps) {
           Mostrar barras de atributos
         </label>
       </fieldset>
-      <button type="button" onClick={() => onChange({ ...defaultCardDesign })}>
+      <button
+        className="studio-btn studio-btn--ghost studio-btn--block"
+        type="button"
+        onClick={() => onChange({ ...defaultCardDesign })}
+      >
         Restaurar somente o design
       </button>
-    </div>
+    </>
   );
 }
 
@@ -165,8 +168,8 @@ function DesignRanges({
   }>) {
   const id = useId();
   return fields.map(([key, label, min, max, unit]) => (
-    <label key={key} htmlFor={`${id}-${key}`}>
-      <span>
+    <label className="studio-field" key={key} htmlFor={`${id}-${key}`}>
+      <span className="studio-field__label">
         {label}
         <output htmlFor={`${id}-${key}`}>
           {design[key]}

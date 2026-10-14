@@ -162,6 +162,48 @@
       "when": 1789652540897,
       "tag": "0023_empty_havok",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790375445200,
+      "tag": "0024_aberrant_marvex",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791481433641,
+      "tag": "0025_lucro_closing_report",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791641717822,
+      "tag": "0026_redeem_code_conditions",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791642174395,
+      "tag": "0027_mission_types",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791903339275,
+      "tag": "0028_admin_user_management",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791904026369,
+      "tag": "0029_entity_discord_emojis",
+      "breakpoints": true
     }
   ]
 }

@@ -21,6 +21,14 @@ export function selectPackCards(
   count: number,
   random: () => number,
 ): readonly PackCard[] {
+  if (cards.length === 0) throw new Error('Pack has no eligible cards.');
+  // Packs without configured probabilities draw any eligible card with equal chance.
+  if (probabilities.length === 0)
+    return Array.from({ length: count }, () => {
+      const card = cards[Math.floor(random() * cards.length)];
+      if (!card) throw new Error('Unable to select an eligible card.');
+      return card;
+    });
   const available = probabilities.filter((probability) =>
     cards.some((card) => card.overall === probability.overall),
   );

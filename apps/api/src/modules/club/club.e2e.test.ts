@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, expect, test } from 'vitest';
 
+import { type E2eContext, internalToken, startE2eContext } from '../../test/e2e/context.js';
 import { createUser } from '../../test/e2e/entities.js';
-import { internalToken, type E2eContext, startE2eContext } from '../../test/e2e/context.js';
 
 let context: E2eContext | undefined;
 

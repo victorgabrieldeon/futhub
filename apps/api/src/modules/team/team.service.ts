@@ -1,6 +1,9 @@
 import type * as DatabaseModule from '@futhub/database';
 
+import { displayEmoji } from '../bot-emojis/entity-emoji.js';
 import { type FilesService, imageFile } from '../files/files.service.js';
+import { lucroCommand } from '../lucro/use-cases/resgatar-lucro/resgatar-lucro.types.js';
+import { getXpForLevel } from '../progression/progression.js';
 import { upsertDiscordUser } from '../users/user.repository.js';
 import { type TeamCardImageInput, renderTeamCardImage } from './team-card-image.js';
 import type {
@@ -305,82 +308,106 @@ export class TeamService {
     balance: number,
     request: TeamViewRequest,
   ): Promise<TeamResponse> {
-    const { and, asc, db, eq, gte, schema } = database;
+    const { and, asc, db, eq, gte, schema, sql } = database;
+    const now = new Date();
     const translationJoin = and(
       eq(schema.localizedTextTranslations.localizedTextId, schema.collections.nameTextId),
       eq(schema.localizedTextTranslations.locale, 'pt-BR'),
     );
-    const [selected, formationRows, slotRows, rows, marketConfig, packs] = await Promise.all([
-      db.query.userFormations.findFirst({
-        where: eq(schema.userFormations.userId, userId),
-      }),
-      db
-        .select({
-          id: schema.formations.id,
-          name: schema.localizedTextTranslations.content,
-        })
-        .from(schema.formations)
-        .leftJoin(
-          schema.localizedTextTranslations,
-          and(
-            eq(schema.localizedTextTranslations.localizedTextId, schema.formations.nameTextId),
-            eq(schema.localizedTextTranslations.locale, 'pt-BR'),
+    const [selected, formationRows, slotRows, rows, marketConfig, packs, [progress], [profit]] =
+      await Promise.all([
+        db.query.userFormations.findFirst({
+          where: eq(schema.userFormations.userId, userId),
+        }),
+        db
+          .select({
+            id: schema.formations.id,
+            name: schema.localizedTextTranslations.content,
+          })
+          .from(schema.formations)
+          .leftJoin(
+            schema.localizedTextTranslations,
+            and(
+              eq(schema.localizedTextTranslations.localizedTextId, schema.formations.nameTextId),
+              eq(schema.localizedTextTranslations.locale, 'pt-BR'),
+            ),
+          )
+          .orderBy(asc(schema.localizedTextTranslations.content), asc(schema.formations.id)),
+        db.select().from(schema.formationSlots),
+        db
+          .select({
+            userCardId: schema.userCards.id,
+            cardId: schema.cards.id,
+            name: schema.cards.name,
+            imageFileId: schema.cards.imageFileId,
+            legacyImageUrl: schema.cards.imageUrl,
+            overall: schema.cards.overall,
+            position: schema.cards.position,
+            teamName: schema.teams.name,
+            teamEmoji: displayEmoji(sql, schema.teams),
+            collectionId: schema.collections.id,
+            collectionName: schema.localizedTextTranslations.content,
+            collectionEmoji: displayEmoji(sql, schema.collections),
+            primaryColor: schema.collections.primaryColor,
+            secondaryColor: schema.collections.secondaryColor,
+            pace: schema.cardStats.pace,
+            finishing: schema.cardStats.finishing,
+            passing: schema.cardStats.passing,
+            dribbling: schema.cardStats.dribbling,
+            marking: schema.cardStats.marking,
+            control: schema.cardStats.control,
+            favorite: schema.userCards.favorite,
+            holder: schema.userCards.holder,
+            holderPosition: schema.userCards.holderPosition,
+            captain: schema.userCards.captain,
+            claimedAt: schema.userCards.claimedAt,
+            basePrice: schema.cardPriceConfigs.price,
+          })
+          .from(schema.userCards)
+          .innerJoin(schema.cards, eq(schema.userCards.cardId, schema.cards.id))
+          .innerJoin(schema.cardStats, eq(schema.cards.statsId, schema.cardStats.id))
+          .innerJoin(schema.teams, eq(schema.cards.teamId, schema.teams.id))
+          .innerJoin(schema.collections, eq(schema.cards.collectionId, schema.collections.id))
+          .leftJoin(schema.localizedTextTranslations, translationJoin)
+          .leftJoin(
+            schema.cardPriceConfigs,
+            eq(schema.cards.overall, schema.cardPriceConfigs.overall),
+          )
+          .where(eq(schema.userCards.userId, userId)),
+        db.query.cardMarketConfig.findFirst(),
+        db
+          .select({
+            id: schema.packs.id,
+            name: schema.packs.name,
+            emoji: displayEmoji(sql, schema.packs),
+            cardsAmount: schema.packs.cardsAmount,
+            imageFileId: schema.packs.imageFileId,
+            imageUrl: schema.packs.imageUrl,
+            quantity: schema.userPacks.quantity,
+          })
+          .from(schema.userPacks)
+          .innerJoin(schema.packs, eq(schema.userPacks.packId, schema.packs.id))
+          .where(and(eq(schema.userPacks.userId, userId), gte(schema.userPacks.quantity, 1)))
+          .orderBy(asc(schema.packs.name), asc(schema.packs.id)),
+        db
+          .select({ xp: schema.users.xp, level: schema.users.level })
+          .from(schema.users)
+          .where(eq(schema.users.id, userId)),
+        db
+          .select({ availableAt: schema.userCooldowns.availableAt })
+          .from(schema.userCooldowns)
+          .innerJoin(
+            schema.commandConfigs,
+            eq(schema.userCooldowns.commandConfigId, schema.commandConfigs.id),
+          )
+          .where(
+            and(
+              eq(schema.userCooldowns.userId, userId),
+              eq(schema.commandConfigs.commandName, lucroCommand.name),
+            ),
           ),
-        )
-        .orderBy(asc(schema.localizedTextTranslations.content), asc(schema.formations.id)),
-      db.select().from(schema.formationSlots),
-      db
-        .select({
-          userCardId: schema.userCards.id,
-          cardId: schema.cards.id,
-          name: schema.cards.name,
-          imageFileId: schema.cards.imageFileId,
-          legacyImageUrl: schema.cards.imageUrl,
-          overall: schema.cards.overall,
-          position: schema.cards.position,
-          teamName: schema.teams.name,
-          collectionId: schema.collections.id,
-          collectionName: schema.localizedTextTranslations.content,
-          collectionEmoji: schema.collections.emoji,
-          primaryColor: schema.collections.primaryColor,
-          secondaryColor: schema.collections.secondaryColor,
-          pace: schema.cardStats.pace,
-          finishing: schema.cardStats.finishing,
-          passing: schema.cardStats.passing,
-          dribbling: schema.cardStats.dribbling,
-          marking: schema.cardStats.marking,
-          control: schema.cardStats.control,
-          favorite: schema.userCards.favorite,
-          holder: schema.userCards.holder,
-          holderPosition: schema.userCards.holderPosition,
-          captain: schema.userCards.captain,
-          claimedAt: schema.userCards.claimedAt,
-          basePrice: schema.cardPriceConfigs.price,
-        })
-        .from(schema.userCards)
-        .innerJoin(schema.cards, eq(schema.userCards.cardId, schema.cards.id))
-        .innerJoin(schema.cardStats, eq(schema.cards.statsId, schema.cardStats.id))
-        .innerJoin(schema.teams, eq(schema.cards.teamId, schema.teams.id))
-        .innerJoin(schema.collections, eq(schema.cards.collectionId, schema.collections.id))
-        .leftJoin(schema.localizedTextTranslations, translationJoin)
-        .leftJoin(
-          schema.cardPriceConfigs,
-          eq(schema.cards.overall, schema.cardPriceConfigs.overall),
-        )
-        .where(eq(schema.userCards.userId, userId)),
-      db.query.cardMarketConfig.findFirst(),
-      db
-        .select({
-          id: schema.packs.id,
-          name: schema.packs.name,
-          emoji: schema.packs.emoji,
-          quantity: schema.userPacks.quantity,
-        })
-        .from(schema.userPacks)
-        .innerJoin(schema.packs, eq(schema.userPacks.packId, schema.packs.id))
-        .where(and(eq(schema.userPacks.userId, userId), gte(schema.userPacks.quantity, 1)))
-        .orderBy(asc(schema.packs.name), asc(schema.packs.id)),
-    ]);
+      ]);
+    if (!progress) throw new Error('Failed to load user progression.');
     if (!selected) throw new TeamInputError('Formação não selecionada.');
 
     const formations: TeamFormation[] = formationRows.map((formation, index) => ({
@@ -409,9 +436,10 @@ export class TeamService {
         positions.map(({ position }) => position),
       );
     }
-    const [imageUrls, generatedImageUrls] = await Promise.all([
+    const [imageUrls, generatedImageUrls, packImageUrls] = await Promise.all([
       this.files.urls(rows.flatMap(({ imageFileId }) => (imageFileId ? [imageFileId] : []))),
       this.ensureCardImages(database, rows),
+      this.files.urls(packs.flatMap(({ imageFileId }) => (imageFileId ? [imageFileId] : []))),
     ]);
     const multiplier = marketConfig?.sellMultiplierBasisPoints ?? 0;
     const cards: TeamCard[] = rows.map((row) => ({
@@ -425,6 +453,7 @@ export class TeamService {
       overall: row.overall,
       position: row.position,
       secondaryPositions: secondary.get(row.userCardId) ?? [],
+      team: { name: row.teamName, emoji: row.teamEmoji },
       collection: {
         id: row.collectionId,
         name: row.collectionName ?? 'Sem coleção',
@@ -450,6 +479,11 @@ export class TeamService {
           card.secondaryPositions.includes(request.position),
       )
       .filter((card) => !request.collectionId || card.collection.id === request.collectionId)
+      .filter(
+        (card) =>
+          !request.sellable ||
+          (!card.holder && !card.favorite && !card.captain && card.sellPrice > 0),
+      )
       .sort((left, right) => {
         if (request.sort === 'name') return left.name.localeCompare(right.name);
         if (request.sort === 'recent') return right.claimedAt.localeCompare(left.claimedAt);
@@ -480,8 +514,19 @@ export class TeamService {
         pageSize,
         totalPages,
       },
-      packs,
+      packs: packs.map(({ imageFileId, imageUrl, ...pack }) => ({
+        ...pack,
+        imageUrl: (imageFileId ? packImageUrls.get(imageFileId) : undefined) ?? imageUrl ?? null,
+      })),
       collections,
+      profile: {
+        level: progress.level,
+        xp: progress.xp,
+        nextLevelXp: getXpForLevel(progress.level),
+      },
+      profit: {
+        availableAt: profit && profit.availableAt > now ? profit.availableAt.toISOString() : null,
+      },
     };
   }
 

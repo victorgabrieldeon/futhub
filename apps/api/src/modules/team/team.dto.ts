@@ -17,6 +17,8 @@ export const TeamViewRequestSchema = z.object({
   position: CardMarketPositionSchema.nullable().default(null),
   collectionId: z.uuid().nullable().default(null),
   sort: z.enum(['overall', 'name', 'recent']).default('overall'),
+  /** Mantém só cartas que podem ser vendidas: reservas não favoritas com preço. */
+  sellable: z.boolean().default(false),
 });
 export type TeamViewRequest = z.infer<typeof TeamViewRequestSchema>;
 
@@ -44,6 +46,11 @@ export const SetCaptainRequestSchema = TeamIdentityRequestSchema.extend({
 });
 export type SetCaptainRequest = z.infer<typeof SetCaptainRequestSchema>;
 
+/** Time real da carta (clube do jogador), não o clube do usuário. */
+export interface TeamClub {
+  name: string;
+  emoji: string;
+}
 export interface TeamCollection {
   id: string;
   name: string;
@@ -67,6 +74,7 @@ export interface TeamCard {
   overall: number;
   position: CardMarketPosition;
   secondaryPositions: CardMarketPosition[];
+  team: TeamClub;
   collection: TeamCollection;
   favorite: boolean;
   holder: boolean;
@@ -86,7 +94,18 @@ export interface TeamPack {
   id: string;
   name: string;
   emoji: string;
+  cardsAmount: number;
+  imageUrl: string | null;
   quantity: number;
+}
+export interface TeamProfile {
+  level: number;
+  xp: number;
+  nextLevelXp: number;
+}
+export interface TeamProfit {
+  /** Quando o próximo lucro libera; `null` se já pode ser resgatado. */
+  availableAt: string | null;
 }
 export interface TeamResponse {
   balance: number;
@@ -99,6 +118,8 @@ export interface TeamResponse {
   inventory: TeamInventory;
   packs: TeamPack[];
   collections: TeamCollection[];
+  profile: TeamProfile;
+  profit: TeamProfit;
 }
 
 export type TeamIdentity = CardMarketIdentity;

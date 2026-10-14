@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, test } from 'vitest';
 
-import { internalToken, type E2eContext, startE2eContext } from '../../../test/e2e/context.js';
+import { type E2eContext, internalToken, startE2eContext } from '../../../test/e2e/context.js';
 import { createLeaguePlayer } from '../../../test/e2e/entities.js';
 
 const newcomer = { id: 'e2e-league-newcomer', name: 'New player', avatarUrl: null };
@@ -152,4 +152,98 @@ test('rejeita escalação incompleta sem persistir entrada na fila', async () =>
       where: database.eq(database.schema.rankedQueues.userId, user.id),
     }),
   ).toBeUndefined();
+});
+
+test('simula partida de teste contra CPU e jogador sem persistir resultado', async () => {
+  if (!context) throw new Error('E2E context was not initialized.');
+  const { app, database } = context;
+  const headers = { authorization: `Bearer ${internalToken}` };
+  const owner = { id: 'e2e-league-test-owner', name: 'Test owner', avatarUrl: null };
+  const rival = { id: 'e2e-league-test-rival', name: 'Test rival', avatarUrl: null };
+  const ownerUser = await createLeaguePlayer(database, owner);
+  await createLeaguePlayer(database, rival);
+  const roomsBefore = (await database.db.query.rooms.findMany()).length;
+
+  const cpu = await app.inject({
+    method: 'POST',
+    url: '/v1/matches/test',
+    headers,
+    payload: { identity: owner, opponentId: null, seed: 1234 },
+  });
+  expect(cpu.statusCode).toBe(200);
+  const cpuMatch = cpu.json<{
+    homeGoals: number;
+    awayGoals: number;
+    events: { type: string; homeGoals: number; awayGoals: number }[];
+    away: { lineup: unknown[] };
+  }>();
+  expect(cpuMatch).toMatchObject({
+    seed: 1234,
+    home: { name: owner.name, cpu: false, tactic: 'balanced', rating: 80 },
+    away: { name: 'FutHub CPU', cpu: true },
+  });
+  expect(cpuMatch.away.lineup).toHaveLength(11);
+  expect(cpuMatch.events[0]).toMatchObject({ type: 'kickoff', homeGoals: 0, awayGoals: 0 });
+  expect(cpuMatch.events.at(-1)).toMatchObject({
+    type: 'fulltime',
+    homeGoals: cpuMatch.homeGoals,
+    awayGoals: cpuMatch.awayGoals,
+  });
+
+  const repeated = await app.inject({
+    method: 'POST',
+    url: '/v1/matches/test',
+    headers,
+    payload: { identity: owner, opponentId: null, seed: 1234 },
+  });
+  expect(repeated.json()).toEqual(cpuMatch);
+
+  const versus = await app.inject({
+    method: 'POST',
+    url: '/v1/matches/test',
+    headers,
+    payload: { identity: owner, opponentId: rival.id },
+  });
+  expect(versus.statusCode).toBe(200);
+  expect(versus.json()).toMatchObject({
+    home: { name: owner.name, cpu: false },
+    away: { name: rival.name, cpu: false },
+  });
+
+  const self = await app.inject({
+    method: 'POST',
+    url: '/v1/matches/test',
+    headers,
+    payload: { identity: owner, opponentId: owner.id },
+  });
+  expect(self.statusCode).toBe(400);
+
+  expect(await database.db.query.rooms.findMany()).toHaveLength(roomsBefore);
+  expect(
+    await database.db.query.userLeagueStandings.findFirst({
+      where: database.eq(database.schema.userLeagueStandings.userId, ownerUser.id),
+    }),
+  ).toBeUndefined();
+  const ownerCards = await database.db.query.userCards.findMany({
+    where: database.eq(database.schema.userCards.userId, ownerUser.id),
+  });
+  expect(ownerCards.every((card) => card.matches === 0 && card.goals === 0)).toBe(true);
+});
+
+test('rejeita partida de teste com escalação incompleta', async () => {
+  if (!context) throw new Error('E2E context was not initialized.');
+  const { app, database } = context;
+  const player = { id: 'e2e-league-test-incomplete', name: 'Test incomplete', avatarUrl: null };
+  await createLeaguePlayer(database, player, { holderCount: 9 });
+  const response = await app.inject({
+    method: 'POST',
+    url: '/v1/matches/test',
+    headers: { authorization: `Bearer ${internalToken}` },
+    payload: { identity: player },
+  });
+  expect(response.statusCode).toBe(400);
+  expect(response.json()).toMatchObject({
+    message:
+      'Complete a escalação com 11 titulares em posições compatíveis antes de buscar uma partida.',
+  });
 });

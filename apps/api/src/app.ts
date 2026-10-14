@@ -8,6 +8,7 @@ import type { OpenAPIObject } from '@nestjs/swagger';
 import { renderApiReference } from '@scalar/client-side-rendering';
 
 import { AppModule } from './app.module.js';
+import { GameRuleFilter } from './game-rule.js';
 import { workspacePath } from './workspace-path.js';
 
 export async function readOpenApiDocument(): Promise<OpenAPIObject> {
@@ -38,6 +39,7 @@ export async function buildApp(options?: NestApplicationOptions): Promise<NestFa
     options,
   );
   app.useGlobalPipes(new StandardSchemaValidationPipe());
+  app.useGlobalFilters(new GameRuleFilter(app.getHttpAdapter()));
   await app.register(multipart as never, { limits: { files: 1, fileSize: 10 * 1024 * 1024 } });
   await configureApiReference(app);
   await app.init();

@@ -10,6 +10,7 @@ const defaultCardObjectKey = 'defaults/card.webp';
 const maxImageBytes = 10 * 1024 * 1024;
 const importHosts = new Set([
   'assets.footylogos.com',
+  'drop-assets.ea.com',
   'game-assets.fut.gg',
   'r2.fut.gg',
   'r2.thesportsdb.com',
@@ -63,6 +64,8 @@ export class FilesService {
   }
 
   async importImage(sourceUrl: string, contentType?: ImageContentType): Promise<FileDto> {
+    const stored = await this.storedFile(sourceUrl);
+    if (stored) return stored;
     const url = this.importUrl(sourceUrl);
     const response = await fetch(url, { signal: AbortSignal.timeout(20_000) });
     if (!response.ok) throw new BadRequestException('Could not download image source.');
@@ -145,6 +148,20 @@ export class FilesService {
       .from(database.schema.files)
       .where(database.inArray(database.schema.files.id, ids));
     return new Map(rows.map((file) => [file.id, fileUrl(file.objectKey)]));
+  }
+
+  async read(fileId: string): Promise<Buffer> {
+    const database = await this.database();
+    const [file] = await database.db
+      .select({ objectKey: database.schema.files.objectKey })
+      .from(database.schema.files)
+      .where(database.eq(database.schema.files.id, fileId));
+    if (!file) throw new Error('File not found.');
+    const chunks: Buffer[] = [];
+    for await (const chunk of await this.client().getObject(this.bucket(), file.objectKey)) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
   }
 
   async removeIfUnused(fileId: string | null): Promise<void> {
@@ -263,6 +280,16 @@ export class FilesService {
       width: file.width,
       height: file.height,
     };
+  }
+
+  private async storedFile(sourceUrl: string): Promise<FileDto | null> {
+    const objectKey = this.objectKeyFromUrl(sourceUrl);
+    if (!objectKey) return null;
+    const database = await this.database();
+    const file = await database.db.query.files.findFirst({
+      where: database.eq(database.schema.files.objectKey, objectKey),
+    });
+    return file ? this.dto(file) : null;
   }
 
   private importUrl(value: string): URL {

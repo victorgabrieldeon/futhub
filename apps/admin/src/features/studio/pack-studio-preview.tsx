@@ -1,83 +1,134 @@
 import type { Canvas } from 'fabric';
-import { useState } from 'react';
+import { type CSSProperties, type ReactNode, useState } from 'react';
 import { PackCanvas } from './pack-canvas';
 import type { PackStudioDraft } from './pack-studio-model';
+import { StudioIcon } from './studio-icon';
+import { StudioSegmented } from './studio-workspace';
 
 const contexts = [
   { id: 'editor', label: 'Edição' },
   { id: 'store', label: 'Loja' },
   { id: 'thumbnail', label: 'Miniatura' },
 ] as const;
+const zoomLevels = [75, 100, 125] as const;
+
+type PreviewContext = (typeof contexts)[number]['id'];
 
 export function PackStudioPreview({
+  dock,
   draft,
+  leading,
+  notice,
   onCanvasReady,
+  onDismissNotice,
+  trailing,
 }: Readonly<{
+  dock?: ReactNode;
   draft: PackStudioDraft;
+  leading?: ReactNode;
+  notice: string;
   onCanvasReady: (canvas: Canvas | null) => void;
+  onDismissNotice: () => void;
+  trailing?: ReactNode;
 }>) {
-  const [context, setContext] = useState<(typeof contexts)[number]['id']>('editor');
-  const [zoom, setZoom] = useState(100);
+  const [context, setContext] = useState<PreviewContext>('editor');
+  const [zoom, setZoom] = useState<(typeof zoomLevels)[number]>(100);
+  const zoomIndex = zoomLevels.indexOf(zoom);
   return (
-    <main className={`pack-studio-canvas-region pack-studio-preview--${context}`}>
-      <div className="pack-studio-canvas-toolbar">
-        <div aria-label="Contexto da prévia" className="pack-studio-preview-contexts">
-          {contexts.map(({ id, label }) => (
-            <button
-              aria-pressed={context === id}
-              key={id}
-              onClick={() => setContext(id)}
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
+    <main
+      className={`studio-stage pack-studio-canvas-region pack-studio-preview--${context}`}
+      style={
+        {
+          '--studio-collection-primary': draft.color,
+          '--studio-collection-secondary': draft.accentColor,
+        } as CSSProperties
+      }
+    >
+      <div className="studio-stage__toolbar">
+        <div className="studio-stage__group">
+          {leading}
+          <span className="studio-live">
+            <i />
+            Arte 600 × 800
+          </span>
         </div>
-        {context === 'editor' && (
-          <div className="pack-studio-zoom" aria-label="Zoom do canvas">
+        <StudioSegmented
+          label="Contexto da prévia"
+          onChange={setContext}
+          options={contexts}
+          value={context}
+        />
+        <div className="studio-stage__group">
+          <fieldset className="studio-zoom" disabled={context !== 'editor'}>
+            <legend className="sr-only">Zoom do canvas</legend>
             <button
               aria-label="Diminuir zoom"
-              disabled={zoom === 75}
-              onClick={() => setZoom((value) => Math.max(75, value - 25))}
+              disabled={zoomIndex === 0}
+              onClick={() => setZoom(zoomLevels[Math.max(0, zoomIndex - 1)])}
               type="button"
             >
-              −
+              <StudioIcon name="minus" />
             </button>
-            <output>{zoom}%</output>
+            <button
+              aria-label="Ajustar zoom"
+              className="studio-zoom__value"
+              onClick={() => setZoom(100)}
+              type="button"
+            >
+              {context === 'editor' ? zoom : 100}%
+            </button>
             <button
               aria-label="Aumentar zoom"
-              disabled={zoom === 125}
-              onClick={() => setZoom((value) => Math.min(125, value + 25))}
+              disabled={zoomIndex === zoomLevels.length - 1}
+              onClick={() => setZoom(zoomLevels[Math.min(zoomLevels.length - 1, zoomIndex + 1)])}
               type="button"
             >
-              +
+              <StudioIcon name="plus" />
             </button>
-            <button onClick={() => setZoom(100)} type="button">
-              Ajustar
-            </button>
-          </div>
-        )}
-      </div>
-      <div className={`pack-studio-stage pack-studio-stage--${context === 'editor' ? zoom : 100}`}>
-        <div className="pack-studio-preview-card">
-          <PackCanvas draft={draft} onCanvasReady={onCanvasReady} />
-          <div className="pack-studio-preview-details" hidden={context === 'editor'}>
-            <p className="eyebrow">{context === 'store' ? 'Pack de cartas' : '96 × 128 px'}</p>
-            <h2>{draft.name || 'Novo pack'}</h2>
-            <p>
-              {draft.cardsAmount} {draft.cardsAmount === 1 ? 'carta' : 'cartas'}
-            </p>
-            <strong>{draft.price.toLocaleString('pt-BR')} moedas</strong>
-          </div>
+          </fieldset>
+          {trailing}
         </div>
       </div>
-      <p className="pack-studio-preview-caption">
-        {context === 'editor'
-          ? 'Arte 600 × 800 · fundo transparente na exportação'
-          : context === 'store'
-            ? 'Simulação de vitrine · sem compra real'
-            : 'Simulação em tamanho reduzido · confira contraste e leitura'}
-      </p>
+      <div className="studio-canvas-shell pack-studio-canvas-shell">
+        <div
+          className="pack-studio-stage"
+          style={{ '--pack-zoom': context === 'editor' ? zoom / 100 : 1 } as CSSProperties}
+        >
+          <div className="pack-studio-preview-card">
+            <div className="pack-studio-preview-art">
+              <PackCanvas draft={draft} onCanvasReady={onCanvasReady} />
+            </div>
+            <div className="pack-studio-preview-details" hidden={context === 'editor'}>
+              <p className="studio-eyebrow">
+                {context === 'store' ? 'Pack de cartas' : '96 × 128 px'}
+              </p>
+              <h2>{draft.name || 'Novo pack'}</h2>
+              <p>
+                {draft.cardsAmount} {draft.cardsAmount === 1 ? 'carta' : 'cartas'}
+              </p>
+              <strong>{draft.price.toLocaleString('pt-BR')} moedas</strong>
+            </div>
+          </div>
+        </div>
+        {notice && (
+          <p aria-live="polite" className="studio-toast pack-studio-notice">
+            <span>{notice}</span>
+            <button aria-label="Dispensar aviso" onClick={onDismissNotice} type="button">
+              <StudioIcon name="close" />
+            </button>
+          </p>
+        )}
+      </div>
+      <footer className="studio-stage__dock">
+        <p className="studio-stage__caption">
+          {context === 'editor'
+            ? 'Fundo transparente na exportação · texto aplicado na face 3D'
+            : context === 'store'
+              ? 'Simulação de vitrine · sem compra real'
+              : 'Simulação em tamanho reduzido · confira contraste e leitura'}
+        </p>
+        {dock && <div className="studio-stage__group">{dock}</div>}
+      </footer>
     </main>
   );
 }

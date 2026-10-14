@@ -39,6 +39,18 @@ export const users = pgTable(
   ],
 );
 
+export const adminSessions = pgTable('admin_sessions', {
+  tokenHash: varchar('token_hash', { length: 64 }).primaryKey(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const adminLoginAttempts = pgTable('admin_login_attempts', {
+  clientIp: varchar('client_ip', { length: 64 }).primaryKey(),
+  failures: integer('failures').notNull(),
+  windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
+});
+
 export const userClubs = pgTable(
   'user_clubs',
   {
@@ -125,6 +137,7 @@ export const cardClaimOrigin = pgEnum('card_claim_origin', [
   'mission',
   'hire',
   'reward',
+  'admin',
 ]);
 
 export const rankedQueueStatus = pgEnum('ranked_queue_status', ['waiting', 'matched']);
@@ -196,6 +209,9 @@ export const teams = pgTable('teams', {
   colors: jsonb('colors').$type<string[]>().notNull().default([]),
   logoFileId: uuid('logo_file_id').references(() => files.id, { onDelete: 'restrict' }),
   imageUrl: varchar('image_url', { length: 2048 }),
+  // Emoji da aplicação no Discord gerado da imagem; ver EntityEmojisService na API.
+  discordEmoji: varchar('discord_emoji', { length: 64 }),
+  discordEmojiFileId: uuid('discord_emoji_file_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -216,6 +232,9 @@ export const collections = pgTable('collections', {
   overlayUrl: varchar('overlay_url', { length: 2048 }),
   bannerUrl: varchar('banner_url', { length: 2048 }),
   contractsBlocked: boolean('contracts_blocked').notNull().default(false),
+  // Emoji da aplicação no Discord gerado da imagem; ver EntityEmojisService na API.
+  discordEmoji: varchar('discord_emoji', { length: 64 }),
+  discordEmojiFileId: uuid('discord_emoji_file_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -488,6 +507,8 @@ export const packs = pgTable(
     imageUrl: varchar('image_url', { length: 2048 }),
     color: varchar('color', { length: 16 }).notNull(),
     emoji: varchar('emoji', { length: 255 }).notNull(),
+    discordEmoji: varchar('discord_emoji', { length: 64 }),
+    discordEmojiFileId: uuid('discord_emoji_file_id'),
     cardsAmount: integer('cards_amount').notNull().default(3),
     price: integer('price').notNull().default(15),
     canBuy: boolean('can_buy').notNull().default(true),
@@ -666,6 +687,10 @@ export const missionType = pgEnum('mission_type', [
   'sell_player',
   'claim_profit',
   'play_match',
+  'buy_pack',
+  'buy_player',
+  'win_match',
+  'spend_balance',
 ]);
 export const missionCadence = pgEnum('mission_cadence', ['daily', 'weekly', 'monthly']);
 export const transactionType = pgEnum('transaction_type', [
@@ -674,6 +699,7 @@ export const transactionType = pgEnum('transaction_type', [
   'trade',
   'reward',
   'redeem',
+  'admin',
 ]);
 
 export const divisions = pgTable('divisions', {
@@ -861,14 +887,23 @@ export const transactionHistory = pgTable('transaction_history', {
   amount: integer('amount').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
-export const redeems = pgTable('redeems', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  code: varchar('code', { length: 100 }).notNull().unique(),
-  itemId: uuid('item_id')
-    .notNull()
-    .references(() => items.id, { onDelete: 'restrict' }),
-  maxClaims: integer('max_claims'),
-});
+export const redeems = pgTable(
+  'redeems',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    code: varchar('code', { length: 100 }).notNull().unique(),
+    itemId: uuid('item_id')
+      .notNull()
+      .references(() => items.id, { onDelete: 'restrict' }),
+    maxClaims: integer('max_claims'),
+    active: boolean('active').notNull().default(true),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    check('redeems_max_claims_positive', sql`${table.maxClaims} is null or ${table.maxClaims} > 0`),
+  ],
+);
 export const redeemClaims = pgTable(
   'redeem_claims',
   {

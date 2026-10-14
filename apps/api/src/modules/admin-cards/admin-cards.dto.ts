@@ -249,3 +249,86 @@ export const CollectionPageSchema = z.object({
   pageSize: z.number(),
 });
 export type CollectionPage = z.infer<typeof CollectionPageSchema>;
+
+export const SquadImportClubsQuerySchema = z.object({ q: z.string().min(2).max(100) });
+export type SquadImportClubsQuery = z.infer<typeof SquadImportClubsQuerySchema>;
+
+export const SquadImportClubSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  league: z.string(),
+  imageUrl: z.string(),
+});
+export type SquadImportClub = z.infer<typeof SquadImportClubSchema>;
+
+export const SquadImportLeagueSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  imageUrl: z.string(),
+  clubCount: z.number(),
+});
+export type SquadImportLeague = z.infer<typeof SquadImportLeagueSchema>;
+
+export const SquadImportLeagueClubsQuerySchema = z.object({
+  leagueId: z.coerce.number().int().positive(),
+});
+export type SquadImportLeagueClubsQuery = z.infer<typeof SquadImportLeagueClubsQuerySchema>;
+
+export const SquadImportSquadQuerySchema = z.object({
+  clubId: z.coerce.number().int().positive().optional(),
+  name: z.string().min(2).max(100).optional(),
+});
+export type SquadImportSquadQuery = z.infer<typeof SquadImportSquadQuerySchema>;
+
+export const SquadImportPlayerSchema = CardInputSchema.pick({
+  name: true,
+  position: true,
+  secondaryPositions: true,
+  overall: true,
+  defense: true,
+  attack: true,
+  creation: true,
+  passing: true,
+  control: true,
+  marking: true,
+  pace: true,
+  dribbling: true,
+  finishing: true,
+}).extend({ photoUrl: z.string().max(2048).nullable() });
+export type SquadImportPlayer = z.infer<typeof SquadImportPlayerSchema>;
+
+export const SquadImportPreviewPlayerSchema = SquadImportPlayerSchema.extend({
+  sourceId: z.string(),
+  overall: z.number(),
+});
+export type SquadImportPreviewPlayer = z.infer<typeof SquadImportPreviewPlayerSchema>;
+
+export const SquadImportPreviewSchema = z.object({
+  provider: z.enum(['EA SPORTS FC', 'TheSportsDB']),
+  estimated: z.boolean(),
+  sourceUrl: z.string(),
+  team: TeamInputSchema.extend({ imageUrl: z.string().nullable() }),
+  crestUrl: z.string().nullable(),
+  existingTeam: CardReferenceSchema.nullable(),
+  players: z.array(SquadImportPreviewPlayerSchema),
+});
+export type SquadImportPreview = z.infer<typeof SquadImportPreviewSchema>;
+
+export const SquadImportInputSchema = z.object({
+  collectionId: z.uuid(),
+  teamId: z.uuid().nullable(),
+  team: TeamInputSchema,
+  players: z.array(SquadImportPlayerSchema).min(1).max(80),
+  crestUrl: z.string().max(2048).nullable().optional(),
+  replaceImages: z.boolean().optional(),
+});
+export type SquadImportInput = z.infer<typeof SquadImportInputSchema>;
+
+export const SquadImportResultSchema = z.object({
+  teamId: z.uuid(),
+  createCount: z.number(),
+  updateCount: z.number(),
+  photoCount: z.number(),
+  photoErrors: z.number(),
+});
+export type SquadImportResult = z.infer<typeof SquadImportResultSchema>;

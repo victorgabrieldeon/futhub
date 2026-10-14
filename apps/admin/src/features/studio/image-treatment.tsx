@@ -278,7 +278,7 @@ export function ImageTreatment({
     <div className="image-treatment" aria-labelledby="image-treatment-title">
       <header className="image-treatment-header">
         <div>
-          <p className="eyebrow">Laboratório de imagem</p>
+          <p className="studio-eyebrow">Laboratório de imagem</p>
           <h2 id="image-treatment-title">Prepare recortes para o {target.label}</h2>
           <p>{target.description}</p>
         </div>
@@ -372,7 +372,7 @@ export function ImageTreatment({
                 value={crop.y}
               />
               <button
-                className="image-treatment-crop-reset"
+                className="studio-btn studio-btn--ghost image-treatment-crop-reset"
                 disabled={crop.scale === defaultCrop.scale && crop.x === 0 && crop.y === 0}
                 onClick={() => setCrop(defaultCrop)}
                 type="button"
@@ -447,7 +447,7 @@ export function ImageTreatment({
               </p>
               <div className="image-treatment-background-actions">
                 <button
-                  className="button-secondary"
+                  className="studio-btn studio-btn--secondary"
                   disabled={!sourceFile || processing}
                   onClick={() => void removeBackgroundWithAi()}
                   type="button"
@@ -460,7 +460,7 @@ export function ImageTreatment({
                 </button>
                 {cutout && (
                   <button
-                    className="image-treatment-restore"
+                    className="studio-btn studio-btn--ghost image-treatment-restore"
                     onClick={restoreOriginalBackground}
                     type="button"
                   >
@@ -473,7 +473,7 @@ export function ImageTreatment({
 
           <div className="image-treatment-actions">
             <button
-              className="button-secondary"
+              className="studio-btn studio-btn--secondary"
               disabled={!hasImage || processing}
               onClick={downloadImage}
               type="button"
@@ -481,7 +481,7 @@ export function ImageTreatment({
               Baixar PNG
             </button>
             <button
-              className="button-primary"
+              className="studio-btn studio-btn--primary"
               disabled={!hasImage || processing}
               onClick={applyToCard}
               type="button"

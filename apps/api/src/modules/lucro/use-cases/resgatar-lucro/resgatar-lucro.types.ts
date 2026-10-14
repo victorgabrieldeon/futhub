@@ -1,4 +1,5 @@
 import type { ClubResponse } from '../../../club/club.dto.js';
+import type { CompletedMission } from '../../../missions/missions.service.js';
 import type { ProgressionSummary } from '../../../progression/progression.js';
 
 export type Reward = Readonly<{ value: number; weight: number; message: string }>;
@@ -40,6 +41,7 @@ export type CommandResult =
       balance: number;
       availableAt: Date;
       progression: ProgressionSummary;
+      completedMissions: readonly CompletedMission[];
       embed: LucroEmbed;
     }>
   | Readonly<{ kind: 'cooldown'; availableAt: Date }>;
@@ -49,7 +51,7 @@ export type CommandTransaction = Readonly<{
   getClub(): Promise<ClubResponse>;
   credit(value: number): Promise<number>;
   grantProgression(): Promise<ProgressionSummary>;
-  advanceMission(): Promise<void>;
+  advanceMission(): Promise<readonly CompletedMission[]>;
   setAvailableAt(availableAt: Date): Promise<void>;
 }>;
 

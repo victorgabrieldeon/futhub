@@ -1,4 +1,5 @@
-import type { BotResponseDefinitionDto, BotResponseTemplateDto } from '@futhub/api-client';
+import type { BotResponseTemplateDto } from '@futhub/api-client';
+import type { Template } from '@futhub/bot-templates';
 
 export type BotResponseComponentDto = BotResponseTemplateDto['components'][number];
 
@@ -86,25 +87,6 @@ export function createResponseDrafts() {
   };
 }
 
-export function exampleText(
-  text: string,
-  variables: BotResponseDefinitionDto['variables'],
-): string {
-  const examples = new Map(variables.map((variable) => [variable.token, variable.example]));
-  return text.replace(/\{[^{}]+\}/g, (token) => examples.get(token) ?? token);
-}
-
-export function previewUrl(value: string): string | undefined {
-  try {
-    const url = new URL(value);
-    return ['https:', 'http:'].includes(url.protocol) && !url.username && !url.password
-      ? url.href
-      : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 export function moveItem<T>(items: T[], index: number, direction: -1 | 1): T[] {
   const target = index + direction;
   if (target < 0 || target >= items.length) return items;
@@ -141,60 +123,37 @@ export function componentCount(components: BotResponseTemplateDto['components'])
   );
 }
 
-export function templateError(
-  template: BotResponseTemplateDto,
-  definition: BotResponseDefinitionDto,
-): string | null {
-  if (template.mode === 'components_v2' && (template.content || template.embeds.length))
-    return 'Components V2 não permite conteúdo ou embeds.';
-  if (template.mode === 'legacy' && template.components.some((block) => block.type !== 'row'))
-    return 'O modo legado aceita apenas linhas de botões.';
-  if (template.mode === 'components_v2' && componentCount(template.components) > 40)
-    return 'Use no máximo 40 componentes, contando containers, linhas e botões.';
-  const embedCharacters = template.embeds.reduce(
-    (total, embed) =>
-      total +
-      embed.title.length +
-      embed.description.length +
-      embed.footer.length +
-      (embed.authorName?.length ?? 0) +
-      embed.fields.reduce((sum, field) => sum + field.name.length + field.value.length, 0),
-    0,
-  );
-  if (embedCharacters > 6000) return 'O conjunto de embeds aceita até 6000 caracteres.';
-  for (const embed of template.embeds) {
-    if (!embed.authorName?.trim() && (embed.authorUrl?.trim() || embed.authorIconUrl?.trim()))
-      return 'URLs do autor exigem o nome do autor.';
-    for (const value of [embed.authorUrl, embed.authorIconUrl]) {
-      if (value?.trim() && !previewUrl(exampleText(value, definition.variables)))
-        return 'Use uma URL HTTP ou HTTPS válida nos dados do autor.';
-    }
+/** Shows a generated image in the message: a media block in V2, the embed image in legacy. */
+export function attachImage(template: Template, ref: string): Template {
+  if (template.mode === 'components_v2') {
+    const media = { type: 'media' as const, url: ref, description: '' };
+    const container = template.components.findIndex((block) => block.type === 'container');
+    const target = template.components[container];
+    if (target?.type === 'container' && target.components.length < 39)
+      return {
+        ...template,
+        components: template.components.map((block, index) =>
+          index === container && block.type === 'container'
+            ? { ...block, components: [...block.components, media] }
+            : block,
+        ),
+      };
+    return { ...template, components: [...template.components, media] };
   }
-  const blocks = template.components.flatMap((block) =>
-    block.type === 'container' ? block.components : [block],
-  );
-  const textCharacters = blocks.reduce(
-    (total, block) => total + (block.type === 'text' ? block.content.length : 0),
-    0,
-  );
-  if (textCharacters > 4000) return 'O conjunto de textos V2 aceita até 4000 caracteres.';
-  for (const block of blocks) {
-    if (block.type !== 'row') continue;
-    if (!block.buttons.length || block.buttons.length > 5)
-      return 'Cada linha precisa de 1 a 5 botões.';
-    for (const button of block.buttons) {
-      if (!definition.actions.some((action) => action.id === button.action))
-        return 'Selecione uma ação do catálogo para cada botão.';
-      if (!button.label.trim()) return 'Preencha o rótulo de cada botão.';
-      if (button.action === 'link') {
-        if (button.style !== 'link' || !previewUrl(exampleText(button.url, definition.variables)))
-          return 'Botões de link precisam do estilo link e uma URL HTTP ou HTTPS válida.';
-      } else if (
-        !['primary', 'secondary', 'success', 'danger'].includes(button.style) ||
-        button.url
-      )
-        return 'Ações do bot não podem usar estilo link ou URL.';
-    }
-  }
-  return null;
+  const [first, ...rest] = template.embeds;
+  if (first) return { ...template, embeds: [{ ...first, imageUrl: ref }, ...rest] };
+  return {
+    ...template,
+    embeds: [
+      {
+        title: '',
+        description: '',
+        color: '',
+        footer: '',
+        imageUrl: ref,
+        thumbnailUrl: '',
+        fields: [],
+      },
+    ],
+  };
 }

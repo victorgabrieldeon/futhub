@@ -3,8 +3,13 @@ import type {
   MatchEventDto,
   MatchResponse,
   QueueResponse,
+  TestMatchResponse,
 } from '../../league.dto.js';
-import type { DiscordIdentity, LeagueRepository } from './league.use-case.types.js';
+import {
+  type DiscordIdentity,
+  LeagueInputError,
+  type LeagueRepository,
+} from './league.use-case.types.js';
 
 export class LeagueUseCase {
   constructor(private readonly repository: LeagueRepository) {}
@@ -30,5 +35,19 @@ export class LeagueUseCase {
 
   events(matchId: string): Promise<MatchEventDto[]> {
     return this.repository.events(matchId);
+  }
+
+  testMatch(
+    identity: DiscordIdentity,
+    opponentId: string | null,
+    seed: number | null,
+  ): Promise<TestMatchResponse> {
+    if (opponentId === identity.id)
+      throw new LeagueInputError('Escolha outro jogador como adversário.');
+    return this.repository.testMatch(
+      identity,
+      opponentId,
+      seed ?? Math.floor(Math.random() * 2_147_483_647) + 1,
+    );
   }
 }
