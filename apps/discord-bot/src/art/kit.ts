@@ -406,4 +406,3 @@ export function canvas(): { canvas: Canvas; context: Ctx } {
 export function png(target: Canvas): Buffer {
   return target.toBuffer('image/png');
 }
-
