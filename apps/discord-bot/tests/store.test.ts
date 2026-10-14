@@ -3,14 +3,14 @@ import { mock, test } from 'node:test';
 
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 
-import { EMOJI } from '../src/emojis.js';
+import { EMOJI } from '../src/core/emojis.js';
 import {
   initialPacksState,
   packDetailResponse,
   storeResponse,
   storeSessionManager,
   toggleFavoritePack,
-} from '../src/store.js';
+} from '../src/features/store/store.js';
 
 const packId = (index: number): string =>
   `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`;
@@ -37,10 +37,10 @@ test('renders the packs tab as Components V2', async () => {
   const container = response.components[0]?.toJSON();
   const title = container?.components.find((component) => component.type === 10);
   assert.ok(title && title.type === 10);
-  assert.equal(title.content, `# ${EMOJI.loja} FUTHUB STORE`);
+  assert.match(title.content, new RegExp(`^## ${EMOJI.loja} Loja de packs`));
   const payload = JSON.stringify(container);
   assert.match(payload, /attachment:\/\/futhub-packs\.png/);
-  assert.match(payload, /Selecione um pack para ver os detalhes/);
+  assert.match(payload, /Escolha um pack para ver e comprar/);
   assert.match(payload, /"label":"Pack Ouro"/);
   assert.match(payload, /50 moedas · 3 cartas · Limite 2/);
   assert.doesNotMatch(payload, /Abra para expandir/);
@@ -113,20 +113,26 @@ test('paginates packs and puts session favorites first', async () => {
   assert.equal(new Set(customIds).size, customIds.length);
 });
 
-test('attaches pack art instead of embedding its remote URL', () => {
-  const response = packDetailResponse(
+test('draws the pack detail as an attached image, even without published art', async () => {
+  const response = await packDetailResponse(
     storeSessionManager.create('owner-1', initialPacksState()).id,
     {
       id: 'pack-1',
       name: 'Pack Ouro',
+      emoji: '<:pk_pack_ouro_ab12cd:300000000000000002>',
       price: 50,
-      imageUrl: 'https://example.com/pack.png',
+      imageUrl: '',
       cardsPerPack: 3,
     },
-    'overview',
+  );
+  assert.match(
+    JSON.stringify(response.components[0]?.toJSON()),
+    /### <:pk_pack_ouro_ab12cd:300000000000000002> Pack Ouro/,
   );
 
   assert.equal(response.files.length, 1);
-  assert.equal(response.files[0]?.data.resolvable, 'https://example.com/pack.png');
+  const image = response.files[0]?.data.resolvable;
+  assert.ok(Buffer.isBuffer(image));
+  assert.equal(image.subarray(1, 4).toString(), 'PNG');
   assert.match(JSON.stringify(response.components[0]?.toJSON()), /attachment:\/\/pack-pack-1\.png/);
 });

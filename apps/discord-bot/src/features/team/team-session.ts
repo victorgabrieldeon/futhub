@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import type { LeagueStatusResponse, MatchResponse } from '@futhub/api-client';
+import type { LeagueStatusResponse, MatchResponse, MissionsResponse } from '@futhub/api-client';
 
 const ttlMs = 15 * 60_000;
 const maxSessions = 1_000;
@@ -12,6 +12,7 @@ export type TeamCard = {
   overall: number;
   position: TeamPosition;
   secondaryPositions: TeamPosition[];
+  team: { name: string; emoji: string };
   collection: { id: string; name: string; emoji: string };
   favorite: boolean;
   holder: boolean;
@@ -37,7 +38,14 @@ export type TeamResponse = {
   }[];
   lineup: TeamCard[];
   inventory: { items: TeamCard[]; total: number; page: number; pageSize: 10; totalPages: number };
-  packs: { id: string; name: string; emoji: string; quantity: number }[];
+  packs: {
+    id: string;
+    name: string;
+    emoji: string;
+    cardsAmount: number;
+    imageUrl: string | null;
+    quantity: number;
+  }[];
   collections: { id: string; name: string; emoji: string }[];
   profile: { level: number; xp: number; nextLevelXp: number };
   profit: { availableAt: string | null };
@@ -65,7 +73,20 @@ export type LeaguePanelState = Readonly<{
   status: LeagueStatusResponse;
   match: MatchResponse | null;
 }>;
-export type TeamTab = 'overview' | 'lineup' | 'inventory' | 'packs' | 'sale' | 'club' | 'league';
+export const TEAM_TABS = [
+  'overview',
+  'lineup',
+  'inventory',
+  'packs',
+  'sale',
+  'club',
+  'league',
+] as const;
+export type TeamTab = (typeof TEAM_TABS)[number];
+
+export function isTeamTab(value: string): value is TeamTab {
+  return (TEAM_TABS as readonly string[]).includes(value);
+}
 export type TeamFilters = {
   readonly name: string;
   readonly position: TeamPosition | null;
@@ -80,11 +101,14 @@ export type TeamSession = {
   readonly expiresAt: number;
   readonly tab: TeamTab;
   readonly filters: TeamFilters;
-  readonly selectedCardId: string | null;
+  /** Na aba Venda pode haver vários; nas demais, no máximo um. */
+  readonly selectedCardIds: readonly string[];
   readonly confirmSale: boolean;
   readonly team: TeamResponse;
   readonly club: ClubResponse | null;
   readonly league: LeaguePanelState | null;
+  /** Só a aba Início usa; nas demais fica o que já foi carregado. */
+  readonly missions: MissionsResponse | null;
 };
 export type TeamAction =
   | 'tab'

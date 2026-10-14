@@ -1,8 +1,17 @@
 import type { SimulateTestMatch200 } from '@futhub/api-client';
-import { Container, Separator, TextDisplay } from 'seyfert';
+import {
+  AttachmentBuilder,
+  Container,
+  MediaGallery,
+  MediaGalleryItem,
+  Separator,
+  TextDisplay,
+} from 'seyfert';
 
-import { EMOJI, MATCH_EVENT_EMOJI } from './emojis.js';
-import { noMentions } from './responses.js';
+import { testMatchImage } from '../art/scenes.js';
+
+import { EMOJI, MATCH_EVENT_EMOJI } from '../core/emojis.js';
+import { noMentions } from '../core/responses.js';
 
 export type TestMatch = SimulateTestMatch200;
 type TestMatchTeam = TestMatch['home'];
@@ -18,11 +27,11 @@ export function testMatchResponse(match: TestMatch, revealed: number) {
   const status = finished
     ? `${EMOJI.fim_de_jogo} **FIM DE JOGO · ${result(homeGoals, awayGoals)}**`
     : `${EMOJI.ao_vivo} **AO VIVO · ${current?.minute ?? 0}'**`;
+  const moment = current && momentOf(match, current, events.at(-2));
+  // O placar e o lance da vez estão na imagem; o texto guarda o histórico da partida.
   const lines = [
-    `# ${EMOJI.estadio} PARTIDA DE TESTE`,
-    `## ${match.home.name} ${homeGoals} × ${awayGoals} ${match.away.name}`,
+    `${status} · **${match.home.name} ${homeGoals} × ${awayGoals} ${match.away.name}**`,
     `-# ${teamInfo(match.home)} · contra · ${teamInfo(match.away)}`,
-    status,
     '',
     `### ${EMOJI.apito} LANCES`,
     ...events.map((event) => eventLine(match, event)),
@@ -33,12 +42,25 @@ export function testMatchResponse(match: TestMatch, revealed: number) {
     lineupLine(match.away),
     `-# Amistoso de teste: não altera liga, missões nem estatísticas · seed ${match.seed}`,
   ];
+  // Um nome por quadro: o Discord não reaproveita a imagem do lance anterior.
+  const imageName = `partida-${revealed}.png`;
   return {
     flags: 32768,
+    files: [
+      new AttachmentBuilder()
+        .setName(imageName)
+        .setDescription('Placar da partida de teste')
+        .setFile('buffer', testMatchImage(match, revealed)),
+    ],
     components: [
       new Container()
-        .setColor(finished ? '#16785b' : '#c0392b')
+        .setColor(moment?.color ?? (finished ? '#16785b' : '#c0392b'))
         .setComponents(
+          new MediaGallery().addItems(
+            new MediaGalleryItem()
+              .setMedia(`attachment://${imageName}`)
+              .setDescription(`${match.home.name} ${homeGoals} × ${awayGoals} ${match.away.name}`),
+          ),
           new TextDisplay().setContent(lines.join('\n')),
           new Separator().setDivider(true),
           new TextDisplay().setContent(footer.join('\n')),
@@ -46,6 +68,36 @@ export function testMatchResponse(match: TestMatch, revealed: number) {
     ],
     allowedMentions: noMentions,
   };
+}
+
+type Moment = Readonly<{ banner: string; color: `#${string}` }>;
+
+/** O lance da vez vira o destaque do quadro: gol, cartão ou o placar final. */
+function momentOf(
+  match: TestMatch,
+  event: TestMatchEvent,
+  previous: TestMatchEvent | undefined,
+): Moment | undefined {
+  if (event.type === 'goal') {
+    const scorer = event.homeGoals > (previous?.homeGoals ?? 0) ? match.home : match.away;
+    return { banner: `# ${EMOJI.gol} GOOOOL DO ${scorer.name.toUpperCase()}!`, color: '#e3a72f' };
+  }
+  if (event.type === 'red_card')
+    return { banner: `## ${EMOJI.cartao_vermelho} CARTÃO VERMELHO!`, color: '#e5484d' };
+  if (event.type === 'fulltime') {
+    const outcome = result(event.homeGoals, event.awayGoals);
+    if (outcome === 'Vitória') return { banner: `# ${EMOJI.trofeu} VITÓRIA!`, color: '#1f9d55' };
+    if (outcome === 'Empate') return { banner: '# 🤝 EMPATE', color: '#f59e0b' };
+    return { banner: '# 💔 DERROTA', color: '#e5484d' };
+  }
+  return undefined;
+}
+
+/** Quanto o quadro segura na tela: gols e o apito final pedem uma pausa maior. */
+export function eventHold(event: TestMatchEvent | undefined): number {
+  if (event?.type === 'goal') return 2;
+  if (event?.type === 'red_card' || event?.type === 'fulltime') return 1.5;
+  return 1;
 }
 
 function eventLine(match: TestMatch, event: TestMatchEvent): string {

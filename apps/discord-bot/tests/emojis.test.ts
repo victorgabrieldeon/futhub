@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { readdir } from 'node:fs/promises';
 import test from 'node:test';
 
-import { emojiAssetsDir, renderEmoji } from '../src/emoji-sync.js';
-import { EMOJI, EMOJI_FALLBACK, EMOJI_NAMES, registerEmojis } from '../src/emojis.js';
+import { emojiAssetsDir, renderEmoji } from '../src/core/emoji-sync.js';
+import { EMOJI, EMOJI_FALLBACK, EMOJI_NAMES, registerEmojis } from '../src/core/emojis.js';
 
 test('every emoji name has exactly one SVG asset', async () => {
   const assets = (await readdir(emojiAssetsDir))

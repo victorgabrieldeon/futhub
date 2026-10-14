@@ -4,7 +4,7 @@ import test from 'node:test';
 import { createMockBot } from '@slipher/testing';
 
 import PartidaTesteCommand from '../../src/commands/partida-teste.js';
-import { mockApi } from '../support/api.js';
+import { messageText, mockApi } from '../support/api.js';
 
 PartidaTesteCommand.frameDelayMs = 0;
 
@@ -100,9 +100,9 @@ test('mostra a mensagem da API quando a escalação está incompleta', async () 
 
   const result = await bot.slash(PartidaTesteCommand);
 
-  assert.equal(
-    result.content,
-    'Complete a escalação com 11 titulares em posições compatíveis antes de buscar uma partida.',
+  assert.match(
+    messageText(result.messages[0]),
+    /Complete a escalação com 11 titulares em posições compatíveis antes de buscar uma partida\./,
   );
   assert.deepEqual(result.edits, []);
 });

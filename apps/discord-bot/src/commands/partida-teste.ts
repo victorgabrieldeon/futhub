@@ -2,7 +2,7 @@ import { ApiClientError, simulateTestMatch } from '@futhub/api-client';
 import { Declare, Options, createIntegerOption, createUserOption } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
-import { type TestMatch, testMatchResponse } from '../test-match.js';
+import { type TestMatch, eventHold, testMatchResponse } from '../features/test-match.js';
 import { CommandInputError, FutHubCommand, identity } from './shared.js';
 
 const options = {
@@ -37,7 +37,11 @@ export default class PartidaTesteCommand extends FutHubCommand {
 
     try {
       for (let revealed = 2; revealed <= match.events.length; revealed += 1) {
-        await new Promise((resolve) => setTimeout(resolve, PartidaTesteCommand.frameDelayMs));
+        // O lance anterior decide a pausa: um gol fica mais tempo na tela antes do próximo.
+        const hold = eventHold(match.events[revealed - 2]);
+        await new Promise((resolve) =>
+          setTimeout(resolve, PartidaTesteCommand.frameDelayMs * hold),
+        );
         await context.editOrReply(testMatchResponse(match, revealed));
       }
     } catch (error) {

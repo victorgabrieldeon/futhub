@@ -13,9 +13,19 @@ import {
   TextDisplay,
 } from 'seyfert';
 
-import { EMOJI, positionEmoji, selectEmoji } from './emojis.js';
-import { noMentions } from './responses.js';
-import { packsImageName, renderPacksImage } from './store-packs-image.js';
+import { cardDetailImage, marketImage, packShowcaseImage } from '../../art/scenes.js';
+import { packsImageName, renderPacksImage } from '../../art/store-packs-image.js';
+import {
+  EMOJI,
+  entityComponentEmoji,
+  positionEmoji,
+  selectEmoji,
+  withIcon,
+} from '../../core/emojis.js';
+import { rarity } from '../../core/juice.js';
+import { navId } from '../../core/nav.js';
+import { noMentions } from '../../core/responses.js';
+import { packTier } from './store-pack-tier.js';
 import { createStoreSessionManager } from './store-session.js';
 import type {
   CardPosition,
@@ -139,70 +149,61 @@ export function toggleFavoritePack(state: StoreSessionState, packId: string): St
   return { ...state, page: 1, favoritePackIds };
 }
 
-export type PackDetailTab = 'overview' | 'config';
-
-export function packDetailResponse(
+export async function packDetailResponse(
   sessionId: StoreSessionId,
   pack: Readonly<{
     id: string;
     name: string;
+    emoji: string;
     price: number;
     imageUrl: string;
     cardsPerPack: number;
   }>,
-  tab: PackDetailTab,
 ) {
-  const cardLabel = pack.cardsPerPack === 1 ? 'carta' : 'cartas';
-  const content =
-    tab === 'overview'
-      ? `# ${EMOJI.pack} ${pack.name.toUpperCase()}\n${EMOJI.moeda} **${pack.price} moedas** · ${EMOJI.carta} **${pack.cardsPerPack} ${cardLabel}**\nAbra este pack para expandir seu elenco.`
-      : `# ${EMOJI.config} CONFIGURAÇÃO · ${pack.name.toUpperCase()}\n${EMOJI.carta} **Cartas concedidas:** ${pack.cardsPerPack}\n${EMOJI.moeda} **Preço:** ${pack.price} moedas\n${pack.imageUrl ? EMOJI.sucesso : EMOJI.alerta} **Arte:** ${pack.imageUrl ? 'configurada' : 'não configurada'}`;
   const imageName = `pack-${pack.id}.png`;
+  const tier = packTier(pack.price);
+  const image = await packShowcaseImage({
+    name: pack.name,
+    price: pack.price,
+    cardsAmount: pack.cardsPerPack,
+    imageUrl: pack.imageUrl || null,
+  });
   return {
     flags: 32768,
-    files: pack.imageUrl
-      ? [
-          new AttachmentBuilder()
-            .setName(imageName)
-            .setDescription(`Arte de ${pack.name}`)
-            .setFile('url', pack.imageUrl),
-        ]
-      : [],
+    files: [
+      new AttachmentBuilder()
+        .setName(imageName)
+        .setDescription(`Arte de ${pack.name}`)
+        .setFile('buffer', image),
+    ],
     components: [
-      new Container().setColor('#8b1d3d').setComponents(
-        new TextDisplay().setContent(content),
-        ...(tab === 'overview' && pack.imageUrl
-          ? [
-              new MediaGallery().addItems(
-                new MediaGalleryItem()
-                  .setMedia(`attachment://${imageName}`)
-                  .setDescription(`Arte de ${pack.name}`),
-              ),
-            ]
-          : []),
+      new Container().setColor(tier.accent as `#${string}`).setComponents(
+        new MediaGallery().addItems(
+          new MediaGalleryItem()
+            .setMedia(`attachment://${imageName}`)
+            .setDescription(`${pack.name}: ${pack.cardsPerPack} cartas por ${pack.price} moedas`),
+        ),
+        new TextDisplay().setContent(
+          [
+            `-# ${EMOJI.loja} LOJA · PACK ${tier.label}`,
+            `### ${withIcon(pack.emoji, pack.name)}`,
+            `${EMOJI.carta} **${pack.cardsPerPack} ${pack.cardsPerPack === 1 ? 'carta' : 'cartas'}** por pack · ${EMOJI.moeda} **${pack.price.toLocaleString('pt-BR')} moedas**`,
+          ].join('\n'),
+        ),
         new Separator().setDivider(true),
         new ActionRow<Button>().setComponents(
           new Button()
             .setCustomId(
-              storeSessionManager.sign(sessionId, { action: 'detail-overview', arg: pack.id }),
-            )
-            .setLabel('Visão geral')
-            .setEmoji(EMOJI.visao_geral)
-            .setStyle(tab === 'overview' ? ButtonStyle.Primary : ButtonStyle.Secondary),
-          new Button()
-            .setCustomId(
-              storeSessionManager.sign(sessionId, { action: 'detail-config', arg: pack.id }),
-            )
-            .setLabel('Configuração')
-            .setEmoji(EMOJI.config)
-            .setStyle(tab === 'config' ? ButtonStyle.Primary : ButtonStyle.Secondary),
-          new Button()
-            .setCustomId(
               storeSessionManager.sign(sessionId, { action: 'purchase-pack', arg: pack.id }),
             )
-            .setLabel('Comprar')
+            .setLabel(`Comprar · ${pack.price.toLocaleString('pt-BR')}`)
             .setEmoji(EMOJI.moeda)
             .setStyle(ButtonStyle.Success),
+          new Button()
+            .setCustomId(storeSessionManager.sign(sessionId, { action: 'back', arg: '_' }))
+            .setLabel('Voltar à loja')
+            .setEmoji(EMOJI.anterior)
+            .setStyle(ButtonStyle.Secondary),
         ),
       ),
     ],
@@ -210,7 +211,11 @@ export function packDetailResponse(
   };
 }
 
-export function cardDetailResponse(sessionId: StoreSessionId, state: HiringState, notice?: string) {
+export async function cardDetailResponse(
+  sessionId: StoreSessionId,
+  state: HiringState,
+  notice?: string,
+) {
   const selectedCardId = state.selection.kind === 'selected' ? state.selection.cardId : undefined;
   const card = selectedCardId ? state.items.find(({ id }) => id === selectedCardId) : undefined;
   if (!card) throw new Error('Selected store card is unavailable.');
@@ -221,8 +226,8 @@ export function cardDetailResponse(sessionId: StoreSessionId, state: HiringState
       ? `${EMOJI.sucesso} **Contratado por ${state.purchase.price.toLocaleString('pt-BR')} moedas.** Saldo: ${state.purchase.balance.toLocaleString('pt-BR')}.`
       : undefined;
   const content = [
-    `# ${EMOJI.carta} ${card.name.toUpperCase()} · ${card.overall} OVR`,
-    `${card.team.emoji} **${card.team.name}** · ${card.position} · ${card.collection.emoji} ${card.collection.name}`,
+    `### ${EMOJI.carta} ${card.name} · ${card.overall}`,
+    `${withIcon(card.team.emoji, `**${card.team.name}**`)} · ${card.position} · ${withIcon(card.collection.emoji, card.collection.name)}`,
     `${EMOJI.moeda} **${card.price.toLocaleString('pt-BR')} moedas**`,
     '',
     `${EMOJI.forca} ATA ${card.attack} · DEF ${card.defense} · PAS ${card.passing} · CON ${card.control}`,
@@ -230,28 +235,23 @@ export function cardDetailResponse(sessionId: StoreSessionId, state: HiringState
     ...(purchaseStatus ? ['', purchaseStatus] : []),
     ...(notice ? ['', notice] : []),
   ].join('\n');
+  const image = await cardDetailImage(card, card.team.name);
   return {
     flags: 32768,
-    files: card.imageUrl
-      ? [
-          new AttachmentBuilder()
-            .setName(imageName)
-            .setDescription(`Carta de ${card.name}`)
-            .setFile('url', card.imageUrl),
-        ]
-      : [],
+    files: [
+      new AttachmentBuilder()
+        .setName(imageName)
+        .setDescription(`Carta de ${card.name}`)
+        .setFile('buffer', image),
+    ],
     components: [
-      new Container().setColor('#176b5b').setComponents(
+      new Container().setColor(rarity(card.overall).color as `#${string}`).setComponents(
+        new MediaGallery().addItems(
+          new MediaGalleryItem()
+            .setMedia(`attachment://${imageName}`)
+            .setDescription(`${card.overall} ${card.name}, ${card.position}`),
+        ),
         new TextDisplay().setContent(content),
-        ...(card.imageUrl
-          ? [
-              new MediaGallery().addItems(
-                new MediaGalleryItem()
-                  .setMedia(`attachment://${imageName}`)
-                  .setDescription(`Carta de ${card.name}`),
-              ),
-            ]
-          : []),
         new Separator().setDivider(true),
         new ActionRow<Button>().setComponents(
           new Button()
@@ -267,20 +267,6 @@ export function cardDetailResponse(sessionId: StoreSessionId, state: HiringState
   };
 }
 
-export function storeErrorResponse(message: string) {
-  return {
-    flags: 32768,
-    components: [
-      new Container()
-        .setColor('#8b1d3d')
-        .setComponents(
-          new TextDisplay().setContent(`## ${EMOJI.erro} Loja indisponível\n${message}`),
-        ),
-    ],
-    allowedMentions: noMentions,
-  };
-}
-
 export async function storeResponse(
   session: StoreSession,
   tab: StoreTab,
@@ -290,6 +276,12 @@ export async function storeResponse(
   const hiring =
     tab === 'contratar' && session.state.tab === 'contratar' ? session.state : undefined;
   const packsImage = packs ? await renderPacksImage(packs) : undefined;
+  const marketPicture = hiring
+    ? await marketImage(
+        hiring.items.map((card) => ({ ...card, imageUrl: card.imageUrl || null })),
+        hiring.total,
+      )
+    : undefined;
   const tabs = new ActionRow<Button>().setComponents(
     new Button()
       .setCustomId(storeSessionManager.sign(session.id, { action: 'tab', arg: 'packs' }))
@@ -301,18 +293,25 @@ export async function storeResponse(
       .setLabel('Contratar')
       .setEmoji(EMOJI.contratar)
       .setStyle(tab === 'contratar' ? ButtonStyle.Primary : ButtonStyle.Secondary),
+    new Button()
+      .setCustomId(navId('packs', session.ownerId))
+      .setLabel('Meus packs')
+      .setEmoji(EMOJI.pack)
+      .setStyle(ButtonStyle.Secondary),
   );
   const packPicker =
     packs && packs.items.length > 0
       ? new ActionRow<StringSelectMenu>().setComponents(
           new StringSelectMenu()
             .setCustomId(storeSessionManager.sign(session.id, { action: 'pack-menu', arg: '_' }))
-            .setPlaceholder('Selecione um pack para ver os detalhes')
+            .setPlaceholder('Escolha um pack para ver e comprar')
             .setOptions(
               packs.items.map((pack) => ({
                 label: pack.name.slice(0, 100),
                 value: pack.id,
-                emoji: selectEmoji(pack.favorite ? 'favorito' : 'pack'),
+                emoji: pack.favorite
+                  ? selectEmoji('favorito')
+                  : (entityComponentEmoji(pack.emoji) ?? selectEmoji('pack')),
                 description:
                   `${pack.price} moedas · ${pack.cardsAmount} ${pack.cardsAmount === 1 ? 'carta' : 'cartas'} · Limite ${pack.limitPerUser}`.slice(
                     0,
@@ -327,7 +326,7 @@ export async function storeResponse(
       ? new ActionRow<StringSelectMenu>().setComponents(
           new StringSelectMenu()
             .setCustomId(storeSessionManager.sign(session.id, { action: 'card-menu', arg: '_' }))
-            .setPlaceholder('Selecione uma carta para contratar')
+            .setPlaceholder('Escolha um jogador para ver e contratar')
             .setOptions(
               hiring.items.map((card) => ({
                 label: `${card.overall} · ${card.name}`.slice(0, 100),
@@ -402,26 +401,53 @@ export async function storeResponse(
 
   return {
     flags: 32768,
-    files: packsImage
-      ? [
-          new AttachmentBuilder()
-            .setName(packsImageName)
-            .setDescription('Vitrine de packs FutHub')
-            .setFile('buffer', packsImage),
-        ]
-      : [],
+    files: [
+      ...(packsImage
+        ? [
+            new AttachmentBuilder()
+              .setName(packsImageName)
+              .setDescription('Vitrine de packs FutHub')
+              .setFile('buffer', packsImage),
+          ]
+        : []),
+      ...(marketPicture
+        ? [
+            new AttachmentBuilder()
+              .setName('futhub-mercado.png')
+              .setDescription('Mercado de jogadores FutHub')
+              .setFile('buffer', marketPicture),
+          ]
+        : []),
+    ],
     components: [
       new Container()
         .setColor(tab === 'packs' ? '#8b1d3d' : '#176b5b')
         .setComponents(
           tabs,
-          ...(packs ? [new TextDisplay().setContent(`# ${EMOJI.loja} FUTHUB STORE`)] : []),
+          ...(packs
+            ? [
+                new TextDisplay().setContent(
+                  packs.items.length
+                    ? `## ${EMOJI.loja} Loja de packs\n-# Escolha um pack no menu abaixo para ver detalhes e comprar.`
+                    : `## ${EMOJI.loja} Loja de packs\nNenhum pack à venda agora. Volte mais tarde ou contrate jogadores na aba **Contratar**.`,
+                ),
+              ]
+            : []),
           ...(packsImage
             ? [
                 new MediaGallery().addItems(
                   new MediaGalleryItem()
                     .setMedia(`attachment://${packsImageName}`)
                     .setDescription('Packs disponíveis na FutHub Shop'),
+                ),
+              ]
+            : []),
+          ...(marketPicture
+            ? [
+                new MediaGallery().addItems(
+                  new MediaGalleryItem()
+                    .setMedia('attachment://futhub-mercado.png')
+                    .setDescription('Jogadores à venda nesta página'),
                 ),
               ]
             : []),
@@ -473,18 +499,24 @@ function paginationRow(
   );
 }
 
+const sortLabel = { recent: 'mais recentes', overall: 'maior overall', name: 'nome' } as const;
+
 function hiringBody(state: HiringState): string {
+  const filters = [
+    state.filters.positions.length ? state.filters.positions.join(', ') : 'todas as posições',
+    sortLabel[state.filters.sort],
+  ].join(' · ');
   const summary =
     state.total === 0
-      ? 'Nenhuma carta encontrada com estes filtros.'
-      : `${state.total} ${state.total === 1 ? 'carta disponível' : 'cartas disponíveis'}.`;
+      ? 'Nenhum jogador com estes filtros. Tente outra posição.'
+      : `-# ${state.total.toLocaleString('pt-BR')} ${state.total === 1 ? 'jogador disponível' : 'jogadores disponíveis'} · ${filters}`;
   const cards = state.items.map((card) =>
-    `**${card.overall}** · ${card.team.emoji} **${card.name}** · ${card.position} · ${card.price.toLocaleString('pt-BR')} moedas`.slice(
+    `\`${card.overall}\` **${card.name}** · ${card.position} · ${withIcon(card.team.emoji, card.team.name)} · ${EMOJI.moeda} ${card.price.toLocaleString('pt-BR')}`.slice(
       0,
       300,
     ),
   );
-  return [`# ${EMOJI.mercado} MERCADO DE CARTAS`, summary, ...cards].join('\n');
+  return [`## ${EMOJI.mercado} Mercado de jogadores`, summary, '', ...cards].join('\n');
 }
 
 async function configuredListPacks(): Promise<readonly PackCatalogItem[]> {

@@ -3,25 +3,30 @@ import { ApiClientError, type CompletedMissionDto } from '@futhub/api-client';
 import { ComponentCommand, Label, MessageFlags, Modal, TextInput } from 'seyfert';
 import type { ComponentContext } from 'seyfert';
 
-import { EMOJI } from '../emojis.js';
-import { sendMissionNotice } from '../mission-notice.js';
+import type { BotMessage } from '../core/bot-response.js';
+import { EMOJI } from '../core/emojis.js';
+import { juice, sleep } from '../core/juice.js';
+import { sendMissionNotice } from '../core/mission-notice.js';
+import { sessionNotice } from '../core/ui.js';
 import {
   autoLineup,
   loadLeague,
   queueLeagueMatch,
   reloadTeam,
-  sellTeamCard,
+  sellTeamCards,
   setTactic,
   toggleFavorite,
   upgradeClubStadium,
-} from '../team-api.js';
+} from '../features/team/team-api.js';
 import {
   type TeamSession,
   parseTeamAction,
   teamCustomId,
   updateTeamSession,
-} from '../team-session.js';
-import { teamResponse } from '../team.js';
+} from '../features/team/team-session.js';
+import { teamResponse } from '../features/team/team.js';
+
+const SEARCH_TICKS = 4;
 
 export default class TimeButtonComponent extends ComponentCommand {
   componentType = 'Button' as const;
@@ -33,13 +38,9 @@ export default class TimeButtonComponent extends ComponentCommand {
   async run(context: ComponentContext<'Button'>): Promise<void> {
     const parsed = parseTeamAction(context.customId, context.interaction.user.id);
     if (parsed.kind !== 'owned') {
-      await context.write({
-        content:
-          parsed.kind === 'foreign'
-            ? `${EMOJI.alerta} Este painel pertence a outro jogador.`
-            : `${EMOJI.relogio} Este painel expirou. Use \`/time\` ou \`!time\` novamente.`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await context.write(
+        sessionNotice(parsed.kind === 'foreign' ? 'foreign' : 'expired', 'time') as BotMessage,
+      );
       return;
     }
     if (parsed.action === 'search') {
@@ -67,7 +68,14 @@ export default class TimeButtonComponent extends ComponentCommand {
             action === 'league-queue'
               ? await queueLeagueMatch(session.identity)
               : await loadLeague(session.identity);
-          const updated = updateTeamSession(session, { league });
+          let updated = updateTeamSession(session, { league });
+          // Enquanto procura, o painel anima e confere sozinho algumas vezes antes de pedir clique.
+          for (let tick = 0; juice.enabled && tick < SEARCH_TICKS; tick += 1) {
+            if (updated.league?.status.queue?.kind !== 'waiting') break;
+            await context.editOrReply(await teamResponse(updated, undefined, { searchTick: tick }));
+            await sleep(juice.frameDelayMs * 1.5);
+            updated = updateTeamSession(updated, { league: await loadLeague(session.identity) });
+          }
           await context.editOrReply(await teamResponse(updated));
         } catch (error) {
           console.error('Failed to update league panel.', error);
@@ -90,7 +98,7 @@ export default class TimeButtonComponent extends ComponentCommand {
         const team = await reloadTeam(session, page);
         const updated = updateTeamSession(session, {
           team,
-          selectedCardId: null,
+          selectedCardIds: [],
           confirmSale: false,
         });
         await context.editOrReply(await teamResponse(updated));
@@ -103,7 +111,7 @@ export default class TimeButtonComponent extends ComponentCommand {
         const updated = updateTeamSession(session, {
           filters,
           team,
-          selectedCardId: null,
+          selectedCardIds: [],
           confirmSale: false,
         });
         await context.editOrReply(await teamResponse(updated));
@@ -119,7 +127,10 @@ export default class TimeButtonComponent extends ComponentCommand {
           team: { ...session.team, balance: club.balance },
         });
         await context.editOrReply(
-          await teamResponse(updated, `${EMOJI.sucesso} Estádio melhorado.`),
+          await teamResponse(
+            updated,
+            `## ${EMOJI.estadio} Estádio nível ${club.stadium.level}!\n${EMOJI.lucro} Bilheteria agora rende **+${club.stadium.ticketRevenue.toLocaleString('pt-BR')}** por fechamento.`,
+          ),
         );
         return;
       }
@@ -134,24 +145,29 @@ export default class TimeButtonComponent extends ComponentCommand {
         await toggleFavorite(session.identity, argument);
         notice = `${EMOJI.sucesso} Favorito atualizado.`;
       } else if (action === 'sell-confirm') {
-        if (session.selectedCardId !== argument) throw new Error('Selected card changed.');
+        if (session.selectedCardIds.length === 0) throw new Error('No card selected for sale.');
         const updated = updateTeamSession(session, { confirmSale: true });
         await context.editOrReply(
           await teamResponse(updated, `${EMOJI.alerta} Confirme a venda. Esta ação é definitiva.`),
         );
         return;
       } else if (action === 'sell') {
-        const card = session.team.inventory.items.find(({ userCardId }) => userCardId === argument);
+        const cards = session.team.inventory.items.filter(({ userCardId }) =>
+          session.selectedCardIds.includes(userCardId),
+        );
         if (
-          session.selectedCardId !== argument ||
-          !card ||
-          card.holder ||
-          card.favorite ||
-          card.captain
+          !session.confirmSale ||
+          cards.length === 0 ||
+          cards.length !== session.selectedCardIds.length ||
+          cards.some((card) => card.holder || card.favorite || card.captain)
         )
           throw new Error('Card is not available for sale.');
-        const sale = await sellTeamCard(session.identity, argument);
-        notice = `${EMOJI.sucesso} ${card.name} vendido por ${sale.amount}. Saldo: ${sale.balance}.`;
+        const sale = await sellTeamCards(session.identity, session.selectedCardIds);
+        const sold =
+          cards.length === 1
+            ? `**${cards[0]?.name}** vendido`
+            : `**${cards.length} jogadores** vendidos`;
+        notice = `## ${EMOJI.venda} +${sale.amount.toLocaleString('pt-BR')} ${EMOJI.moeda}\n${sold} · saldo ${sale.balance.toLocaleString('pt-BR')}`;
         completedMissions = sale.completedMissions;
       } else {
         throw new Error('Unsupported team button action.');
@@ -160,7 +176,7 @@ export default class TimeButtonComponent extends ComponentCommand {
       const team = await reloadTeam(session);
       const updated = updateTeamSession(session, {
         team,
-        selectedCardId: action === 'sell' ? null : session.selectedCardId,
+        selectedCardIds: action === 'sell' ? [] : session.selectedCardIds,
         confirmSale: false,
       });
       await context.editOrReply(await teamResponse(updated, notice));

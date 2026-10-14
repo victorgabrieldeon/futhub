@@ -8,8 +8,8 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-import { renderEmoji, syncEmojis } from '../src/emoji-sync.js';
-import { EMOJI_NAMES } from '../src/emojis.js';
+import { renderEmoji, syncEmojis } from '../src/core/emoji-sync.js';
+import { EMOJI_NAMES } from '../src/core/emojis.js';
 
 const args = new Set(process.argv.slice(2));
 

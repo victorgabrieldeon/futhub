@@ -3,8 +3,8 @@ import test from 'node:test';
 
 import type { CompletedMissionDto } from '@futhub/api-client';
 
-import { missionNotice, sendMissionNotice } from '../src/mission-notice.js';
-import { mockApi, withTemplates } from './support/api.js';
+import { missionNotice, sendMissionNotice } from '../src/core/mission-notice.js';
+import { messageText, mockApi, withTemplates } from './support/api.js';
 
 const identity = { name: 'Victor', avatarUrl: null };
 const missions: CompletedMissionDto[] = [
@@ -38,8 +38,8 @@ test('anuncia missões concluídas com ciclo e recompensa', async () => {
   const notice = await missionNotice(identity, missions);
 
   assert.equal(
-    notice?.content,
-    '✅ Missão concluída!\n🎯 **Diária** — Resgate o lucro: **+300 moedas**\n🎯 **Semanal** — Abra 5 packs: **+1 pack**',
+    messageText(notice ?? undefined),
+    '-# 🎉 🎉 🎉\n## 🏆 Missão concluída!\n✅ **Resgate o lucro** · Diária — **+300 moedas**\n✅ **Abra 5 packs** · Semanal — **+1 pack**',
   );
 });
 

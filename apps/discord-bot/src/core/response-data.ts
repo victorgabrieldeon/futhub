@@ -10,6 +10,9 @@ import type {
 } from '@futhub/api-client';
 import type { ListItem, TemplateData } from '@futhub/bot-templates';
 
+import { EMOJI, entityIcon } from './emojis.js';
+import { rarity } from './juice.js';
+
 // Turns API results into the variables and lists declared in the bot-templates catalog.
 
 const CADENCE_LABEL: Record<MissionDtoCadence, string> = {
@@ -45,12 +48,16 @@ export function lucroData(
   now: Date,
 ): { key: 'lucro.success' | 'lucro.cooldown'; data: TemplateData } {
   const availableAt = timestamp(result.availableAt, 'F');
+  const availableIn = timestamp(result.availableAt, 'R');
   if (result.kind === 'cooldown') {
     const remaining = Math.max(
       0,
       Math.ceil((new Date(result.availableAt).getTime() - now.getTime()) / 1000),
     );
-    return { key: 'lucro.cooldown', data: { availableAt, remaining: String(remaining) } };
+    return {
+      key: 'lucro.cooldown',
+      data: { availableAt, availableIn, remaining: String(remaining) },
+    };
   }
   const { report, progression } = result;
   return {
@@ -64,6 +71,7 @@ export function lucroData(
       nextLevelXp: String(progression.nextLevelXp),
       level: String(progression.level),
       availableAt,
+      availableIn,
       net: String(report.net),
       // Same signs the bot always printed: revenues "+", costs "-", net signed only when >= 0.
       report: [
@@ -100,9 +108,9 @@ export function missionsData(result: MissionsResponse): TemplateData {
           : `${mission.progress}/${mission.goal}`,
         expires: timestamp(mission.expiresAt, 'R'),
         reward: mission.reward
-          ? `Recompensa: +${mission.reward.quantity} ${mission.reward.type}.`
-          : '',
-        done: mission.claimed || mission.completed ? '✅' : '',
+          ? `Recompensa: +${mission.reward.quantity.toLocaleString('pt-BR')} ${REWARD_LABEL[mission.reward.type] ?? mission.reward.type}`
+          : 'Sem recompensa',
+        done: mission.claimed || mission.completed ? '✅' : '🎯',
       };
     }),
   };
@@ -124,31 +132,69 @@ export function completedMissionsData(missions: readonly CompletedMissionDto[]):
   };
 }
 
-export function packOpenData(packId: string, result: OpenPackResponse): TemplateData {
+/** Emoji do pack nos templates: o da imagem do pack, ou o emoji de pack do bot. */
+function packEmoji(emoji: string): string {
+  return entityIcon(emoji) || EMOJI.pack;
+}
+
+export function packOpenData(
+  packId: string,
+  pack: Readonly<{ name: string; emoji: string }>,
+  result: OpenPackResponse,
+): TemplateData {
   const { gainedXp, level, nextLevelXp, xp } = result.progression;
   return {
     packId,
+    packName: pack.name,
+    packEmoji: packEmoji(pack.emoji),
     xp: String(gainedXp),
     xpTotal: String(xp),
     nextLevelXp: String(nextLevelXp),
     level: String(level),
-    cards: result.cards.map(({ id, card }) => ({
-      id,
-      name: card.name,
-      position: card.position,
-      overall: String(card.overall),
-    })),
+    // Best card first: the reveal ends on it and the list reads as a ranking.
+    cards: [...result.cards]
+      .sort((left, right) => right.card.overall - left.card.overall)
+      .map(({ id, card }) => ({
+        id,
+        name: card.name,
+        position: card.position,
+        overall: String(card.overall),
+        rarity: rarity(card.overall).label,
+        tierEmoji: rarity(card.overall).emoji,
+        team: card.team.name,
+        teamEmoji: entityIcon(card.team.emoji),
+        collection: card.collection.name,
+        collectionEmoji: entityIcon(card.collection.emoji),
+      })),
     rewards: rewards(result.progression.rewards),
   };
 }
 
-export function packPurchaseData(packId: string, result: PurchasePackResponse): TemplateData {
-  return { packId, quantity: String(result.quantity), balance: String(result.balance) };
+export function packPurchaseData(
+  pack: Readonly<{ id: string; name: string; emoji: string; price: number }>,
+  result: PurchasePackResponse,
+): TemplateData {
+  return {
+    packId: pack.id,
+    packName: pack.name,
+    packEmoji: packEmoji(pack.emoji),
+    price: String(pack.price),
+    quantity: String(result.quantity),
+    balance: String(result.balance),
+  };
 }
 
-export function cardPurchaseData(result: PurchaseCardResponse): TemplateData {
+export function cardPurchaseData(
+  card: Readonly<{ name: string; overall: number; position: string; imageUrl: string | null }>,
+  result: PurchaseCardResponse,
+): TemplateData {
   return {
     userCardId: result.userCardId,
+    cardName: card.name,
+    cardOverall: String(card.overall),
+    cardPosition: card.position,
+    cardRarity: rarity(card.overall).label,
+    cardImageUrl: card.imageUrl ?? '',
     price: String(result.price),
     balance: String(result.balance),
   };

@@ -1,89 +1,82 @@
-import { ApiClientError, inspectPack, purchaseCard, purchasePack } from '@futhub/api-client';
+import { inspectPack, purchaseCard, purchasePack } from '@futhub/api-client';
 import { ComponentCommand, MessageFlags } from 'seyfert';
 import type { ComponentContext } from 'seyfert';
 
-import { botResponse, identityData } from '../bot-response.js';
+import { hireImage } from '../art/scenes.js';
 import { refreshApiClient } from '../commands/shared.js';
-import { EMOJI } from '../emojis.js';
-import { sendMissionNotice } from '../mission-notice.js';
-import { packPurchaseData } from '../response-data.js';
-import type { StoreSessionId } from '../store-session.js';
+import {
+  type BotMessage,
+  botResponse,
+  identityData,
+  isComponentsV2,
+  withActions,
+  withHero,
+} from '../core/bot-response.js';
+import { sendMissionNotice } from '../core/mission-notice.js';
+import { navButton } from '../core/nav.js';
+import { packPurchaseReply } from '../core/replies.js';
+import { cardPurchaseData } from '../core/response-data.js';
+import { EPHEMERAL, friendlyError, notice, row, sessionNotice } from '../core/ui.js';
+import type { StoreSessionId } from '../features/store/store-session.js';
 import {
   cardDetailResponse,
   loadHiringState,
-  packDetailResponse,
-  storeErrorResponse,
   storeResponse,
   storeSessionManager,
   toggleFavoritePack,
   withStorePage,
   withStoreTab,
-} from '../store.js';
-import type { PackDetailTab } from '../store.js';
+} from '../features/store/store.js';
+
+type Context = ComponentContext<'Button'>;
+
+const say = (...args: Parameters<typeof notice>) => notice(...args) as BotMessage;
+const privately = (message: BotMessage): BotMessage => ({
+  ...message,
+  flags: (message.flags ?? 0) | MessageFlags.Ephemeral,
+});
+
+function player(context: Context) {
+  const user = context.interaction.user;
+  return { id: user.id, name: user.username, avatarUrl: user.avatarURL() };
+}
 
 export default class LojaTabComponent extends ComponentCommand {
   componentType = 'Button' as const;
 
-  filter(context: ComponentContext<'Button'>): boolean {
+  filter(context: Context): boolean {
     return context.customId.startsWith('ls1:');
   }
 
-  async run(context: ComponentContext<'Button'>): Promise<void> {
+  async run(context: Context): Promise<void> {
     const userId = context.interaction.user.id;
     const parsed = storeSessionManager.parse(context.customId, userId);
-    if (parsed.kind === 'foreign') {
-      await context.write({
-        content: `${EMOJI.alerta} Esta loja pertence a outro jogador.`,
-        flags: MessageFlags.Ephemeral,
-      });
+    if (parsed.kind === 'foreign' || parsed.kind === 'expired') {
+      await context.write(sessionNotice(parsed.kind, 'loja') as BotMessage);
       return;
     }
     if (parsed.kind !== 'owned') {
-      await context.write({
-        content: `${EMOJI.relogio} Esta loja expirou. Use \`/loja\` novamente.`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await context.write(say('warning', 'Botão inválido', 'Abra a loja de novo com /loja.'));
       return;
     }
-    if (parsed.action.action === 'inspect-pack') {
-      await this.inspect(context, parsed.session.id, parsed.action.arg, 'overview', false);
+    const { action } = parsed;
+    if (action.action === 'purchase-pack') {
+      await this.purchasePack(context, action.arg);
       return;
     }
-    if (parsed.action.action === 'detail-overview' || parsed.action.action === 'detail-config') {
-      await this.inspect(
-        context,
-        parsed.session.id,
-        parsed.action.arg,
-        parsed.action.action === 'detail-overview' ? 'overview' : 'config',
-        true,
-      );
+    if (action.action === 'buy') {
+      await this.purchaseCard(context, parsed.session.id, userId, action.arg);
       return;
     }
-    if (parsed.action.action === 'purchase-pack') {
-      await this.purchasePack(context, parsed.action.arg);
-      return;
-    }
-    if (parsed.action.action === 'buy') {
-      await this.purchaseCard(context, parsed.session.id, userId, parsed.action.arg);
-      return;
-    }
-
     if (
       parsed.session.state.tab === 'contratar' &&
       parsed.session.state.purchase.kind === 'purchasing'
     ) {
-      await context.write({
-        content: `${EMOJI.relogio} Aguarde a contratação atual terminar antes de navegar na loja.`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await context.write(say('info', 'Contratação em andamento', 'Aguarde ela terminar.'));
       return;
     }
-
-    if (!['tab', 'page', 'favorite'].includes(parsed.action.action)) {
-      await context.write({
-        content: `${EMOJI.alerta} Esta ação não está disponível na loja.`,
-        flags: MessageFlags.Ephemeral,
-      });
+    if (!['tab', 'page', 'favorite', 'back'].includes(action.action)) {
+      await context.write(say('warning', 'Esta ação não está disponível na loja.'));
       return;
     }
 
@@ -91,19 +84,18 @@ export default class LojaTabComponent extends ComponentCommand {
     try {
       refreshApiClient();
       let state = parsed.session.state;
-      if (parsed.action.action === 'tab') {
-        state = withStoreTab(state, parsed.action.arg);
-        if (state.tab === 'contratar') state = await loadHiringState(state);
-      } else if (parsed.action.action === 'page') {
-        const page = Number(parsed.action.arg);
+      if (action.action === 'tab') {
+        state = withStoreTab(state, action.arg);
+        if (state.tab === 'contratar' && state !== parsed.session.state)
+          state = await loadHiringState(state);
+      } else if (action.action === 'page') {
+        const page = Number(action.arg);
         state =
           state.tab === 'contratar'
             ? await loadHiringState(state, { page })
             : withStorePage(state, page);
-      } else if (parsed.action.action === 'favorite') {
-        state = toggleFavoritePack(state, parsed.action.arg);
-      } else {
-        throw new Error('Unsupported store navigation action.');
+      } else if (action.action === 'favorite') {
+        state = toggleFavoritePack(state, action.arg);
       }
       const updated = storeSessionManager.replaceStateIf(
         parsed.session.id,
@@ -111,78 +103,47 @@ export default class LojaTabComponent extends ComponentCommand {
         parsed.session.state,
         state,
       );
-      if (updated.kind === 'stale') {
+      if (updated.kind === 'stale' || updated.kind === 'owned') {
         await context.editOrReply(await storeResponse(updated.session, updated.session.state.tab));
         return;
       }
-      if (updated.kind !== 'owned') {
-        await context.editOrReply(storeErrorResponse('Esta loja expirou. Use `/loja` novamente.'));
-        return;
-      }
-      await context.editOrReply(await storeResponse(updated.session, updated.session.state.tab));
+      await context.followup(sessionNotice('expired', 'loja') as BotMessage);
     } catch (error) {
       console.error('Failed to update store.', error);
-      await context.editOrReply(
-        storeErrorResponse('Não foi possível atualizar a loja. Use `/loja` para tentar novamente.'),
+      await context.followup(
+        say('error', 'Não foi possível atualizar a loja', friendlyError(error, 'Tente novamente.')),
       );
     }
   }
 
-  private async inspect(
-    context: ComponentContext<'Button'>,
-    sessionId: StoreSessionId,
-    packId: string,
-    tab: PackDetailTab,
-    update: boolean,
-  ): Promise<void> {
-    if (update) await context.deferUpdate();
-    else await context.deferReply();
+  private async purchasePack(context: Context, packId: string): Promise<void> {
+    await context.deferReply(true);
     try {
       refreshApiClient();
-      const response = packDetailResponse(sessionId, await inspectPack(packId), tab);
-      await context.editOrReply(response);
-    } catch (error) {
-      console.error('Failed to inspect pack.', error);
-      await context.editOrReply(
-        storeErrorResponse('Não foi possível carregar este pack. Tente novamente.'),
-      );
-    }
-  }
-
-  private async purchasePack(context: ComponentContext<'Button'>, packId: string): Promise<void> {
-    try {
-      refreshApiClient();
-      const user = {
-        id: context.interaction.user.id,
-        name: context.interaction.user.username,
-        avatarUrl: context.interaction.user.avatarURL(),
-      };
-      const result = await purchasePack(packId, { identity: user });
-      const message = await botResponse('pack.purchase', {
-        ...identityData(user),
-        ...packPurchaseData(packId, result),
-      });
-      await context.write({ ...message, flags: (message.flags ?? 0) | MessageFlags.Ephemeral });
-      await sendMissionNotice(
-        (notice) =>
-          context.followup({ ...notice, flags: (notice.flags ?? 0) | MessageFlags.Ephemeral }),
+      const user = player(context);
+      const pack = await inspectPack(packId);
+      const reply = await packPurchaseReply(
         user,
-        result.completedMissions,
+        { ...pack, cardsAmount: pack.cardsPerPack, imageUrl: pack.imageUrl || null },
+        await purchasePack(packId, { identity: user }),
       );
+      await context.editOrReply(privately(reply.message));
+      await reply.afterSend((notice) => context.followup(privately(notice)));
     } catch (error) {
       console.error('Failed to purchase pack.', error);
-      await context.write({
-        content:
-          error instanceof ApiClientError && error.message.includes('Insufficient balance')
-            ? `${EMOJI.erro} Saldo insuficiente para comprar este pack.`
-            : `${EMOJI.erro} Não foi possível comprar este pack. Tente novamente.`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await context.editOrReply(
+        say(
+          'error',
+          'Compra não concluída',
+          friendlyError(error, 'Confira seu saldo e o limite deste pack por jogador.'),
+          'Nenhuma moeda foi descontada se a compra falhou.',
+        ),
+      );
     }
   }
 
   private async purchaseCard(
-    context: ComponentContext<'Button'>,
+    context: Context,
     sessionId: StoreSessionId,
     userId: string,
     cardId: string,
@@ -194,30 +155,24 @@ export default class LojaTabComponent extends ComponentCommand {
       access.session.state.selection.kind !== 'selected' ||
       access.session.state.selection.cardId !== cardId
     ) {
-      await context.write({
-        content: `${EMOJI.alerta} Esta carta não está mais selecionada. Abra os detalhes novamente.`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await context.write(
+        say('warning', 'Jogador não selecionado', 'Escolha o jogador no menu da loja de novo.'),
+      );
       return;
     }
     const state = access.session.state;
     if (state.purchase.kind !== 'idle') {
-      await context.write({
-        content:
-          state.purchase.kind === 'purchased'
-            ? `${EMOJI.sucesso} Esta contratação já foi concluída.`
-            : `${EMOJI.relogio} Esta contratação já está sendo processada.`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await context.write(
+        state.purchase.kind === 'purchased'
+          ? say('success', 'Este jogador já foi contratado.')
+          : say('info', 'Contratação em andamento', 'Aguarde ela terminar.'),
+      );
       return;
     }
     const pending = { ...state, purchase: { kind: 'purchasing' as const, cardId } };
     const started = storeSessionManager.replaceStateIf(sessionId, userId, state, pending);
     if (started.kind !== 'owned') {
-      await context.write({
-        content: `${EMOJI.alerta} A loja mudou. Abra os detalhes da carta e tente novamente.`,
-        flags: MessageFlags.Ephemeral,
-      });
+      await context.write(say('warning', 'A loja mudou', 'Escolha o jogador de novo.'));
       return;
     }
 
@@ -231,29 +186,21 @@ export default class LojaTabComponent extends ComponentCommand {
       throw error;
     }
 
+    const user = player(context);
     let result: Awaited<ReturnType<typeof purchaseCard>>;
     try {
       refreshApiClient();
-      result = await purchaseCard(cardId, {
-        identity: {
-          id: userId,
-          name: context.interaction.user.username,
-          avatarUrl: context.interaction.user.avatarURL(),
-        },
-      });
+      result = await purchaseCard(cardId, { identity: user });
     } catch (error) {
       const idle = { ...pending, purchase: { kind: 'idle' as const } };
       const restored = storeSessionManager.replaceStateIf(sessionId, userId, pending, idle);
       console.error('Failed to purchase card.', error);
-      const notice =
-        error instanceof ApiClientError && error.message.includes('Insufficient balance')
-          ? `${EMOJI.erro} Saldo insuficiente para contratar esta carta.`
-          : `${EMOJI.erro} Não foi possível contratar esta carta. Tente novamente.`;
-      await context.editOrReply(
-        restored.kind === 'owned' && restored.session.state.tab === 'contratar'
-          ? cardDetailResponse(sessionId, restored.session.state, notice)
-          : storeErrorResponse(notice),
-      );
+      const reason = friendlyError(error, 'Não foi possível contratar este jogador.');
+      if (restored.kind === 'owned' && restored.session.state.tab === 'contratar')
+        await context.editOrReply(
+          await cardDetailResponse(sessionId, restored.session.state, `> ${reason}`),
+        );
+      else await context.followup(say('error', 'Contratação não concluída', reason));
       return;
     }
 
@@ -266,29 +213,42 @@ export default class LojaTabComponent extends ComponentCommand {
         balance: result.balance,
       },
     };
-    const completed = storeSessionManager.replaceStateIf(sessionId, userId, pending, purchased);
-    if (completed.kind !== 'owned' || completed.session.state.tab !== 'contratar') {
-      await context.editOrReply(
-        storeErrorResponse(
-          `A contratação foi concluída. Saldo atual: ${result.balance.toLocaleString('pt-BR')} moedas.`,
-        ),
-      );
-      return;
-    }
+    storeSessionManager.replaceStateIf(sessionId, userId, pending, purchased);
+    const card = state.items.find(({ id }) => id === cardId);
     try {
-      await context.editOrReply(cardDetailResponse(sessionId, completed.session.state));
-    } catch (error) {
-      console.error('Card was purchased, but the store response could not be updated.', error);
-      await context.editOrReply(
-        storeErrorResponse(
-          `A contratação foi concluída. Saldo atual: ${result.balance.toLocaleString('pt-BR')} moedas.`,
+      const face = card ?? { name: 'Jogador', overall: 0, position: '', imageUrl: null };
+      const message = withActions(
+        withHero(
+          await botResponse('card.purchase', {
+            ...identityData(user),
+            ...cardPurchaseData(face, result),
+          }),
+          {
+            name: 'contratacao.png',
+            data: await hireImage(face, result.price, result.balance),
+            description: `${face.name} contratado`,
+          },
         ),
+        [
+          row(
+            navButton('time', userId, { arg: 'inventory', label: 'Ver elenco', emoji: 'elenco' }),
+            navButton('time', userId, { arg: 'lineup', label: 'Escalar', emoji: 'escalacao' }),
+          ),
+        ],
       );
+      if (isComponentsV2(message))
+        await context.editOrReply({ ...message, flags: (message.flags ?? 0) & ~EPHEMERAL });
+      else {
+        await context.editOrReply(await cardDetailResponse(sessionId, purchased));
+        await context.followup(privately(message));
+      }
+    } catch (error) {
+      console.error('Card was purchased, but the reply could not be rendered.', error);
+      await context.editOrReply(await cardDetailResponse(sessionId, purchased));
     }
     await sendMissionNotice(
-      (notice) =>
-        context.followup({ ...notice, flags: (notice.flags ?? 0) | MessageFlags.Ephemeral }),
-      { name: context.interaction.user.username, avatarUrl: context.interaction.user.avatarURL() },
+      (notice) => context.followup(privately(notice)),
+      user,
       result.completedMissions,
     );
   }

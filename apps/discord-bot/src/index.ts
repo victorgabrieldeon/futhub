@@ -1,7 +1,7 @@
 import { configureApiClient } from '@futhub/api-client';
 import { Client } from 'seyfert';
 
-import { syncEmojis } from './emoji-sync.js';
+import { syncEmojis } from './core/emoji-sync.js';
 
 function required(name: string): string {
   const value = process.env[name];

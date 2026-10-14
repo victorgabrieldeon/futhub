@@ -1,12 +1,14 @@
 import {
+  type MissionsResponse,
   type SellCardsResponse,
   getLeague,
   getV1MatchesMatchId,
   joinRankedQueue,
+  listMissions,
   request,
 } from '@futhub/api-client';
 
-import { refreshApiClient } from './commands/shared.js';
+import { refreshApiClient } from '../../commands/shared.js';
 import type {
   ClubResponse,
   LeaguePanelState,
@@ -16,6 +18,16 @@ import type {
 } from './team-session.js';
 
 type Identity = TeamSession['identity'];
+
+export const defaultTeamView = {
+  page: 1,
+  name: '',
+  position: null,
+  collectionId: null,
+  sort: 'overall',
+  sellable: false,
+} as const;
+
 export async function loadLeague(identity: Identity): Promise<LeaguePanelState> {
   refreshApiClient();
   const status = await getLeague(identity);
@@ -34,6 +46,17 @@ export async function loadOverviewLeague(identity: Identity): Promise<LeaguePane
   }
 }
 
+/** Missões são complementares: se falharem, o início abre sem elas. */
+export async function loadOverviewMissions(identity: Identity): Promise<MissionsResponse | null> {
+  try {
+    refreshApiClient();
+    return await listMissions(identity);
+  } catch (error) {
+    console.error('Failed to load missions for team overview.', error);
+    return null;
+  }
+}
+
 export async function queueLeagueMatch(identity: Identity): Promise<LeaguePanelState> {
   refreshApiClient();
   await joinRankedQueue(identity);
@@ -44,6 +67,7 @@ export async function reloadTeam(session: TeamSession, page = 1): Promise<TeamRe
   return loadTeam(session.identity, {
     ...session.filters,
     page,
+    sellable: session.tab === 'sale',
   });
 }
 
@@ -55,6 +79,7 @@ export async function loadTeam(
     position: TeamPosition | null;
     collectionId: string | null;
     sort: 'overall' | 'name' | 'recent';
+    sellable: boolean;
   }>,
 ): Promise<TeamResponse> {
   refreshApiClient();
@@ -111,12 +136,15 @@ export function toggleFavorite(identity: Identity, userCardId: string): Promise<
   return mutate(`/v1/team/cards/${userCardId}/favorite`, 'PUT', { identity });
 }
 
-export function sellTeamCard(identity: Identity, userCardId: string): Promise<SellCardsResponse> {
+export function sellTeamCards(
+  identity: Identity,
+  userCardIds: readonly string[],
+): Promise<SellCardsResponse> {
   refreshApiClient();
   return request('/v1/cards/sell', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ identity, userCardIds: [userCardId] }),
+    body: JSON.stringify({ identity, userCardIds }),
   });
 }
 

@@ -52,3 +52,52 @@ export function withTemplates(
     return templates[key] ?? definition(key)?.defaultTemplate;
   };
 }
+
+/** Every text the player reads in a reply: content plus Components V2 text displays. */
+export function messageText(
+  message: { content?: unknown; components?: unknown } | undefined,
+): string {
+  const out: string[] = [];
+  if (typeof message?.content === 'string' && message.content) out.push(message.content);
+  const visit = (node: unknown): void => {
+    if (!node || typeof node !== 'object') return;
+    const value =
+      'toJSON' in node && typeof node.toJSON === 'function' ? (node.toJSON() as unknown) : node;
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item);
+      return;
+    }
+    const record = value as Record<string, unknown>;
+    if (record.type === 10 && typeof record.content === 'string') out.push(record.content);
+    for (const child of Object.values(record)) if (typeof child === 'object') visit(child);
+  };
+  visit(message?.components);
+  return out.join('\n');
+}
+
+/** Labels and custom IDs of every button in a reply. */
+export function messageButtons(
+  message: { components?: unknown } | undefined,
+): { label: string; customId: string; disabled: boolean; style: number }[] {
+  const out: { label: string; customId: string; disabled: boolean; style: number }[] = [];
+  const visit = (node: unknown): void => {
+    if (!node || typeof node !== 'object') return;
+    const value =
+      'toJSON' in node && typeof node.toJSON === 'function' ? (node.toJSON() as unknown) : node;
+    if (Array.isArray(value)) {
+      for (const item of value) visit(item);
+      return;
+    }
+    const record = value as Record<string, unknown>;
+    if (record.type === 2)
+      out.push({
+        label: String(record.label ?? ''),
+        customId: String(record.custom_id ?? ''),
+        disabled: record.disabled === true,
+        style: Number(record.style),
+      });
+    for (const child of Object.values(record)) if (typeof child === 'object') visit(child);
+  };
+  visit(message?.components);
+  return out;
+}

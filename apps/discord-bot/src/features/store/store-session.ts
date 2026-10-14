@@ -110,14 +110,7 @@ export type StoreAction =
   | { readonly action: 'page'; readonly arg: string }
   | { readonly action: 'picker'; readonly arg: string }
   | {
-      readonly action:
-        | 'select'
-        | 'buy'
-        | 'favorite'
-        | 'inspect-pack'
-        | 'purchase-pack'
-        | 'detail-overview'
-        | 'detail-config';
+      readonly action: 'select' | 'buy' | 'favorite' | 'purchase-pack';
       readonly arg: string;
     }
   | {
@@ -307,10 +300,7 @@ function parseAction(
         ? { kind: 'valid', value: { action, arg } }
         : { kind: 'invalid', reason: 'argument' };
     case 'favorite':
-    case 'inspect-pack':
     case 'purchase-pack':
-    case 'detail-overview':
-    case 'detail-config':
       return isPackId(arg)
         ? { kind: 'valid', value: { action, arg } }
         : { kind: 'invalid', reason: 'argument' };
@@ -334,14 +324,7 @@ function isValidAction(action: string, arg: string): boolean {
   if (action === 'page') return /^[1-9]\d{0,3}$/.test(arg);
   if (action === 'picker') return /^(0|[1-9]\d{0,2})$/.test(arg);
   if (action === 'select' || action === 'buy') return isUuid(arg);
-  if (
-    action === 'favorite' ||
-    action === 'inspect-pack' ||
-    action === 'purchase-pack' ||
-    action === 'detail-overview' ||
-    action === 'detail-config'
-  )
-    return isPackId(arg);
+  if (action === 'favorite' || action === 'purchase-pack') return isPackId(arg);
   return (
     (action === 'pack-menu' ||
       action === 'card-menu' ||

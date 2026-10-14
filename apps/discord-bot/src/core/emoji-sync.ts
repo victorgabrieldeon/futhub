@@ -5,7 +5,7 @@ import { createCanvas, loadImage } from '@napi-rs/canvas';
 
 import { type ApplicationEmoji, EMOJI_NAMES, type EmojiName, registerEmojis } from './emojis.js';
 
-export const emojiAssetsDir = fileURLToPath(new URL('../assets/emojis/', import.meta.url));
+export const emojiAssetsDir = fileURLToPath(new URL('../../assets/emojis/', import.meta.url));
 // Discord exibe emojis em até 128x128; renderizar no tamanho final evita reamostragem dupla.
 const SIZE = 128;
 

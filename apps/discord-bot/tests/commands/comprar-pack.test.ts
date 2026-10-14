@@ -5,78 +5,103 @@ import { createMockBot } from '@slipher/testing';
 import { MessageFlags } from 'seyfert';
 
 import ComprarPackCommand from '../../src/commands/comprar-pack.js';
-import { EMOJI } from '../../src/emojis.js';
-import { mockApi, withTemplates } from '../support/api.js';
+import { parseNavId } from '../../src/core/nav.js';
+import {
+  type ApiRequest,
+  messageButtons,
+  messageText,
+  mockApi,
+  withTemplates,
+} from '../support/api.js';
 
-test('compra pack pelo pipeline real do Seyfert', async () => {
-  const api = mockApi(withTemplates({ quantity: 2, balance: 450 }));
+const catalog = [
+  {
+    id: 'pack-1',
+    name: 'Pack Ouro',
+    emoji: '📦',
+    cardsAmount: 3,
+    price: 100,
+    limitPerUser: 5,
+    imageUrl: null,
+  },
+];
+
+function store(templates: Record<string, unknown> = {}) {
+  return withTemplates({ quantity: 2, balance: 4500, completedMissions: [] }, templates);
+}
+
+function routes(templates?: Record<string, unknown>) {
+  const fallback = store(templates);
+  return (request: ApiRequest) => (request.path === '/v1/packs' ? catalog : fallback(request));
+}
+
+test('compra pack pelo nome escolhido e oferece abrir na hora', async () => {
+  const api = mockApi(routes());
 
   await using bot = await createMockBot({ commands: [ComprarPackCommand] });
 
-  const result = await bot.slash(ComprarPackCommand, { options: { pack_id: 'pack-1' } });
+  const result = await bot.slash(ComprarPackCommand, { options: { pack: 'pack-1' } });
+  const message = result.messages[0];
 
-  assert.equal(result.content, '📦 Pack comprado. Quantidade: 2. 🪙 Saldo: 450.');
-  assert.deepEqual(api.requests, [
-    {
-      method: 'POST',
-      path: '/v1/packs/pack-1/purchase',
-      body: {
-        identity: {
-          id: '900000000000000005',
-          name: 'slipher-tester',
-          avatarUrl: 'https://cdn.discordapp.com/embed/avatars/1.png',
-        },
-      },
-    },
-    { method: 'GET', path: '/v1/bot-responses/pack.purchase', body: null },
-  ]);
+  assert.match(messageText(message), /## 📦 Pack Ouro é seu!\nVocê tem \*\*2\*\* no inventário/);
+  assert.match(messageText(message), /🪙 \*\*−100\*\* {2}· {2}saldo 4\.500/);
+  const open = messageButtons(message).find((button) => button.label === 'Abrir agora');
+  assert.deepEqual(parseNavId(open?.customId ?? ''), {
+    target: 'open',
+    ownerId: '900000000000000005',
+    arg: 'pack-1',
+  });
+  assert.deepEqual(
+    api.requests.map(({ method, path }) => `${method} ${path}`),
+    ['GET /v1/packs', 'POST /v1/packs/pack-1/purchase', 'GET /v1/bot-responses/pack.purchase'],
+  );
 });
 
 test('usa a resposta editada no painel, com filtros de variáveis', async () => {
   mockApi(
-    withTemplates(
-      { quantity: 2, balance: 4500 },
-      {
-        'pack.purchase': {
-          mode: 'legacy',
-          content: 'Comprou! {quantity} no inventário · saldo {balance|number}',
-          embeds: [],
-          components: [],
-        },
+    routes({
+      'pack.purchase': {
+        mode: 'legacy',
+        content: 'Comprou {packName}! {quantity} no inventário · saldo {balance|number}',
+        embeds: [],
+        components: [],
       },
-    ),
+    }),
   );
 
   await using bot = await createMockBot({ commands: [ComprarPackCommand] });
 
-  const result = await bot.slash(ComprarPackCommand, { options: { pack_id: 'pack-1' } });
+  const result = await bot.slash(ComprarPackCommand, { options: { pack: 'pack-1' } });
 
-  assert.equal(result.content, 'Comprou! 2 no inventário · saldo 4.500');
+  assert.equal(result.content, 'Comprou Pack Ouro! 2 no inventário · saldo 4.500');
 });
 
-test('rejeita ID de pack vazio sem chamar API', async () => {
-  const api = mockApi({ quantity: 2, balance: 450 });
+test('pack fora da loja vira aviso sem tentar comprar', async () => {
+  const api = mockApi(routes());
 
   await using bot = await createMockBot({ commands: [ComprarPackCommand] });
 
-  const result = await bot.slash(ComprarPackCommand, { options: { pack_id: ' ' } });
+  const result = await bot.slash(ComprarPackCommand, { options: { pack: 'sumiu' } });
 
-  assert.equal(result.content, 'Informe pack_id.');
-  assert.deepEqual(api.requests, []);
+  assert.match(messageText(result.messages[0]), /Pack não encontrado na loja/);
+  assert.equal(result.messages[0]?.flags, 32768 | MessageFlags.Ephemeral);
+  assert.deepEqual(
+    api.requests.map(({ path }) => path),
+    ['/v1/packs'],
+  );
 });
 
-test('oculta erro da API ao comprar pack', async (context) => {
+test('falha da API vira aviso privado e amigável', async (context) => {
   const api = mockApi({ message: 'Falha interna.' }, 503);
   context.mock.method(console, 'error', () => undefined);
 
   await using bot = await createMockBot({ commands: [ComprarPackCommand] });
 
-  const result = await bot.slash(ComprarPackCommand, { options: { pack_id: 'pack-1' } });
+  const result = await bot.slash(ComprarPackCommand, { options: { pack: 'pack-1' } });
 
-  assert.equal(
-    result.content,
-    `${EMOJI.erro} Não foi possível executar /comprar-pack. Tente novamente.`,
-  );
-  assert.equal(result.messages[0]?.flags, MessageFlags.Ephemeral);
+  assert.match(messageText(result.messages[0]), /Não foi possível concluir \/comprar-pack/);
+  assert.match(messageText(result.messages[0]), /servidor do jogo não respondeu/);
+  assert.doesNotMatch(messageText(result.messages[0]), /Falha interna/);
+  assert.equal(result.messages[0]?.flags, 32768 | MessageFlags.Ephemeral);
   assert.equal(api.requests.length, 1);
 });

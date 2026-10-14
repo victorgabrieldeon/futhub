@@ -3,14 +3,38 @@ import test from 'node:test';
 
 import { definition, imagePresets, imageRef } from '@futhub/bot-templates';
 
-import { botResponse } from '../src/bot-response.js';
-import { lucroData, missionsData, packOpenData } from '../src/response-data.js';
-import { mockApi, withTemplates } from './support/api.js';
+import { botResponse } from '../src/core/bot-response.js';
+import { lucroData, missionsData, packOpenData } from '../src/core/response-data.js';
+import { messageText, mockApi, withTemplates } from './support/api.js';
 
+const pack = { name: 'Pack Ouro', emoji: '📦' };
 const opened = {
   cards: [
-    { id: 'uc-1', card: { id: 'c-1', overall: 88, name: 'Rafael Lima', position: 'CA' } },
-    { id: 'uc-2', card: { id: 'c-2', overall: 79, name: 'Bruno Costa', position: 'MC' } },
+    {
+      id: 'uc-1',
+      card: {
+        id: 'c-1',
+        overall: 88,
+        name: 'Rafael Lima',
+        position: 'CA',
+        imageUrl: null,
+        team: { name: 'Flamengo', emoji: '<:tm_flamengo_ab12cd:300000000000000001>' },
+        collection: { name: 'Lendas', emoji: '🏆' },
+      },
+    },
+    {
+      id: 'uc-2',
+      card: {
+        id: 'c-2',
+        overall: 79,
+        name: 'Bruno Costa',
+        position: 'MC',
+        imageUrl: null,
+        // Times importados guardam siglas no campo emoji; elas não aparecem como ícone.
+        team: { name: 'Barcelona', emoji: 'FCB' },
+        collection: { name: 'Padrão', emoji: '🎴' },
+      },
+    },
   ],
   progression: {
     gainedXp: 10,
@@ -22,12 +46,22 @@ const opened = {
   completedMissions: [],
 };
 
-test('pack aberto usa a lista padrão com recompensas na mesma linha', async () => {
+test('pack aberto padrão lista as cartas da melhor para a pior, com as recompensas de nível', async () => {
   mockApi(withTemplates({}));
-  const message = await botResponse('pack.open', packOpenData('p-1', opened));
-  assert.equal(
-    message.content,
-    '📦 Pack aberto.\n🃏 `uc-1` — OVR 88\n🃏 `uc-2` — OVR 79\n⚡ XP: +10 (40/100). 🎖️ Nível: 3. Recompensas: 🎁 +500 balance.',
+  const message = await botResponse('pack.open', {
+    userName: 'Ana',
+    ...packOpenData('p-1', pack, { ...opened, cards: [...opened.cards].reverse() }),
+  });
+  assert.equal(message.flags, 32768);
+  const text = messageText(message);
+  assert.match(text, /-# 🎉 PACK ABERTO\n## 📦 Pack Ouro\n-# 2 novas no elenco de Ana/);
+  assert.match(
+    text,
+    /🟣 \*\*88\*\* · Rafael Lima · `CA` · <:tm_flamengo_ab12cd:300000000000000001> Flamengo\n🟢 \*\*79\*\* · Bruno Costa · `MC` · {2}Barcelona/,
+  );
+  assert.match(
+    text,
+    /\*\*\+10 XP\*\*.*Nível \*\*3\*\* \(40\/100\)\n🎁 \*\*Subiu de nível!\*\* \+500 moedas/,
   );
 });
 
@@ -68,7 +102,7 @@ test('imagem gerada no painel vira anexo PNG desenhado pelo bot', async () => {
       },
     ),
   );
-  const message = await botResponse('pack.open', packOpenData('p-1', opened));
+  const message = await botResponse('pack.open', packOpenData('p-1', pack, opened));
   assert.equal(message.flags, 32768);
   const container = (
     message.components as unknown as {
@@ -93,8 +127,8 @@ test('template salvo inválido cai no padrão do catálogo', async (context) => 
       { 'pack.open': { mode: 'components_v2', content: '', embeds: [], components: [] } },
     ),
   );
-  const message = await botResponse('pack.open', packOpenData('p-1', opened));
-  assert.match(String(message.content), /^📦 Pack aberto\./);
+  const message = await botResponse('pack.open', packOpenData('p-1', pack, opened));
+  assert.match(messageText(message), /Pack Ouro/);
 });
 
 test('lucro e missões viram variáveis e listas do catálogo', () => {
@@ -120,6 +154,7 @@ test('lucro e missões viram variáveis e listas do catálogo', () => {
   );
   assert.equal(key, 'lucro.success');
   assert.equal(data.availableAt, '<t:1767225600:F>');
+  assert.equal(data.availableIn, '<t:1767225600:R>');
   assert.deepEqual((data.report as Record<string, string>[]).slice(-2), [
     { label: 'Folha salarial', value: '-300', amount: '300' },
     { label: 'Lucro líquido', value: '+1350', amount: '1350' },
@@ -150,7 +185,7 @@ test('lucro e missões viram variáveis e listas do catálogo', () => {
     bar: '▰▰▰▱▱▱▱▱▱▱',
     status: '1/4',
     expires: '<t:1767225600:R>',
-    reward: '',
-    done: '',
+    reward: 'Sem recompensa',
+    done: '🎯',
   });
 });

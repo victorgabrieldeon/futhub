@@ -10,10 +10,10 @@ import {
   render,
 } from '@futhub/bot-templates';
 import { type Image, createCanvas, loadImage } from '@napi-rs/canvas';
-import type { CommandContext } from 'seyfert';
+import type { ActionRow, Button, CommandContext } from 'seyfert';
 
+import { imageFont } from '../art/image-fonts.js';
 import { EMOJI_FALLBACK, isEmojiName, registeredEmojis } from './emojis.js';
-import { imageFont } from './image-fonts.js';
 
 export type BotMessage = Parameters<CommandContext['write']>[0];
 
@@ -116,4 +116,60 @@ export async function botResponse(key: string, data: TemplateData): Promise<BotM
 /** Common values every response receives. */
 export function identityData(identity: { name: string; avatarUrl: string | null }): TemplateData {
   return { userName: identity.name, avatarUrl: identity.avatarUrl ?? '' };
+}
+
+export function isComponentsV2(message: BotMessage): boolean {
+  return ((message.flags ?? 0) & 32768) !== 0;
+}
+
+/** Appends bot-owned buttons below an admin-edited response, whatever its mode. */
+export function withActions(message: BotMessage, rows: readonly ActionRow<Button>[]): BotMessage {
+  const added = rows.filter((row) => row.components.length > 0).map((row) => row.toJSON());
+  if (!added.length) return message;
+  const current = (message.components ?? []).map((component) =>
+    'toJSON' in component ? component.toJSON() : component,
+  );
+  return { ...message, components: [...current, ...added] } as BotMessage;
+}
+
+type Json = Record<string, unknown>;
+const toJson = (component: unknown): Json =>
+  (typeof component === 'object' && component !== null && 'toJSON' in component
+    ? (component as { toJSON: () => Json }).toJSON()
+    : component) as Json;
+
+/**
+ * Coloca uma imagem gerada pelo bot como peça principal de uma resposta editada no admin:
+ * no topo do primeiro container (Components V2) ou como imagem do primeiro embed.
+ */
+export function withHero(
+  message: BotMessage,
+  picture: Readonly<{ name: string; data: Buffer; description?: string }>,
+): BotMessage {
+  const url = `attachment://${picture.name}`;
+  const files = [
+    ...((message.files as { filename: string; data: Buffer }[] | undefined) ?? []),
+    { filename: picture.name, data: picture.data },
+  ];
+  if (isComponentsV2(message)) {
+    const media = {
+      type: 12,
+      items: [
+        { media: { url }, ...(picture.description ? { description: picture.description } : {}) },
+      ],
+    };
+    const components = (message.components ?? []).map(toJson);
+    const index = components.findIndex((component) => component.type === 17);
+    const container = components[index];
+    if (container)
+      components[index] = {
+        ...container,
+        components: [media, ...((container.components as unknown[]) ?? [])],
+      };
+    else components.unshift(media);
+    return { ...message, components, files } as unknown as BotMessage;
+  }
+  const embeds = (message.embeds ?? []).map(toJson);
+  if (embeds[0]) embeds[0] = { ...embeds[0], image: { url } };
+  return { ...message, ...(embeds.length ? { embeds } : {}), files } as unknown as BotMessage;
 }

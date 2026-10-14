@@ -99,6 +99,54 @@ export function selectEmoji(name: EmojiName): { id?: string; name: string; anima
     : { name: EMOJI_FALLBACK[name] };
 }
 
+export type EmojiMention = `<${string}:${string}:${string}>`;
+type ComponentEmoji = { id?: string; name: string; animated: boolean };
+
+const mentionPattern = /^<(a?):([A-Za-z0-9_]{2,32}):(\d{17,20})>$/;
+const unicodeEmojiPattern = /^(?:\p{Extended_Pictographic}|\p{Regional_Indicator})/u;
+
+/**
+ * Ícone de um time, coleção ou pack: o emoji da aplicação gerado da imagem, ou o unicode
+ * cadastrado. Times importados guardam siglas ("FCB") no campo emoji; essas ficam de fora.
+ */
+export function entityIcon(emoji: string): string {
+  const value = emoji.trim();
+  return mentionPattern.test(value) || unicodeEmojiPattern.test(value) ? value : '';
+}
+
+/** `ícone nome`, ou só o nome quando o cadastro não tem emoji de verdade. */
+export function withIcon(emoji: string, name: string): string {
+  const icon = entityIcon(emoji);
+  return icon ? `${icon} ${name}` : name;
+}
+
+/** Emoji de componente (select, botão) do cadastro; `undefined` quando não há emoji. */
+export function entityComponentEmoji(emoji: string): ComponentEmoji | undefined {
+  const icon = entityIcon(emoji);
+  const match = mentionPattern.exec(icon);
+  if (match) return { id: match[3] ?? '', name: match[2] ?? '', animated: match[1] === 'a' };
+  return icon ? { name: icon, animated: false } : undefined;
+}
+
+/** Emoji do cadastro para botões, com um emoji do bot quando ele não tem um próprio. */
+export function entityButtonEmoji(emoji: string, fallback: EmojiName): EmojiName | EmojiMention {
+  const icon = entityIcon(emoji);
+  return mentionPattern.test(icon) ? (icon as EmojiMention) : fallback;
+}
+
+/**
+ * Opção de select de um time, coleção ou pack: o emoji vai no campo `emoji`, o único lugar
+ * onde o Discord desenha emojis em selects; siglas seguem no rótulo como antes.
+ */
+export function entityOption(
+  emoji: string,
+  label: string,
+): { label: string; emoji?: ComponentEmoji } {
+  const component = entityComponentEmoji(emoji);
+  if (component) return { label: label.slice(0, 100), emoji: component };
+  return { label: (emoji.trim() ? `${emoji.trim()} ${label}` : label).slice(0, 100) };
+}
+
 const positionEmojis: Readonly<Record<string, EmojiName>> = {
   GOL: 'goleiro',
   LD: 'defesa',

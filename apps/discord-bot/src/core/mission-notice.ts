@@ -1,6 +1,7 @@
 import type { CompletedMissionDto } from '@futhub/api-client';
 
-import { type BotMessage, botResponse, identityData } from './bot-response.js';
+import { missionCompleteImage } from '../art/scenes.js';
+import { type BotMessage, botResponse, identityData, withHero } from './bot-response.js';
 import { completedMissionsData } from './response-data.js';
 
 /** Follow-up announcing missions the action just completed; `null` when none were completed. */
@@ -10,10 +11,13 @@ export async function missionNotice(
 ): Promise<BotMessage | null> {
   // An API deployed before missions were reported omits the list.
   if (!missions?.length) return null;
-  return botResponse('missoes.completed', {
-    ...identityData(identity),
-    ...completedMissionsData(missions),
-  });
+  return withHero(
+    await botResponse('missoes.completed', {
+      ...identityData(identity),
+      ...completedMissionsData(missions),
+    }),
+    { name: 'missao.png', data: missionCompleteImage(missions), description: 'Missão concluída' },
+  );
 }
 
 /** Sends the notice after the main reply; a failure here must not hide the completed action. */
