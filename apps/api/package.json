@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "ttsc -p tsconfig.build.json",
-    "dev": "pnpm openapi:generate && ttsc -p tsconfig.build.json && concurrently -k \"ttsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"node --env-file=../../.env --watch dist/server.js\"",
+    "dev": "pnpm openapi:generate && ttsc -p tsconfig.build.json && concurrently -k \"ttsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"node --env-file=../../.env --watch-path=dist --watch-path=../../packages/database --watch-path=../../packages/bot-templates dist/server.js\"",
     "openapi:generate": "nestia swagger && node scripts/normalize-openapi.mjs && biome format --write openapi.json",
     "generate:module": "node scripts/generate-module.mjs",
     "generate:usecase": "node scripts/generate-usecase.mjs",

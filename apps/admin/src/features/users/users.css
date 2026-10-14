@@ -1,0 +1,343 @@
+.users-page {
+  color: var(--ink);
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.users-page code {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.9em;
+}
+.users-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+}
+.users-toolbar .users-field {
+  flex: 1;
+  max-width: 420px;
+}
+.users-toolbar output {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.users-field {
+  display: grid;
+  font-size: 13px;
+  gap: 8px;
+  min-width: 0;
+}
+.users-field small {
+  color: var(--muted);
+}
+.users-field--compact input {
+  width: 96px;
+}
+.users-list,
+.users-items {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.users-row {
+  align-items: center;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 12px;
+  color: inherit;
+  display: grid;
+  gap: 12px 20px;
+  grid-template-columns: 44px minmax(160px, 1fr) auto minmax(0, 2fr);
+  padding: 14px 16px;
+  text-decoration: none;
+}
+.users-row:hover {
+  background: var(--canvas-soft);
+}
+.users-row:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.users-row-identity {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.users-row-identity strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.users-row-identity code {
+  color: var(--muted);
+}
+.users-row-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+.users-row-facts,
+.users-hero-facts {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+}
+.users-row-facts dt,
+.users-hero-facts dt {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.users-row-facts dd,
+.users-hero-facts dd {
+  font-variant-numeric: tabular-nums;
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+.user-avatar {
+  border-radius: 50%;
+  height: 44px;
+  object-fit: cover;
+  width: 44px;
+}
+.user-avatar--initial {
+  align-items: center;
+  background: var(--surface-strong);
+  color: var(--body-strong);
+  display: inline-flex;
+  font-weight: 600;
+  justify-content: center;
+}
+.user-badge {
+  background: var(--surface-strong);
+  border-radius: 999px;
+  color: var(--body-strong);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+}
+.user-badge--banned {
+  background: color-mix(in srgb, var(--error) 14%, transparent);
+  color: var(--error);
+}
+.users-back {
+  color: var(--body);
+  font-size: 14px;
+  justify-self: start;
+}
+.users-hero {
+  align-items: center;
+  display: grid;
+  gap: 16px 24px;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.4fr);
+}
+.users-hero .user-avatar {
+  height: 72px;
+  width: 72px;
+}
+.users-hero .user-avatar--initial {
+  font-size: 28px;
+}
+.users-hero .page-title {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.users-hero-ids {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  margin: 4px 0 8px;
+}
+.users-grid {
+  align-items: start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.users-tabs {
+  margin: 0;
+}
+.users-tabs .command-tab {
+  font-variant-numeric: tabular-nums;
+}
+.users-tabs .command-tab:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+.users-tabpanel {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.users-panel {
+  border: 1px solid var(--hairline-strong);
+  border-radius: 12px;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px;
+}
+.users-panel--wide {
+  grid-column: 1 / -1;
+}
+.users-panel[aria-busy="true"] {
+  opacity: 0.7;
+}
+.users-panel > .form-error {
+  margin: 0;
+}
+.users-panel-heading h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+.users-panel-heading h2 span {
+  font-variant-numeric: tabular-nums;
+}
+.users-panel-heading p {
+  color: var(--muted);
+  margin: 0;
+}
+.users-balance {
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  margin: 0;
+}
+.users-fieldset {
+  align-items: end;
+  border: 0;
+  display: grid;
+  gap: 16px 20px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+.users-toggle {
+  align-items: center;
+  display: flex;
+  font-size: 14px;
+  gap: 8px;
+  min-height: 40px;
+}
+.users-toggle input[type="checkbox"] {
+  accent-color: var(--futhub-violet);
+  flex: none;
+  height: 16px;
+  margin: 0;
+  width: 16px;
+}
+.users-toggle--danger {
+  color: var(--error);
+}
+.users-toggle--danger input[type="checkbox"] {
+  accent-color: var(--error);
+}
+.users-actions,
+.users-item-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.users-actions--inline {
+  align-self: end;
+}
+.users-filter {
+  max-width: 360px;
+}
+.users-item {
+  align-items: center;
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+  padding-top: 12px;
+}
+.users-item[aria-busy="true"] {
+  opacity: 0.6;
+}
+.users-item > .form-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+.users-table-wrap {
+  overflow-x: auto;
+}
+.users-table {
+  border-collapse: collapse;
+  font-size: 14px;
+  width: 100%;
+}
+.users-table th,
+.users-table td {
+  border-bottom: 1px solid var(--hairline);
+  padding: 10px 12px 10px 0;
+  text-align: left;
+  vertical-align: middle;
+}
+.users-table thead th {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.users-table tbody th {
+  font-weight: 600;
+}
+.users-table th:last-child,
+.users-table td:last-child {
+  text-align: right;
+}
+.users-table td {
+  font-variant-numeric: tabular-nums;
+}
+.users-amount {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+}
+.users-empty {
+  color: var(--muted);
+  margin: 0;
+}
+@media (max-width: 1100px) {
+  .users-hero {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .users-hero-facts {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 900px) {
+  .users-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .users-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+  .users-row-badges,
+  .users-row-facts {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 768px) {
+  .users-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    row-gap: 12px;
+  }
+  .users-row-facts,
+  .users-hero-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .users-toolbar .users-field {
+    max-width: none;
+  }
+}

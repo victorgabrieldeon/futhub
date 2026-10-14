@@ -1,5 +1,6 @@
 import type * as DatabaseModule from '@futhub/database';
 
+import { displayEmoji } from '../../bot-emojis/entity-emoji.js';
 import type { FilesService } from '../../files/files.service.js';
 import { advanceMissions, missionRewardBalance } from '../../missions/missions.service.js';
 import { cardInventoryCapacity, upsertDiscordUser } from '../../users/user.repository.js';
@@ -99,10 +100,10 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
         basePrice: schema.cardPriceConfigs.price,
         teamId: schema.teams.id,
         teamName: schema.teams.name,
-        teamEmoji: schema.teams.emoji,
+        teamEmoji: displayEmoji(sql, schema.teams),
         collectionId: schema.collections.id,
         collectionName: schema.localizedTextTranslations.content,
-        collectionEmoji: schema.collections.emoji,
+        collectionEmoji: displayEmoji(sql, schema.collections),
       })
       .from(schema.cards)
       .innerJoin(schema.cardStats, eq(schema.cards.statsId, schema.cardStats.id))
@@ -176,7 +177,7 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
 
   async listCatalog(): Promise<ListCatalogResult> {
     const database = await this.loadDatabase();
-    const { and, asc, db, eq, schema } = database;
+    const { and, asc, db, eq, sql, schema } = database;
     const eligible = and(
       eq(schema.cards.contractsBlocked, false),
       eq(schema.collections.contractsBlocked, false),
@@ -187,7 +188,11 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
     );
     const [teams, collections] = await Promise.all([
       db
-        .selectDistinct({ id: schema.teams.id, name: schema.teams.name, emoji: schema.teams.emoji })
+        .selectDistinct({
+          id: schema.teams.id,
+          name: schema.teams.name,
+          emoji: displayEmoji(sql, schema.teams),
+        })
         .from(schema.cards)
         .innerJoin(schema.teams, eq(schema.cards.teamId, schema.teams.id))
         .innerJoin(schema.collections, eq(schema.cards.collectionId, schema.collections.id))
@@ -202,7 +207,7 @@ export class DrizzleCardMarketRepository extends CardMarketRepository {
         .selectDistinct({
           id: schema.collections.id,
           name: schema.localizedTextTranslations.content,
-          emoji: schema.collections.emoji,
+          emoji: displayEmoji(sql, schema.collections),
         })
         .from(schema.cards)
         .innerJoin(schema.collections, eq(schema.cards.collectionId, schema.collections.id))

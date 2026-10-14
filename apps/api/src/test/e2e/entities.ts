@@ -214,6 +214,7 @@ export async function createAdminPackFixture(database: Database): Promise<{
 
 export async function createPackFixture(
   database: Database,
+  options: Readonly<{ probabilities?: boolean; limitPerUser?: number }> = {},
 ): Promise<{ packId: string; cardId: string }> {
   const catalog = await createCardCatalog(database, 'pack');
   const card = await createCard(database, catalog, 'Pack card', 'CA');
@@ -231,13 +232,17 @@ export async function createPackFixture(
       emoji: '📦',
       cardsAmount: 1,
       price: 20,
+      ...(options.limitPerUser === undefined ? {} : { limitPerUser: options.limitPerUser }),
     })
     .returning({ id: database.schema.packs.id });
+  if (!pack) throw new Error('Failed to create test pack.');
+  // Packs created in the admin have no probabilities: any eligible card is drawn.
+  if (options.probabilities === false) return { packId: pack.id, cardId: card.id };
   const [probability] = await database.db
     .insert(database.schema.packProbabilities)
     .values({ name: `e2e ${randomUUID()}`, overall: 80, probability: 1 })
     .returning({ id: database.schema.packProbabilities.id });
-  if (!pack || !probability) throw new Error('Failed to create test pack.');
+  if (!probability) throw new Error('Failed to create test pack.');
   await database.db.insert(database.schema.packProbabilityLinks).values({
     packId: pack.id,
     probabilityId: probability.id,
@@ -398,6 +403,7 @@ export async function createTeamPlayer(database: Database, identity: DiscordIden
       configId: packConfig.id,
       color: '#111111',
       emoji: '📦',
+      imageUrl: 'https://example.com/team-pack.png',
       cardsAmount: 3,
       price: 10,
     })
@@ -562,4 +568,69 @@ export async function createMissionFixture(
     .insert(database.schema.missionRewards)
     .values({ missionId: mission.id, itemId: item.id, tier });
   return { missionId: mission.id, itemId: item.id };
+}
+
+export async function createSoccerFieldFixture(
+  database: Database,
+  name: string,
+): Promise<{ fieldId: string }> {
+  const [text] = await database.db
+    .insert(database.schema.localizedTexts)
+    .values({})
+    .returning({ id: database.schema.localizedTexts.id });
+  if (!text) throw new Error('Failed to create soccer field name.');
+  await database.db
+    .insert(database.schema.localizedTextTranslations)
+    .values({ localizedTextId: text.id, locale: 'pt-BR', content: name });
+  const [field] = await database.db
+    .insert(database.schema.soccerFields)
+    .values({ nameTextId: text.id, color: '#1f9d55' })
+    .returning({ id: database.schema.soccerFields.id });
+  if (!field) throw new Error('Failed to create soccer field.');
+  return { fieldId: field.id };
+}
+
+export async function createTradeFixture(
+  database: Database,
+  input: Readonly<{ senderId: string; recipientId: string; userCardId: string }>,
+): Promise<{ tradeId: string }> {
+  const [trade] = await database.db
+    .insert(database.schema.trades)
+    .values({ senderId: input.senderId, recipientId: input.recipientId })
+    .returning({ id: database.schema.trades.id });
+  if (!trade) throw new Error('Failed to create trade.');
+  await database.db.insert(database.schema.tradeCards).values({
+    tradeId: trade.id,
+    userCardId: input.userCardId,
+    ownerId: input.senderId,
+  });
+  return { tradeId: trade.id };
+}
+
+export async function createEntityEmojiFixture(database: Database) {
+  const catalog = await createCardCatalog(database, 'emoji');
+  const { packId } = await createPackFixture(database);
+  const plainTeam = await createTeamFixture(database, {
+    name: `Plain team ${randomUUID()}`,
+    slug: `plain-team-${randomUUID()}`,
+  });
+  const [teamFile, collectionFile, packFile] = await Promise.all(
+    ['team', 'collection', 'pack'].map((name) =>
+      createFileFixture(database, `emoji/${name}-${randomUUID()}.png`),
+    ),
+  );
+  if (!teamFile || !collectionFile || !packFile) throw new Error('Failed to create emoji files.');
+  await database.db
+    .update(database.schema.teams)
+    .set({ logoFileId: teamFile.id })
+    .where(database.eq(database.schema.teams.id, catalog.teamId));
+  await database.db
+    .update(database.schema.collections)
+    .set({ imageFileId: collectionFile.id })
+    .where(database.eq(database.schema.collections.id, catalog.collectionId));
+  await database.db
+    .update(database.schema.packs)
+    .set({ imageFileId: packFile.id, name: 'Pack Lendário' })
+    .where(database.eq(database.schema.packs.id, packId));
+  return { ...catalog, packId, plainTeamId: plainTeam.id, teamFile, collectionFile, packFile };
 }

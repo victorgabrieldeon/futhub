@@ -6,16 +6,17 @@
  * OpenAPI spec version: 1.0
  */
 import { request } from "./request.js";
-export interface ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber {
+export interface ReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumber {
   id: string;
   name: string;
+  emoji: string;
   price: number;
   imageUrl: string;
   cardsPerPack: number;
 }
 
-export interface ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber {
-  packs: ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber[];
+export interface ReadonlypacksReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber {
+  packs: ReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumber[];
   page: number;
   totalPages: number;
 }
@@ -71,6 +72,14 @@ export const TeamCardHolderPosition = {
   ZAG: "ZAG",
 } as const;
 
+/**
+ * Time real da carta (clube do jogador), não o clube do usuário.
+ */
+export interface TeamClub {
+  name: string;
+  emoji: string;
+}
+
 export interface TeamCollection {
   id: string;
   name: string;
@@ -85,6 +94,7 @@ export interface TeamCard {
   overall: number;
   position: TeamCardPosition;
   secondaryPositions: TeamCardSecondaryPositionsItem[];
+  team: TeamClub;
   collection: TeamCollection;
   favorite: boolean;
   holder: boolean;
@@ -143,6 +153,9 @@ export interface TeamPack {
   id: string;
   name: string;
   emoji: string;
+  cardsAmount: number;
+  /** @nullable */
+  imageUrl: string | null;
   quantity: number;
 }
 
@@ -867,11 +880,25 @@ export type OpenPackBody = {
   identity: OpenPackBodyIdentity;
 };
 
+export type OpenPack200CardsItemCardTeam = {
+  name: string;
+  emoji: string;
+};
+
+export type OpenPack200CardsItemCardCollection = {
+  name: string;
+  emoji: string;
+};
+
 export type OpenPack200CardsItemCard = {
   id: string;
   overall: number;
   name: string;
   position: string;
+  /** @nullable */
+  imageUrl: string | null;
+  team: OpenPack200CardsItemCardTeam;
+  collection: OpenPack200CardsItemCardCollection;
 };
 
 export type OpenPack200CardsItem = {
@@ -2175,6 +2202,8 @@ export type GetTeamBody = {
   /** @nullable */
   collectionId: string | null;
   sort: GetTeamBodySort;
+  /** Mantém só cartas que podem ser vendidas: reservas não favoritas com preço. */
+  sellable: boolean;
 };
 
 export type SetTeamFormationBodyIdentity = {
@@ -4040,6 +4069,550 @@ export type DeleteV1AdminRedeemCodesId200 = {
   reward: DeleteV1AdminRedeemCodesId200Reward;
 };
 
+export type GetV1AdminUsersParams = {
+  query?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+export type GetV1AdminUsers200ItemsItem = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GetV1AdminUsers200 = {
+  items: GetV1AdminUsers200ItemsItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type GetV1AdminUsersOptions200CardsItem = {
+  id: string;
+  name: string;
+};
+
+export type GetV1AdminUsersOptions200PacksItem = {
+  id: string;
+  name: string;
+};
+
+export type GetV1AdminUsersOptions200FieldsItem = {
+  id: string;
+  name: string;
+};
+
+export type GetV1AdminUsersOptions200 = {
+  cards: GetV1AdminUsersOptions200CardsItem[];
+  packs: GetV1AdminUsersOptions200PacksItem[];
+  fields: GetV1AdminUsersOptions200FieldsItem[];
+};
+
+export type GetV1AdminUsersId200CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type GetV1AdminUsersId200PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type GetV1AdminUsersId200FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type GetV1AdminUsersId200TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type GetV1AdminUsersId200 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: GetV1AdminUsersId200CardsItem[];
+  packs: GetV1AdminUsersId200PacksItem[];
+  fields: GetV1AdminUsersId200FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: GetV1AdminUsersId200TransactionsItem[];
+};
+
+export type PutV1AdminUsersIdBody = {
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+};
+
+export type PutV1AdminUsersId200CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type PutV1AdminUsersId200PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type PutV1AdminUsersId200FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type PutV1AdminUsersId200TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type PutV1AdminUsersId200 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: PutV1AdminUsersId200CardsItem[];
+  packs: PutV1AdminUsersId200PacksItem[];
+  fields: PutV1AdminUsersId200FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: PutV1AdminUsersId200TransactionsItem[];
+};
+
+export type PostV1AdminUsersIdBalanceBody = {
+  /** Signed adjustment applied atomically on top of the current balance. */
+  amount: number;
+};
+
+export type PostV1AdminUsersIdBalance201CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type PostV1AdminUsersIdBalance201PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type PostV1AdminUsersIdBalance201FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type PostV1AdminUsersIdBalance201TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type PostV1AdminUsersIdBalance201 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: PostV1AdminUsersIdBalance201CardsItem[];
+  packs: PostV1AdminUsersIdBalance201PacksItem[];
+  fields: PostV1AdminUsersIdBalance201FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: PostV1AdminUsersIdBalance201TransactionsItem[];
+};
+
+export type PostV1AdminUsersIdCardsBody = {
+  cardId: string;
+  quantity: number;
+};
+
+export type PostV1AdminUsersIdCards201CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type PostV1AdminUsersIdCards201PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type PostV1AdminUsersIdCards201FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type PostV1AdminUsersIdCards201TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type PostV1AdminUsersIdCards201 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: PostV1AdminUsersIdCards201CardsItem[];
+  packs: PostV1AdminUsersIdCards201PacksItem[];
+  fields: PostV1AdminUsersIdCards201FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: PostV1AdminUsersIdCards201TransactionsItem[];
+};
+
+export type DeleteV1AdminUsersIdCardsUserCardId200CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type DeleteV1AdminUsersIdCardsUserCardId200PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type DeleteV1AdminUsersIdCardsUserCardId200FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type DeleteV1AdminUsersIdCardsUserCardId200TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type DeleteV1AdminUsersIdCardsUserCardId200 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: DeleteV1AdminUsersIdCardsUserCardId200CardsItem[];
+  packs: DeleteV1AdminUsersIdCardsUserCardId200PacksItem[];
+  fields: DeleteV1AdminUsersIdCardsUserCardId200FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: DeleteV1AdminUsersIdCardsUserCardId200TransactionsItem[];
+};
+
+export type PutV1AdminUsersIdPacksPackIdBody = {
+  /** Absolute quantity owned; zero removes the Pack from the inventory. */
+  quantity: number;
+};
+
+export type PutV1AdminUsersIdPacksPackId200CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type PutV1AdminUsersIdPacksPackId200PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type PutV1AdminUsersIdPacksPackId200FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type PutV1AdminUsersIdPacksPackId200TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type PutV1AdminUsersIdPacksPackId200 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: PutV1AdminUsersIdPacksPackId200CardsItem[];
+  packs: PutV1AdminUsersIdPacksPackId200PacksItem[];
+  fields: PutV1AdminUsersIdPacksPackId200FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: PutV1AdminUsersIdPacksPackId200TransactionsItem[];
+};
+
+export type PutV1AdminUsersIdFieldsFieldId200CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type PutV1AdminUsersIdFieldsFieldId200PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type PutV1AdminUsersIdFieldsFieldId200FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type PutV1AdminUsersIdFieldsFieldId200TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type PutV1AdminUsersIdFieldsFieldId200 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: PutV1AdminUsersIdFieldsFieldId200CardsItem[];
+  packs: PutV1AdminUsersIdFieldsFieldId200PacksItem[];
+  fields: PutV1AdminUsersIdFieldsFieldId200FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: PutV1AdminUsersIdFieldsFieldId200TransactionsItem[];
+};
+
+export type DeleteV1AdminUsersIdFieldsFieldId200CardsItem = {
+  id: string;
+  cardId: string;
+  name: string;
+  overall: number;
+  position: string;
+  holder: boolean;
+  captain: boolean;
+  favorite: boolean;
+  /** Cards referenced by a trade keep that history and cannot be removed. */
+  inTrade: boolean;
+  claimedBy: string;
+  claimedAt: string;
+};
+
+export type DeleteV1AdminUsersIdFieldsFieldId200PacksItem = {
+  packId: string;
+  name: string;
+  quantity: number;
+};
+
+export type DeleteV1AdminUsersIdFieldsFieldId200FieldsItem = {
+  fieldId: string;
+  name: string;
+};
+
+export type DeleteV1AdminUsersIdFieldsFieldId200TransactionsItem = {
+  id: string;
+  type: string;
+  amount: number;
+  createdAt: string;
+};
+
+export type DeleteV1AdminUsersIdFieldsFieldId200 = {
+  id: string;
+  discordUserId: string;
+  name: string;
+  /** @nullable */
+  avatarUrl: string | null;
+  balance: number;
+  level: number;
+  xp: number;
+  booster: boolean;
+  banned: boolean;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+  language: string;
+  nextLevelXp: number;
+  maxCards: number;
+  /** @nullable */
+  stadiumLevel: number | null;
+  cards: DeleteV1AdminUsersIdFieldsFieldId200CardsItem[];
+  packs: DeleteV1AdminUsersIdFieldsFieldId200PacksItem[];
+  fields: DeleteV1AdminUsersIdFieldsFieldId200FieldsItem[];
+  /** Most recent balance movements, newest first. */
+  transactions: DeleteV1AdminUsersIdFieldsFieldId200TransactionsItem[];
+};
+
 export const getListPackCatalogUrl = () => {
   return `/v1/packs`;
 };
@@ -4072,8 +4645,8 @@ export const getGetPackShopUrl = (params?: GetPackShopParams) => {
 export const getPackShop = async (
   params?: GetPackShopParams,
   options?: Parameters<typeof request>[1],
-): Promise<ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber> => {
-  return request<ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber>(
+): Promise<ReadonlypacksReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber> => {
+  return request<ReadonlypacksReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber>(
     getGetPackShopUrl(params),
     {
       ...options,
@@ -4089,8 +4662,8 @@ export const getInspectPackUrl = (packId: string) => {
 export const inspectPack = async (
   packId: string,
   options?: Parameters<typeof request>[1],
-): Promise<ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber> => {
-  return request<ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber>(
+): Promise<ReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumber> => {
+  return request<ReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumber>(
     getInspectPackUrl(packId),
     {
       ...options,
@@ -5619,6 +6192,203 @@ export const deleteV1AdminRedeemCodesId = async (
 ): Promise<DeleteV1AdminRedeemCodesId200> => {
   return request<DeleteV1AdminRedeemCodesId200>(
     getDeleteV1AdminRedeemCodesIdUrl(id),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getGetV1AdminUsersUrl = (params?: GetV1AdminUsersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/v1/admin/users?${stringifiedParams}`
+    : `/v1/admin/users`;
+};
+
+export const getV1AdminUsers = async (
+  params?: GetV1AdminUsersParams,
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminUsers200> => {
+  return request<GetV1AdminUsers200>(getGetV1AdminUsersUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetV1AdminUsersOptionsUrl = () => {
+  return `/v1/admin/users/options`;
+};
+
+export const getV1AdminUsersOptions = async (
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminUsersOptions200> => {
+  return request<GetV1AdminUsersOptions200>(getGetV1AdminUsersOptionsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetV1AdminUsersIdUrl = (id: string) => {
+  return `/v1/admin/users/${id}`;
+};
+
+export const getV1AdminUsersId = async (
+  id: string,
+  options?: Parameters<typeof request>[1],
+): Promise<GetV1AdminUsersId200> => {
+  return request<GetV1AdminUsersId200>(getGetV1AdminUsersIdUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getPutV1AdminUsersIdUrl = (id: string) => {
+  return `/v1/admin/users/${id}`;
+};
+
+export const putV1AdminUsersId = async (
+  id: string,
+  putV1AdminUsersIdBody: PutV1AdminUsersIdBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PutV1AdminUsersId200> => {
+  return request<PutV1AdminUsersId200>(getPutV1AdminUsersIdUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(putV1AdminUsersIdBody),
+  });
+};
+
+export const getPostV1AdminUsersIdBalanceUrl = (id: string) => {
+  return `/v1/admin/users/${id}/balance`;
+};
+
+export const postV1AdminUsersIdBalance = async (
+  id: string,
+  postV1AdminUsersIdBalanceBody: PostV1AdminUsersIdBalanceBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PostV1AdminUsersIdBalance201> => {
+  return request<PostV1AdminUsersIdBalance201>(
+    getPostV1AdminUsersIdBalanceUrl(id),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(postV1AdminUsersIdBalanceBody),
+    },
+  );
+};
+
+export const getPostV1AdminUsersIdCardsUrl = (id: string) => {
+  return `/v1/admin/users/${id}/cards`;
+};
+
+export const postV1AdminUsersIdCards = async (
+  id: string,
+  postV1AdminUsersIdCardsBody: PostV1AdminUsersIdCardsBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PostV1AdminUsersIdCards201> => {
+  return request<PostV1AdminUsersIdCards201>(
+    getPostV1AdminUsersIdCardsUrl(id),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(postV1AdminUsersIdCardsBody),
+    },
+  );
+};
+
+export const getDeleteV1AdminUsersIdCardsUserCardIdUrl = (
+  id: string,
+  userCardId: string,
+) => {
+  return `/v1/admin/users/${id}/cards/${userCardId}`;
+};
+
+export const deleteV1AdminUsersIdCardsUserCardId = async (
+  id: string,
+  userCardId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<DeleteV1AdminUsersIdCardsUserCardId200> => {
+  return request<DeleteV1AdminUsersIdCardsUserCardId200>(
+    getDeleteV1AdminUsersIdCardsUserCardIdUrl(id, userCardId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getPutV1AdminUsersIdPacksPackIdUrl = (
+  id: string,
+  packId: string,
+) => {
+  return `/v1/admin/users/${id}/packs/${packId}`;
+};
+
+export const putV1AdminUsersIdPacksPackId = async (
+  id: string,
+  packId: string,
+  putV1AdminUsersIdPacksPackIdBody: PutV1AdminUsersIdPacksPackIdBody,
+  options?: Parameters<typeof request>[1],
+): Promise<PutV1AdminUsersIdPacksPackId200> => {
+  return request<PutV1AdminUsersIdPacksPackId200>(
+    getPutV1AdminUsersIdPacksPackIdUrl(id, packId),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(putV1AdminUsersIdPacksPackIdBody),
+    },
+  );
+};
+
+export const getPutV1AdminUsersIdFieldsFieldIdUrl = (
+  id: string,
+  fieldId: string,
+) => {
+  return `/v1/admin/users/${id}/fields/${fieldId}`;
+};
+
+export const putV1AdminUsersIdFieldsFieldId = async (
+  id: string,
+  fieldId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<PutV1AdminUsersIdFieldsFieldId200> => {
+  return request<PutV1AdminUsersIdFieldsFieldId200>(
+    getPutV1AdminUsersIdFieldsFieldIdUrl(id, fieldId),
+    {
+      ...options,
+      method: "PUT",
+    },
+  );
+};
+
+export const getDeleteV1AdminUsersIdFieldsFieldIdUrl = (
+  id: string,
+  fieldId: string,
+) => {
+  return `/v1/admin/users/${id}/fields/${fieldId}`;
+};
+
+export const deleteV1AdminUsersIdFieldsFieldId = async (
+  id: string,
+  fieldId: string,
+  options?: Parameters<typeof request>[1],
+): Promise<DeleteV1AdminUsersIdFieldsFieldId200> => {
+  return request<DeleteV1AdminUsersIdFieldsFieldId200>(
+    getDeleteV1AdminUsersIdFieldsFieldIdUrl(id, fieldId),
     {
       ...options,
       method: "DELETE",

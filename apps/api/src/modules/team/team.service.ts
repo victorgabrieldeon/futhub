@@ -1,5 +1,6 @@
 import type * as DatabaseModule from '@futhub/database';
 
+import { displayEmoji } from '../bot-emojis/entity-emoji.js';
 import { type FilesService, imageFile } from '../files/files.service.js';
 import { lucroCommand } from '../lucro/use-cases/resgatar-lucro/resgatar-lucro.types.js';
 import { getXpForLevel } from '../progression/progression.js';
@@ -307,7 +308,7 @@ export class TeamService {
     balance: number,
     request: TeamViewRequest,
   ): Promise<TeamResponse> {
-    const { and, asc, db, eq, gte, schema } = database;
+    const { and, asc, db, eq, gte, schema, sql } = database;
     const now = new Date();
     const translationJoin = and(
       eq(schema.localizedTextTranslations.localizedTextId, schema.collections.nameTextId),
@@ -343,9 +344,10 @@ export class TeamService {
             overall: schema.cards.overall,
             position: schema.cards.position,
             teamName: schema.teams.name,
+            teamEmoji: displayEmoji(sql, schema.teams),
             collectionId: schema.collections.id,
             collectionName: schema.localizedTextTranslations.content,
-            collectionEmoji: schema.collections.emoji,
+            collectionEmoji: displayEmoji(sql, schema.collections),
             primaryColor: schema.collections.primaryColor,
             secondaryColor: schema.collections.secondaryColor,
             pace: schema.cardStats.pace,
@@ -377,7 +379,10 @@ export class TeamService {
           .select({
             id: schema.packs.id,
             name: schema.packs.name,
-            emoji: schema.packs.emoji,
+            emoji: displayEmoji(sql, schema.packs),
+            cardsAmount: schema.packs.cardsAmount,
+            imageFileId: schema.packs.imageFileId,
+            imageUrl: schema.packs.imageUrl,
             quantity: schema.userPacks.quantity,
           })
           .from(schema.userPacks)
@@ -431,9 +436,10 @@ export class TeamService {
         positions.map(({ position }) => position),
       );
     }
-    const [imageUrls, generatedImageUrls] = await Promise.all([
+    const [imageUrls, generatedImageUrls, packImageUrls] = await Promise.all([
       this.files.urls(rows.flatMap(({ imageFileId }) => (imageFileId ? [imageFileId] : []))),
       this.ensureCardImages(database, rows),
+      this.files.urls(packs.flatMap(({ imageFileId }) => (imageFileId ? [imageFileId] : []))),
     ]);
     const multiplier = marketConfig?.sellMultiplierBasisPoints ?? 0;
     const cards: TeamCard[] = rows.map((row) => ({
@@ -447,6 +453,7 @@ export class TeamService {
       overall: row.overall,
       position: row.position,
       secondaryPositions: secondary.get(row.userCardId) ?? [],
+      team: { name: row.teamName, emoji: row.teamEmoji },
       collection: {
         id: row.collectionId,
         name: row.collectionName ?? 'Sem coleção',
@@ -472,6 +479,11 @@ export class TeamService {
           card.secondaryPositions.includes(request.position),
       )
       .filter((card) => !request.collectionId || card.collection.id === request.collectionId)
+      .filter(
+        (card) =>
+          !request.sellable ||
+          (!card.holder && !card.favorite && !card.captain && card.sellPrice > 0),
+      )
       .sort((left, right) => {
         if (request.sort === 'name') return left.name.localeCompare(right.name);
         if (request.sort === 'recent') return right.claimedAt.localeCompare(left.claimedAt);
@@ -502,7 +514,10 @@ export class TeamService {
         pageSize,
         totalPages,
       },
-      packs,
+      packs: packs.map(({ imageFileId, imageUrl, ...pack }) => ({
+        ...pack,
+        imageUrl: (imageFileId ? packImageUrls.get(imageFileId) : undefined) ?? imageUrl ?? null,
+      })),
       collections,
       profile: {
         level: progress.level,

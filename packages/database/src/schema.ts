@@ -137,6 +137,7 @@ export const cardClaimOrigin = pgEnum('card_claim_origin', [
   'mission',
   'hire',
   'reward',
+  'admin',
 ]);
 
 export const rankedQueueStatus = pgEnum('ranked_queue_status', ['waiting', 'matched']);
@@ -208,6 +209,9 @@ export const teams = pgTable('teams', {
   colors: jsonb('colors').$type<string[]>().notNull().default([]),
   logoFileId: uuid('logo_file_id').references(() => files.id, { onDelete: 'restrict' }),
   imageUrl: varchar('image_url', { length: 2048 }),
+  // Emoji da aplicação no Discord gerado da imagem; ver EntityEmojisService na API.
+  discordEmoji: varchar('discord_emoji', { length: 64 }),
+  discordEmojiFileId: uuid('discord_emoji_file_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -228,6 +232,9 @@ export const collections = pgTable('collections', {
   overlayUrl: varchar('overlay_url', { length: 2048 }),
   bannerUrl: varchar('banner_url', { length: 2048 }),
   contractsBlocked: boolean('contracts_blocked').notNull().default(false),
+  // Emoji da aplicação no Discord gerado da imagem; ver EntityEmojisService na API.
+  discordEmoji: varchar('discord_emoji', { length: 64 }),
+  discordEmojiFileId: uuid('discord_emoji_file_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
@@ -500,6 +507,8 @@ export const packs = pgTable(
     imageUrl: varchar('image_url', { length: 2048 }),
     color: varchar('color', { length: 16 }).notNull(),
     emoji: varchar('emoji', { length: 255 }).notNull(),
+    discordEmoji: varchar('discord_emoji', { length: 64 }),
+    discordEmojiFileId: uuid('discord_emoji_file_id'),
     cardsAmount: integer('cards_amount').notNull().default(3),
     price: integer('price').notNull().default(15),
     canBuy: boolean('can_buy').notNull().default(true),
@@ -690,6 +699,7 @@ export const transactionType = pgEnum('transaction_type', [
   'trade',
   'reward',
   'redeem',
+  'admin',
 ]);
 
 export const divisions = pgTable('divisions', {

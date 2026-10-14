@@ -6,6 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { EntityEmojisService } from '../bot-emojis/entity-emojis.service.js';
 import { type FileDto, FilesService, imageFile } from '../files/files.service.js';
 import { renderTeamCardImage } from '../team/team-card-image.js';
 import type {
@@ -81,6 +82,7 @@ export class SquadImportService {
     @Inject(AdminCardsService) private readonly cards: AdminCardsService,
     @Inject(FilesService) private readonly files: FilesService,
     @Inject(FootyLogosService) private readonly footyLogos: FootyLogosService,
+    @Inject(EntityEmojisService) private readonly entityEmojis: EntityEmojisService,
   ) {}
 
   async clubs(query: string): Promise<SquadImportClub[]> {
@@ -317,6 +319,7 @@ export class SquadImportService {
           .set({ logoFileId: crest.id, updatedAt: new Date() })
           .where(database.eq(database.schema.teams.id, teamId));
         logoFileId = crest.id;
+        await this.entityEmojis.sync('team', teamId);
       }
       return logoFileId ? await this.files.read(logoFileId) : undefined;
     } catch {

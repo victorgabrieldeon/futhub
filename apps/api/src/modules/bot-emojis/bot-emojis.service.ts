@@ -14,6 +14,7 @@ const discordApi = 'https://discord.com/api/v10';
 export const botEmojiLimit = 2000;
 const maxImageBytes = 256 * 1024;
 const cacheTtlMs = 60_000;
+const maxRateLimitRetries = 5;
 const signatures: Record<string, (bytes: Buffer) => boolean> = {
   png: (bytes) => bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])),
   jpeg: (bytes) => bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff,
@@ -24,6 +25,12 @@ const signatures: Record<string, (bytes: Buffer) => boolean> = {
 };
 
 type DiscordEmoji = { id: string; name: string; animated?: boolean };
+
+export class BotEmojiLimitException extends BadRequestException {
+  constructor() {
+    super(`O bot atingiu o limite de ${botEmojiLimit} emojis.`);
+  }
+}
 
 export function validateBotEmojiImage(image: string): void {
   const match = /^data:image\/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/]+={0,2})$/.exec(image);
@@ -52,6 +59,10 @@ function snowflake(id: string): string {
 export class BotEmojisService {
   private cache: { expiresAt: number; emojis: BotEmojiDto[] } | undefined;
 
+  isConfigured(): boolean {
+    return Boolean(process.env.DISCORD_TOKEN?.trim() && process.env.DISCORD_CLIENT_ID?.trim());
+  }
+
   private config(): { token: string; applicationId: string } {
     const token = process.env.DISCORD_TOKEN?.trim();
     const applicationId = process.env.DISCORD_CLIENT_ID?.trim();
@@ -65,14 +76,23 @@ export class BotEmojisService {
   private async discord<T>(path: string, init: RequestInit = {}): Promise<T> {
     const { token, applicationId } = this.config();
     let response: Response;
-    try {
-      response = await fetch(`${discordApi}/applications/${applicationId}/emojis${path}`, {
-        ...init,
-        headers: { authorization: `Bot ${token}`, 'content-type': 'application/json' },
-        signal: AbortSignal.timeout(10_000),
-      });
-    } catch {
-      throw new BadGatewayException('Não foi possível conectar ao Discord.');
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        response = await fetch(`${discordApi}/applications/${applicationId}/emojis${path}`, {
+          ...init,
+          headers: { authorization: `Bot ${token}`, 'content-type': 'application/json' },
+          signal: AbortSignal.timeout(10_000),
+        });
+      } catch {
+        throw new BadGatewayException('Não foi possível conectar ao Discord.');
+      }
+      if (response.status !== 429 || attempt >= maxRateLimitRetries) break;
+      // Criar emojis em lote (retroativo de times, coleções e packs) esbarra no rate limit.
+      const { retry_after: retryAfter } = (await response.json().catch(() => ({}))) as {
+        retry_after?: unknown;
+      };
+      const seconds = typeof retryAfter === 'number' && retryAfter > 0 ? retryAfter : 1;
+      await new Promise((resolve) => setTimeout(resolve, Math.min(seconds, 60) * 1_000));
     }
     if (response.status === 204) return undefined as T;
     const body = (await response.json().catch(() => null)) as
@@ -82,8 +102,7 @@ export class BotEmojisService {
     if (response.ok) return body as T;
     const error = (body ?? {}) as { code?: unknown; message?: unknown };
     if (response.status === 404) throw new NotFoundException('Emoji não encontrado.');
-    if (error.code === 30008)
-      throw new BadRequestException(`O bot atingiu o limite de ${botEmojiLimit} emojis.`);
+    if (error.code === 30008) throw new BotEmojiLimitException();
     if (response.status === 400)
       throw new BadRequestException(
         `Discord recusou o emoji${typeof error.message === 'string' ? `: ${error.message}` : '.'}`,
@@ -112,6 +131,12 @@ export class BotEmojisService {
     const { emojis } = await this.list();
     if (emojis.some((emoji) => emoji.name.toLowerCase() === name.toLowerCase()))
       throw new ConflictException(`Já existe um emoji chamado ${name}.`);
+    return this.upload(name, image);
+  }
+
+  /** Sobe o emoji sem conferir nomes; quem chama garante a unicidade. */
+  async upload(name: string, image: string): Promise<BotEmojiDto> {
+    validateBotEmojiImage(image);
     const created = await this.discord<DiscordEmoji>('', {
       method: 'POST',
       body: JSON.stringify({ name, image }),

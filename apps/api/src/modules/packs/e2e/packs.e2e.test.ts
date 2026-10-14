@@ -63,15 +63,112 @@ test('compra e abre pack persistindo carta e progressão', async () => {
   expect(cards[0]?.cardId).toBe(cardId);
 });
 
+test('abre pack sem probabilidades sorteando entre as cartas elegíveis', async () => {
+  if (!context) throw new Error('E2E context was not initialized.');
+  const { app, database } = context;
+  const { packId, cardId } = await createPackFixture(database, { probabilities: false });
+  // Sem filtro, o sorteio pega qualquer carta elegível, inclusive as de outros testes.
+  const [pack] = await database.db
+    .select({ configId: database.schema.packs.configId })
+    .from(database.schema.packs)
+    .where(database.eq(database.schema.packs.id, packId));
+  await database.db
+    .insert(database.schema.packConfigOnlyCards)
+    .values({ configId: pack?.configId ?? '', cardId });
+  // A arte do card vai junto com a carta para o bot desenhar a abertura.
+  await database.db
+    .update(database.schema.cards)
+    .set({ imageUrl: 'https://cdn.test/card.png' })
+    .where(database.eq(database.schema.cards.id, cardId));
+  // Time com imagem vira emoji do Discord; a coleção sem imagem segue com o unicode.
+  const [card] = await database.db
+    .select({ teamId: database.schema.cards.teamId })
+    .from(database.schema.cards)
+    .where(database.eq(database.schema.cards.id, cardId));
+  const teamEmoji = '<:tm_pack_team_ab12cd:300000000000000009>';
+  await database.db
+    .update(database.schema.teams)
+    .set({ discordEmoji: teamEmoji })
+    .where(database.eq(database.schema.teams.id, card?.teamId ?? ''));
+  const player = { ...identity, id: 'e2e-pack-no-probabilities' };
+  await createUser(database, player, 100);
+  const headers = { authorization: `Bearer ${internalToken}` };
+
+  const purchase = await app.inject({
+    method: 'POST',
+    url: `/v1/packs/${packId}/purchase`,
+    headers,
+    payload: { identity: player },
+  });
+  expect(purchase.statusCode).toBe(200);
+  const open = await app.inject({
+    method: 'POST',
+    url: `/v1/packs/${packId}/open`,
+    headers,
+    payload: { identity: player },
+  });
+  expect(open.statusCode).toBe(200);
+  expect(open.json().cards).toMatchObject([
+    {
+      card: {
+        id: cardId,
+        imageUrl: 'https://cdn.test/card.png',
+        team: { name: expect.stringMatching(/^pack team /), emoji: teamEmoji },
+        collection: { name: expect.stringMatching(/^pack collection /), emoji: '⚽' },
+      },
+    },
+  ]);
+
+  const user = await database.db.query.users.findFirst({
+    where: database.eq(database.schema.users.discordUserId, player.id),
+  });
+  if (!user) throw new Error('E2E user was not persisted.');
+  const cards = await database.db.query.userCards.findMany({
+    where: database.eq(database.schema.userCards.userId, user.id),
+  });
+  expect(cards.map((card) => card.cardId)).toEqual([cardId]);
+});
+
+test('recusa compra acima do limite com 400 explicando a regra', async () => {
+  if (!context) throw new Error('E2E context was not initialized.');
+  const { app, database } = context;
+  const { packId } = await createPackFixture(database, { limitPerUser: 1 });
+  const player = { ...identity, id: 'e2e-pack-limit' };
+  await createUser(database, player, 100);
+  const buy = () =>
+    app.inject({
+      method: 'POST',
+      url: `/v1/packs/${packId}/purchase`,
+      headers: { authorization: `Bearer ${internalToken}` },
+      payload: { identity: player },
+    });
+
+  expect((await buy()).statusCode).toBe(200);
+  const refused = await buy();
+  expect(refused.statusCode).toBe(400);
+  expect(refused.json()).toMatchObject({ message: 'Pack limit reached.' });
+
+  const user = await database.db.query.users.findFirst({
+    where: database.eq(database.schema.users.discordUserId, player.id),
+  });
+  expect(user?.saldo).toBe(80);
+});
+
 test('lista na loja apenas packs disponíveis para compra', async () => {
   if (!context) throw new Error('E2E context was not initialized.');
   const { app, database } = context;
   const { packId } = await createPackFixture(database);
   const { packId: hiddenPackId } = await createPackFixture(database);
+  const { packId: linkedPackId } = await createPackFixture(database);
   await database.db
     .update(database.schema.packs)
     .set({ canBuy: false })
     .where(database.eq(database.schema.packs.id, hiddenPackId));
+  const packEmoji = '<:pk_e2e_pack_ab12cd:300000000000000010>';
+  await database.db
+    .update(database.schema.packs)
+    .set({ discordEmoji: packEmoji })
+    .where(database.eq(database.schema.packs.id, linkedPackId));
 
   const response = await app.inject({
     method: 'GET',
@@ -91,6 +188,18 @@ test('lista na loja apenas packs disponíveis para compra', async () => {
     }),
   );
   expect(response.json()).not.toContainEqual(expect.objectContaining({ id: hiddenPackId }));
+  expect(response.json()).toContainEqual(
+    expect.objectContaining({ id: linkedPackId, emoji: packEmoji }),
+  );
+
+  // O detalhe da loja também usa o emoji gerado da imagem do pack.
+  const inspected = await app.inject({
+    method: 'GET',
+    url: `/v1/packs/${linkedPackId}`,
+    headers: { authorization: `Bearer ${internalToken}` },
+  });
+  expect(inspected.statusCode, inspected.body).toBe(200);
+  expect(inspected.json()).toMatchObject({ id: linkedPackId, emoji: packEmoji });
 });
 
 test('lista no catálogo a arte do pack enviada ou externa', async () => {

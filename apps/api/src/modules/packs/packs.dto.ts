@@ -26,6 +26,7 @@ export type PackCatalogItem = z.infer<typeof PackCatalogItemSchema>;
 export type PackShopItemDto = Readonly<{
   id: string;
   name: string;
+  emoji: string;
   price: number;
   imageUrl: string;
   cardsPerPack: number;
@@ -58,6 +59,9 @@ export const OpenPackResponseSchema = z.object({
         overall: z.number(),
         name: z.string(),
         position: z.string(),
+        imageUrl: z.string().nullable(),
+        team: z.object({ name: z.string(), emoji: z.string() }),
+        collection: z.object({ name: z.string(), emoji: z.string() }),
       }),
     }),
   ),

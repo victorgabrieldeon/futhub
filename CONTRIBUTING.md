@@ -18,7 +18,7 @@ corepack enable
 pnpm dev:devspace
 ```
 
-DevSpace constrói imagem local, aplica manifests Kubernetes, inicia PostgreSQL e MinIO, aplica migrations e conecta sync/logs dos pods. Para encerrar:
+DevSpace constrói imagem local, aplica manifests Kubernetes, inicia PostgreSQL e MinIO, aplica migrations e conecta sync/logs dos pods de todas as aplicações: API, admin, player, bot do Discord e Caddy. O bot exige `DISCORD_TOKEN` e `DISCORD_CLIENT_ID` no `.env`. Para encerrar:
 
 ```bash
 pnpm dev:devspace:down

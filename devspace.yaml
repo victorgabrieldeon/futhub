@@ -37,18 +37,26 @@ pipelines:
     create_deployments --all
 
 dev:
+  # The dev image goes stale, so each process only starts after the initial sync
+  # (startContainer), running the synced package.json and code instead of the image's.
+  # Each pod has its own /app: dist folders are not synced, so every pod rebuilds only the
+  # workspace packages it imports. Package builds overwrite dist in place (no rm -rf) so the
+  # dev watchers keep tracking it.
   api:
     labelSelector:
       app.kubernetes.io/name: futhub
       app.kubernetes.io/component: api
     logs: {}
-    sync: &workspace-sync
+    command: [/bin/sh, -c, 'pnpm --filter @futhub/database db:migrate && pnpm --filter @futhub/api dev']
+    sync:
       - path: ./:/app
+        startContainer: true
         excludeFile: .devspaceignore
         initialSync: preferLocal
         onUpload:
           exec:
-            - name: install-workspace-dependencies
+            - &install-workspace-dependencies
+              name: install-workspace-dependencies
               command: corepack enable && pnpm install --offline --no-frozen-lockfile
               onChange:
                 - package.json
@@ -60,17 +68,20 @@ dev:
               command: pnpm --filter @futhub/database build
               onChange:
                 - packages/database/src/**
-            - name: build-api-client-package
-              command: pnpm --filter @futhub/api-client build
+            # The startup command only migrates once; apply migrations synced afterwards.
+            - name: apply-database-migrations
+              command: pnpm --filter @futhub/database db:migrate
               onChange:
-                - packages/api-client/src/**
-            - name: build-bot-templates-package
-              command: pnpm --filter @futhub/bot-templates build
+                - packages/database/drizzle/**
+            - &build-bot-templates-package
+              name: build-bot-templates-package
+              command: pnpm --filter @futhub/bot-templates exec tsc -p tsconfig.build.json
               onChange:
                 - packages/bot-templates/package.json
                 - packages/bot-templates/src/**
+            # ttsc --watch already rebuilds the API; only the OpenAPI contract needs a refresh.
             - name: regenerate-api-contract
-              command: pnpm --filter @futhub/api openapi:generate && pnpm --filter @futhub/api build
+              command: pnpm --filter @futhub/api openapi:generate
               onChange:
                 - apps/api/src/**
                 - apps/api/nestia.config.ts
@@ -80,13 +91,51 @@ dev:
       app.kubernetes.io/name: futhub
       app.kubernetes.io/component: admin
     logs: {}
-    sync: *workspace-sync
+    command: [pnpm, --filter, '@futhub/admin', dev]
+    sync:
+      - path: ./:/app
+        startContainer: true
+        excludeFile: .devspaceignore
+        initialSync: preferLocal
+        onUpload:
+          exec:
+            - *install-workspace-dependencies
+            - &build-api-client-package
+              name: build-api-client-package
+              command: pnpm --filter @futhub/api-client build
+              onChange:
+                - packages/api-client/src/**
+            - *build-bot-templates-package
   player:
     labelSelector:
       app.kubernetes.io/name: futhub
       app.kubernetes.io/component: player
     logs: {}
-    sync: *workspace-sync
+    command: [pnpm, --filter, '@futhub/play', dev]
+    sync:
+      - path: ./:/app
+        startContainer: true
+        excludeFile: .devspaceignore
+        initialSync: preferLocal
+        onUpload:
+          exec:
+            - *install-workspace-dependencies
+  discord-bot:
+    labelSelector:
+      app.kubernetes.io/name: futhub
+      app.kubernetes.io/component: discord-bot
+    logs: {}
+    command: [pnpm, --filter, '@futhub/discord-bot', dev]
+    sync:
+      - path: ./:/app
+        startContainer: true
+        excludeFile: .devspaceignore
+        initialSync: preferLocal
+        onUpload:
+          exec:
+            - *install-workspace-dependencies
+            - *build-api-client-package
+            - *build-bot-templates-package
   caddy:
     labelSelector:
       app.kubernetes.io/name: futhub
@@ -94,21 +143,3 @@ dev:
     logs: {}
     ports:
       - port: '8080:80'
-
-profiles:
-  - name: discord
-    patches:
-      - op: add
-        path: deployments.discord-bot
-        value:
-          kubectl:
-            manifests:
-              - k8s/discord-bot.yaml
-      - op: add
-        path: dev.discord-bot
-        value:
-          labelSelector:
-            app.kubernetes.io/name: futhub
-            app.kubernetes.io/component: discord-bot
-          logs: {}
-          sync: *workspace-sync

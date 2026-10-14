@@ -2,7 +2,7 @@ import { afterAll, beforeAll, expect, test, vi } from 'vitest';
 
 import { type E2eContext, adminToken, startE2eContext } from '../../../test/e2e/context.js';
 import { createAdminPackFixture } from '../../../test/e2e/entities.js';
-import { FilesService } from '../../files/files.service.js';
+import { FilesService, fileUrl } from '../../files/files.service.js';
 
 let context: E2eContext;
 beforeAll(async () => {
@@ -130,6 +130,38 @@ test('lists packs with locally hosted artwork over HTTP', async () => {
   } finally {
     urls.mockRestore();
   }
+});
+
+test('updates pack keeping its stored artwork URL over HTTP', async () => {
+  const fixture = await createAdminPackFixture(context.database);
+  const objectKey = `packs/${fixture.id}/stored.png`;
+  const [file] = await context.database.db
+    .insert(context.database.schema.files)
+    .values({ objectKey, contentType: 'image/png', sizeBytes: 1, source: 'upload', metadata: {} })
+    .returning({ id: context.database.schema.files.id });
+  if (!file) throw new Error('Failed to create stored pack file.');
+  await context.database.db
+    .update(context.database.schema.packs)
+    .set({ imageFileId: file.id })
+    .where(context.database.eq(context.database.schema.packs.id, fixture.id));
+
+  const response = await context.app.inject({
+    method: 'PUT',
+    url: `/v1/admin/packs/${fixture.id}`,
+    headers: { authorization: `Bearer ${adminToken}` },
+    payload: { ...input, name: 'Stored artwork pack', imageUrl: fileUrl(objectKey) },
+  });
+
+  expect(response.statusCode, response.body).toBe(200);
+  expect(response.json().imageUrl).toBe(fileUrl(objectKey));
+  const [persisted] = await context.database.db
+    .select({
+      name: context.database.schema.packs.name,
+      imageFileId: context.database.schema.packs.imageFileId,
+    })
+    .from(context.database.schema.packs)
+    .where(context.database.eq(context.database.schema.packs.id, fixture.id));
+  expect(persisted).toEqual({ name: 'Stored artwork pack', imageFileId: file.id });
 });
 
 test('uploads pack artwork over HTTP and persists its file reference', async () => {

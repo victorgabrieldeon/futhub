@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { validateTemplate } from '@futhub/bot-templates';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import typia from 'typia';
 
 import { botResponseCatalog } from './bot-responses.catalog.js';

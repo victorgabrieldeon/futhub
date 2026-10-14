@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { AdminAiModule } from './modules/admin-ai/admin-ai.module.js';
 import { AdminCardsModule } from './modules/admin-cards/admin-cards.module.js';
 import { AdminPacksModule } from './modules/admin-packs/admin-packs.module.js';
+import { AdminUsersModule } from './modules/admin-users/admin-users.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { BotEmojisModule } from './modules/bot-emojis/bot-emojis.module.js';
 import { BotResponsesModule } from './modules/bot-responses/bot-responses.module.js';
@@ -25,6 +26,7 @@ import { TeamModule } from './modules/team/team.module.js';
     AdminAiModule,
     AdminCardsModule,
     AdminPacksModule,
+    AdminUsersModule,
     CardMarketModule,
     ClubModule,
     FilesModule,

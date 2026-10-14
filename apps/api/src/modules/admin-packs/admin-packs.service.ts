@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 
+import { EntityEmojisService } from '../bot-emojis/entity-emojis.service.js';
 import { type FileDto, FilesService, type ImageFile } from '../files/files.service.js';
 import type { AdminPack, AdminPackConfigInput, AdminPackInput } from './admin-packs.dto.js';
 
@@ -7,7 +8,10 @@ type Database = typeof import('@futhub/database');
 
 @Injectable()
 export class AdminPacksService {
-  constructor(@Inject(FilesService) private readonly files: FilesService) {}
+  constructor(
+    @Inject(FilesService) private readonly files: FilesService,
+    @Inject(EntityEmojisService) private readonly entityEmojis: EntityEmojisService,
+  ) {}
 
   private database(): Promise<Database> {
     return import('@futhub/database');
@@ -49,6 +53,7 @@ export class AdminPacksService {
       await this.removeFile(image);
       throw error;
     }
+    await this.entityEmojis.sync('pack', id);
     return this.read(database, id);
   }
 
@@ -84,6 +89,7 @@ export class AdminPacksService {
       throw error;
     }
     await this.files.removeIfUnused(current.imageFileId);
+    await this.entityEmojis.sync('pack', id);
     return this.read(database, id);
   }
 
@@ -98,6 +104,7 @@ export class AdminPacksService {
     const file = await this.files.upload(image);
     await db.update(schema.packs).set({ imageFileId: file.id }).where(eq(schema.packs.id, id));
     await this.files.removeIfUnused(pack.imageFileId);
+    await this.entityEmojis.sync('pack', id);
     return this.read(database, id);
   }
 

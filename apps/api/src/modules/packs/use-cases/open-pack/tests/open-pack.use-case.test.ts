@@ -4,6 +4,11 @@ import type { PackRepository } from '../../pack.types.js';
 import { OpenPackUseCase } from '../open-pack.use-case.js';
 import { selectPackCards } from '../select-pack-cards.js';
 
+const club = {
+  team: { name: 'Time', emoji: '⚽' },
+  collection: { name: 'Coleção', emoji: '🎴' },
+};
+
 const identity = { id: 'discord-1', name: 'Jogador', avatarUrl: null };
 const progression = { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] };
 
@@ -29,7 +34,9 @@ describe('OpenPackUseCase', () => {
           cardCount: 0,
           maxCards: 10,
           cardsAmount: 1,
-          candidates: [{ id: 'card-1', overall: 80, name: 'Card', position: 'CA' }],
+          candidates: [
+            { id: 'card-1', overall: 80, name: 'Card', position: 'CA', imageUrl: null, ...club },
+          ],
           probabilities: [{ overall: 80, weight: 1 }],
           commit: async (cards) => ({
             cards: cards.map((card) => ({ id: 'owned-1', card })),
@@ -43,7 +50,19 @@ describe('OpenPackUseCase', () => {
     await expect(
       new OpenPackUseCase(repository, () => 0.5).execute(identity, 'pack-1'),
     ).resolves.toEqual({
-      cards: [{ id: 'owned-1', card: { id: 'card-1', overall: 80, name: 'Card', position: 'CA' } }],
+      cards: [
+        {
+          id: 'owned-1',
+          card: {
+            id: 'card-1',
+            overall: 80,
+            name: 'Card',
+            position: 'CA',
+            imageUrl: null,
+            ...club,
+          },
+        },
+      ],
       completedMissions: [],
       progression,
     });
@@ -54,23 +73,36 @@ describe('OpenPackUseCase', () => {
 describe('selectPackCards', () => {
   it('selects only eligible cards and permits duplicates', () => {
     const cards = [
-      { id: 'low', overall: 70, name: 'Low', position: 'CA' },
-      { id: 'high', overall: 80, name: 'High', position: 'CA' },
+      { id: 'low', overall: 70, name: 'Low', position: 'CA', imageUrl: null, ...club },
+      { id: 'high', overall: 80, name: 'High', position: 'CA', imageUrl: null, ...club },
     ];
     expect(selectPackCards(cards, [{ overall: 80, weight: 1 }], 2, () => 0)).toEqual([
-      { id: 'high', overall: 80, name: 'High', position: 'CA' },
-      { id: 'high', overall: 80, name: 'High', position: 'CA' },
+      { id: 'high', overall: 80, name: 'High', position: 'CA', imageUrl: null, ...club },
+      { id: 'high', overall: 80, name: 'High', position: 'CA', imageUrl: null, ...club },
     ]);
   });
 
   it('rejects a pack with no eligible weighted card', () => {
     expect(() =>
       selectPackCards(
-        [{ id: 'card', overall: 70, name: 'Card', position: 'CA' }],
+        [{ id: 'card', overall: 70, name: 'Card', position: 'CA', imageUrl: null, ...club }],
         [{ overall: 80, weight: 1 }],
         1,
         () => 0,
       ),
     ).toThrow('Pack has no eligible probabilities.');
+  });
+
+  it('draws uniformly among eligible cards when the pack has no probabilities', () => {
+    const cards = [
+      { id: 'a', overall: 70, name: 'A', position: 'CA', imageUrl: null, ...club },
+      { id: 'b', overall: 90, name: 'B', position: 'GOL', imageUrl: null, ...club },
+    ];
+    const rolls = [0, 0.99];
+    expect(selectPackCards(cards, [], 2, () => rolls.shift() ?? 0)).toEqual(cards);
+  });
+
+  it('rejects a pack whose filters leave no cards', () => {
+    expect(() => selectPackCards([], [], 1, () => 0)).toThrow('Pack has no eligible cards.');
   });
 });

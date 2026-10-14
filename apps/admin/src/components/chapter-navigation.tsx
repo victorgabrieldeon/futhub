@@ -13,6 +13,7 @@ const chapters = [
     ],
   },
   { label: 'Packs', to: '/app/gerenciar/packs', links: [] },
+  { label: 'Usuários', to: '/app/usuarios', links: [] },
   {
     label: 'Studio',
     to: '/app/studio',
@@ -40,7 +41,10 @@ export function ChapterNavigation() {
   const { pathname } = useLocation();
   const active =
     chapters.find(
-      (chapter) => chapter.to === pathname || chapter.links.some((link) => link.to === pathname),
+      (chapter) =>
+        chapter.to === pathname ||
+        chapter.links.some((link) => link.to === pathname) ||
+        (chapter.to !== '/app' && pathname.startsWith(`${chapter.to}/`)),
     ) ?? chapters[0];
 
   return (

@@ -14,11 +14,22 @@ const variables = {
   nextLevelXp: ['XP do próximo nível', '100'],
   level: ['Nível atual', '12'],
   availableAt: ['Horário do próximo resgate', '<t:1767225600:F>'],
+  availableIn: ['Tempo relativo até o próximo resgate ("em 2 horas")', '<t:1767225600:R>'],
   remaining: ['Segundos restantes até o próximo resgate', '7800'],
   net: ['Lucro líquido do fechamento', '1350'],
   packId: ['ID do pack', '123e4567-e89b-42d3-a456-426614174000'],
+  packName: ['Nome do pack', 'Pack Ouro'],
+  packEmoji: ['Emoji do pack (gerado da imagem do pack, ou o emoji de pack do bot)', '📦'],
   quantity: ['Quantidade de packs no inventário após a compra', '2'],
   userCardId: ['ID da carta no elenco', '9f1c2d3e-0000-4000-8000-000000000001'],
+  cardName: ['Nome do jogador contratado', 'Rafael Lima'],
+  cardOverall: ['Overall do jogador contratado', '87'],
+  cardPosition: ['Posição do jogador contratado', 'CA'],
+  cardRarity: ['Raridade pelo overall (Comum, Rara, Épica, Lendária…)', 'Épica'],
+  cardImageUrl: [
+    'Imagem da carta contratada (pode estar vazia; imagens vazias são omitidas)',
+    'https://cdn.discordapp.com/embed/avatars/0.png',
+  ],
   price: ['Preço pago', '1200'],
   code: ['Código de resgate digitado, em maiúsculas', 'BEMVINDO'],
   rewardLabel: ['Item recebido no resgate, já formatado', '+500 moedas'],
@@ -62,13 +73,13 @@ const lists = {
       { type: 'pack', label: 'pack', quantity: '1' },
     ],
     defaultFormat: {
-      item: '{emoji:resgatar} +{quantity} {type}',
-      separator: ', ',
+      item: '+{quantity|number} {label}',
+      separator: ' · ',
       empty: '',
       limit: 50,
       more: '',
-      prefix: ' Recompensas: ',
-      suffix: '.',
+      prefix: '\n{emoji:resgatar} **Subiu de nível!** ',
+      suffix: '',
     },
   },
   missions: {
@@ -82,8 +93,8 @@ const lists = {
       ['bar', 'Barra de progresso (▰▰▱▱▱)'],
       ['status', 'Progresso ou "concluída"'],
       ['expires', 'Expiração relativa do Discord'],
-      ['reward', 'Recompensa formatada (pode estar vazia)'],
-      ['done', '✅ quando concluída, vazio caso contrário'],
+      ['reward', 'Recompensa formatada ("Recompensa: +300 moedas")'],
+      ['done', '✅ quando concluída, 🎯 em andamento'],
     ],
     examples: [
       {
@@ -95,8 +106,8 @@ const lists = {
         bar: '▰▰▰▰▰▰▱▱▱▱',
         status: '2/3',
         expires: '<t:1767225600:R>',
-        reward: 'Recompensa: +300 balance.',
-        done: '',
+        reward: 'Recompensa: +300 moedas',
+        done: '🎯',
       },
       {
         title: 'Abra 5 packs',
@@ -107,7 +118,7 @@ const lists = {
         bar: '▰▰▰▰▰▰▰▰▰▰',
         status: 'concluída; recompensa concedida',
         expires: '<t:1767484800:R>',
-        reward: 'Recompensa: +1 pack.',
+        reward: 'Recompensa: +1 pack',
         done: '✅',
       },
       {
@@ -119,13 +130,13 @@ const lists = {
         bar: '▰▱▱▱▱▱▱▱▱▱',
         status: '1/10',
         expires: '<t:1769904000:R>',
-        reward: '',
-        done: '',
+        reward: 'Sem recompensa',
+        done: '🎯',
       },
     ],
     defaultFormat: {
-      item: '{emoji:missao} **{cadence}** — {title}: {status}. Expira {expires}. {reward}',
-      separator: '\n',
+      item: '{done} **{title}**\n`{bar}` **{progress}/{goal}** · {cadence} · termina {expires}\n-# {reward}',
+      separator: '\n\n',
       empty: 'Nenhuma missão ativa agora.',
       limit: 50,
       more: '',
@@ -160,7 +171,7 @@ const lists = {
       },
     ],
     defaultFormat: {
-      item: '{emoji:missao} **{cadence}** — {title}: **{reward}**',
+      item: '{emoji:sucesso} **{title}** · {cadence} — **{reward}**',
       separator: '\n',
       empty: '',
       limit: 20,
@@ -174,6 +185,12 @@ const lists = {
       ['name', 'Nome do jogador'],
       ['position', 'Posição (GOL, ZAG, CA…)'],
       ['overall', 'Overall'],
+      ['rarity', 'Raridade pelo overall (Comum, Rara, Épica, Lendária…)'],
+      ['tierEmoji', 'Emoji da raridade (⚪ 🟢 🔵 🟣 🟡 💎)'],
+      ['team', 'Time do jogador'],
+      ['teamEmoji', 'Emoji do time (vazio quando o time não tem)'],
+      ['collection', 'Coleção da carta'],
+      ['collectionEmoji', 'Emoji da coleção (vazio quando a coleção não tem)'],
     ],
     examples: [
       {
@@ -181,22 +198,40 @@ const lists = {
         name: 'Rafael Lima',
         position: 'CA',
         overall: '87',
+        rarity: 'Épica',
+        tierEmoji: '🟣',
+        team: 'Flamengo',
+        teamEmoji: '🔴',
+        collection: 'Lendas',
+        collectionEmoji: '🏆',
       },
       {
         id: '4f1a2b3c-0000-4000-8000-000000000002',
         name: 'Bruno Costa',
         position: 'MC',
         overall: '81',
+        rarity: 'Rara',
+        tierEmoji: '🔵',
+        team: 'Grêmio',
+        teamEmoji: '🔵',
+        collection: 'Padrão',
+        collectionEmoji: '🎴',
       },
       {
         id: '4f1a2b3c-0000-4000-8000-000000000003',
         name: 'Diego Alves',
         position: 'GOL',
         overall: '76',
+        rarity: 'Incomum',
+        tierEmoji: '🟢',
+        team: 'Palmeiras',
+        teamEmoji: '🟢',
+        collection: 'Padrão',
+        collectionEmoji: '🎴',
       },
     ],
     defaultFormat: {
-      item: '{emoji:carta} `{id}` — OVR {overall}',
+      item: '{tierEmoji} **{overall}** · {name} · `{position}` · {teamEmoji} {team}',
       separator: '\n',
       empty: 'Nenhuma carta recebida.',
       limit: 50,
@@ -213,12 +248,28 @@ const actions = {
   link: ['Abrir link', 'Abre uma URL HTTP(S); exige o estilo link'],
 } satisfies Record<string, [string, string]>;
 
-const text = (content: string): Template => ({
-  mode: 'legacy',
-  content,
+type Child = Extract<Template['components'][number], { type: 'container' }>['components'][number];
+
+const block = (content: string): Child => ({ type: 'text', content });
+const line: Child = { type: 'separator', spacing: 1, divider: true };
+
+/** Default look of every response: one accent-colored Components V2 card. */
+const card = (color: string, ...components: Child[]): Template => ({
+  mode: 'components_v2',
+  content: '',
   embeds: [],
-  components: [],
+  components: [{ type: 'container', color, components }],
 });
+
+const color = {
+  brand: '#1F9D55',
+  gold: '#E3A72F',
+  store: '#8B1D3D',
+  market: '#176B5B',
+  info: '#3B82F6',
+  danger: '#E5484D',
+  neutral: '#4E5058',
+};
 
 // Register new response contexts here, then call `botResponse(key, data)` from the bot command.
 const definitions: {
@@ -244,39 +295,38 @@ const definitions: {
       'nextLevelXp',
       'level',
       'availableAt',
+      'availableIn',
       'net',
       'userName',
       'avatarUrl',
     ],
     lists: ['report', 'rewards'],
-    defaultTemplate: {
-      mode: 'legacy',
-      content: '',
-      components: [],
-      embeds: [
-        {
-          title: '{emoji:lucro} /lucro',
-          // The lucro embed default plus the club closing the bot always appended.
-          description:
-            '**{message}**\n{emoji:moeda} Saldo: **{balance}**\n{emoji:forca} XP: **+{xp}** ({xp}/{nextLevelXp})\n{emoji:divisao} Nível: **{level}**\n\n{emoji:clube} **Fechamento do clube**\n{report}',
-          color: '#2B2D31',
-          footer: 'Próximo lucro: {availableAt}',
-          imageUrl: '',
-          thumbnailUrl: '',
-          fields: [],
-        },
-      ],
-    },
+    defaultTemplate: card(
+      color.brand,
+      block(
+        '-# {emoji:lucro} LUCRO DE {userName|upper}\n# {emoji:moeda} +{reward|number}\n**{message}**',
+      ),
+      block(
+        '{emoji:moeda} Saldo **{balance|number}**  ·  {emoji:forca} **+{xp} XP**  ·  {emoji:divisao} Nível **{level}** ({xpTotal}/{nextLevelXp}){rewards}',
+      ),
+      line,
+      block('### {emoji:clube} Fechamento do clube\n{report}'),
+      line,
+      block('-# {emoji:relogio} Próximo lucro {availableIn}'),
+    ),
   },
   {
     key: 'lucro.cooldown',
     command: 'lucro',
     label: 'Lucro em espera',
     description: 'A recompensa ainda não está disponível.',
-    variables: ['availableAt', 'remaining', 'userName', 'avatarUrl'],
+    variables: ['availableAt', 'availableIn', 'remaining', 'userName', 'avatarUrl'],
     lists: [],
-    defaultTemplate: text(
-      '{emoji:relogio} Aguarde {remaining}s. Lucro disponível em {availableAt}.',
+    defaultTemplate: card(
+      color.neutral,
+      block(
+        '### {emoji:relogio} Lucro em espera\nO caixa do clube libera de novo {availableIn}.\n-# {availableAt}',
+      ),
     ),
   },
   {
@@ -286,7 +336,14 @@ const definitions: {
     description: 'Missões diárias, semanais e mensais do jogador.',
     variables: ['userName', 'avatarUrl'],
     lists: ['missions'],
-    defaultTemplate: text('{missions}'),
+    defaultTemplate: card(
+      color.info,
+      block('## {emoji:missao} Missões\n-# {missions|count} ativas para {userName}'),
+      line,
+      block('{missions}'),
+      line,
+      block('-# Lucro, packs, contratações e vendas contam progresso automaticamente.'),
+    ),
   },
   {
     key: 'missoes.completed',
@@ -296,17 +353,34 @@ const definitions: {
       'Aviso enviado após /lucro, packs, contratações e vendas que concluem missões (recompensa já entregue).',
     variables: ['userName', 'avatarUrl'],
     lists: ['completedMissions'],
-    defaultTemplate: text('{emoji:sucesso} Missão concluída!\n{completedMissions}'),
+    defaultTemplate: card(
+      color.gold,
+      block('-# 🎉 🎉 🎉\n## {emoji:trofeu} Missão concluída!\n{completedMissions}'),
+    ),
   },
   {
     key: 'pack.purchase',
     command: 'pack',
     label: 'Pack comprado',
     description: 'Compra de pack concluída (/comprar-pack e /loja).',
-    variables: ['packId', 'balance', 'quantity', 'userName', 'avatarUrl'],
+    variables: [
+      'packId',
+      'packName',
+      'packEmoji',
+      'price',
+      'balance',
+      'quantity',
+      'userName',
+      'avatarUrl',
+    ],
     lists: [],
-    defaultTemplate: text(
-      '{emoji:pack} Pack comprado. Quantidade: {quantity}. {emoji:moeda} Saldo: {balance}.',
+    defaultTemplate: card(
+      color.store,
+      block(
+        '-# {emoji:loja} COMPRA CONFIRMADA\n## {packEmoji} {packName} é seu!\nVocê tem **{quantity}** no inventário.',
+      ),
+      line,
+      block('{emoji:moeda} **−{price|number}**  ·  saldo {balance|number}'),
     ),
   },
   {
@@ -314,21 +388,57 @@ const definitions: {
     command: 'pack',
     label: 'Pack aberto',
     description: 'Cartas recebidas e progressão ao abrir um pack.',
-    variables: ['packId', 'xp', 'xpTotal', 'nextLevelXp', 'level', 'userName', 'avatarUrl'],
+    variables: [
+      'packId',
+      'packName',
+      'packEmoji',
+      'xp',
+      'xpTotal',
+      'nextLevelXp',
+      'level',
+      'userName',
+      'avatarUrl',
+    ],
     lists: ['cards', 'rewards'],
-    defaultTemplate: text(
-      '{emoji:pack} Pack aberto.\n{cards}\n{emoji:forca} XP: +{xp} ({xpTotal}/{nextLevelXp}). {emoji:divisao} Nível: {level}.{rewards}',
+    defaultTemplate: card(
+      color.gold,
+      block(
+        '-# 🎉 PACK ABERTO\n## {packEmoji} {packName}\n-# {cards|count} novas no elenco de {userName}',
+      ),
+      line,
+      block('{cards}'),
+      line,
+      block(
+        '{emoji:forca} **+{xp} XP**  ·  {emoji:divisao} Nível **{level}** ({xpTotal}/{nextLevelXp}){rewards}',
+      ),
     ),
   },
   {
     key: 'card.purchase',
     command: 'loja',
     label: 'Carta contratada',
-    description: 'Contratação de carta concluída por /loja aba:contratar.',
-    variables: ['userCardId', 'price', 'balance', 'userName', 'avatarUrl'],
+    description: 'Contratação de carta concluída na aba Contratar da /loja.',
+    variables: [
+      'userCardId',
+      'cardName',
+      'cardOverall',
+      'cardPosition',
+      'cardRarity',
+      'cardImageUrl',
+      'price',
+      'balance',
+      'userName',
+      'avatarUrl',
+    ],
     lists: [],
-    defaultTemplate: text(
-      '{emoji:contratar} Carta comprada. ID no elenco: `{userCardId}`. Preço: {price}. {emoji:moeda} Saldo: {balance}.',
+    defaultTemplate: card(
+      color.market,
+      block(
+        '-# {emoji:contratar} CONTRATAÇÃO FECHADA\n# {cardOverall} · {cardName}\n`{cardPosition}` · carta {cardRarity} · chegou ao elenco',
+      ),
+      { type: 'media', url: '{cardImageUrl}', description: '{cardName}' },
+      line,
+      block('{emoji:moeda} **−{price|number}**  ·  saldo {balance|number}'),
     ),
   },
   {
@@ -338,8 +448,11 @@ const definitions: {
     description: 'Resgate de Código de resgate concluído por /resgatar.',
     variables: ['code', 'rewardLabel', 'balance', 'userName', 'avatarUrl'],
     lists: [],
-    defaultTemplate: text(
-      '{emoji:resgatar} Código **{code}** resgatado! Você recebeu {rewardLabel}. {emoji:moeda} Saldo: {balance}.',
+    defaultTemplate: card(
+      color.brand,
+      block(
+        '-# {emoji:resgatar} PRESENTE ABERTO\n## {rewardLabel}\n-# Código {code} · {emoji:moeda} saldo {balance|number}',
+      ),
     ),
   },
   {
@@ -349,7 +462,10 @@ const definitions: {
     description: 'Código inexistente, desativado, expirado, esgotado ou já resgatado.',
     variables: ['code', 'reason', 'userName', 'avatarUrl'],
     lists: [],
-    defaultTemplate: text('{emoji:erro} {reason}'),
+    defaultTemplate: card(
+      color.danger,
+      block('### {emoji:erro} Não foi possível resgatar {code}\n{reason}'),
+    ),
   },
 ];
 

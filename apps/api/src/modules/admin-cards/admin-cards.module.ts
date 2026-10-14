@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { BotEmojisModule } from '../bot-emojis/bot-emojis.module.js';
 import { FilesModule } from '../files/files.module.js';
 import { AdminCardsController } from './admin-cards.controller.js';
 import { AdminCardsService } from './admin-cards.service.js';
@@ -9,7 +10,7 @@ import { PlayerPhotosService } from './player-photos.service.js';
 import { SquadImportService } from './squad-import.service.js';
 
 @Module({
-  imports: [FilesModule],
+  imports: [BotEmojisModule, FilesModule],
   controllers: [AdminCardsController],
   providers: [
     AdminCardsService,

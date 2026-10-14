@@ -14,16 +14,16 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import { AdminApiConfig, isValidAdminApiKey } from './admin-auth.guard.js';
 import {
+  type AdminSessionInput,
+  AdminSessionInputSchema,
+  type AdminSessionResponse,
+} from './admin-session.dto.js';
+import {
   AdminSessionService,
   adminSessionMaxAge,
   cookieToken,
   requireAdminRequestHeader,
 } from './admin-session.service.js';
-import {
-  type AdminSessionInput,
-  AdminSessionInputSchema,
-  type AdminSessionResponse,
-} from './admin-session.dto.js';
 
 @ApiTags('Administração / Sessão')
 @Controller('v1/admin/session')

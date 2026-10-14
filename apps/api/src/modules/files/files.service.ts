@@ -64,6 +64,8 @@ export class FilesService {
   }
 
   async importImage(sourceUrl: string, contentType?: ImageContentType): Promise<FileDto> {
+    const stored = await this.storedFile(sourceUrl);
+    if (stored) return stored;
     const url = this.importUrl(sourceUrl);
     const response = await fetch(url, { signal: AbortSignal.timeout(20_000) });
     if (!response.ok) throw new BadRequestException('Could not download image source.');
@@ -278,6 +280,16 @@ export class FilesService {
       width: file.width,
       height: file.height,
     };
+  }
+
+  private async storedFile(sourceUrl: string): Promise<FileDto | null> {
+    const objectKey = this.objectKeyFromUrl(sourceUrl);
+    if (!objectKey) return null;
+    const database = await this.database();
+    const file = await database.db.query.files.findFirst({
+      where: database.eq(database.schema.files.objectKey, objectKey),
+    });
+    return file ? this.dto(file) : null;
   }
 
   private importUrl(value: string): URL {

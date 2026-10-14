@@ -1,3 +1,6 @@
+import { randomUUID } from 'node:crypto';
+
+import { createCanvas } from '@napi-rs/canvas';
 import { afterAll, afterEach, beforeAll, expect, test, vi } from 'vitest';
 
 import {
@@ -6,17 +9,26 @@ import {
   internalToken,
   startE2eContext,
 } from '../../../test/e2e/context.js';
+import { createEntityEmojiFixture, createFileFixture } from '../../../test/e2e/entities.js';
+import type { FilesService } from '../../files/files.service.js';
+import type { EntityEmojisService } from '../entity-emojis.service.js';
 
 let context: E2eContext;
+let filesServiceClass: typeof FilesService;
+let entityEmojisServiceClass: typeof EntityEmojisService;
 const environment = {
   DISCORD_TOKEN: process.env.DISCORD_TOKEN,
   DISCORD_CLIENT_ID: process.env.DISCORD_CLIENT_ID,
 };
 beforeAll(async () => {
   context = await startE2eContext();
+  // Static loading races the isolated Vite bootstrap for this app module.
+  ({ FilesService: filesServiceClass } = await import('../../files/files.service.js'));
+  ({ EntityEmojisService: entityEmojisServiceClass } = await import('../entity-emojis.service.js'));
 }, 120_000);
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   for (const [name, value] of Object.entries(environment)) {
     if (value === undefined) delete process.env[name];
     else process.env[name] = value;
@@ -177,4 +189,136 @@ test('rejects invalid names, images and duplicates without touching Discord stat
   ).toBe(404);
   expect(discord.calls.filter((call) => call.method !== 'GET')).toEqual([]);
   expect([...discord.emojis.values()].map((emoji) => emoji.name)).toEqual(['trofeu']);
+});
+
+/** Logo retangular: o emoji encaixa a imagem em 128x128 sem distorcer. */
+async function logo(): Promise<Buffer> {
+  const canvas = createCanvas(256, 128);
+  const context2d = canvas.getContext('2d');
+  context2d.fillStyle = '#c52613';
+  context2d.fillRect(0, 0, 256, 128);
+  return canvas.encode('png');
+}
+
+function emojiId(mention: string | null | undefined): string {
+  const id = /^<:[a-z0-9_]{2,32}:(\d{17,20})>$/.exec(mention ?? '')?.[1];
+  if (!id) throw new Error(`Expected a Discord emoji mention, got ${mention}.`);
+  return id;
+}
+
+async function linkedEmojis(ids: { teamId: string; collectionId: string; packId: string }) {
+  const { db, eq, schema } = context.database;
+  const select = <T extends typeof schema.teams | typeof schema.collections | typeof schema.packs>(
+    table: T,
+    id: string,
+  ) =>
+    db
+      .select({ discordEmoji: table.discordEmoji, discordEmojiFileId: table.discordEmojiFileId })
+      .from(table as typeof schema.teams)
+      .where(eq(table.id, id))
+      .then(([row]) => row);
+  const [team, collection, pack] = await Promise.all([
+    select(schema.teams, ids.teamId),
+    select(schema.collections, ids.collectionId),
+    select(schema.packs, ids.packId),
+  ]);
+  return { team, collection, pack };
+}
+
+test('backfills Discord emojis for teams, collections and packs with images', async () => {
+  const discord = mockDiscord();
+  const fixture = await createEntityEmojiFixture(context.database);
+  vi.spyOn(filesServiceClass.prototype, 'read').mockResolvedValue(await logo());
+  const service = context.app.get(entityEmojisServiceClass);
+
+  await service.backfill();
+
+  const linked = await linkedEmojis(fixture);
+  expect(linked.team?.discordEmoji).toMatch(/^<:tm_emoji_team_[a-z0-9_]*_[0-9a-f]{6}:\d+>$/);
+  expect(linked.collection?.discordEmoji).toMatch(/^<:col_emoji_collection_[a-z0-9_]+:\d+>$/);
+  expect(linked.pack?.discordEmoji).toBe(
+    `<:pk_pack_lendario_${fixture.packFile.id.replace(/-/g, '').slice(0, 6)}:${emojiId(linked.pack?.discordEmoji)}>`,
+  );
+  expect(linked.team?.discordEmojiFileId).toBe(fixture.teamFile.id);
+  expect(linked.collection?.discordEmojiFileId).toBe(fixture.collectionFile.id);
+  expect(linked.pack?.discordEmojiFileId).toBe(fixture.packFile.id);
+  for (const row of Object.values(linked))
+    expect(discord.emojis.has(emojiId(row?.discordEmoji))).toBe(true);
+  const [plainTeam] = await context.database.db
+    .select({ discordEmoji: context.database.schema.teams.discordEmoji })
+    .from(context.database.schema.teams)
+    .where(context.database.eq(context.database.schema.teams.id, fixture.plainTeamId));
+  expect(plainTeam?.discordEmoji).toBeNull();
+
+  // O bot recebe o emoji do Discord no lugar do unicode.
+  const catalog = await request('GET', '/v1/packs', undefined, internalToken);
+  expect(catalog.statusCode, catalog.body).toBe(200);
+  expect(catalog.json().find((pack: { id: string }) => pack.id === fixture.packId)?.emoji).toBe(
+    linked.pack?.discordEmoji,
+  );
+
+  const created = discord.calls.filter((call) => call.method === 'POST').length;
+  await service.backfill();
+  expect(discord.calls.filter((call) => call.method === 'POST').length).toBe(created);
+
+  // Emoji apagado direto no Discord volta na próxima subida.
+  discord.emojis.delete(emojiId(linked.team?.discordEmoji));
+  await service.backfill();
+  const healed = await linkedEmojis(fixture);
+  expect(emojiId(healed.team?.discordEmoji)).not.toBe(emojiId(linked.team?.discordEmoji));
+  expect(discord.emojis.has(emojiId(healed.team?.discordEmoji))).toBe(true);
+  expect(healed.collection).toEqual(linked.collection);
+});
+
+test('replaces the Discord emoji when an admin edits a team image and deletes it with the team', async () => {
+  const discord = mockDiscord();
+  const fixture = await createEntityEmojiFixture(context.database);
+  const files = await Promise.all(
+    [1, 2].map((index) =>
+      createFileFixture(context.database, `emoji/edit-${index}-${randomUUID()}.png`),
+    ),
+  );
+  const imported = [...files];
+  vi.spyOn(filesServiceClass.prototype, 'read').mockResolvedValue(await logo());
+  vi.spyOn(filesServiceClass.prototype, 'removeIfUnused').mockResolvedValue();
+  vi.spyOn(filesServiceClass.prototype, 'importImage').mockImplementation(async () => {
+    const file = imported.shift();
+    if (!file) throw new Error('Unexpected image import.');
+    return { ...file, url: `https://minio.test/${file.objectKey}` };
+  });
+  const team = {
+    name: `Edited team ${randomUUID()}`,
+    slug: `edited-team-${randomUUID()}`,
+    emoji: '⚽',
+    color: '#000000',
+  };
+  const update = (imageUrl: string | null) =>
+    request('PUT', `/v1/admin/cards/teams/${fixture.teamId}`, { ...team, imageUrl });
+  const linkedTeam = async () => (await linkedEmojis(fixture)).team;
+
+  const first = await update('https://assets.footylogos.com/logos/a/a-logo-footylogos.svg');
+  expect(first.statusCode, first.body).toBe(200);
+  const firstLink = await linkedTeam();
+  expect(firstLink?.discordEmojiFileId).toBe(files[0]?.id);
+  expect(discord.emojis.get(emojiId(firstLink?.discordEmoji))?.name).toMatch(/^tm_edited_team_/);
+
+  const second = await update('https://assets.footylogos.com/logos/b/b-logo-footylogos.svg');
+  expect(second.statusCode, second.body).toBe(200);
+  const secondLink = await linkedTeam();
+  expect(secondLink?.discordEmojiFileId).toBe(files[1]?.id);
+  expect(discord.emojis.has(emojiId(secondLink?.discordEmoji))).toBe(true);
+  expect(discord.emojis.has(emojiId(firstLink?.discordEmoji))).toBe(false);
+
+  const removed = await update(null);
+  expect(removed.statusCode, removed.body).toBe(200);
+  expect(await linkedTeam()).toEqual({ discordEmoji: null, discordEmojiFileId: null });
+  expect(discord.emojis.has(emojiId(secondLink?.discordEmoji))).toBe(false);
+
+  const collectionEmoji = (await linkedEmojis(fixture)).collection?.discordEmoji;
+  expect(collectionEmoji).toBeNull();
+  await context.app.get(entityEmojisServiceClass).backfill();
+  const collectionLink = (await linkedEmojis(fixture)).collection;
+  const deleted = await request('DELETE', `/v1/admin/cards/collections/${fixture.collectionId}`);
+  expect(deleted.statusCode, deleted.body).toBe(204);
+  expect(discord.emojis.has(emojiId(collectionLink?.discordEmoji))).toBe(false);
 });

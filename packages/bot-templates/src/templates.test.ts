@@ -3,6 +3,7 @@ import { test } from 'node:test';
 
 import {
   type Canvas2D,
+  type CanvasImage,
   type Template,
   catalog,
   createScope,
@@ -19,26 +20,40 @@ import {
 const packOpen = definition('pack.open');
 if (!packOpen) throw new Error('missing pack.open');
 
+/** Shows a generated image the way each mode allows: a media block (V2) or an embed (legacy). */
+function withImage(template: Template, image: CanvasImage): Template {
+  if (template.mode === 'components_v2')
+    return {
+      ...template,
+      images: [image],
+      components: [
+        ...template.components,
+        { type: 'media', url: imageRef(image.id), description: '' },
+      ],
+    };
+  return {
+    ...template,
+    images: [image],
+    embeds: [
+      ...template.embeds,
+      {
+        title: 'x',
+        description: '',
+        color: '',
+        footer: '',
+        imageUrl: imageRef(image.id),
+        thumbnailUrl: '',
+        fields: [],
+      },
+    ],
+  };
+}
+
 test('every catalog default and image preset is publishable', () => {
   for (const entry of catalog) {
     assert.equal(validateTemplate(entry, entry.defaultTemplate), null, entry.key);
     for (const preset of imagePresets(entry)) {
-      const template: Template = {
-        ...entry.defaultTemplate,
-        images: [preset.image],
-        embeds: [
-          ...entry.defaultTemplate.embeds,
-          {
-            title: '',
-            description: '',
-            color: '',
-            footer: '',
-            imageUrl: imageRef(preset.image.id),
-            thumbnailUrl: '',
-            fields: [],
-          },
-        ],
-      };
+      const template = withImage(entry.defaultTemplate, preset.image);
       assert.equal(validateTemplate(entry, template), null, `${entry.key}/${preset.id}`);
     }
   }
@@ -152,21 +167,7 @@ test('runtime render truncates instead of failing and drops empty optional media
 test('generated images are collected and canvas draws list items', async () => {
   const preset = imagePresets(packOpen).find((entry) => entry.id === 'cards-grid');
   assert.ok(preset);
-  const template: Template = {
-    ...packOpen.defaultTemplate,
-    images: [preset.image],
-    embeds: [
-      {
-        title: 'x',
-        description: '',
-        color: '',
-        footer: '',
-        imageUrl: imageRef(preset.image.id),
-        thumbnailUrl: '',
-        fields: [],
-      },
-    ],
-  };
+  const template = withImage(packOpen.defaultTemplate, preset.image);
   const scope = createScope(template, exampleData(packOpen), packOpen);
   const rendered = render(template, scope);
   assert.deepEqual(

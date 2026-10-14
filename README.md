@@ -50,7 +50,7 @@ http://s3console.futhub.localhost
 
 Abra painel Tilt para logs e estado dos resources. `discord-bot` inicia manualmente pelo painel depois de preencher `DISCORD_TOKEN` e `DISCORD_CLIENT_ID` em `.env`.
 
-Ao iniciar, o bot sobe para a aplicação do Discord os emojis de `apps/discord-bot/assets/emojis/*.svg` que ainda não existirem; eles aparecem no painel em **Emojis do bot**. No código, use `EMOJI.<nome>` de `apps/discord-bot/src/emojis.ts`. Para publicar sem subir o bot, ou recriar após editar um SVG:
+Ao iniciar, o bot sobe para a aplicação do Discord os emojis de `apps/discord-bot/assets/emojis/*.svg` que ainda não existirem; eles aparecem no painel em **Emojis do bot**. No código, use `EMOJI.<nome>` de `apps/discord-bot/src/core/emojis.ts`. Para publicar sem subir o bot, ou recriar após editar um SVG:
 
 ```bash
 pnpm --filter @futhub/discord-bot emojis:sync           # cria os que faltam
@@ -59,6 +59,8 @@ pnpm --filter @futhub/discord-bot emojis:sync --preview # PNGs em apps/discord-b
 ```
 
 Novo emoji: adicione `assets/emojis/<nome>.svg` (128×128) e a entrada em `EMOJI_FALLBACK`.
+
+Times, coleções e packs com imagem também viram emojis da aplicação (`tm_*`, `col_*`, `pk_*`): a API cria ou troca o emoji ao salvar a imagem no painel e apaga junto com o cadastro. O vínculo fica em `discord_emoji`, e o bot recebe esse emoji no lugar do unicode. Ao iniciar, a API faz o retroativo dos cadastros sem emoji, com imagem alterada ou cujo emoji sumiu do Discord; precisa de `DISCORD_TOKEN` e `DISCORD_CLIENT_ID` no ambiente da API.
 
 Para encerrar:
 

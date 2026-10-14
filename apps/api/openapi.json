@@ -14,13 +14,16 @@
       }
     },
     "schemas": {
-      "ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber": {
+      "ReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumber": {
         "additionalProperties": false,
         "properties": {
           "id": {
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "emoji": {
             "type": "string"
           },
           "price": {
@@ -33,15 +36,15 @@
             "type": "number"
           }
         },
-        "required": ["id", "name", "price", "imageUrl", "cardsPerPack"],
+        "required": ["id", "name", "emoji", "price", "imageUrl", "cardsPerPack"],
         "type": "object"
       },
-      "ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber": {
+      "ReadonlypacksReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber": {
         "additionalProperties": false,
         "properties": {
           "packs": {
             "items": {
-              "$ref": "#/components/schemas/ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber"
+              "$ref": "#/components/schemas/ReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumber"
             },
             "type": "array"
           },
@@ -82,6 +85,9 @@
             },
             "type": "array"
           },
+          "team": {
+            "$ref": "#/components/schemas/TeamClub"
+          },
           "collection": {
             "$ref": "#/components/schemas/TeamCollection"
           },
@@ -113,6 +119,7 @@
           "overall",
           "position",
           "secondaryPositions",
+          "team",
           "collection",
           "favorite",
           "holder",
@@ -121,6 +128,20 @@
           "sellPrice",
           "claimedAt"
         ],
+        "type": "object"
+      },
+      "TeamClub": {
+        "additionalProperties": false,
+        "description": "Time real da carta (clube do jogador), não o clube do usuário.",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "emoji": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "emoji"],
         "type": "object"
       },
       "TeamCollection": {
@@ -216,11 +237,18 @@
           "emoji": {
             "type": "string"
           },
+          "cardsAmount": {
+            "type": "number"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
           "quantity": {
             "type": "number"
           }
         },
-        "required": ["id", "name", "emoji", "quantity"],
+        "required": ["id", "name", "emoji", "cardsAmount", "imageUrl", "quantity"],
         "type": "object"
       },
       "TeamProfile": {
@@ -1323,7 +1351,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadonlypacksReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber"
+                  "$ref": "#/components/schemas/ReadonlypacksReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumberpagenumbertotalPagesnumber"
                 }
               }
             }
@@ -1358,7 +1386,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReadonlyidstringnamestringpricenumberimageUrlstringcardsPerPacknumber"
+                  "$ref": "#/components/schemas/ReadonlyidstringnamestringemojistringpricenumberimageUrlstringcardsPerPacknumber"
                 }
               }
             }
@@ -1564,9 +1592,47 @@
                               },
                               "position": {
                                 "type": "string"
+                              },
+                              "imageUrl": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "team": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "emoji": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": ["name", "emoji"],
+                                "type": "object"
+                              },
+                              "collection": {
+                                "additionalProperties": false,
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "emoji": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": ["name", "emoji"],
+                                "type": "object"
                               }
                             },
-                            "required": ["id", "overall", "name", "position"],
+                            "required": [
+                              "id",
+                              "overall",
+                              "name",
+                              "position",
+                              "imageUrl",
+                              "team",
+                              "collection"
+                            ],
                             "type": "object"
                           }
                         },
@@ -4674,9 +4740,21 @@
                   "sort": {
                     "type": "string",
                     "enum": ["name", "overall", "recent"]
+                  },
+                  "sellable": {
+                    "description": "Mantém só cartas que podem ser vendidas: reservas não favoritas com preço.",
+                    "type": "boolean"
                   }
                 },
-                "required": ["identity", "page", "name", "position", "collectionId", "sort"],
+                "required": [
+                  "identity",
+                  "page",
+                  "name",
+                  "position",
+                  "collectionId",
+                  "sort",
+                  "sellable"
+                ],
                 "type": "object"
               }
             }
@@ -10008,6 +10086,2050 @@
         "x-samchon-accessor": ["v1", "admin", "redeem_codes", "remove"],
         "x-samchon-controller": "AdminRedeemCodesController"
       }
+    },
+    "/v1/admin/users": {
+      "get": {
+        "tags": ["Administração / Usuários"],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "discordUserId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "avatarUrl": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "balance": {
+                            "type": "number"
+                          },
+                          "level": {
+                            "type": "number"
+                          },
+                          "xp": {
+                            "type": "number"
+                          },
+                          "booster": {
+                            "type": "boolean"
+                          },
+                          "banned": {
+                            "type": "boolean"
+                          },
+                          "cardCount": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "discordUserId",
+                          "name",
+                          "avatarUrl",
+                          "balance",
+                          "level",
+                          "xp",
+                          "booster",
+                          "banned",
+                          "cardCount",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "page": {
+                      "type": "number"
+                    },
+                    "pageSize": {
+                      "type": "number"
+                    }
+                  },
+                  "required": ["items", "total", "page", "pageSize"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "users", "list"],
+        "x-samchon-controller": "AdminUsersController"
+      }
+    },
+    "/v1/admin/users/options": {
+      "get": {
+        "tags": ["Administração / Usuários"],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "cards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "packs": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": ["cards", "packs", "fields"],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "users", "options"],
+        "x-samchon-controller": "AdminUsersController"
+      }
+    },
+    "/v1/admin/users/{id}": {
+      "get": {
+        "tags": ["Administração / Usuários"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "discordUserId": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "balance": {
+                      "type": "number"
+                    },
+                    "level": {
+                      "type": "number"
+                    },
+                    "xp": {
+                      "type": "number"
+                    },
+                    "booster": {
+                      "type": "boolean"
+                    },
+                    "banned": {
+                      "type": "boolean"
+                    },
+                    "cardCount": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "nextLevelXp": {
+                      "type": "number"
+                    },
+                    "maxCards": {
+                      "type": "number"
+                    },
+                    "stadiumLevel": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "cards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "cardId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "overall": {
+                            "type": "number"
+                          },
+                          "position": {
+                            "type": "string"
+                          },
+                          "holder": {
+                            "type": "boolean"
+                          },
+                          "captain": {
+                            "type": "boolean"
+                          },
+                          "favorite": {
+                            "type": "boolean"
+                          },
+                          "inTrade": {
+                            "description": "Cards referenced by a trade keep that history and cannot be removed.",
+                            "type": "boolean"
+                          },
+                          "claimedBy": {
+                            "type": "string"
+                          },
+                          "claimedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "cardId",
+                          "name",
+                          "overall",
+                          "position",
+                          "holder",
+                          "captain",
+                          "favorite",
+                          "inTrade",
+                          "claimedBy",
+                          "claimedAt"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "packs": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "packId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          }
+                        },
+                        "required": ["packId", "name", "quantity"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "fieldId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["fieldId", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "transactions": {
+                      "description": "Most recent balance movements, newest first.",
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "type", "amount", "createdAt"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "discordUserId",
+                    "name",
+                    "avatarUrl",
+                    "balance",
+                    "level",
+                    "xp",
+                    "booster",
+                    "banned",
+                    "cardCount",
+                    "createdAt",
+                    "updatedAt",
+                    "language",
+                    "nextLevelXp",
+                    "maxCards",
+                    "stadiumLevel",
+                    "cards",
+                    "packs",
+                    "fields",
+                    "transactions"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "users", "detail"],
+        "x-samchon-controller": "AdminUsersController"
+      },
+      "put": {
+        "tags": ["Administração / Usuários"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "level": {
+                    "type": "number"
+                  },
+                  "xp": {
+                    "type": "number"
+                  },
+                  "booster": {
+                    "type": "boolean"
+                  },
+                  "banned": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["level", "xp", "booster", "banned"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "discordUserId": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "balance": {
+                      "type": "number"
+                    },
+                    "level": {
+                      "type": "number"
+                    },
+                    "xp": {
+                      "type": "number"
+                    },
+                    "booster": {
+                      "type": "boolean"
+                    },
+                    "banned": {
+                      "type": "boolean"
+                    },
+                    "cardCount": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "nextLevelXp": {
+                      "type": "number"
+                    },
+                    "maxCards": {
+                      "type": "number"
+                    },
+                    "stadiumLevel": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "cards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "cardId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "overall": {
+                            "type": "number"
+                          },
+                          "position": {
+                            "type": "string"
+                          },
+                          "holder": {
+                            "type": "boolean"
+                          },
+                          "captain": {
+                            "type": "boolean"
+                          },
+                          "favorite": {
+                            "type": "boolean"
+                          },
+                          "inTrade": {
+                            "description": "Cards referenced by a trade keep that history and cannot be removed.",
+                            "type": "boolean"
+                          },
+                          "claimedBy": {
+                            "type": "string"
+                          },
+                          "claimedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "cardId",
+                          "name",
+                          "overall",
+                          "position",
+                          "holder",
+                          "captain",
+                          "favorite",
+                          "inTrade",
+                          "claimedBy",
+                          "claimedAt"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "packs": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "packId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          }
+                        },
+                        "required": ["packId", "name", "quantity"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "fieldId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["fieldId", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "transactions": {
+                      "description": "Most recent balance movements, newest first.",
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "type", "amount", "createdAt"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "discordUserId",
+                    "name",
+                    "avatarUrl",
+                    "balance",
+                    "level",
+                    "xp",
+                    "booster",
+                    "banned",
+                    "cardCount",
+                    "createdAt",
+                    "updatedAt",
+                    "language",
+                    "nextLevelXp",
+                    "maxCards",
+                    "stadiumLevel",
+                    "cards",
+                    "packs",
+                    "fields",
+                    "transactions"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "users", "updateProfile"],
+        "x-samchon-controller": "AdminUsersController"
+      }
+    },
+    "/v1/admin/users/{id}/balance": {
+      "post": {
+        "tags": ["Administração / Usuários"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "amount": {
+                    "description": "Signed adjustment applied atomically on top of the current balance.",
+                    "type": "number"
+                  }
+                },
+                "required": ["amount"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "discordUserId": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "balance": {
+                      "type": "number"
+                    },
+                    "level": {
+                      "type": "number"
+                    },
+                    "xp": {
+                      "type": "number"
+                    },
+                    "booster": {
+                      "type": "boolean"
+                    },
+                    "banned": {
+                      "type": "boolean"
+                    },
+                    "cardCount": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "nextLevelXp": {
+                      "type": "number"
+                    },
+                    "maxCards": {
+                      "type": "number"
+                    },
+                    "stadiumLevel": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "cards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "cardId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "overall": {
+                            "type": "number"
+                          },
+                          "position": {
+                            "type": "string"
+                          },
+                          "holder": {
+                            "type": "boolean"
+                          },
+                          "captain": {
+                            "type": "boolean"
+                          },
+                          "favorite": {
+                            "type": "boolean"
+                          },
+                          "inTrade": {
+                            "description": "Cards referenced by a trade keep that history and cannot be removed.",
+                            "type": "boolean"
+                          },
+                          "claimedBy": {
+                            "type": "string"
+                          },
+                          "claimedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "cardId",
+                          "name",
+                          "overall",
+                          "position",
+                          "holder",
+                          "captain",
+                          "favorite",
+                          "inTrade",
+                          "claimedBy",
+                          "claimedAt"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "packs": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "packId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          }
+                        },
+                        "required": ["packId", "name", "quantity"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "fieldId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["fieldId", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "transactions": {
+                      "description": "Most recent balance movements, newest first.",
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "type", "amount", "createdAt"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "discordUserId",
+                    "name",
+                    "avatarUrl",
+                    "balance",
+                    "level",
+                    "xp",
+                    "booster",
+                    "banned",
+                    "cardCount",
+                    "createdAt",
+                    "updatedAt",
+                    "language",
+                    "nextLevelXp",
+                    "maxCards",
+                    "stadiumLevel",
+                    "cards",
+                    "packs",
+                    "fields",
+                    "transactions"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "users", "balance", "adjustBalance"],
+        "x-samchon-controller": "AdminUsersController"
+      }
+    },
+    "/v1/admin/users/{id}/cards": {
+      "post": {
+        "tags": ["Administração / Usuários"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "cardId": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  }
+                },
+                "required": ["cardId", "quantity"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "discordUserId": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "balance": {
+                      "type": "number"
+                    },
+                    "level": {
+                      "type": "number"
+                    },
+                    "xp": {
+                      "type": "number"
+                    },
+                    "booster": {
+                      "type": "boolean"
+                    },
+                    "banned": {
+                      "type": "boolean"
+                    },
+                    "cardCount": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "nextLevelXp": {
+                      "type": "number"
+                    },
+                    "maxCards": {
+                      "type": "number"
+                    },
+                    "stadiumLevel": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "cards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "cardId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "overall": {
+                            "type": "number"
+                          },
+                          "position": {
+                            "type": "string"
+                          },
+                          "holder": {
+                            "type": "boolean"
+                          },
+                          "captain": {
+                            "type": "boolean"
+                          },
+                          "favorite": {
+                            "type": "boolean"
+                          },
+                          "inTrade": {
+                            "description": "Cards referenced by a trade keep that history and cannot be removed.",
+                            "type": "boolean"
+                          },
+                          "claimedBy": {
+                            "type": "string"
+                          },
+                          "claimedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "cardId",
+                          "name",
+                          "overall",
+                          "position",
+                          "holder",
+                          "captain",
+                          "favorite",
+                          "inTrade",
+                          "claimedBy",
+                          "claimedAt"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "packs": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "packId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          }
+                        },
+                        "required": ["packId", "name", "quantity"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "fieldId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["fieldId", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "transactions": {
+                      "description": "Most recent balance movements, newest first.",
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "type", "amount", "createdAt"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "discordUserId",
+                    "name",
+                    "avatarUrl",
+                    "balance",
+                    "level",
+                    "xp",
+                    "booster",
+                    "banned",
+                    "cardCount",
+                    "createdAt",
+                    "updatedAt",
+                    "language",
+                    "nextLevelXp",
+                    "maxCards",
+                    "stadiumLevel",
+                    "cards",
+                    "packs",
+                    "fields",
+                    "transactions"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "users", "cards", "addCards"],
+        "x-samchon-controller": "AdminUsersController"
+      }
+    },
+    "/v1/admin/users/{id}/cards/{userCardId}": {
+      "delete": {
+        "tags": ["Administração / Usuários"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "userCardId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "discordUserId": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "balance": {
+                      "type": "number"
+                    },
+                    "level": {
+                      "type": "number"
+                    },
+                    "xp": {
+                      "type": "number"
+                    },
+                    "booster": {
+                      "type": "boolean"
+                    },
+                    "banned": {
+                      "type": "boolean"
+                    },
+                    "cardCount": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "nextLevelXp": {
+                      "type": "number"
+                    },
+                    "maxCards": {
+                      "type": "number"
+                    },
+                    "stadiumLevel": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "cards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "cardId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "overall": {
+                            "type": "number"
+                          },
+                          "position": {
+                            "type": "string"
+                          },
+                          "holder": {
+                            "type": "boolean"
+                          },
+                          "captain": {
+                            "type": "boolean"
+                          },
+                          "favorite": {
+                            "type": "boolean"
+                          },
+                          "inTrade": {
+                            "description": "Cards referenced by a trade keep that history and cannot be removed.",
+                            "type": "boolean"
+                          },
+                          "claimedBy": {
+                            "type": "string"
+                          },
+                          "claimedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "cardId",
+                          "name",
+                          "overall",
+                          "position",
+                          "holder",
+                          "captain",
+                          "favorite",
+                          "inTrade",
+                          "claimedBy",
+                          "claimedAt"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "packs": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "packId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          }
+                        },
+                        "required": ["packId", "name", "quantity"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "fieldId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["fieldId", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "transactions": {
+                      "description": "Most recent balance movements, newest first.",
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "type", "amount", "createdAt"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "discordUserId",
+                    "name",
+                    "avatarUrl",
+                    "balance",
+                    "level",
+                    "xp",
+                    "booster",
+                    "banned",
+                    "cardCount",
+                    "createdAt",
+                    "updatedAt",
+                    "language",
+                    "nextLevelXp",
+                    "maxCards",
+                    "stadiumLevel",
+                    "cards",
+                    "packs",
+                    "fields",
+                    "transactions"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "users", "cards", "removeCard"],
+        "x-samchon-controller": "AdminUsersController"
+      }
+    },
+    "/v1/admin/users/{id}/packs/{packId}": {
+      "put": {
+        "tags": ["Administração / Usuários"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "packId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "quantity": {
+                    "description": "Absolute quantity owned; zero removes the Pack from the inventory.",
+                    "type": "number"
+                  }
+                },
+                "required": ["quantity"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "discordUserId": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "balance": {
+                      "type": "number"
+                    },
+                    "level": {
+                      "type": "number"
+                    },
+                    "xp": {
+                      "type": "number"
+                    },
+                    "booster": {
+                      "type": "boolean"
+                    },
+                    "banned": {
+                      "type": "boolean"
+                    },
+                    "cardCount": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "nextLevelXp": {
+                      "type": "number"
+                    },
+                    "maxCards": {
+                      "type": "number"
+                    },
+                    "stadiumLevel": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "cards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "cardId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "overall": {
+                            "type": "number"
+                          },
+                          "position": {
+                            "type": "string"
+                          },
+                          "holder": {
+                            "type": "boolean"
+                          },
+                          "captain": {
+                            "type": "boolean"
+                          },
+                          "favorite": {
+                            "type": "boolean"
+                          },
+                          "inTrade": {
+                            "description": "Cards referenced by a trade keep that history and cannot be removed.",
+                            "type": "boolean"
+                          },
+                          "claimedBy": {
+                            "type": "string"
+                          },
+                          "claimedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "cardId",
+                          "name",
+                          "overall",
+                          "position",
+                          "holder",
+                          "captain",
+                          "favorite",
+                          "inTrade",
+                          "claimedBy",
+                          "claimedAt"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "packs": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "packId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          }
+                        },
+                        "required": ["packId", "name", "quantity"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "fieldId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["fieldId", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "transactions": {
+                      "description": "Most recent balance movements, newest first.",
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "type", "amount", "createdAt"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "discordUserId",
+                    "name",
+                    "avatarUrl",
+                    "balance",
+                    "level",
+                    "xp",
+                    "booster",
+                    "banned",
+                    "cardCount",
+                    "createdAt",
+                    "updatedAt",
+                    "language",
+                    "nextLevelXp",
+                    "maxCards",
+                    "stadiumLevel",
+                    "cards",
+                    "packs",
+                    "fields",
+                    "transactions"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "users", "packs", "setPack"],
+        "x-samchon-controller": "AdminUsersController"
+      }
+    },
+    "/v1/admin/users/{id}/fields/{fieldId}": {
+      "put": {
+        "tags": ["Administração / Usuários"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "fieldId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "discordUserId": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "balance": {
+                      "type": "number"
+                    },
+                    "level": {
+                      "type": "number"
+                    },
+                    "xp": {
+                      "type": "number"
+                    },
+                    "booster": {
+                      "type": "boolean"
+                    },
+                    "banned": {
+                      "type": "boolean"
+                    },
+                    "cardCount": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "nextLevelXp": {
+                      "type": "number"
+                    },
+                    "maxCards": {
+                      "type": "number"
+                    },
+                    "stadiumLevel": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "cards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "cardId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "overall": {
+                            "type": "number"
+                          },
+                          "position": {
+                            "type": "string"
+                          },
+                          "holder": {
+                            "type": "boolean"
+                          },
+                          "captain": {
+                            "type": "boolean"
+                          },
+                          "favorite": {
+                            "type": "boolean"
+                          },
+                          "inTrade": {
+                            "description": "Cards referenced by a trade keep that history and cannot be removed.",
+                            "type": "boolean"
+                          },
+                          "claimedBy": {
+                            "type": "string"
+                          },
+                          "claimedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "cardId",
+                          "name",
+                          "overall",
+                          "position",
+                          "holder",
+                          "captain",
+                          "favorite",
+                          "inTrade",
+                          "claimedBy",
+                          "claimedAt"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "packs": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "packId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          }
+                        },
+                        "required": ["packId", "name", "quantity"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "fieldId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["fieldId", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "transactions": {
+                      "description": "Most recent balance movements, newest first.",
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "type", "amount", "createdAt"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "discordUserId",
+                    "name",
+                    "avatarUrl",
+                    "balance",
+                    "level",
+                    "xp",
+                    "booster",
+                    "banned",
+                    "cardCount",
+                    "createdAt",
+                    "updatedAt",
+                    "language",
+                    "nextLevelXp",
+                    "maxCards",
+                    "stadiumLevel",
+                    "cards",
+                    "packs",
+                    "fields",
+                    "transactions"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "users", "fields", "grantField"],
+        "x-samchon-controller": "AdminUsersController"
+      },
+      "delete": {
+        "tags": ["Administração / Usuários"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "fieldId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "discordUserId": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "balance": {
+                      "type": "number"
+                    },
+                    "level": {
+                      "type": "number"
+                    },
+                    "xp": {
+                      "type": "number"
+                    },
+                    "booster": {
+                      "type": "boolean"
+                    },
+                    "banned": {
+                      "type": "boolean"
+                    },
+                    "cardCount": {
+                      "type": "number"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "nextLevelXp": {
+                      "type": "number"
+                    },
+                    "maxCards": {
+                      "type": "number"
+                    },
+                    "stadiumLevel": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "cards": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "cardId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "overall": {
+                            "type": "number"
+                          },
+                          "position": {
+                            "type": "string"
+                          },
+                          "holder": {
+                            "type": "boolean"
+                          },
+                          "captain": {
+                            "type": "boolean"
+                          },
+                          "favorite": {
+                            "type": "boolean"
+                          },
+                          "inTrade": {
+                            "description": "Cards referenced by a trade keep that history and cannot be removed.",
+                            "type": "boolean"
+                          },
+                          "claimedBy": {
+                            "type": "string"
+                          },
+                          "claimedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "cardId",
+                          "name",
+                          "overall",
+                          "position",
+                          "holder",
+                          "captain",
+                          "favorite",
+                          "inTrade",
+                          "claimedBy",
+                          "claimedAt"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "packs": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "packId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          }
+                        },
+                        "required": ["packId", "name", "quantity"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "fieldId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["fieldId", "name"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "transactions": {
+                      "description": "Most recent balance movements, newest first.",
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["id", "type", "amount", "createdAt"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "discordUserId",
+                    "name",
+                    "avatarUrl",
+                    "balance",
+                    "level",
+                    "xp",
+                    "booster",
+                    "banned",
+                    "cardCount",
+                    "createdAt",
+                    "updatedAt",
+                    "language",
+                    "nextLevelXp",
+                    "maxCards",
+                    "stadiumLevel",
+                    "cards",
+                    "packs",
+                    "fields",
+                    "transactions"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "x-samchon-accessor": ["v1", "admin", "users", "fields", "revokeField"],
+        "x-samchon-controller": "AdminUsersController"
+      }
     }
   },
   "tags": [
@@ -10034,6 +12156,10 @@
     {
       "name": "Administração / Sessão",
       "description": "Sessão autenticada da área administrativa."
+    },
+    {
+      "name": "Administração / Usuários",
+      "description": "Perfil, saldo, cards, packs, campos e banimento de jogadores."
     },
     {
       "name": "Respostas do bot",

@@ -22,6 +22,8 @@ import { Packs } from './features/packs/packs';
 import { RedeemCodesPage } from './features/redeem-codes/redeem-codes-page';
 import { PackStudio } from './features/studio/pack-studio';
 import { Studio } from './features/studio/studio';
+import { UserDetailPage } from './features/users/user-detail-page';
+import { UsersPage } from './features/users/users-page';
 import type { LucroConfig } from './lib/lucro';
 import { AlbumPage } from './pages/album-page';
 import { LucroPage } from './pages/lucro-page';
@@ -76,6 +78,8 @@ export function App() {
           <Route path="/app/emojis" element={<BotEmojisPage />} />
           <Route path="/app/codigos" element={<RedeemCodesPage />} />
           <Route path="/app/missoes" element={<MissionsPage />} />
+          <Route path="/app/usuarios" element={<UsersPage />} />
+          <Route path="/app/usuarios/:id" element={<UserDetailPage />} />
           <Route path="/app/gerenciar/cards" element={<Cards view="players" />} />
           <Route path="/app/gerenciar/times" element={<Cards view="teams" />} />
           <Route path="/app/gerenciar/colecoes" element={<Cards view="collections" />} />

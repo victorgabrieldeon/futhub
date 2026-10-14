@@ -22,6 +22,10 @@ export const swaggerConfig = {
     },
     { name: 'Administração / Sessão', description: 'Sessão autenticada da área administrativa.' },
     {
+      name: 'Administração / Usuários',
+      description: 'Perfil, saldo, cards, packs, campos e banimento de jogadores.',
+    },
+    {
       name: 'Respostas do bot',
       description: 'Templates configuráveis de resposta do bot Discord.',
     },
@@ -63,6 +67,7 @@ export default {
     'src/modules/admin-cards/admin-cards.controller.ts',
     'src/modules/redeem-codes/redeem-codes.controller.ts',
     'src/modules/redeem-codes/admin-redeem-codes.controller.ts',
+    'src/modules/admin-users/admin-users.controller.ts',
   ],
   swagger: { ...swaggerConfig, output: 'openapi.json' },
 } satisfies INestiaConfig;

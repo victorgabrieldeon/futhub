@@ -44,6 +44,8 @@ export class PackShopService {
     rows: {
       id: string;
       name: string;
+      emoji: string;
+      discordEmoji: string | null;
       price: number;
       imageFileId: string | null;
       imageUrl: string | null;
@@ -56,6 +58,7 @@ export class PackShopService {
     return rows.map((row) => ({
       id: row.id,
       name: row.name,
+      emoji: row.discordEmoji ?? row.emoji,
       price: row.price,
       imageUrl: row.imageFileId ? (urls.get(row.imageFileId) ?? '') : (row.imageUrl ?? ''),
       cardsPerPack: row.cardsAmount,

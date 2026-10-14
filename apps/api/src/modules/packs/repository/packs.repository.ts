@@ -1,5 +1,6 @@
 import type * as DatabaseModule from '@futhub/database';
 
+import { displayEmoji } from '../../bot-emojis/entity-emoji.js';
 import { fileUrl } from '../../files/files.service.js';
 import { advanceMissions, missionRewardBalance } from '../../missions/missions.service.js';
 import { grantCommandXp } from '../../progression/progression.js';
@@ -20,12 +21,12 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
   constructor(private readonly loadDatabase: DatabaseLoader) {}
 
   async listAvailable(): Promise<readonly PackCatalogItem[]> {
-    const { asc, db, eq, schema } = await this.loadDatabase();
+    const { asc, db, eq, schema, sql } = await this.loadDatabase();
     const rows = await db
       .select({
         id: schema.packs.id,
         name: schema.packs.name,
-        emoji: schema.packs.emoji,
+        emoji: displayEmoji(sql, schema.packs),
         cardsAmount: schema.packs.cardsAmount,
         price: schema.packs.price,
         limitPerUser: schema.packs.limitPerUser,
@@ -216,16 +217,38 @@ export class DrizzlePackRepository implements PackCatalogRepository, PackReposit
       const excludedPositionValues = excludedPositions.map((row) => row.id);
       if (excludedPositionValues.length)
         conditions.push(notInArray(schema.cards.position, excludedPositionValues));
-      const candidates = await tx
-        .select({
-          id: schema.cards.id,
-          overall: schema.cards.overall,
-          name: schema.cards.name,
-          position: schema.cards.position,
-        })
-        .from(schema.cards)
-        .where(and(...conditions))
-        .orderBy(asc(schema.cards.id));
+      const candidates = (
+        await tx
+          .select({
+            id: schema.cards.id,
+            overall: schema.cards.overall,
+            name: schema.cards.name,
+            position: schema.cards.position,
+            imageObjectKey: schema.files.objectKey,
+            legacyImageUrl: schema.cards.imageUrl,
+            team: { name: schema.teams.name, emoji: displayEmoji(sql, schema.teams) },
+            collection: {
+              name: sql<string>`coalesce(${schema.localizedTextTranslations.content}, ${schema.collections.slug})`,
+              emoji: displayEmoji(sql, schema.collections),
+            },
+          })
+          .from(schema.cards)
+          .innerJoin(schema.teams, eq(schema.teams.id, schema.cards.teamId))
+          .innerJoin(schema.collections, eq(schema.collections.id, schema.cards.collectionId))
+          .leftJoin(
+            schema.localizedTextTranslations,
+            and(
+              eq(schema.localizedTextTranslations.localizedTextId, schema.collections.nameTextId),
+              eq(schema.localizedTextTranslations.locale, 'pt-BR'),
+            ),
+          )
+          .leftJoin(schema.files, eq(schema.files.id, schema.cards.imageFileId))
+          .where(and(...conditions))
+          .orderBy(asc(schema.cards.id))
+      ).map(({ imageObjectKey, legacyImageUrl, ...card }) => ({
+        ...card,
+        imageUrl: imageObjectKey ? fileUrl(imageObjectKey) : legacyImageUrl || null,
+      }));
       const probabilities = await tx
         .select({
           overall: schema.packProbabilities.overall,
