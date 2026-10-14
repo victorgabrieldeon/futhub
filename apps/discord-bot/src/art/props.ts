@@ -76,7 +76,7 @@ export const strengthIcon: Icon = (context, x, y, color) => {
   }
 };
 
-export function clipboard(context: Ctx, x: number, y: number, w: number, h: number, color: string) {
+function clipboard(context: Ctx, x: number, y: number, w: number, h: number, color: string) {
   box(context, x, y, w, h, w * 0.12);
   context.strokeStyle = color;
   context.lineWidth = Math.max(1.5, w * 0.06);

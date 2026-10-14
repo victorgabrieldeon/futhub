@@ -1,7 +1,6 @@
-import { type Canvas, type Image, type SKRSContext2D, createCanvas } from '@napi-rs/canvas';
+import { type Canvas, type SKRSContext2D, createCanvas } from '@napi-rs/canvas';
 
 import { displayFont, interfaceFont, monoFont } from './image-fonts.js';
-import { remoteImage } from './remote-image.js';
 
 /**
  * Peças de desenho das imagens do bot: noite de estádio em verde, cabeçalho com o monograma FH,
@@ -395,52 +394,6 @@ export function stat(
     write(context, crop(context, caption, w - 44, ui(15)), x + 22, y + h - 24, ui(15), INK.white);
 }
 
-/** Avatar com anel verde duplo e brilho. */
-export async function avatar(
-  context: Ctx,
-  url: string | null | undefined,
-  x: number,
-  y: number,
-  size: number,
-  ring: string,
-  fallback: string,
-): Promise<void> {
-  const image = url ? await remoteImage(url) : undefined;
-  const cx = x + size / 2;
-  const cy = y + size / 2;
-  const r = size / 2;
-  glow(context, cx, cy, r * 1.9, ring, 0.3);
-  context.beginPath();
-  context.arc(cx, cy, r + 10, 0, Math.PI * 2);
-  context.strokeStyle = alpha(ring, 0.35);
-  context.lineWidth = 2;
-  context.stroke();
-  context.beginPath();
-  context.arc(cx, cy, r + 4, 0, Math.PI * 2);
-  context.strokeStyle = ring;
-  context.lineWidth = 5;
-  context.stroke();
-  context.save();
-  context.beginPath();
-  context.arc(cx, cy, r, 0, Math.PI * 2);
-  context.closePath();
-  context.fillStyle = INK.raised2;
-  context.fill();
-  context.clip();
-  if (image) context.drawImage(image, x, y, size, size);
-  else
-    write(
-      context,
-      fallback.slice(0, 1).toUpperCase(),
-      cx,
-      cy + 3,
-      display(r, 700),
-      INK.white,
-      'center',
-    );
-  context.restore();
-}
-
 export function fmt(value: number): string {
   return value.toLocaleString('pt-BR');
 }
@@ -454,4 +407,3 @@ export function png(target: Canvas): Buffer {
   return target.toBuffer('image/png');
 }
 
-export type { Image };

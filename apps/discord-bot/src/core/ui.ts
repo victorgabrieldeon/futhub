@@ -41,23 +41,8 @@ export function plural(count: number, one: string, many: string): string {
   return `${fmt(count)} ${count === 1 ? one : many}`;
 }
 
-export function coins(value: number): string {
-  return `${EMOJI.moeda} **${fmt(value)}**`;
-}
-
-/** Barra de progresso em texto; `ratio` é limitado a 0–1. */
-export function bar(ratio: number, size = 10): string {
-  const filled = Math.round(Math.max(0, Math.min(1, ratio)) * size);
-  return '▰'.repeat(filled) + '▱'.repeat(size - filled);
-}
-
-export function discordTime(value: string | Date, style: 'R' | 'F' | 'f' | 't' = 'R'): string {
-  const time = new Date(value).getTime();
-  return Number.isFinite(time) ? `<t:${Math.floor(time / 1_000)}:${style}>` : String(value);
-}
-
 /** Linhas de texto sem os itens vazios, para montar blocos condicionais sem `filter` solto. */
-export function lines(...items: readonly (string | false | null | undefined)[]): string {
+function lines(...items: readonly (string | false | null | undefined)[]): string {
   return items.filter((item) => typeof item === 'string').join('\n');
 }
 
@@ -112,7 +97,7 @@ export type V2Message = {
   files?: { filename: string; data: Buffer }[];
 };
 
-export function gallery(picture: Picture): MediaGallery {
+function gallery(picture: Picture): MediaGallery {
   const item = new MediaGalleryItem().setMedia(`attachment://${picture.name}`);
   return new MediaGallery().addItems(
     picture.description ? item.setDescription(picture.description) : item,

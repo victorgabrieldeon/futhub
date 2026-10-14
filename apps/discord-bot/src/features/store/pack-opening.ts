@@ -51,7 +51,7 @@ type OwnedPack = TeamResponse['packs'][number];
 const MAX_LISTED = 8;
 
 /** A arte vem da loja; se ela falhar, os packs aparecem com a arte padrão. */
-export async function packCatalog(): Promise<readonly PackCatalogItem[]> {
+async function packCatalog(): Promise<readonly PackCatalogItem[]> {
   return listPackCatalog()
     .then((catalog) => (Array.isArray(catalog) ? catalog : []))
     .catch((error: unknown) => {

@@ -144,7 +144,7 @@ type StoreSessionManagerOptions = {
   readonly secret?: string | Uint8Array;
 };
 
-export class InvalidStoreActionError extends Error {
+class InvalidStoreActionError extends Error {
   readonly name = 'InvalidStoreActionError';
 
   constructor(readonly action: StoreAction) {
@@ -152,7 +152,7 @@ export class InvalidStoreActionError extends Error {
   }
 }
 
-export class StoreSessionManager {
+class StoreSessionManager {
   readonly #sessions = new Map<string, StoreSession>();
   readonly #clock: () => number;
   readonly #randomBytes: (size: number) => Uint8Array;

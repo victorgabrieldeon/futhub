@@ -10,7 +10,6 @@ import type { LeaguePanelState } from '../features/team/team-session.js';
 import type { TestMatch } from '../features/test-match.js';
 import {
   type Ctx,
-  H,
   INK,
   W,
   alpha,
@@ -1062,5 +1061,3 @@ export function helpImage(): Buffer {
   });
   return png(target);
 }
-
-export { H };

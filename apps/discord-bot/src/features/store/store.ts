@@ -44,10 +44,6 @@ type ListPacks = () => Promise<readonly PackCatalogItem[]>;
 
 export const storeSessionManager = createStoreSessionManager({ clock: () => Date.now() });
 
-export function isStoreTab(value: string): value is StoreTab {
-  return (storeTabs as readonly string[]).includes(value);
-}
-
 export function initialPacksState(): StorePacks {
   return { tab: 'packs', page: 1, favoritePackIds: [] };
 }
