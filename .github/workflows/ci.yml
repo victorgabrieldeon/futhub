@@ -19,7 +19,9 @@ jobs:
           package-manager-cache: false
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
-      - run: pnpm check
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
       - run: pnpm build
         env:
           DATABASE_URL: postgresql://futhub:futhub@localhost:5432/futhub
