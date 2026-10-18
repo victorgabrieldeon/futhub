@@ -77,7 +77,14 @@ export class LeagueController {
   async testMatch(
     @Body({ schema: TestMatchRequestSchema }) input: TestMatchRequest,
   ): Promise<TestMatchResponse> {
-    return this.handle(() => this.league.testMatch(input.identity, input.opponentId, input.seed));
+    return this.handle(() =>
+      this.league.testMatch(
+        input.identity,
+        input.opponentId ?? null,
+        input.seed ?? null,
+        input.difficulty,
+      ),
+    );
   }
 
   @TypedRoute.Get('matches/:matchId')

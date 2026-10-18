@@ -3617,9 +3617,13 @@
                   "seed": {
                     "type": "number",
                     "nullable": true
+                  },
+                  "difficulty": {
+                    "type": "string",
+                    "enum": ["easy", "hard", "medium"]
                   }
                 },
-                "required": ["identity", "opponentId", "seed"],
+                "required": ["identity"],
                 "type": "object"
               }
             }
@@ -3636,6 +3640,11 @@
                   "properties": {
                     "seed": {
                       "type": "number"
+                    },
+                    "difficulty": {
+                      "type": "string",
+                      "enum": ["easy", "hard", "medium"],
+                      "nullable": true
                     },
                     "home": {
                       "additionalProperties": false,
@@ -3666,15 +3675,49 @@
                               },
                               "position": {
                                 "type": "string"
+                              },
+                              "overall": {
+                                "type": "number"
+                              },
+                              "imageUrl": {
+                                "type": "string",
+                                "nullable": true
                               }
                             },
-                            "required": ["name", "position"],
+                            "required": ["name", "position", "overall", "imageUrl"],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "slots": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "position": {
+                                "type": "string"
+                              },
+                              "x": {
+                                "type": "number"
+                              },
+                              "y": {
+                                "type": "number"
+                              }
+                            },
+                            "required": ["position", "x", "y"],
                             "type": "object"
                           },
                           "type": "array"
                         }
                       },
-                      "required": ["name", "avatarUrl", "cpu", "tactic", "rating", "lineup"],
+                      "required": [
+                        "name",
+                        "avatarUrl",
+                        "cpu",
+                        "tactic",
+                        "rating",
+                        "lineup",
+                        "slots"
+                      ],
                       "type": "object"
                     },
                     "away": {
@@ -3706,15 +3749,49 @@
                               },
                               "position": {
                                 "type": "string"
+                              },
+                              "overall": {
+                                "type": "number"
+                              },
+                              "imageUrl": {
+                                "type": "string",
+                                "nullable": true
                               }
                             },
-                            "required": ["name", "position"],
+                            "required": ["name", "position", "overall", "imageUrl"],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "slots": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "position": {
+                                "type": "string"
+                              },
+                              "x": {
+                                "type": "number"
+                              },
+                              "y": {
+                                "type": "number"
+                              }
+                            },
+                            "required": ["position", "x", "y"],
                             "type": "object"
                           },
                           "type": "array"
                         }
                       },
-                      "required": ["name", "avatarUrl", "cpu", "tactic", "rating", "lineup"],
+                      "required": [
+                        "name",
+                        "avatarUrl",
+                        "cpu",
+                        "tactic",
+                        "rating",
+                        "lineup",
+                        "slots"
+                      ],
                       "type": "object"
                     },
                     "homeGoals": {
@@ -3750,7 +3827,15 @@
                       "type": "array"
                     }
                   },
-                  "required": ["seed", "home", "away", "homeGoals", "awayGoals", "events"],
+                  "required": [
+                    "seed",
+                    "difficulty",
+                    "home",
+                    "away",
+                    "homeGoals",
+                    "awayGoals",
+                    "events"
+                  ],
                   "type": "object"
                 }
               }

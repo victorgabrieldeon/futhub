@@ -38,6 +38,13 @@ export default class TimeSelectComponent extends ComponentCommand {
       return;
     }
     const value = context.interaction.values[0];
+    if (parsed.session.matchBusy) {
+      await context.write({
+        content: 'A partida está em andamento. Aguarde o apito final.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
     if (!value) {
       await context.write({
         content: `${EMOJI.alerta} Seleção inválida.`,
@@ -61,7 +68,7 @@ export default class TimeSelectComponent extends ComponentCommand {
               ? reloadTeam({ ...session, tab: value })
               : session.team,
           value === 'club' ? loadClub(session.identity) : session.club,
-          value === 'league'
+          value === 'league' || (value === 'match' && session.matchMode === 'league')
             ? loadLeague(session.identity)
             : overview
               ? loadOverviewLeague(session.identity)

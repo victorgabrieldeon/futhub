@@ -1,3 +1,4 @@
+import type { CpuDifficulty } from '../../league.dto.js';
 import { pick, seededRandom } from './league.simulator.js';
 import type { LineupCard } from './league.types.js';
 
@@ -22,16 +23,18 @@ export function lineupRating(cards: readonly LineupCard[]): number {
   return Math.round(total / (cards.length * 3));
 }
 
-/** Builds a reproducible CPU lineup mirroring the opponent's positions with catalog cards of similar strength. */
-export function buildCpuLineup(
-  pool: readonly CpuCandidate[],
+/** Mirrors positions and scales catalog attributes in memory, even when cards must be reused. */
+export function buildCpuLineup<T extends CpuCandidate>(
+  pool: readonly T[],
   opponent: readonly LineupCard[],
   seed: number,
-): LineupCard[] {
+  difficulty: CpuDifficulty = 'medium',
+): (LineupCard & { source: T })[] {
   if (pool.length === 0) throw new Error('CPU lineup requires catalog cards.');
   const random = seededRandom(seed ^ 0x5f3759df);
   const target = lineupRating(opponent);
-  const used = new Set<CpuCandidate>();
+  const multiplier = { easy: 0.8, medium: 1, hard: 1.2 }[difficulty];
+  const used = new Set<T>();
   const distance = (candidate: CpuCandidate) => Math.abs(candidate.overall - target);
 
   return opponent.map((slot, index) => {
@@ -50,13 +53,14 @@ export function buildCpuLineup(
       name: card.name,
       assignedPosition: slot.assignedPosition,
       allowedPositions: [slot.assignedPosition],
-      attack: card.attack,
-      creation: card.creation,
-      defense: card.defense,
-      finishing: card.finishing,
-      passing: card.passing,
-      control: card.control,
-      marking: card.marking,
+      attack: card.attack * multiplier,
+      creation: card.creation * multiplier,
+      defense: card.defense * multiplier,
+      finishing: card.finishing * multiplier,
+      passing: card.passing * multiplier,
+      control: card.control * multiplier,
+      marking: card.marking * multiplier,
+      source: card,
     };
   });
 }

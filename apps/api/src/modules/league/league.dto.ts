@@ -68,12 +68,16 @@ export const MatchResponseSchema = z.object({
 });
 export type MatchResponse = z.infer<typeof MatchResponseSchema>;
 
+export const CpuDifficultySchema = z.enum(['easy', 'medium', 'hard']);
+export type CpuDifficulty = z.infer<typeof CpuDifficultySchema>;
+
 export const TestMatchRequestSchema = z.object({
   identity: DiscordIdentityDtoSchema,
   opponentId: z.string().min(1).max(80).nullable().default(null),
   seed: z.number().int().positive().max(2_147_483_647).nullable().default(null),
+  difficulty: CpuDifficultySchema.default('medium'),
 });
-export type TestMatchRequest = z.infer<typeof TestMatchRequestSchema>;
+export type TestMatchRequest = z.input<typeof TestMatchRequestSchema>;
 
 export const TestMatchTeamDtoSchema = z.object({
   name: z.string(),
@@ -81,12 +85,21 @@ export const TestMatchTeamDtoSchema = z.object({
   cpu: z.boolean(),
   tactic: z.enum(['defensive', 'balanced', 'offensive']),
   rating: z.number(),
-  lineup: z.array(z.object({ name: z.string(), position: z.string() })),
+  lineup: z.array(
+    z.object({
+      name: z.string(),
+      position: z.string(),
+      overall: z.number(),
+      imageUrl: z.string().nullable(),
+    }),
+  ),
+  slots: z.array(z.object({ position: z.string(), x: z.number(), y: z.number() })),
 });
 export type TestMatchTeamDto = z.infer<typeof TestMatchTeamDtoSchema>;
 
 export const TestMatchResponseSchema = z.object({
   seed: z.number(),
+  difficulty: CpuDifficultySchema.nullable(),
   home: TestMatchTeamDtoSchema,
   away: TestMatchTeamDtoSchema,
   homeGoals: z.number(),

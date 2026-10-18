@@ -47,7 +47,7 @@ export function createTeamPanel(context: CommandContext, tab: TeamTab = 'overvie
 
 @Declare({
   name: 'time',
-  description: 'Seu clube em um painel: início, escalação, elenco, packs, clube e liga.',
+  description: 'Seu clube: escalação, elenco, packs e partidas de liga, amistoso ou contra bots.',
 })
 export default class TimeCommand extends FutHubCommand {
   async run(context: CommandContext): Promise<void> {

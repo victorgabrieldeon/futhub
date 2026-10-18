@@ -33,7 +33,8 @@ import {
   ui,
   write,
 } from './kit.js';
-import { CARD_RATIO, playerCard } from './player-card.js';
+import type { TestMatch } from '../features/test-match.js';
+import { CARD_RATIO, type CardFace, playerCard } from './player-card.js';
 import { cardsIcon, coinsIcon, crowd, pack, peopleIcon, star, strengthIcon } from './props.js';
 import { remoteImage } from './remote-image.js';
 import { drawPackArt } from './store-packs-image.js';
@@ -41,7 +42,7 @@ import { drawPackArt } from './store-packs-image.js';
 export const teamImageName = 'futhub-team.png';
 
 /** Início e Liga têm arte própria (`art/hub.ts` e `art/scenes.ts`). */
-export type TeamImageTab = Exclude<TeamTab, 'league' | 'overview'>;
+export type TeamImageTab = Exclude<TeamTab, 'league' | 'overview' | 'match'>;
 type TeamImageData = Pick<TeamSession, 'identity' | 'team'> &
   Readonly<{ tab: TeamImageTab }> &
   Partial<Pick<TeamSession, 'club'>>;
@@ -172,9 +173,9 @@ function turf(context: Ctx, x: number, y: number, w: number, h: number): void {
   context.stroke();
 }
 
-function vacancy(context: Ctx, position: string, x: number, y: number): void {
-  const w = LINEUP_CARD;
+function vacancy(context: Ctx, position: string, x: number, y: number, w: number): void {
   const h = w * CARD_RATIO;
+  const unit = w / LINEUP_CARD;
   box(context, x - w / 2, y - h / 2, w, h, 10);
   context.fillStyle = 'rgba(4, 10, 7, 0.7)';
   context.fill();
@@ -183,8 +184,16 @@ function vacancy(context: Ctx, position: string, x: number, y: number): void {
   context.lineWidth = 1.5;
   context.stroke();
   context.setLineDash([]);
-  write(context, position, x, y - 6, display(32, 700), alpha(INK.white, 0.7), 'center');
-  write(context, 'VAGO', x, y + 24, mono(10, 600), INK.mute, 'center', 2);
+  write(
+    context,
+    position,
+    x,
+    y - 6 * unit,
+    display(32 * unit, 700),
+    alpha(INK.white, 0.7),
+    'center',
+  );
+  write(context, 'VAGO', x, y + 24 * unit, mono(10 * unit, 600), INK.mute, 'center', 2);
 }
 
 function captainMark(context: Ctx, x: number, y: number): void {
@@ -199,18 +208,23 @@ function captainMark(context: Ctx, x: number, y: number): void {
   write(context, 'C', x, y + 1, display(17, 700), INK.canvas, 'center');
 }
 
+type PitchSlot = Readonly<{ position: string; x: number; y: number }>;
+type PitchCard = CardFace & Readonly<{ holderPosition: string | null; captain?: boolean }>;
+
+/** Cartas nas vagas da formação; `slot.x`/`slot.y` (0–100) viram linhas e colunas no campo. */
 async function lineupPitch(
   context: Ctx,
-  team: TeamResponse,
+  slots: readonly PitchSlot[],
+  cards: readonly PitchCard[],
   x: number,
   y: number,
   width: number,
   height: number,
+  cardWidth = LINEUP_CARD,
 ): Promise<void> {
-  const cardWidth = LINEUP_CARD;
   const cardHeight = cardWidth * CARD_RATIO;
-  const players = [...team.lineup];
-  const slotRows = [...new Set(team.formation.slots.map(({ y: slotY }) => slotY))].sort(
+  const players = [...cards];
+  const slotRows = [...new Set(slots.map(({ y: slotY }) => slotY))].sort(
     (left, right) => left - right,
   );
   const rowByY = new Map<number, number>();
@@ -219,7 +233,7 @@ async function lineupPitch(
     if (index === 0 || slotY - (slotRows[index - 1] ?? slotY) > 12) rowCount++;
     rowByY.set(slotY, rowCount - 1);
   }
-  const placed = team.formation.slots.map((slot) => {
+  const placed = slots.map((slot) => {
     const index = players.findIndex(({ holderPosition }) => holderPosition === slot.position);
     const card = index >= 0 ? players.splice(index, 1)[0] : undefined;
     const row = rowByY.get(slot.y) ?? 0;
@@ -233,7 +247,7 @@ async function lineupPitch(
   });
   await Promise.all(placed.map(({ card }) => cardArt(card?.imageUrl)));
   for (const { slot, card, cx, cy } of placed) {
-    if (!card) vacancy(context, slot.position, cx, cy);
+    if (!card) vacancy(context, slot.position, cx, cy, cardWidth);
     else await playerCard(context, card, cx - cardWidth / 2, cy - cardHeight / 2, cardWidth);
   }
   for (const { card, cx, cy } of placed)
@@ -269,7 +283,7 @@ function tactic(context: Ctx, current: TeamResponse['tactic'], x: number, y: num
 
 async function lineup(context: Ctx, team: TeamResponse): Promise<void> {
   turf(context, MARGIN, 92, 782, 694);
-  await lineupPitch(context, team, 50, 104, 750, 670);
+  await lineupPitch(context, team.formation.slots, team.lineup, 50, 104, 750, 670);
 
   const x = 832;
   const w = RIGHT - x;
@@ -337,6 +351,47 @@ async function lineup(context: Ctx, team: TeamResponse): Promise<void> {
     'right',
   );
   bar(context, x + 22, 742, w - 44, 12, team.lineup.length / slots, NEON);
+}
+
+/** As duas escalações da partida lado a lado: mandante à esquerda, visitante à direita. */
+export async function renderMatchLineupsImage(match: TestMatch): Promise<Buffer> {
+  const canvas = createCanvas(WIDTH * OUTPUT_SCALE, LINEUP_HEIGHT * OUTPUT_SCALE);
+  const context = canvas.getContext('2d');
+  context.scale(OUTPUT_SCALE, OUTPUT_SCALE);
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = 'high';
+  stage(context, LINEUP_HEIGHT);
+  masthead(context, 'Partida · Escalações', undefined, NEON, pitchIcon);
+
+  const gap = 16;
+  const w = (RIGHT - MARGIN - gap) / 2;
+  const sides = [match.home, match.away] as const;
+  for (const [index, team] of sides.entries()) {
+    const x = MARGIN + index * (w + gap);
+    fit(context, team.name.toUpperCase(), x + 4, 112, w - 220, 30, INK.white, 'left', 700);
+    write(
+      context,
+      `${team.cpu ? 'BOT · ' : ''}FORÇA ${team.rating} · ${tacticTitles[team.tactic]}`,
+      x + w - 4,
+      114,
+      mono(11, 500),
+      INK.body,
+      'right',
+      2,
+    );
+    turf(context, x, 136, w, 650);
+    await lineupPitch(
+      context,
+      team.slots,
+      team.lineup.map((card) => ({ ...card, holderPosition: card.position })),
+      x + 14,
+      148,
+      w - 28,
+      626,
+      86,
+    );
+  }
+  return canvas.toBuffer('image/png');
 }
 
 // ── Elenco, venda e packs ───────────────────────────────────────────────────────────────

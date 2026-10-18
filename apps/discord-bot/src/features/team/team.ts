@@ -8,10 +8,11 @@ import {
   MediaGalleryItem,
   StringSelectMenu,
   TextDisplay,
+  UserSelectMenu,
 } from 'seyfert';
 
 import { hubImage } from '../../art/hub.js';
-import { leagueImage } from '../../art/scenes.js';
+import { leagueImage, matchLobbyImage } from '../../art/scenes.js';
 import { renderTeamImage, teamImageName } from '../../art/team-image.js';
 import {
   EMOJI,
@@ -25,6 +26,7 @@ import {
 } from '../../core/emojis.js';
 import { navButton } from '../../core/nav.js';
 import { noMentions } from '../../core/responses.js';
+import { difficultyLabels, testMatchResponse } from '../test-match.js';
 import { type HubData, hubControls, nextStep } from './hub.js';
 import {
   type TeamCard,
@@ -41,7 +43,7 @@ const tabs: readonly [TeamTab, string, EmojiName][] = [
   ['packs', 'Packs', 'pack'],
   ['sale', 'Venda', 'venda'],
   ['club', 'Clube', 'clube'],
-  ['league', 'Liga', 'trofeu'],
+  ['match', 'Partida', 'apito'],
 ];
 const positions = ['GOL', 'LD', 'LE', 'ZAG', 'VOL', 'MA', 'MC', 'PD', 'PE', 'CA'] as const;
 const sortLabels = { overall: 'Força', name: 'Nome', recent: 'Recentes' } as const;
@@ -50,7 +52,9 @@ const nextSort = { overall: 'name', name: 'recent', recent: 'overall' } as const
 export type TeamView = Readonly<{ notice?: string; searchTick?: number }>;
 
 export async function teamResponse(session: TeamSession, notice?: string, view: TeamView = {}) {
-  if (session.tab === 'league') return leagueResponse(session, notice, view.searchTick);
+  if (session.tab === 'league' || (session.tab === 'match' && session.matchMode === 'league'))
+    return leagueResponse(session, notice, view.searchTick);
+  if (session.tab === 'match') return matchResponse(session, notice);
   if (session.tab === 'overview') return homeResponse(session, notice);
 
   const image = await renderTeamImage({
@@ -78,6 +82,133 @@ export async function teamResponse(session: TeamSession, notice?: string, view: 
         .setFile('buffer', image),
     ],
     components: [new Container().setColor('#16785b').setComponents(...components)],
+    allowedMentions: noMentions,
+  };
+}
+
+function matchModes(session: TeamSession): ActionRow<Button> {
+  const mode = session.tab === 'league' ? 'league' : session.matchMode;
+  return new ActionRow<Button>().setComponents(
+    ...(
+      [
+        ['league', 'Liga', 'trofeu'],
+        ['friendly', 'Amistoso', 'apito'],
+        ['bots', 'Contra bots', 'cpu'],
+      ] as const
+    ).map(([value, label, emoji]) =>
+      new Button()
+        .setCustomId(teamCustomId(session, 'match-mode', value))
+        .setLabel(label)
+        .setEmoji(EMOJI[emoji])
+        .setStyle(mode === value ? ButtonStyle.Primary : ButtonStyle.Secondary)
+        .setDisabled(Boolean(session.matchBusy)),
+    ),
+  );
+}
+
+function practiceControls(session: TeamSession): (ActionRow<Button> | ActionRow<UserSelectMenu>)[] {
+  const controls: (ActionRow<Button> | ActionRow<UserSelectMenu>)[] = [matchModes(session)];
+  if (session.matchMode === 'bots')
+    controls.push(
+      new ActionRow<Button>().setComponents(
+        ...(['easy', 'medium', 'hard'] as const).map((difficulty) =>
+          new Button()
+            .setCustomId(teamCustomId(session, 'bot-difficulty', difficulty))
+            .setLabel(difficultyLabels[difficulty])
+            .setStyle(
+              (session.botDifficulty ?? 'medium') === difficulty
+                ? ButtonStyle.Primary
+                : ButtonStyle.Secondary,
+            )
+            .setDisabled(Boolean(session.matchBusy)),
+        ),
+      ),
+    );
+  if (session.matchMode === 'friendly')
+    controls.push(
+      new ActionRow<UserSelectMenu>().setComponents(
+        new UserSelectMenu()
+          .setCustomId(teamCustomId(session, 'opponent'))
+          .setPlaceholder('Escolha o adversário do amistoso')
+          .setValuesLength({ min: 1, max: 1 })
+          .setDisabled(Boolean(session.matchBusy)),
+      ),
+    );
+  if (session.matchMode === 'bots' || session.matchMode === 'friendly')
+    controls.push(
+      new ActionRow<Button>().setComponents(
+        new Button()
+          .setCustomId(teamCustomId(session, 'match-play'))
+          .setLabel(
+            session.matchBusy
+              ? 'Partida em andamento'
+              : session.practice
+                ? 'Jogar novamente'
+                : 'Iniciar partida',
+          )
+          .setEmoji(EMOJI.apito)
+          .setStyle(ButtonStyle.Success)
+          .setDisabled(
+            Boolean(session.matchBusy) ||
+              session.team.lineup.length !== 11 ||
+              (session.matchMode === 'friendly' && !session.opponentId),
+          ),
+      ),
+    );
+  return controls;
+}
+
+async function matchResponse(session: TeamSession, notice?: string) {
+  const controls = practiceControls(session);
+  if (session.practice && !notice) {
+    const response = await testMatchResponse(session.practice.match, session.practice, {
+      navigation: tabMenu(session),
+      controls,
+    });
+    return { ...response, flags: 32768 | (session.ephemeral ? 64 : 0) };
+  }
+  const difficulty = session.botDifficulty ?? 'medium';
+  const body = [
+    `# ${EMOJI.apito} MEU TIME · PARTIDA`,
+    session.matchMode === 'bots'
+      ? `**Contra bots · ${difficultyLabels[difficulty]}**\nEscolha o nível e entre em campo. A força do bot se adapta ao seu time e ao nível escolhido.`
+      : session.matchMode === 'friendly'
+        ? `**Amistoso**\n${session.opponentId ? `Adversário: <@${session.opponentId}>. Pronto para iniciar.` : 'Escolha outro jogador com 11 titulares para simular um amistoso.'}`
+        : '**Liga** · Dispute pontos e suba de divisão.\n**Amistoso** · Enfrente outro jogador sem valer pontos.\n**Contra bots** · Treine no Fácil, Médio ou Difícil.',
+    '-# Amistosos e bots não alteram liga, missões nem estatísticas.',
+    ...(session.team.lineup.length !== 11
+      ? [`${EMOJI.alerta} Complete os 11 titulares na aba Escalação para jogar.`]
+      : []),
+    notice,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const imageName = 'futhub-partida.png';
+  return {
+    flags: 32768 | (session.ephemeral ? 64 : 0),
+    files: [
+      new AttachmentBuilder()
+        .setName(imageName)
+        .setDescription('Modos de partida FutHub')
+        .setFile(
+          'buffer',
+          matchLobbyImage(session.matchMode, difficulty, Boolean(session.matchBusy)),
+        ),
+    ],
+    components: [
+      new Container()
+        .setColor('#16785b')
+        .setComponents(
+          tabMenu(session),
+          new MediaGallery().addItems(
+            new MediaGalleryItem()
+              .setMedia(`attachment://${imageName}`)
+              .setDescription('Liga, Amistoso e Contra bots: Fácil, Médio ou Difícil'),
+          ),
+          new TextDisplay().setContent(body),
+          ...controls,
+        ),
+    ],
     allowedMentions: noMentions,
   };
 }
@@ -152,6 +283,7 @@ async function leagueResponse(session: TeamSession, notice?: string, searchTick?
         ]
       : []),
     new TextDisplay().setContent(leagueBody(session, notice, searchTick)),
+    matchModes(session),
     leagueControls(session),
   ];
   const divisionColor = league?.status.division.color;
@@ -244,12 +376,13 @@ function tabMenu(session: TeamSession): ActionRow<StringSelectMenu> {
     new StringSelectMenu()
       .setCustomId(teamCustomId(session, 'tab'))
       .setPlaceholder('Escolha uma aba')
+      .setDisabled(Boolean(session.matchBusy))
       .setOptions(
         ...tabs.map(([tab, label, emoji]) => ({
           label,
           value: tab,
           emoji: selectEmoji(emoji),
-          default: session.tab === tab,
+          default: session.tab === tab || (tab === 'match' && session.tab === 'league'),
         })),
       ),
   );
@@ -400,7 +533,7 @@ function inventoryControls(session: TeamSession) {
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(session.team.inventory.page === 1),
           new Button()
-            .setCustomId(teamCustomId(session, 'cancel'))
+            .setCustomId(teamCustomId(session, 'cancel', 'page'))
             .setLabel(`Página ${session.team.inventory.page}/${session.team.inventory.totalPages}`)
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(true),

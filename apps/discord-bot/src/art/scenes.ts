@@ -7,7 +7,7 @@ import type {
 
 import { rarity } from '../core/juice.js';
 import type { LeaguePanelState } from '../features/team/team-session.js';
-import type { TestMatch } from '../features/test-match.js';
+import type { MatchFrame, TestMatch } from '../features/test-match.js';
 import {
   type Ctx,
   INK,
@@ -933,42 +933,120 @@ export async function leagueImage(
 
 // ── Partida de teste ────────────────────────────────────────────────────────────────────
 
-export function testMatchImage(match: TestMatch, revealed: number): Buffer {
+export function matchLobbyImage(
+  mode?: 'league' | 'friendly' | 'bots',
+  difficulty: 'easy' | 'medium' | 'hard' = 'medium',
+  busy = false,
+): Buffer {
   const { canvas: target, context } = canvas();
-  const events = match.events.slice(0, Math.max(1, revealed));
-  const current = events.at(-1);
-  const previous = events.at(-2);
-  const finished = current?.type === 'fulltime';
-  const goal = current?.type === 'goal';
-  const homeGoals = current?.homeGoals ?? 0;
-  const awayGoals = current?.awayGoals ?? 0;
-  const tint = goal
-    ? INK.gold
-    : current?.type === 'red_card'
-      ? INK.danger
-      : finished
-        ? homeGoals > awayGoals
-          ? INK.success
-          : homeGoals === awayGoals
-            ? INK.warning
-            : INK.danger
-        : INK.danger;
   frame(
     context,
-    'Partida de teste',
-    finished ? 'fim de jogo' : `ao vivo · ${current?.minute ?? 0}'`,
+    'Partida',
+    busy ? 'preparando o jogo' : 'escolha seu desafio',
+    INK.success,
+    ballIcon,
+  );
+  heading(
+    context,
+    'Seu time em campo',
+    'Dispute a liga, desafie um jogador ou treine contra bots.',
+  );
+  const modes = [
+    ['league', 'LIGA', 'Vale pontos e divisão', INK.gold, trophy],
+    ['friendly', 'AMISTOSO', 'Contra outro jogador', INK.info, peopleIcon],
+    ['bots', 'CONTRA BOTS', 'Fácil · Médio · Difícil', INK.success, tactics],
+  ] as const;
+  modes.forEach(([value, title, subtitle, color, icon], index) => {
+    const x = 34 + index * 382;
+    raised(context, x, 236, 368, 278, mode === value ? color : INK.hairline);
+    icon(context, x + 184, 300, color);
+    write(context, title, x + 184, 368, display(38, 700), INK.white, 'center');
+    write(context, subtitle, x + 184, 414, ui(18), INK.body, 'center');
+    if (mode === value) write(context, 'SELECIONADO', x + 184, 474, mono(12), color, 'center', 1);
+  });
+  const description =
+    mode === 'bots'
+      ? `BOT ${difficulty === 'easy' ? 'FÁCIL · Força reduzida' : difficulty === 'hard' ? 'DIFÍCIL · Força elevada' : 'MÉDIO · Força equilibrada'}`
+      : '11 titulares escalados para começar';
+  write(
+    context,
+    busy ? 'PREPARANDO A PARTIDA...' : description,
+    W / 2,
+    566,
+    ui(24, 600),
+    INK.white,
+    'center',
+  );
+  write(
+    context,
+    'Amistosos e bots não afetam sua campanha na liga.',
+    W / 2,
+    614,
+    ui(18),
+    INK.body,
+    'center',
+  );
+  return png(target);
+}
+
+export function testMatchImage(match: TestMatch, step: MatchFrame): Buffer {
+  const { canvas: target, context } = canvas();
+  const events = match.events.slice(0, Math.max(1, step.revealed));
+  const current = events.at(-1);
+  const previous = events.at(-2);
+  const next = match.events[step.revealed];
+  const chance = step.beat === 'chance';
+  const halftime = step.beat === 'halftime';
+  const finished = !step.beat && current?.type === 'fulltime';
+  const goal = !step.beat && current?.type === 'goal';
+  const homeGoals = current?.homeGoals ?? 0;
+  const awayGoals = current?.awayGoals ?? 0;
+  const minute = halftime ? 45 : ((chance ? next : current)?.minute ?? 0);
+  // Lado em destaque: quem acabou de marcar ou quem está chegando com perigo.
+  const side = goal
+    ? homeGoals > (previous?.homeGoals ?? 0)
+      ? 'home'
+      : 'away'
+    : chance && next
+      ? next.homeGoals > homeGoals
+        ? 'home'
+        : 'away'
+      : undefined;
+  const won = finished && homeGoals > awayGoals;
+  const tint = goal
+    ? INK.gold
+    : chance
+      ? INK.warning
+      : halftime
+        ? INK.info
+        : current?.type === 'red_card'
+          ? INK.danger
+          : finished
+            ? won
+              ? INK.success
+              : homeGoals === awayGoals
+                ? INK.warning
+                : INK.danger
+            : INK.danger;
+  frame(
+    context,
+    match.away.cpu ? 'Contra bots' : 'Amistoso',
+    finished ? 'fim de jogo' : halftime ? 'intervalo' : `ao vivo · ${minute}'`,
     tint,
     ballIcon,
   );
-  if (goal) rays(context, W / 2, 300, INK.gold, 16, 800);
+  if (goal || won) rays(context, W / 2, 300, tint, 16, 800);
   glow(context, W / 2, 300, 420, tint, goal ? 0.5 : 0.22);
+  const sideX = side === 'home' ? 290 : 910;
+  if (side) glow(context, sideX, 260, 260, tint, chance ? 0.35 : 0.5);
 
-  fit(context, match.home.name.toUpperCase(), 290, 220, 380, 46, INK.white, 'center', 600);
-  fit(context, match.away.name.toUpperCase(), 910, 220, 380, 46, INK.white, 'center', 600);
+  const nameColor = (team: 'home' | 'away') => (side === team ? tint : INK.white);
+  fit(context, match.home.name.toUpperCase(), 290, 220, 380, 46, nameColor('home'), 'center', 600);
+  fit(context, match.away.name.toUpperCase(), 910, 220, 380, 46, nameColor('away'), 'center', 600);
   write(context, `FORÇA ${match.home.rating}`, 290, 262, mono(12), INK.mute, 'center', 2);
   write(
     context,
-    `${match.away.cpu ? 'CPU · ' : ''}FORÇA ${match.away.rating}`,
+    `${match.away.cpu ? `BOT ${match.difficulty === 'easy' ? 'FÁCIL' : match.difficulty === 'hard' ? 'DIFÍCIL' : 'MÉDIO'} · ` : ''}FORÇA ${match.away.rating}`,
     910,
     262,
     mono(12),
@@ -976,16 +1054,17 @@ export function testMatchImage(match: TestMatch, revealed: number): Buffer {
     'center',
     2,
   );
-  write(context, `${homeGoals}`, 520, 330, display(170, 700), INK.white, 'center');
+  const scoreColor = (team: 'home' | 'away') => (goal && side === team ? INK.gold : INK.white);
+  write(context, `${homeGoals}`, 520, 330, display(170, 700), scoreColor('home'), 'center');
   write(context, '×', W / 2, 320, display(80, 600), INK.mute, 'center');
-  write(context, `${awayGoals}`, 680, 330, display(170, 700), INK.white, 'center');
+  write(context, `${awayGoals}`, 680, 330, display(170, 700), scoreColor('away'), 'center');
 
   box(context, W / 2 - 70, 112, 140, 44, 22);
-  context.fillStyle = finished ? INK.raised2 : INK.danger;
+  context.fillStyle = finished || halftime ? INK.raised2 : chance ? INK.warning : INK.danger;
   context.fill();
   write(
     context,
-    finished ? 'FIM' : `${current?.minute ?? 0}'`,
+    finished ? 'FIM' : halftime ? 'INT' : `${minute}'`,
     W / 2,
     135,
     display(30, 700),
@@ -993,24 +1072,45 @@ export function testMatchImage(match: TestMatch, revealed: number): Buffer {
     'center',
   );
 
+  matchTimeline(context, events, minute, tint);
+
+  const attacker = (side === 'home' ? match.home : match.away).name.toUpperCase();
   const banner = goal
-    ? `GOOOL DO ${(homeGoals > (previous?.homeGoals ?? 0) ? match.home : match.away).name.toUpperCase()}!`
-    : current?.type === 'red_card'
-      ? 'CARTÃO VERMELHO!'
-      : current?.type === 'yellow_card'
-        ? 'CARTÃO AMARELO'
-        : finished
-          ? homeGoals > awayGoals
-            ? 'VITÓRIA!'
-            : homeGoals === awayGoals
-              ? 'EMPATE'
-              : 'DERROTA'
-          : 'BOLA ROLANDO';
+    ? `GOOOL DO ${attacker}!`
+    : chance
+      ? `ATAQUE PERIGOSO DO ${attacker}...`
+      : halftime
+        ? 'INTERVALO'
+        : current?.type === 'red_card'
+          ? 'CARTÃO VERMELHO!'
+          : current?.type === 'yellow_card'
+            ? 'CARTÃO AMARELO'
+            : finished
+              ? won
+                ? 'VITÓRIA!'
+                : homeGoals === awayGoals
+                  ? 'EMPATE'
+                  : 'DERROTA'
+              : 'APITO INICIAL';
+  const description = chance
+    ? CHANCES[minute % CHANCES.length]
+    : halftime
+      ? `Fim do primeiro tempo · ${match.home.name} ${homeGoals} × ${awayGoals} ${match.away.name}`
+      : (current?.description ?? '');
   raised(context, 40, 470, 1_120, 160, tint);
-  fit(context, banner, W / 2, 530, 1_060, 64, goal || finished ? tint : INK.white, 'center');
+  fit(
+    context,
+    banner,
+    W / 2,
+    530,
+    1_060,
+    64,
+    goal || finished || chance ? tint : INK.white,
+    'center',
+  );
   write(
     context,
-    crop(context, current?.description ?? '', 1_060, ui(20)),
+    crop(context, description ?? '', 1_060, ui(20)),
     W / 2,
     588,
     ui(20),
@@ -1018,6 +1118,46 @@ export function testMatchImage(match: TestMatch, revealed: number): Buffer {
     'center',
   );
   return png(target);
+}
+
+const CHANCES = [
+  'Avança em velocidade pela ponta...',
+  'Cruzamento venenoso na área...',
+  'Fica cara a cara com o goleiro...',
+  'Arrisca de fora da área...',
+] as const;
+
+/** Linha do tempo 0'–90': progresso até o minuto e um marcador por lance (casa em cima, fora embaixo). */
+function matchTimeline(
+  context: Ctx,
+  events: TestMatch['events'],
+  minute: number,
+  color: string,
+): void {
+  const x = 140;
+  const w = 920;
+  const y = 438;
+  bar(context, x, y - 3, w, 6, minute / 90, color);
+  context.fillStyle = 'rgba(255,255,255,0.35)';
+  context.fillRect(x + w / 2 - 1, y - 10, 2, 20);
+  write(context, "0'", x - 14, y, mono(12), INK.mute, 'right');
+  write(context, "90'", x + w + 14, y, mono(12), INK.mute, 'left');
+  for (const [index, event] of events.entries()) {
+    const at = x + (Math.min(event.minute, 90) / 90) * w;
+    if (event.type === 'goal') {
+      const my = event.homeGoals > (events[index - 1]?.homeGoals ?? 0) ? y - 19 : y + 19;
+      glow(context, at, my, 18, INK.gold, 0.55);
+      context.beginPath();
+      context.arc(at, my, 10, 0, Math.PI * 2);
+      context.fillStyle = INK.white;
+      context.fill();
+      ballIcon(context, at, my, INK.canvas);
+    } else if (event.type === 'yellow_card' || event.type === 'red_card') {
+      box(context, at - 4, y - 7, 8, 14, 2);
+      context.fillStyle = event.type === 'red_card' ? INK.danger : '#facc15';
+      context.fill();
+    }
+  }
 }
 
 // ── Ajuda ───────────────────────────────────────────────────────────────────────────────

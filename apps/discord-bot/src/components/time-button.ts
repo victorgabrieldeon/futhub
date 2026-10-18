@@ -18,6 +18,7 @@ import {
   toggleFavorite,
   upgradeClubStadium,
 } from '../features/team/team-api.js';
+import { playTeamMatch } from '../features/team/team-match.js';
 import {
   type TeamSession,
   parseTeamAction,
@@ -43,6 +44,13 @@ export default class TimeButtonComponent extends ComponentCommand {
       );
       return;
     }
+    if (parsed.session.matchBusy) {
+      await context.write({
+        content: 'A partida está em andamento. Aguarde o apito final.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
     if (parsed.action === 'search') {
       const input = new TextInput()
         .setCustomId('name')
@@ -59,9 +67,38 @@ export default class TimeButtonComponent extends ComponentCommand {
       return;
     }
 
+    if (parsed.action === 'match-play') {
+      await playTeamMatch(context, parsed.session);
+      return;
+    }
     await context.deferUpdate();
     try {
       const { session, action, argument } = parsed;
+      if (action === 'match-mode') {
+        if (argument !== 'league' && argument !== 'friendly' && argument !== 'bots')
+          throw new Error('Invalid match mode.');
+        const league = argument === 'league' ? await loadLeague(session.identity) : session.league;
+        const updated = updateTeamSession(session, {
+          tab: 'match',
+          matchMode: argument,
+          practice: null,
+          league,
+        });
+        await context.editOrReply(await teamResponse(updated));
+        return;
+      }
+      if (action === 'bot-difficulty') {
+        if (argument !== 'easy' && argument !== 'medium' && argument !== 'hard')
+          throw new Error('Invalid bot difficulty.');
+        const updated = updateTeamSession(session, {
+          tab: 'match',
+          matchMode: 'bots',
+          botDifficulty: argument,
+          practice: null,
+        });
+        await context.editOrReply(await teamResponse(updated));
+        return;
+      }
       if (action === 'league-refresh' || action === 'league-queue') {
         try {
           const league =

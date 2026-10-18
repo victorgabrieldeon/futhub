@@ -7,7 +7,7 @@ import { MessageFlags } from 'seyfert';
 import LucroCommand from '../src/commands/lucro.js';
 import type { BotMessage } from '../src/core/bot-response.js';
 import { countUp, juice, leveledUp, rarity, scene } from '../src/core/juice.js';
-import { type TestMatch, eventHold, testMatchResponse } from '../src/features/test-match.js';
+import { type TestMatch, matchFrames, testMatchResponse } from '../src/features/test-match.js';
 import { messageText, mockApi, withTemplates } from './support/api.js';
 
 juice.frameDelayMs = 0;
@@ -123,7 +123,7 @@ test('quadros de cena privada saem privados', async () => {
   assert.deepEqual(flags, [32768 | MessageFlags.Ephemeral, 32768]);
 });
 
-test('gol vira destaque dourado e segura mais na tela', () => {
+test('gol vira destaque dourado e segura mais na tela', async () => {
   const event = (type: string, homeGoals: number, minute: number) => ({
     minute,
     type,
@@ -133,19 +133,51 @@ test('gol vira destaque dourado e segura mais na tela', () => {
   });
   const match = {
     seed: 1,
-    home: { name: 'Casa', avatarUrl: null, cpu: false, tactic: 'balanced', rating: 80, lineup: [] },
-    away: { name: 'Fora', avatarUrl: null, cpu: true, tactic: 'balanced', rating: 80, lineup: [] },
+    home: {
+      name: 'Casa',
+      avatarUrl: null,
+      cpu: false,
+      tactic: 'balanced',
+      rating: 80,
+      lineup: [],
+      slots: [],
+    },
+    away: {
+      name: 'Fora',
+      avatarUrl: null,
+      cpu: true,
+      tactic: 'balanced',
+      rating: 80,
+      lineup: [],
+      slots: [],
+    },
     homeGoals: 1,
     awayGoals: 0,
     events: [event('kickoff', 0, 0), event('goal', 1, 30), event('fulltime', 1, 90)],
   } as unknown as TestMatch;
 
-  const frame = testMatchResponse(match, 2);
+  const frame = await testMatchResponse(match, { revealed: 2 });
   const goal = JSON.stringify(frame.components[0]?.toJSON());
   assert.match(goal, /attachment:\/\/partida-2\.png/);
   assert.match(goal, /"accent_color":14919471/);
   assert.match(JSON.stringify(frame.files[0]), /partida-2\.png/);
-  assert.equal(eventHold(match.events[1]), 2);
-  assert.equal(eventHold(match.events[0]), 1);
-  assert.match(JSON.stringify(testMatchResponse(match, 3).components[0]?.toJSON()), /Vitória/);
+  // Tensão antes do gol, intervalo na virada dos 45' e o gol segurando mais na tela.
+  assert.deepEqual(matchFrames(match), [
+    { revealed: 1, hold: 1 },
+    { revealed: 1, beat: 'chance', hold: 0.8 },
+    { revealed: 2, hold: 2 },
+    { revealed: 2, beat: 'halftime', hold: 1.5 },
+    { revealed: 3, hold: 1.5 },
+  ]);
+  const chance = JSON.stringify(
+    (await testMatchResponse(match, { revealed: 1, beat: 'chance' })).components[0]?.toJSON(),
+  );
+  assert.match(chance, /AO VIVO · 30'/);
+  assert.match(chance, /Casa chega com perigo/);
+  assert.match(chance, /Casa 0 × 0 Fora/);
+  const end = JSON.stringify(
+    (await testMatchResponse(match, { revealed: 3 })).components[0]?.toJSON(),
+  );
+  assert.match(end, /Vitória/);
+  assert.match(end, /Intervalo · 1 × 0/);
 });

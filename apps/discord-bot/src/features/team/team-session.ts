@@ -1,5 +1,12 @@
 import { randomBytes } from 'node:crypto';
-import type { LeagueStatusResponse, MatchResponse, MissionsResponse } from '@futhub/api-client';
+import type {
+  LeagueStatusResponse,
+  MatchResponse,
+  MissionsResponse,
+  SimulateTestMatch200,
+} from '@futhub/api-client';
+
+import type { MatchFrame } from '../test-match.js';
 
 const ttlMs = 15 * 60_000;
 const maxSessions = 1_000;
@@ -81,6 +88,7 @@ export const TEAM_TABS = [
   'sale',
   'club',
   'league',
+  'match',
 ] as const;
 export type TeamTab = (typeof TEAM_TABS)[number];
 
@@ -109,6 +117,11 @@ export type TeamSession = {
   readonly league: LeaguePanelState | null;
   /** Só a aba Início usa; nas demais fica o que já foi carregado. */
   readonly missions: MissionsResponse | null;
+  readonly matchMode?: 'league' | 'friendly' | 'bots';
+  readonly botDifficulty?: 'easy' | 'medium' | 'hard';
+  readonly opponentId?: string;
+  readonly practice?: Readonly<{ match: SimulateTestMatch200 } & MatchFrame> | null;
+  readonly matchBusy?: boolean;
 };
 export type TeamAction =
   | 'tab'
@@ -129,7 +142,11 @@ export type TeamAction =
   | 'search'
   | 'stadium-upgrade'
   | 'league-queue'
-  | 'league-refresh';
+  | 'league-refresh'
+  | 'match-mode'
+  | 'bot-difficulty'
+  | 'opponent'
+  | 'match-play';
 
 const sessions = new Map<string, TeamSession>();
 
@@ -210,5 +227,9 @@ function isTeamAction(value: string): value is TeamAction {
     'stadium-upgrade',
     'league-queue',
     'league-refresh',
+    'match-mode',
+    'bot-difficulty',
+    'opponent',
+    'match-play',
   ].includes(value);
 }
