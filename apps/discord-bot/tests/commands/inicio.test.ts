@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createMockBot } from '@slipher/testing';
+import { apiMessage, buttonInteraction, createMockBot } from '@slipher/testing';
 import { MessageFlags } from 'seyfert';
 
 import AbrirPackCommand from '../../src/commands/abrir-pack.js';
@@ -213,16 +213,35 @@ test('o início abre mesmo sem liga e missões', async (context) => {
   assert.match(messageText(result.messages[0]), /Próximo passo/);
 });
 
-test('atalho do dono troca a tela no lugar; de outro jogador abre em privado', async () => {
+test('atalho do dono troca a tela V2 no lugar; legado ou outro jogador abre em privado', async () => {
   mockApi(game());
   await using bot = await createMockBot({ components: [NavButtonComponent] });
-
-  const own = await bot.clickButton(navId('missoes', owner));
+  const own = await bot.dispatchInteraction(
+    buttonInteraction({
+      customId: navId('missoes', owner),
+      user: bot.defaultUser,
+      message: apiMessage({ flags: MessageFlags.IsComponentsV2 }),
+    }),
+  );
   assert.equal(own.deferredUpdate, true);
   assert.equal(own.ephemeral, false);
   assert.match(messageText(own.edits[0]), /## 🎯 Missões\n-# 2 ativas para slipher-tester/);
   assert.match(messageText(own.edits[0]), /`▰▰▰▰▰▰▰▱▱▱` \*\*2\/3\*\* · Diária/);
   assert.match(messageText(own.edits[0]), /Recompensa: \+300 moedas/);
+
+  // Mensagem com embeds não vira Components V2: o Discord recusa a edição.
+  bot.reset();
+  const legacy = await bot.dispatchInteraction(
+    buttonInteraction({
+      customId: navId('hub', owner),
+      user: bot.defaultUser,
+      message: apiMessage({ embeds: [{ title: 'Missões' }] }),
+    }),
+  );
+  assert.equal(legacy.deferredUpdate, true);
+  assert.deepEqual(legacy.edits, []);
+  assert.match(JSON.stringify(legacy.messages[0]), /Clube de slipher-tester/);
+  assert.ok(Number(legacy.messages[0]?.flags) & MessageFlags.Ephemeral);
 
   bot.reset();
   const foreign = await bot.clickButton(navId('hub', stranger));

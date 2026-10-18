@@ -2,9 +2,15 @@ import type { AdminRedeemCode } from '@futhub/api-client';
 import { describe, expect, it } from 'vitest';
 import {
   canonicalCode,
+  claimsShare,
+  codePattern,
   draftFrom,
   emptyDraft,
+  expiryAfter,
+  expiryLabel,
+  generateCode,
   inputFrom,
+  matchesQuery,
   redeemCodeStatus,
   rewardLabel,
 } from './redeem-code-form';
@@ -89,5 +95,44 @@ describe('redeem code form', () => {
       inputFrom({ ...emptyDraft, code: 'OK1', rewardType: 'field', amount: '2', resourceId: 'x' }),
     ).toHaveProperty('error');
     expect(inputFrom({ ...emptyDraft, code: 'OK1', maxClaims: '0' })).toHaveProperty('error');
+  });
+
+  it('generates codes the API accepts without ambiguous characters', () => {
+    expect(generateCode(() => 0)).toBe('FUT-AAAAAA');
+    expect(generateCode(() => 0.999)).toBe('FUT-999999');
+    for (let index = 0; index < 50; index += 1) {
+      const generated = generateCode();
+      expect(generated).toMatch(codePattern);
+      expect(generated.slice(4)).not.toMatch(/[01ILO]/);
+    }
+  });
+
+  it('builds expiry shortcuts as local datetime values', () => {
+    const now = new Date(2026, 9, 10, 23, 15);
+    expect(expiryAfter(now, 24)).toBe('2026-10-11T23:15');
+    expect(expiryAfter(now, 24 * 7)).toBe('2026-10-17T23:15');
+  });
+
+  it('describes how far the expiry is', () => {
+    const now = new Date('2026-10-10T12:00:00.000Z');
+    expect(expiryLabel(null, now)).toBe('Nunca');
+    expect(expiryLabel('2026-10-13T13:00:00.000Z', now)).toBe('em 3 dias');
+    expect(expiryLabel('2026-10-10T14:30:00.000Z', now)).toBe('em 2 horas');
+    expect(expiryLabel('2026-10-10T12:00:20.000Z', now)).toBe('em 1 minuto');
+    expect(expiryLabel('2026-10-10T10:00:00.000Z', now)).toBe('expirou há 2 horas');
+    expect(expiryLabel(now.toISOString(), now)).toBe('expirou há 1 minuto');
+  });
+
+  it('measures the claim limit usage', () => {
+    expect(claimsShare(code)).toBeCloseTo(0.3);
+    expect(claimsShare({ claims: 12, maxClaims: 10 })).toBe(1);
+    expect(claimsShare({ claims: 5, maxClaims: null })).toBeNull();
+  });
+
+  it('finds codes by name or by reward', () => {
+    expect(matchesQuery(code, '')).toBe(true);
+    expect(matchesQuery(code, 'bemv')).toBe(true);
+    expect(matchesQuery(code, 'lendário')).toBe(true);
+    expect(matchesQuery(code, 'moedas')).toBe(false);
   });
 });

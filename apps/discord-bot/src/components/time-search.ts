@@ -1,4 +1,4 @@
-import { ModalCommand } from 'seyfert';
+import { MessageFlags, ModalCommand } from 'seyfert';
 import type { ModalContext } from 'seyfert';
 
 import type { BotMessage } from '../core/bot-response.js';
@@ -19,6 +19,13 @@ export default class TimeSearchComponent extends ModalCommand {
       await context.write(
         sessionNotice(parsed.kind === 'foreign' ? 'foreign' : 'expired', 'time') as BotMessage,
       );
+      return;
+    }
+    if (parsed.session.matchBusy) {
+      await context.write({
+        content: 'A partida está em andamento. Aguarde o apito final.',
+        flags: MessageFlags.Ephemeral,
+      });
       return;
     }
     const input = context.getInputValue('name') ?? '';

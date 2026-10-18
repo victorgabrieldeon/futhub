@@ -103,3 +103,51 @@ export function inputFrom(
     },
   };
 }
+
+/** Letters and digits players cannot confuse when typing (no 0/O, 1/I/L). */
+const codeAlphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+/** Suggests a fresh code such as `FUT-7KQ2MX`; `random` is injectable for tests. */
+export function generateCode(random: () => number = Math.random): string {
+  let suffix = '';
+  for (let index = 0; index < 6; index += 1)
+    suffix += codeAlphabet[Math.floor(random() * codeAlphabet.length)];
+  return `FUT-${suffix}`;
+}
+
+/** `datetime-local` value `hours` after `now`, for the expiry shortcuts. */
+export function expiryAfter(now: Date, hours: number): string {
+  return localDateTime(new Date(now.getTime() + hours * 3_600_000).toISOString());
+}
+
+const relativeUnits: readonly [Intl.RelativeTimeFormatUnit, number][] = [
+  ['day', 86_400_000],
+  ['hour', 3_600_000],
+  ['minute', 60_000],
+];
+
+/** Human distance to the expiry, e.g. `em 3 dias` or `expirou há 2 horas`. */
+export function expiryLabel(expiresAt: string | null, now: Date): string {
+  if (!expiresAt) return 'Nunca';
+  const delta = new Date(expiresAt).getTime() - now.getTime();
+  const [unit, size] = relativeUnits.find(([, ms]) => Math.abs(delta) >= ms) ?? relativeUnits[2];
+  const value = Math.trunc(delta / size) || (delta <= 0 ? -1 : 1);
+  const relative = new Intl.RelativeTimeFormat('pt-BR', { numeric: 'always' }).format(value, unit);
+  return delta <= 0 ? `expirou ${relative}` : relative;
+}
+
+/** Share of the claim limit already used, or `null` for unlimited codes. */
+export function claimsShare(code: Pick<AdminRedeemCode, 'claims' | 'maxClaims'>): number | null {
+  if (code.maxClaims === null) return null;
+  return Math.min(1, code.claims / Math.max(1, code.maxClaims));
+}
+
+/** Searches by code and by what the code grants (`moedas`, card or pack name…). */
+export function matchesQuery(code: AdminRedeemCode, query: string): boolean {
+  const needle = query.trim().toLocaleLowerCase('pt-BR');
+  if (!needle) return true;
+  return (
+    code.code.toLocaleLowerCase('pt-BR').includes(needle) ||
+    rewardLabel(code.reward).toLocaleLowerCase('pt-BR').includes(needle)
+  );
+}

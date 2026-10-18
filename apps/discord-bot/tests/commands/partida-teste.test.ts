@@ -8,11 +8,15 @@ import { messageText, mockApi } from '../support/api.js';
 
 PartidaTesteCommand.frameDelayMs = 0;
 
+const positions = ['GOL', 'LD', 'LE', 'ZAG', 'ZAG', 'VOL', 'MC', 'MA', 'PD', 'PE', 'CA'];
 const lineup = (prefix: string) =>
-  ['GOL', 'LD', 'LE', 'ZAG', 'ZAG', 'VOL', 'MC', 'MA', 'PD', 'PE', 'CA'].map((position, index) => ({
+  positions.map((position, index) => ({
     name: `${prefix} ${index + 1}`,
     position,
+    overall: 80,
+    imageUrl: null,
   }));
+const slots = positions.map((position, index) => ({ position, x: (index % 4) * 33, y: index * 9 }));
 
 const match = {
   seed: 1234,
@@ -23,6 +27,7 @@ const match = {
     tactic: 'offensive',
     rating: 82,
     lineup: lineup('Titular'),
+    slots,
   },
   away: {
     name: 'FutHub CPU',
@@ -31,6 +36,7 @@ const match = {
     tactic: 'balanced',
     rating: 81,
     lineup: lineup('Rival'),
+    slots,
   },
   homeGoals: 1,
   awayGoals: 0,
@@ -80,11 +86,16 @@ test('narra a partida de teste lance a lance até o fim de jogo', async () => {
   assert.match(first, /slipher-tester 0 × 0 FutHub CPU/);
   assert.doesNotMatch(first, /Cartão amarelo/);
 
-  assert.equal(result.edits.length, 3);
+  // amarelo, intervalo, tensão, gol e apito final
+  assert.equal(result.edits.length, 5);
+  assert.match(JSON.stringify(result.edits[1]), /INTERVALO/);
+  assert.match(JSON.stringify(result.edits[2]), /slipher-tester chega com perigo/);
   const last = JSON.stringify(result.edits.at(-1));
   assert.match(last, /FIM DE JOGO · Vitória/);
   assert.match(last, /Gol de Titular 11/);
-  assert.match(last, /CA Rival 11/);
+  // As escalações viram imagem: as cartas no lugar da lista de nomes.
+  assert.match(last, /attachment:\/\/escalacoes\.png/);
+  assert.doesNotMatch(last, /CA Rival 11/);
   assert.match(last, /seed 1234/);
 });
 

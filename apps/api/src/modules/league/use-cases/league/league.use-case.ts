@@ -1,4 +1,5 @@
 import type {
+  CpuDifficulty,
   LeagueStatusResponse,
   MatchEventDto,
   MatchResponse,
@@ -41,6 +42,7 @@ export class LeagueUseCase {
     identity: DiscordIdentity,
     opponentId: string | null,
     seed: number | null,
+    difficulty: CpuDifficulty = 'medium',
   ): Promise<TestMatchResponse> {
     if (opponentId === identity.id)
       throw new LeagueInputError('Escolha outro jogador como adversário.');
@@ -48,6 +50,7 @@ export class LeagueUseCase {
       identity,
       opponentId,
       seed ?? Math.floor(Math.random() * 2_147_483_647) + 1,
+      difficulty,
     );
   }
 }

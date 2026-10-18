@@ -674,7 +674,7 @@ test('lista só vendáveis na aba Venda e vende vários jogadores de uma vez', a
       total: 3,
       page: 1,
       pageSize: 10,
-      totalPages: 1,
+      totalPages: 2,
     },
   } as TeamResponse;
   const api = mockApi(
@@ -701,6 +701,13 @@ test('lista só vendáveis na aba Venda e vende vários jogadores de uma vez', a
   assert.match(body(picked.messages), /2 selecionado\(s\)\*\* · Total: \*\*300\*\*/);
   bot.reset();
   const confirm = await bot.clickButton(buttonId(picked.messages, 'Vender 2 jogadores'));
+  // Paginação e confirmação aparecem juntas; o Discord rejeita custom_id repetido.
+  const customIds = Array.from(
+    JSON.stringify(confirm.messages[0]?.components).matchAll(/"custom_id":"([^"]+)"/g),
+    ([, id]) => id,
+  );
+  assert.ok(customIds.includes(buttonId(confirm.messages, 'Cancelar')));
+  assert.equal(new Set(customIds).size, customIds.length);
   bot.reset();
   const sold = await bot.clickButton(buttonId(confirm.messages, 'Confirmar venda por 300'));
 

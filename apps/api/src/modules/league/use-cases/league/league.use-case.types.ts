@@ -1,4 +1,5 @@
 import type {
+  CpuDifficulty,
   LeagueStatusResponse,
   MatchEventDto,
   MatchResponse,
@@ -22,5 +23,6 @@ export abstract class LeagueRepository {
     identity: DiscordIdentity,
     opponentId: string | null,
     seed: number,
+    difficulty: CpuDifficulty,
   ): Promise<TestMatchResponse>;
 }

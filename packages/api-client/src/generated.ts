@@ -1714,13 +1714,36 @@ export type SimulateTestMatchBodyIdentity = {
   avatarUrl: string | null;
 };
 
+export type SimulateTestMatchBodyDifficulty =
+  (typeof SimulateTestMatchBodyDifficulty)[keyof typeof SimulateTestMatchBodyDifficulty];
+
+export const SimulateTestMatchBodyDifficulty = {
+  easy: "easy",
+  hard: "hard",
+  medium: "medium",
+} as const;
+
 export type SimulateTestMatchBody = {
   identity: SimulateTestMatchBodyIdentity;
   /** @nullable */
-  opponentId: string | null;
+  opponentId?: string | null;
   /** @nullable */
-  seed: number | null;
+  seed?: number | null;
+  difficulty?: SimulateTestMatchBodyDifficulty;
 };
+
+/**
+ * @nullable
+ */
+export type SimulateTestMatch200Difficulty =
+  | (typeof SimulateTestMatch200Difficulty)[keyof typeof SimulateTestMatch200Difficulty]
+  | null;
+
+export const SimulateTestMatch200Difficulty = {
+  easy: "easy",
+  hard: "hard",
+  medium: "medium",
+} as const;
 
 export type SimulateTestMatch200HomeTactic =
   (typeof SimulateTestMatch200HomeTactic)[keyof typeof SimulateTestMatch200HomeTactic];
@@ -1734,6 +1757,15 @@ export const SimulateTestMatch200HomeTactic = {
 export type SimulateTestMatch200HomeLineupItem = {
   name: string;
   position: string;
+  overall: number;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type SimulateTestMatch200HomeSlotsItem = {
+  position: string;
+  x: number;
+  y: number;
 };
 
 export type SimulateTestMatch200Home = {
@@ -1744,6 +1776,7 @@ export type SimulateTestMatch200Home = {
   tactic: SimulateTestMatch200HomeTactic;
   rating: number;
   lineup: SimulateTestMatch200HomeLineupItem[];
+  slots: SimulateTestMatch200HomeSlotsItem[];
 };
 
 export type SimulateTestMatch200AwayTactic =
@@ -1758,6 +1791,15 @@ export const SimulateTestMatch200AwayTactic = {
 export type SimulateTestMatch200AwayLineupItem = {
   name: string;
   position: string;
+  overall: number;
+  /** @nullable */
+  imageUrl: string | null;
+};
+
+export type SimulateTestMatch200AwaySlotsItem = {
+  position: string;
+  x: number;
+  y: number;
 };
 
 export type SimulateTestMatch200Away = {
@@ -1768,6 +1810,7 @@ export type SimulateTestMatch200Away = {
   tactic: SimulateTestMatch200AwayTactic;
   rating: number;
   lineup: SimulateTestMatch200AwayLineupItem[];
+  slots: SimulateTestMatch200AwaySlotsItem[];
 };
 
 export type SimulateTestMatch200EventsItemType =
@@ -1791,6 +1834,8 @@ export type SimulateTestMatch200EventsItem = {
 
 export type SimulateTestMatch200 = {
   seed: number;
+  /** @nullable */
+  difficulty: SimulateTestMatch200Difficulty;
   home: SimulateTestMatch200Home;
   away: SimulateTestMatch200Away;
   homeGoals: number;

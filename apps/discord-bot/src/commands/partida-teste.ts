@@ -2,7 +2,7 @@ import { ApiClientError, simulateTestMatch } from '@futhub/api-client';
 import { Declare, Options, createIntegerOption, createUserOption } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
-import { type TestMatch, eventHold, testMatchResponse } from '../features/test-match.js';
+import { type TestMatch, matchFrames, testMatchResponse } from '../features/test-match.js';
 import { CommandInputError, FutHubCommand, identity } from './shared.js';
 
 const options = {
@@ -31,18 +31,19 @@ export default class PartidaTesteCommand extends FutHubCommand {
     let match: TestMatch | undefined;
     await this.respond(context, 'partida-teste', async () => {
       match = await loadTestMatch(context);
-      return testMatchResponse(match, 1);
+      return testMatchResponse(match, { revealed: 1 });
     });
     if (!match) return;
 
     try {
-      for (let revealed = 2; revealed <= match.events.length; revealed += 1) {
-        // O lance anterior decide a pausa: um gol fica mais tempo na tela antes do próximo.
-        const hold = eventHold(match.events[revealed - 2]);
+      const frames = matchFrames(match);
+      for (let index = 1; index < frames.length; index += 1) {
+        // O quadro anterior decide a pausa: um gol fica mais tempo na tela antes do próximo.
+        const hold = frames[index - 1]?.hold ?? 1;
         await new Promise((resolve) =>
           setTimeout(resolve, PartidaTesteCommand.frameDelayMs * hold),
         );
-        await context.editOrReply(testMatchResponse(match, revealed));
+        await context.editOrReply(await testMatchResponse(match, frames[index] ?? { revealed: 1 }));
       }
     } catch (error) {
       console.error('Failed to narrate /partida-teste.', error);
