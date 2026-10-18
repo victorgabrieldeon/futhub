@@ -239,7 +239,8 @@ test('atalho do dono troca a tela V2 no lugar; legado ou outro jogador abre em p
     }),
   );
   assert.equal(legacy.deferredUpdate, true);
-  assert.deepEqual(legacy.edits, []);
+  // Conta em vez de comparar: as edições carregam PNGs e o diff do assert estoura a memória.
+  assert.equal(legacy.edits.length, 0);
   assert.match(JSON.stringify(legacy.messages[0]), /Clube de slipher-tester/);
   assert.ok(Number(legacy.messages[0]?.flags) & MessageFlags.Ephemeral);
 

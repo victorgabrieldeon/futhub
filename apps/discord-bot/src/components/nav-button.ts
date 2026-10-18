@@ -1,5 +1,5 @@
 import { type DiscordIdentityDto, executeLucro, listMissions } from '@futhub/api-client';
-import { ComponentCommand } from 'seyfert';
+import { ComponentCommand, MessageFlags } from 'seyfert';
 import type { ComponentContext } from 'seyfert';
 
 import { refreshApiClient } from '../commands/shared.js';
@@ -115,8 +115,11 @@ export default class NavButtonComponent extends ComponentCommand {
   }
 
   private async showView(context: Context, own: boolean, message: BotMessage): Promise<void> {
-    // Mensagens Components V2 não viram texto/embeds; templates legados vão numa mensagem nova.
-    if (own && !isComponentsV2(message)) {
+    // Mensagens Components V2 não viram texto/embeds e o Discord recusa editar uma mensagem com
+    // embeds para V2: templates legados ou cliques em mensagens legadas vão numa mensagem nova.
+    const clickedV2 =
+      ((context.interaction.message.flags ?? 0) & MessageFlags.IsComponentsV2) !== 0;
+    if (own && (!isComponentsV2(message) || !clickedV2)) {
       await context.followup({ ...message, flags: (message.flags ?? 0) | EPHEMERAL });
       return;
     }

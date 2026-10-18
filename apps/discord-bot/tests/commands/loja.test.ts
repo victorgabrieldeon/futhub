@@ -404,7 +404,7 @@ test('nega clique estrangeiro ou adulterado sem atualizar a loja', async () => {
   const foreign = await bot.clickButton(contratar, { userId: '900000000000000006' });
   assert.equal(foreign.ephemeral, true);
   assert.match(messageText(foreign.messages[0]), /Este painel não é seu/);
-  assert.deepEqual(foreign.edits, []);
+  assert.equal(foreign.edits.length, 0);
   assert.equal(storeSessionManager.size, beforeSize);
   const after = storeSessionManager.parse(contratar, '900000000000000005');
   assert.equal(after.kind, 'owned');
@@ -418,7 +418,7 @@ test('nega clique estrangeiro ou adulterado sem atualizar a loja', async () => {
   const tampered = await bot.clickButton(tamperedId);
   assert.equal(tampered.ephemeral, true);
   assert.match(messageText(tampered.messages[0]), /Botão inválido/);
-  assert.deepEqual(tampered.edits, []);
+  assert.equal(tampered.edits.length, 0);
   assert.deepEqual(api.requests, [{ method: 'GET', path: '/v1/packs', body: null }]);
 });
 
@@ -450,7 +450,7 @@ test('nega clique expirado sem atualizar a loja', async () => {
 
     assert.equal(expired.ephemeral, true);
     assert.match(messageText(expired.messages[0]), /Painel expirado/);
-    assert.deepEqual(expired.edits, []);
+    assert.equal(expired.edits.length, 0);
     assert.deepEqual(api.requests, [{ method: 'GET', path: '/v1/packs', body: null }]);
   } finally {
     dateNow.mock.restore();

@@ -115,5 +115,5 @@ test('mostra a mensagem da API quando a escalação está incompleta', async () 
     messageText(result.messages[0]),
     /Complete a escalação com 11 titulares em posições compatíveis antes de buscar uma partida\./,
   );
-  assert.deepEqual(result.edits, []);
+  assert.equal(result.edits.length, 0);
 });
