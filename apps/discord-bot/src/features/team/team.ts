@@ -17,16 +17,24 @@ import { renderTeamImage, teamImageName } from '../../art/team-image.js';
 import {
   EMOJI,
   type EmojiName,
-  MATCH_EVENT_EMOJI,
   entityButtonEmoji,
   entityOption,
   positionEmoji,
   selectEmoji,
   withIcon,
 } from '../../core/emojis.js';
+import { bold, code, fmt, h1, h2, subtext, timestamp } from '../../core/format.js';
 import { navButton } from '../../core/nav.js';
 import { noMentions } from '../../core/responses.js';
-import { difficultyLabels, testMatchResponse } from '../test-match.js';
+import {
+  type Outcome,
+  difficultyLabels,
+  eventLine,
+  outcome,
+  scoreline,
+  tacticName,
+  testMatchResponse,
+} from '../test-match.js';
 import { type HubData, hubControls, nextStep } from './hub.js';
 import {
   type TeamCard,
@@ -169,13 +177,13 @@ async function matchResponse(session: TeamSession, notice?: string) {
   }
   const difficulty = session.botDifficulty ?? 'medium';
   const body = [
-    `# ${EMOJI.apito} MEU TIME · PARTIDA`,
+    h1(`${EMOJI.apito} MEU TIME · PARTIDA`),
     session.matchMode === 'bots'
-      ? `**Contra bots · ${difficultyLabels[difficulty]}**\nEscolha o nível e entre em campo. A força do bot se adapta ao seu time e ao nível escolhido.`
+      ? `${bold(`Contra bots · ${difficultyLabels[difficulty]}`)}\nEscolha o nível e entre em campo. A força do bot se adapta ao seu time e ao nível escolhido.`
       : session.matchMode === 'friendly'
-        ? `**Amistoso**\n${session.opponentId ? `Adversário: <@${session.opponentId}>. Pronto para iniciar.` : 'Escolha outro jogador com 11 titulares para simular um amistoso.'}`
-        : '**Liga** · Dispute pontos e suba de divisão.\n**Amistoso** · Enfrente outro jogador sem valer pontos.\n**Contra bots** · Treine no Fácil, Médio ou Difícil.',
-    '-# Amistosos e bots não alteram liga, missões nem estatísticas.',
+        ? `${bold('Amistoso')}\n${session.opponentId ? `Adversário: <@${session.opponentId}>. Pronto para iniciar.` : 'Escolha outro jogador com 11 titulares para simular um amistoso.'}`
+        : `${bold('Liga')} · Dispute pontos e suba de divisão.\n${bold('Amistoso')} · Enfrente outro jogador sem valer pontos.\n${bold('Contra bots')} · Treine no Fácil, Médio ou Difícil.`,
+    subtext('Amistosos e bots não alteram liga, missões nem estatísticas.'),
     ...(session.team.lineup.length !== 11
       ? [`${EMOJI.alerta} Complete os 11 titulares na aba Escalação para jogar.`]
       : []),
@@ -229,11 +237,11 @@ async function homeResponse(session: TeamSession, notice?: string) {
       new MediaGalleryItem()
         .setMedia(`attachment://${imageName}`)
         .setDescription(
-          `Clube de ${identity.name}: nível ${team.profile.level}, ${team.balance.toLocaleString('pt-BR')} moedas`,
+          `Clube de ${identity.name}: nível ${team.profile.level}, ${fmt(team.balance)} moedas`,
         ),
     ),
     new TextDisplay().setContent(
-      [`> **Próximo passo:** ${nextStep(data).message}`, notice].filter(Boolean).join('\n'),
+      [`> ${bold('Próximo passo:')} ${nextStep(data).message}`, notice].filter(Boolean).join('\n'),
     ),
     ...hubControls(data),
   ];
@@ -250,20 +258,15 @@ async function homeResponse(session: TeamSession, notice?: string) {
   };
 }
 
-type MatchOutcome = Readonly<{ label: string; banner: string; color: `#${string}` }>;
-
 /** Resultado do ponto de vista do dono do painel; `undefined` se ele não jogou a partida. */
-function matchOutcome(session: TeamSession): MatchOutcome | undefined {
+function matchOutcome(session: TeamSession): Outcome | undefined {
   const match = session.league?.match;
   if (!match || session.league?.status.queue?.kind !== 'matched') return undefined;
   const home = match.home.id === session.identity.id;
   if (!home && match.away.id !== session.identity.id) return undefined;
-  const own = home ? match.homeGoals : match.awayGoals;
-  const other = home ? match.awayGoals : match.homeGoals;
-  if (own > other)
-    return { label: 'Vitória', banner: `# ${EMOJI.trofeu} VITÓRIA!`, color: '#1f9d55' };
-  if (own === other) return { label: 'Empate', banner: '# 🤝 EMPATE', color: '#f59e0b' };
-  return { label: 'Derrota', banner: '# 💔 DERROTA', color: '#e5484d' };
+  return home
+    ? outcome(match.homeGoals, match.awayGoals)
+    : outcome(match.awayGoals, match.homeGoals);
 }
 
 async function leagueResponse(session: TeamSession, notice?: string, searchTick?: number) {
@@ -329,15 +332,15 @@ function leagueControls(session: TeamSession): ActionRow<Button> {
 function leagueBody(session: TeamSession, notice?: string, searchTick?: number): string {
   const league = session.league;
   if (!league)
-    return [`# ${EMOJI.trofeu} MEU TIME · LIGA`, 'Carregando informações da liga...', notice]
+    return [h1(`${EMOJI.trofeu} MEU TIME · LIGA`), 'Carregando informações da liga...', notice]
       .filter(Boolean)
       .join('\n');
 
   const { status, match } = league;
   const lines = [
-    `# ${EMOJI.trofeu} MEU TIME · LIGA`,
-    `${status.division.emoji} **${status.division.name}** · **${status.points.toLocaleString('pt-BR')} pontos**`,
-    `${EMOJI.sucesso} **Vitórias:** ${status.wins} · **Empates:** ${status.draws} · **Derrotas:** ${status.losses}`,
+    h1(`${EMOJI.trofeu} MEU TIME · LIGA`),
+    `${status.division.emoji} ${bold(status.division.name)} · ${bold(`${fmt(status.points)} pontos`)}`,
+    `${EMOJI.sucesso} ${bold('Vitórias:')} ${status.wins} · ${bold('Empates:')} ${status.draws} · ${bold('Derrotas:')} ${status.losses}`,
   ];
   if (notice) lines.push(notice);
   if (status.queue === null) lines.push('', `${EMOJI.apito} Pronto para buscar um adversário.`);
@@ -345,26 +348,22 @@ function leagueBody(session: TeamSession, notice?: string, searchTick?: number):
     const tick = searchTick ?? 0;
     lines.push(
       '',
-      `## ${EMOJI.buscar} Procurando adversário${'.'.repeat((tick % 3) + 1)}`,
-      `\`${'▰'.repeat((tick % 5) + 1).padEnd(5, '▱')}\``,
+      h2(`${EMOJI.buscar} Procurando adversário${'.'.repeat((tick % 3) + 1)}`),
+      code('▰'.repeat((tick % 5) + 1).padEnd(5, '▱')),
     );
   } else if (match) {
-    const outcome = matchOutcome(session);
-    const completedAt = Math.floor(new Date(match.completedAt).getTime() / 1_000);
+    const result = matchOutcome(session);
     lines.push(
       '',
-      outcome?.banner ?? `## ${EMOJI.fim_de_jogo} ÚLTIMA PARTIDA`,
-      `## ${match.home.name} ${match.homeGoals} × ${match.awayGoals} ${match.away.name}`,
-      `**Resultado:** ${outcome?.label ?? 'Resultado indisponível'} · <t:${completedAt}:f>`,
-      ...match.events.map(
-        (event) =>
-          `\`${String(event.minute).padStart(2, '0')}'\` ${EMOJI[MATCH_EVENT_EMOJI[event.type]]} ${event.description}`,
-      ),
+      result?.banner ?? h2(`${EMOJI.fim_de_jogo} ÚLTIMA PARTIDA`),
+      h2(scoreline(match.home, match.homeGoals, match.awayGoals, match.away)),
+      `${bold('Resultado:')} ${result?.label ?? 'Resultado indisponível'} · ${timestamp(new Date(match.completedAt), 'f')}`,
+      ...match.events.map(eventLine),
     );
   } else
     lines.push(
       '',
-      `${EMOJI.alerta} Resultado da partida indisponível. Use **Atualizar** novamente.`,
+      `${EMOJI.alerta} Resultado da partida indisponível. Use ${bold('Atualizar')} novamente.`,
     );
   if (status.queue?.kind !== 'waiting' && session.team.lineup.length !== 11)
     lines.push('', `${EMOJI.alerta} Complete os 11 titulares para entrar na fila.`);
@@ -421,7 +420,7 @@ function clubControls(session: TeamSession): ActionRow<Button>[] {
     new ActionRow<Button>().setComponents(
       new Button()
         .setCustomId(teamCustomId(session, 'stadium-upgrade'))
-        .setLabel(cost ? `Melhorar estádio · ${cost.toLocaleString('pt-BR')}` : 'Estádio no máximo')
+        .setLabel(cost ? `Melhorar estádio · ${fmt(cost)}` : 'Estádio no máximo')
         .setEmoji(EMOJI.estadio)
         .setStyle(ButtonStyle.Success)
         .setDisabled(cost === null || cost === undefined),
@@ -566,7 +565,7 @@ function inventoryControls(session: TeamSession) {
                 label: `${item.overall} · ${item.name}`.slice(0, 100),
                 value: item.userCardId,
                 description: (sale
-                  ? `${item.position} · ${item.sellPrice.toLocaleString('pt-BR')} moedas`
+                  ? `${item.position} · ${fmt(item.sellPrice)} moedas`
                   : `${item.position} · ${item.team.name} · ${item.collection.name}`
                 ).slice(0, 100),
                 emoji: selectEmoji(item.favorite ? 'favorito' : positionEmoji(item.position)),
@@ -595,7 +594,7 @@ function saleTotal(cards: readonly TeamCard[]): number {
 
 function saleActions(session: TeamSession, cards: readonly TeamCard[]) {
   if (cards.length === 0) return [];
-  const total = saleTotal(cards).toLocaleString('pt-BR');
+  const total = fmt(saleTotal(cards));
   if (session.confirmSale)
     return [
       new ActionRow<Button>().setComponents(
@@ -702,13 +701,13 @@ function tacticControls(session: TeamSession) {
 
 function teamBody(session: TeamSession, notice?: string): string {
   const tab = tabs.find(([id]) => id === session.tab);
-  const heading = `# ${tab ? `${EMOJI[tab[2]]} ` : ''}MEU TIME · ${tab?.[1].toUpperCase()}`;
+  const heading = h1(`${tab ? `${EMOJI[tab[2]]} ` : ''}MEU TIME · ${tab?.[1].toUpperCase()}`);
   const message = notice ? `\n${notice}` : '';
   if (session.tab === 'lineup') {
     const missing = session.team.formation.slots.length - session.team.lineup.length;
     return [
       heading,
-      `${EMOJI.escalacao} **Formação:** ${session.team.formation.name} · ${EMOJI.tatica} **Tática:** ${tacticName(session.team.tactic)}`,
+      `${EMOJI.escalacao} ${bold('Formação:')} ${session.team.formation.name} · ${EMOJI.tatica} ${bold('Tática:')} ${tacticName(session.team.tactic)}`,
       missing > 0
         ? `${EMOJI.alerta} Faltam ${missing} titular(es).`
         : `${EMOJI.sucesso} Time completo.`,
@@ -723,10 +722,10 @@ function teamBody(session: TeamSession, notice?: string): string {
     const sponsor = club.sponsor.completed ? `${EMOJI.sucesso} Meta concluída` : 'Em andamento';
     return [
       heading,
-      `${EMOJI.estadio} **Estádio:** nível ${club.stadium.level}/${club.stadium.maxLevel} · ${EMOJI.moeda} **Saldo:** ${club.balance.toLocaleString('pt-BR')}`,
-      `${EMOJI.lucro} **Bilheteria:** +${club.stadium.ticketRevenue} · **Manutenção:** -${club.stadium.maintenance} · **Folha:** -${club.payroll}`,
-      `${EMOJI.missao} **${club.sponsor.name}:** ${club.sponsor.weeklyMatches}/${club.sponsor.weeklyGoal} partidas · ${sponsor}`,
-      `${EMOJI.relogio} **Próximo fechamento:** ${club.projectedNet >= 0 ? '+' : ''}${club.projectedNet}`,
+      `${EMOJI.estadio} ${bold('Estádio:')} nível ${club.stadium.level}/${club.stadium.maxLevel} · ${EMOJI.moeda} ${bold('Saldo:')} ${fmt(club.balance)}`,
+      `${EMOJI.lucro} ${bold('Bilheteria:')} +${club.stadium.ticketRevenue} · ${bold('Manutenção:')} -${club.stadium.maintenance} · ${bold('Folha:')} -${club.payroll}`,
+      `${EMOJI.missao} ${bold(`${club.sponsor.name}:`)} ${club.sponsor.weeklyMatches}/${club.sponsor.weeklyGoal} partidas · ${sponsor}`,
+      `${EMOJI.relogio} ${bold('Próximo fechamento:')} ${club.projectedNet >= 0 ? '+' : ''}${club.projectedNet}`,
       message,
     ]
       .filter(Boolean)
@@ -734,13 +733,15 @@ function teamBody(session: TeamSession, notice?: string): string {
   }
   if (session.tab === 'packs') {
     const packs = session.team.packs.map(
-      (pack) => `${withIcon(pack.emoji, `**${pack.name}**`)} · ${pack.quantity}x`,
+      (pack) => `${withIcon(pack.emoji, bold(pack.name))} · ${pack.quantity}x`,
     );
     return [
       heading,
       ...(packs.length
-        ? [...packs, '-# Clique em um pack para abrir. As cartas vão direto para o elenco.']
-        : ['Você não tem packs fechados. Compre na `/loja` ou complete `/missoes`.']),
+        ? [...packs, subtext('Clique em um pack para abrir. As cartas vão direto para o elenco.')]
+        : [
+            `Você não tem packs fechados. Compre na ${code('/loja')} ou complete ${code('/missoes')}.`,
+          ]),
       message,
     ]
       .filter(Boolean)
@@ -749,7 +750,7 @@ function teamBody(session: TeamSession, notice?: string): string {
   if (session.tab === 'sale') return saleBody(session, heading, message);
   if (session.tab === 'inventory') {
     const selection = session.selectedCardIds.length
-      ? `\n${EMOJI.carta} **Carta selecionada**`
+      ? `\n${EMOJI.carta} ${bold('Carta selecionada')}`
       : '';
     return [
       heading,
@@ -775,15 +776,9 @@ function saleBody(session: TeamSession, heading: string, message: string): strin
   if (selected.length > 0)
     lines.push(
       '',
-      `${EMOJI.carta} **${selected.length} selecionado(s)** · Total: **${saleTotal(selected).toLocaleString('pt-BR')}** ${EMOJI.moeda}`,
-      ...selected.map(
-        (card) => `- ${card.overall} · ${card.name} · ${card.sellPrice.toLocaleString('pt-BR')}`,
-      ),
+      `${EMOJI.carta} ${bold(`${selected.length} selecionado(s)`)} · Total: ${bold(fmt(saleTotal(selected)))} ${EMOJI.moeda}`,
+      ...selected.map((card) => `- ${card.overall} · ${card.name} · ${fmt(card.sellPrice)}`),
     );
-  lines.push('-# Titulares, favoritos e o capitão não aparecem aqui.', message);
+  lines.push(subtext('Titulares, favoritos e o capitão não aparecem aqui.'), message);
   return lines.filter(Boolean).join('\n');
-}
-
-function tacticName(tactic: TeamSession['team']['tactic']): string {
-  return tactic === 'defensive' ? 'Defensiva' : tactic === 'offensive' ? 'Ofensiva' : 'Equilibrada';
 }

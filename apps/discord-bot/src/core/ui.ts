@@ -13,11 +13,12 @@ import {
 } from 'seyfert';
 
 import { EMOJI, type EmojiMention, type EmojiName, isEmojiName } from './emojis.js';
+import { h3, subtext } from './format.js';
 import { noMentions } from './responses.js';
 
 /**
- * Kit visual do bot: uma paleta, um jeito de formatar números e tempo e um jeito de montar
- * painéis Components V2. Toda resposta nova deve sair daqui para o bot falar uma língua só.
+ * Kit visual do bot: uma paleta e um jeito de montar painéis Components V2; o texto sai de
+ * `format.ts`. Toda resposta nova deve sair daqui para o bot falar uma língua só.
  */
 export const COLOR = {
   brand: '#1f9d55',
@@ -32,14 +33,6 @@ export const COLOR = {
 
 export const COMPONENTS_V2 = 32768;
 export const EPHEMERAL = 64;
-
-export function fmt(value: number): string {
-  return value.toLocaleString('pt-BR');
-}
-
-export function plural(count: number, one: string, many: string): string {
-  return `${fmt(count)} ${count === 1 ? one : many}`;
-}
 
 /** Linhas de texto sem os itens vazios, para montar blocos condicionais sem `filter` solto. */
 function lines(...items: readonly (string | false | null | undefined)[]): string {
@@ -137,7 +130,7 @@ const toneStyle: Record<Tone, [EmojiName, string]> = {
 export function notice(tone: Tone, title: string, detail?: string, hint?: string): V2Message {
   const [emoji, color] = toneStyle[tone];
   return v2(
-    [panel(color, text(`### ${EMOJI[emoji]} ${title}`, detail, hint && `-# ${hint}`))],
+    [panel(color, text(h3(`${EMOJI[emoji]} ${title}`), detail, hint && subtext(hint)))],
     true,
   );
 }

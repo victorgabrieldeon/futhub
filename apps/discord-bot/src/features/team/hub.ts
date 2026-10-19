@@ -1,8 +1,9 @@
 import type { DiscordIdentityDto, MissionsResponse } from '@futhub/api-client';
 import { type ActionRow, type Button, ButtonStyle } from 'seyfert';
 
+import { bold, plural } from '../../core/format.js';
 import { type NavTarget, navButton } from '../../core/nav.js';
-import { plural, row } from '../../core/ui.js';
+import { row } from '../../core/ui.js';
 import type { LeaguePanelState, TeamResponse } from './team-session.js';
 
 export type HubData = Readonly<{
@@ -29,11 +30,11 @@ export function nextStep({ team, league }: HubData): Step {
       target: 'time',
       message:
         team.lineup.length === 0
-          ? 'Monte sua escalação na aba **Escalação**.'
-          : `Faltam ${plural(missing, 'titular', 'titulares')} na aba **Escalação**.`,
+          ? `Monte sua escalação na aba ${bold('Escalação')}.`
+          : `Faltam ${plural(missing, 'titular', 'titulares')} na aba ${bold('Escalação')}.`,
     };
   if (league && league.status.queue === null)
-    return { target: 'liga', message: 'Time completo. Busque uma partida na aba **Liga**.' };
+    return { target: 'liga', message: `Time completo. Busque uma partida na aba ${bold('Liga')}.` };
   return { target: 'loja', message: 'Reforce o elenco na loja.' };
 }
 

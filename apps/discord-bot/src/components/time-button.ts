@@ -5,6 +5,7 @@ import type { ComponentContext } from 'seyfert';
 
 import type { BotMessage } from '../core/bot-response.js';
 import { EMOJI } from '../core/emojis.js';
+import { bold, fmt, h2 } from '../core/format.js';
 import { juice, sleep } from '../core/juice.js';
 import { sendMissionNotice } from '../core/mission-notice.js';
 import { sessionNotice } from '../core/ui.js';
@@ -166,7 +167,7 @@ export default class TimeButtonComponent extends ComponentCommand {
         await context.editOrReply(
           await teamResponse(
             updated,
-            `## ${EMOJI.estadio} Estádio nível ${club.stadium.level}!\n${EMOJI.lucro} Bilheteria agora rende **+${club.stadium.ticketRevenue.toLocaleString('pt-BR')}** por fechamento.`,
+            `${h2(`${EMOJI.estadio} Estádio nível ${club.stadium.level}!`)}\n${EMOJI.lucro} Bilheteria agora rende ${bold(`+${fmt(club.stadium.ticketRevenue)}`)} por fechamento.`,
           ),
         );
         return;
@@ -202,9 +203,9 @@ export default class TimeButtonComponent extends ComponentCommand {
         const sale = await sellTeamCards(session.identity, session.selectedCardIds);
         const sold =
           cards.length === 1
-            ? `**${cards[0]?.name}** vendido`
-            : `**${cards.length} jogadores** vendidos`;
-        notice = `## ${EMOJI.venda} +${sale.amount.toLocaleString('pt-BR')} ${EMOJI.moeda}\n${sold} · saldo ${sale.balance.toLocaleString('pt-BR')}`;
+            ? `${bold(cards[0]?.name ?? '')} vendido`
+            : `${bold(`${cards.length} jogadores`)} vendidos`;
+        notice = `${h2(`${EMOJI.venda} +${fmt(sale.amount)} ${EMOJI.moeda}`)}\n${sold} · saldo ${fmt(sale.balance)}`;
         completedMissions = sale.completedMissions;
       } else {
         throw new Error('Unsupported team button action.');

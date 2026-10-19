@@ -1,5 +1,6 @@
 import type { DiscordIdentityDto, MissionsResponse } from '@futhub/api-client';
 
+import { fmt } from '../core/format.js';
 import type { LeaguePanelState, TeamResponse } from '../features/team/team-session.js';
 import {
   type Ctx,
@@ -15,7 +16,6 @@ import {
   crop,
   display,
   fit,
-  fmt,
   glow,
   gradient,
   masthead,

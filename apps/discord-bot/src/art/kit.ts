@@ -394,10 +394,6 @@ export function stat(
     write(context, crop(context, caption, w - 44, ui(15)), x + 22, y + h - 24, ui(15), INK.white);
 }
 
-export function fmt(value: number): string {
-  return value.toLocaleString('pt-BR');
-}
-
 export function canvas(): { canvas: Canvas; context: Ctx } {
   const created = createCanvas(W, H);
   return { canvas: created, context: created.getContext('2d') };

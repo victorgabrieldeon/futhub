@@ -22,6 +22,7 @@ import {
   selectEmoji,
   withIcon,
 } from '../../core/emojis.js';
+import { bold, code, fmt, h2, h3, plural, subtext } from '../../core/format.js';
 import { rarity } from '../../core/juice.js';
 import { navId } from '../../core/nav.js';
 import { noMentions } from '../../core/responses.js';
@@ -181,9 +182,9 @@ export async function packDetailResponse(
         ),
         new TextDisplay().setContent(
           [
-            `-# ${EMOJI.loja} LOJA · PACK ${tier.label}`,
-            `### ${withIcon(pack.emoji, pack.name)}`,
-            `${EMOJI.carta} **${pack.cardsPerPack} ${pack.cardsPerPack === 1 ? 'carta' : 'cartas'}** por pack · ${EMOJI.moeda} **${pack.price.toLocaleString('pt-BR')} moedas**`,
+            subtext(`${EMOJI.loja} LOJA · PACK ${tier.label}`),
+            h3(withIcon(pack.emoji, pack.name)),
+            `${EMOJI.carta} ${bold(plural(pack.cardsPerPack, 'carta', 'cartas'))} por pack · ${EMOJI.moeda} ${bold(`${fmt(pack.price)} moedas`)}`,
           ].join('\n'),
         ),
         new Separator().setDivider(true),
@@ -192,7 +193,7 @@ export async function packDetailResponse(
             .setCustomId(
               storeSessionManager.sign(sessionId, { action: 'purchase-pack', arg: pack.id }),
             )
-            .setLabel(`Comprar · ${pack.price.toLocaleString('pt-BR')}`)
+            .setLabel(`Comprar · ${fmt(pack.price)}`)
             .setEmoji(EMOJI.moeda)
             .setStyle(ButtonStyle.Success),
           new Button()
@@ -219,12 +220,12 @@ export async function cardDetailResponse(
   const purchased = state.purchase.kind === 'purchased' && state.purchase.cardId === card.id;
   const purchaseStatus =
     purchased && state.purchase.kind === 'purchased'
-      ? `${EMOJI.sucesso} **Contratado por ${state.purchase.price.toLocaleString('pt-BR')} moedas.** Saldo: ${state.purchase.balance.toLocaleString('pt-BR')}.`
+      ? `${EMOJI.sucesso} ${bold(`Contratado por ${fmt(state.purchase.price)} moedas.`)} Saldo: ${fmt(state.purchase.balance)}.`
       : undefined;
   const content = [
-    `### ${EMOJI.carta} ${card.name} · ${card.overall}`,
-    `${withIcon(card.team.emoji, `**${card.team.name}**`)} · ${card.position} · ${withIcon(card.collection.emoji, card.collection.name)}`,
-    `${EMOJI.moeda} **${card.price.toLocaleString('pt-BR')} moedas**`,
+    h3(`${EMOJI.carta} ${card.name} · ${card.overall}`),
+    `${withIcon(card.team.emoji, bold(card.team.name))} · ${card.position} · ${withIcon(card.collection.emoji, card.collection.name)}`,
+    `${EMOJI.moeda} ${bold(`${fmt(card.price)} moedas`)}`,
     '',
     `${EMOJI.forca} ATA ${card.attack} · DEF ${card.defense} · PAS ${card.passing} · CON ${card.control}`,
     `VEL ${card.pace} · DRI ${card.dribbling} · FIN ${card.finishing}`,
@@ -329,10 +330,7 @@ export async function storeResponse(
                 value: card.id,
                 emoji: selectEmoji(positionEmoji(card.position)),
                 description:
-                  `${card.position} · ${card.team.name} · ${card.price.toLocaleString('pt-BR')} moedas`.slice(
-                    0,
-                    100,
-                  ),
+                  `${card.position} · ${card.team.name} · ${fmt(card.price)} moedas`.slice(0, 100),
               })),
             ),
         )
@@ -424,8 +422,8 @@ export async function storeResponse(
             ? [
                 new TextDisplay().setContent(
                   packs.items.length
-                    ? `## ${EMOJI.loja} Loja de packs\n-# Escolha um pack no menu abaixo para ver detalhes e comprar.`
-                    : `## ${EMOJI.loja} Loja de packs\nNenhum pack à venda agora. Volte mais tarde ou contrate jogadores na aba **Contratar**.`,
+                    ? `${h2(`${EMOJI.loja} Loja de packs`)}\n${subtext('Escolha um pack no menu abaixo para ver detalhes e comprar.')}`
+                    : `${h2(`${EMOJI.loja} Loja de packs`)}\nNenhum pack à venda agora. Volte mais tarde ou contrate jogadores na aba ${bold('Contratar')}.`,
                 ),
               ]
             : []),
@@ -505,14 +503,16 @@ function hiringBody(state: HiringState): string {
   const summary =
     state.total === 0
       ? 'Nenhum jogador com estes filtros. Tente outra posição.'
-      : `-# ${state.total.toLocaleString('pt-BR')} ${state.total === 1 ? 'jogador disponível' : 'jogadores disponíveis'} · ${filters}`;
+      : subtext(
+          `${plural(state.total, 'jogador disponível', 'jogadores disponíveis')} · ${filters}`,
+        );
   const cards = state.items.map((card) =>
-    `\`${card.overall}\` **${card.name}** · ${card.position} · ${withIcon(card.team.emoji, card.team.name)} · ${EMOJI.moeda} ${card.price.toLocaleString('pt-BR')}`.slice(
+    `${code(card.overall)} ${bold(card.name)} · ${card.position} · ${withIcon(card.team.emoji, card.team.name)} · ${EMOJI.moeda} ${fmt(card.price)}`.slice(
       0,
       300,
     ),
   );
-  return [`## ${EMOJI.mercado} Mercado de jogadores`, summary, '', ...cards].join('\n');
+  return [h2(`${EMOJI.mercado} Mercado de jogadores`), summary, '', ...cards].join('\n');
 }
 
 async function configuredListPacks(): Promise<readonly PackCatalogItem[]> {
