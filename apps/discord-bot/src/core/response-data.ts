@@ -11,6 +11,7 @@ import type {
 import type { ListItem, TemplateData } from '@futhub/bot-templates';
 
 import { EMOJI, entityIcon } from './emojis.js';
+import { bold, fmt, timestamp } from './format.js';
 import { rarity } from './juice.js';
 
 // Turns API results into the variables and lists declared in the bot-templates catalog.
@@ -29,10 +30,10 @@ const REWARD_LABEL: Record<string, string> = {
   premium: 'premium',
 };
 
-function timestamp(value: string, style: 'F' | 'R'): string {
+function apiTimestamp(value: string, style: 'F' | 'R'): string {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) throw new Error('API returned an invalid date.');
-  return `<t:${Math.floor(date.getTime() / 1000)}:${style}>`;
+  return timestamp(date, style);
 }
 
 function rewards(items: readonly { type: string; quantity: number }[]): ListItem[] {
@@ -47,8 +48,8 @@ export function lucroData(
   result: LucroResponse,
   now: Date,
 ): { key: 'lucro.success' | 'lucro.cooldown'; data: TemplateData } {
-  const availableAt = timestamp(result.availableAt, 'F');
-  const availableIn = timestamp(result.availableAt, 'R');
+  const availableAt = apiTimestamp(result.availableAt, 'F');
+  const availableIn = apiTimestamp(result.availableAt, 'R');
   if (result.kind === 'cooldown') {
     const remaining = Math.max(
       0,
@@ -106,9 +107,9 @@ export function missionsData(result: MissionsResponse): TemplateData {
         status: mission.claimed
           ? 'concluída; recompensa concedida'
           : `${mission.progress}/${mission.goal}`,
-        expires: timestamp(mission.expiresAt, 'R'),
+        expires: apiTimestamp(mission.expiresAt, 'R'),
         reward: mission.reward
-          ? `Recompensa: +${mission.reward.quantity.toLocaleString('pt-BR')} ${REWARD_LABEL[mission.reward.type] ?? mission.reward.type}`
+          ? `Recompensa: +${fmt(mission.reward.quantity)} ${REWARD_LABEL[mission.reward.type] ?? mission.reward.type}`
           : 'Sem recompensa',
         done: mission.claimed || mission.completed ? '✅' : '🎯',
       };
@@ -216,7 +217,7 @@ function redeemRewardLabel(
   reward: Extract<RedeemCodeResponse, { kind: 'success' }>['reward'],
 ): string {
   if (reward.type === 'balance') return `+${reward.quantity} moedas`;
-  const name = reward.resourceName ? ` **${reward.resourceName}**` : '';
+  const name = reward.resourceName ? ` ${bold(reward.resourceName)}` : '';
   const label = REWARD_LABEL[reward.type] ?? reward.type;
   return reward.quantity > 1 ? `${reward.quantity}× ${label}${name}` : `${label}${name}`;
 }

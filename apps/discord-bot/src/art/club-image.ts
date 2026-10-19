@@ -1,3 +1,4 @@
+import { fmt, signed, twoDigits } from '../core/format.js';
 import type { ClubResponse } from '../features/team/team-session.js';
 import {
   type Ctx,
@@ -9,7 +10,6 @@ import {
   box,
   display,
   fit,
-  fmt,
   glow,
   gradient,
   mono,
@@ -112,10 +112,6 @@ function pips(context: Ctx, x: number, y: number, w: number, level: number, maxL
   }
 }
 
-function signed(value: number): string {
-  return `${value >= 0 ? '+' : '−'}${fmt(Math.abs(value))}`;
-}
-
 function stadiumPanel(context: Ctx, club: ClubResponse): void {
   const x = 34;
   const w = 420;
@@ -127,7 +123,7 @@ function stadiumPanel(context: Ctx, club: ClubResponse): void {
   stadium(context, x + w / 2, TOP + 178, info.level, info.maxLevel);
 
   const left = x + 28;
-  const level = String(info.level).padStart(2, '0');
+  const level = twoDigits(info.level);
   const width = write(context, level, left - 4, TOP + 352, display(140, 700), INK.white);
   write(
     context,

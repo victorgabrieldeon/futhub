@@ -2,6 +2,7 @@ import { listPackCatalog, purchasePack } from '@futhub/api-client';
 import { Declare, Options, createStringOption } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
+import { fmt, plural } from '../core/format.js';
 import { packPurchaseReply } from '../core/replies.js';
 import {
   CommandInputError,
@@ -25,7 +26,7 @@ const options = {
             .filter((pack) => pack.name.toLocaleLowerCase('pt-BR').includes(query))
             .slice(0, 25)
             .map((pack) => ({
-              name: `${pack.name} · ${pack.price.toLocaleString('pt-BR')} moedas · ${pack.cardsAmount} ${pack.cardsAmount === 1 ? 'carta' : 'cartas'}`.slice(
+              name: `${pack.name} · ${fmt(pack.price)} moedas · ${plural(pack.cardsAmount, 'carta', 'cartas')}`.slice(
                 0,
                 100,
               ),

@@ -5,6 +5,7 @@ import type {
   PackCatalogItem,
 } from '@futhub/api-client';
 
+import { fmt, signed } from '../core/format.js';
 import { rarity } from '../core/juice.js';
 import type { LeaguePanelState } from '../features/team/team-session.js';
 import type { MatchFrame, TestMatch } from '../features/test-match.js';
@@ -21,7 +22,6 @@ import {
   display,
   eyebrow,
   fit,
-  fmt,
   frame,
   glow,
   gradient,
@@ -160,15 +160,7 @@ export function lucroImage(
     const tone = value >= 0 ? INK.success : INK.danger;
     context.globalAlpha = final ? 1 : 0.35;
     write(context, label, 652, y, ui(17, 500), INK.white);
-    write(
-      context,
-      `${value >= 0 ? '+' : '−'}${fmt(Math.abs(value))}`,
-      1_140,
-      y,
-      display(30, 700),
-      tone,
-      'right',
-    );
+    write(context, signed(value), 1_140, y, display(30, 700), tone, 'right');
     bar(context, 652, y + 22, 488, 8, Math.abs(value) / largest, tone);
     context.globalAlpha = 1;
   });
@@ -177,7 +169,7 @@ export function lucroImage(
   write(context, 'LUCRO LÍQUIDO', 652, 586, mono(13, 600), INK.body, 'left', 3);
   write(
     context,
-    `${report.net >= 0 ? '+' : '−'}${fmt(Math.abs(report.net))}`,
+    signed(report.net),
     1_140,
     586,
     display(54, 700),

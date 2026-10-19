@@ -17,12 +17,13 @@ import {
   withHero,
 } from './bot-response.js';
 import { entityButtonEmoji } from './emojis.js';
+import { fmt } from './format.js';
 import { type Stage, countUp, leveledUp, scene } from './juice.js';
 import { sendMissionNotice } from './mission-notice.js';
 import { levelUpFrame } from './moments.js';
 import { navButton } from './nav.js';
 import { lucroData, missionsData, packPurchaseData, redeemData } from './response-data.js';
-import { COLOR, EPHEMERAL, fmt, illustrated, row } from './ui.js';
+import { COLOR, EPHEMERAL, illustrated, row } from './ui.js';
 
 type Frames = readonly Readonly<{ message: BotMessage; hold?: number }>[];
 

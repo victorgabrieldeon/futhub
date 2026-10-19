@@ -1,5 +1,6 @@
 import { createCanvas } from '@napi-rs/canvas';
 
+import { fmt } from '../core/format.js';
 import type {
   TeamCard,
   TeamResponse,
@@ -22,7 +23,6 @@ import {
   crop,
   display,
   fit,
-  fmt,
   glow,
   gradient,
   masthead,

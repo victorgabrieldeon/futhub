@@ -24,6 +24,7 @@ import {
   withHero,
 } from '../../core/bot-response.js';
 import { EMOJI, entityButtonEmoji, entityIcon, withIcon } from '../../core/emojis.js';
+import { bold, code, h3, plural, subtext } from '../../core/format.js';
 import { type Stage, leveledUp, rarity, scene } from '../../core/juice.js';
 import { sendMissionNotice } from '../../core/mission-notice.js';
 import { levelUpFrame } from '../../core/moments.js';
@@ -38,7 +39,6 @@ import {
   illustrated,
   notice,
   panel,
-  plural,
   row,
   text,
   v2,
@@ -76,14 +76,16 @@ export async function myPacksResponse(
     { name: 'meus-packs.png', data: image, description: 'Seus packs fechados' },
     [
       text(
-        total > 0
-          ? `-# ${plural(total, 'pack fechado', 'packs fechados')} esperando por você`
-          : '-# Compre packs na loja ou ganhe completando missões.',
+        subtext(
+          total > 0
+            ? `${plural(total, 'pack fechado', 'packs fechados')} esperando por você`
+            : 'Compre packs na loja ou ganhe completando missões.',
+        ),
       ),
       divider(),
       ...owned.slice(0, MAX_LISTED).map((pack) =>
         new Section()
-          .setComponents(text(`${withIcon(pack.emoji, `**${pack.name}**`)} · ${pack.quantity}×`))
+          .setComponents(text(`${withIcon(pack.emoji, bold(pack.name))} · ${pack.quantity}×`))
           .setAccessory(
             navButton('open', ownerId, {
               arg: pack.id,
@@ -94,7 +96,9 @@ export async function myPacksResponse(
           ),
       ),
       owned.length > MAX_LISTED &&
-        text(`-# +${owned.length - MAX_LISTED} tipos de pack. Use /abrir-pack para escolher.`),
+        text(
+          subtext(`+${owned.length - MAX_LISTED} tipos de pack. Use /abrir-pack para escolher.`),
+        ),
       row(
         navButton('loja', ownerId, {
           style: owned.length ? ButtonStyle.Secondary : ButtonStyle.Primary,
@@ -133,7 +137,7 @@ async function openingFrame(
       data: await packOpeningImage(look, progress, shake, color, hint),
       description: `Abrindo ${look.name}`,
     },
-    [text(`-# ${EMOJI.pack} ${hint}…`)],
+    [text(subtext(`${EMOJI.pack} ${hint}…`))],
   ) as BotMessage;
 }
 
@@ -147,8 +151,8 @@ async function walkoutFrame(
   const tier = rarity(best.overall);
   const caption =
     reveal === 'full'
-      ? `### ${tier.emoji} ${best.overall} · ${best.name}`
-      : `-# ${tier.emoji} Carta ${tier.label.toLowerCase()} chegando…`;
+      ? h3(`${tier.emoji} ${best.overall} · ${best.name}`)
+      : subtext(`${tier.emoji} Carta ${tier.label.toLowerCase()} chegando…`);
   return illustrated(
     tier.color,
     {
@@ -203,7 +207,7 @@ export async function revealPack(
         panel(
           COLOR.danger,
           text(
-            `### ${EMOJI.erro} Não foi possível abrir ${withIcon(pack.emoji, pack.name)}`,
+            h3(`${EMOJI.erro} Não foi possível abrir ${withIcon(pack.emoji, pack.name)}`),
             friendlyError(error, 'O pack continua no seu inventário.'),
           ),
         ),
@@ -278,10 +282,10 @@ export async function revealPack(
         panel(
           COLOR.gold,
           text(
-            `### ${entityIcon(pack.emoji) || EMOJI.pack} ${pack.name} aberto`,
+            h3(`${entityIcon(pack.emoji) || EMOJI.pack} ${pack.name} aberto`),
             ...faces.map(
               (card) =>
-                `${rarity(card.overall).emoji} **${card.overall}** · ${card.name} · \`${card.position}\` · ${withIcon(card.team.emoji, card.team.name)}`,
+                `${rarity(card.overall).emoji} ${bold(card.overall)} · ${card.name} · ${code(card.position)} · ${withIcon(card.team.emoji, card.team.name)}`,
             ),
           ),
         ),

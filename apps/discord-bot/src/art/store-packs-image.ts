@@ -1,6 +1,7 @@
 import type { PackCatalogItem } from '@futhub/api-client';
 import type { Image } from '@napi-rs/canvas';
 
+import { fmt, twoDigits } from '../core/format.js';
 import { packTier } from '../features/store/store-pack-tier.js';
 import type { PackTier } from '../features/store/store-pack-tier.js';
 import {
@@ -15,7 +16,6 @@ import {
   crop,
   display,
   eyebrow,
-  fmt,
   glow,
   gradient,
   masthead,
@@ -329,8 +329,6 @@ function uploadedArt(
   context.restore();
 }
 
-const pad = (value: number) => String(value).padStart(2, '0');
-
 /** Seta para baixo: o menu de packs fica logo abaixo da imagem. */
 function down(context: Ctx, x: number, y: number, color: string): void {
   context.beginPath();
@@ -368,7 +366,7 @@ function tracked(context: Ctx, value: string, font: string, tracking: number): n
 
 /** Selo da página com um ponto por página quando cabem. */
 function pagination(context: Ctx, page: number, totalPages: number): void {
-  const label = `PÁGINA ${pad(page)} / ${pad(totalPages)}`;
+  const label = `PÁGINA ${twoDigits(page)} / ${twoDigits(totalPages)}`;
   const dots = totalPages > 1 && totalPages <= 8 ? totalPages : 0;
   const x = pill(context, label, dots ? (dots - 1) * 11 + 18 : 0, NEON);
   if (!dots) return;
@@ -389,7 +387,7 @@ function header(context: Ctx, page: number, totalPages: number, count: number): 
   eyebrow(context, 'Vitrine', MARGIN + 2, 100);
   const title = write(context, 'PACKS', MARGIN, 138, display(66, 700), INK.white, 'left', -0.5);
   if (count === 0) return;
-  write(context, pad(count), MARGIN + title + 12, 120, mono(18, 600), GOLD, 'left', 1);
+  write(context, twoDigits(count), MARGIN + title + 12, 120, mono(18, 600), GOLD, 'left', 1);
   down(context, W - MARGIN - 6, 146, NEON);
   write(context, 'Escolha um pack no menu abaixo', W - MARGIN - 22, 146, ui(15), INK.body, 'right');
 }

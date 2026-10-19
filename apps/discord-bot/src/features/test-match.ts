@@ -16,6 +16,7 @@ import { testMatchImage } from '../art/scenes.js';
 import { renderMatchLineupsImage } from '../art/team-image.js';
 
 import { EMOJI, MATCH_EVENT_EMOJI } from '../core/emojis.js';
+import { bold, code, h1, h2, h3, subtext, twoDigits } from '../core/format.js';
 import { noMentions } from '../core/responses.js';
 
 export type TestMatch = SimulateTestMatch200;
@@ -74,10 +75,10 @@ export async function testMatchResponse(
   const homeGoals = current?.homeGoals ?? 0;
   const awayGoals = current?.awayGoals ?? 0;
   const status = finished
-    ? `${EMOJI.fim_de_jogo} **FIM DE JOGO · ${result(homeGoals, awayGoals)}**`
+    ? `${EMOJI.fim_de_jogo} ${bold(`FIM DE JOGO · ${outcome(homeGoals, awayGoals).label}`)}`
     : frame.beat === 'halftime'
-      ? `${EMOJI.apito} **INTERVALO**`
-      : `${EMOJI.ao_vivo} **AO VIVO · ${(frame.beat === 'chance' ? next : current)?.minute ?? 0}'**`;
+      ? `${EMOJI.apito} ${bold('INTERVALO')}`
+      : `${EMOJI.ao_vivo} ${bold(`AO VIVO · ${(frame.beat === 'chance' ? next : current)?.minute ?? 0}'`)}`;
   const moment =
     frame.beat === 'chance'
       ? { color: '#f97316' as const }
@@ -88,20 +89,21 @@ export async function testMatchResponse(
   const history = events.flatMap((event, index) => {
     const before = events[index - 1];
     const pause = before && before.minute <= 45 && event.minute > 45 ? [halftimeLine(before)] : [];
-    return [...pause, eventLine(match, event)];
+    return [...pause, historyLine(match, event)];
   });
   if (frame.beat === 'halftime' && current) history.push(halftimeLine(current));
   if (frame.beat === 'chance' && next)
     history.push(
-      `\`${String(next.minute).padStart(2, '0')}'\` ${EMOJI.ataque} **${(next.homeGoals > homeGoals ? match.home : match.away).name} chega com perigo...**`,
+      `${code(`${twoDigits(next.minute)}'`)} ${EMOJI.ataque} ${bold(`${(next.homeGoals > homeGoals ? match.home : match.away).name} chega com perigo...`)}`,
     );
+  const score = scoreline(match.home, homeGoals, awayGoals, match.away);
   // O placar e o lance da vez estão na imagem; o texto guarda o histórico da partida.
   const lines = [
-    `${status} · **${match.home.name} ${homeGoals} × ${awayGoals} ${match.away.name}**`,
-    `-# ${teamInfo(match.home)} · contra · ${teamInfo(match.away)}`,
-    ...(match.difficulty ? [`**Contra bots · ${difficultyLabels[match.difficulty]}**`] : []),
+    `${status} · ${bold(score)}`,
+    subtext(`${teamInfo(match.home)} · contra · ${teamInfo(match.away)}`),
+    ...(match.difficulty ? [bold(`Contra bots · ${difficultyLabels[match.difficulty]}`)] : []),
     '',
-    `### ${EMOJI.apito} LANCES`,
+    h3(`${EMOJI.apito} LANCES`),
     ...history,
   ];
   // Um nome por quadro: o Discord não reaproveita a imagem do lance anterior.
@@ -124,20 +126,18 @@ export async function testMatchResponse(
         .setComponents(
           ...(panel.navigation ? [panel.navigation] : []),
           new MediaGallery().addItems(
-            new MediaGalleryItem()
-              .setMedia(`attachment://${imageName}`)
-              .setDescription(`${match.home.name} ${homeGoals} × ${awayGoals} ${match.away.name}`),
+            new MediaGalleryItem().setMedia(`attachment://${imageName}`).setDescription(score),
           ),
           new TextDisplay().setContent(lines.join('\n')),
           new Separator().setDivider(true),
-          new TextDisplay().setContent(`### ${EMOJI.escalacao} ESCALAÇÕES`),
+          new TextDisplay().setContent(h3(`${EMOJI.escalacao} ESCALAÇÕES`)),
           new MediaGallery().addItems(
             new MediaGalleryItem()
               .setMedia(`attachment://${lineupsImageName}`)
               .setDescription(`Escalações de ${match.home.name} e ${match.away.name}`),
           ),
           new TextDisplay().setContent(
-            `-# Amistoso: não altera liga, missões nem estatísticas · seed ${match.seed}`,
+            subtext(`Amistoso: não altera liga, missões nem estatísticas · seed ${match.seed}`),
           ),
           ...(panel.controls ?? []),
         ),
@@ -147,6 +147,15 @@ export async function testMatchResponse(
 }
 
 type Moment = Readonly<{ banner: string; color: `#${string}` }>;
+export type Outcome = Moment & Readonly<{ label: string }>;
+
+/** Resultado de quem fez `own` gols contra `other`: rótulo, faixa do quadro e cor. */
+export function outcome(own: number, other: number): Outcome {
+  if (own > other)
+    return { label: 'Vitória', banner: h1(`${EMOJI.trofeu} VITÓRIA!`), color: '#1f9d55' };
+  if (own === other) return { label: 'Empate', banner: h1('🤝 EMPATE'), color: '#f59e0b' };
+  return { label: 'Derrota', banner: h1('💔 DERROTA'), color: '#e5484d' };
+}
 
 /** O lance da vez vira o destaque do quadro: gol, cartão ou o placar final. */
 function momentOf(
@@ -156,37 +165,45 @@ function momentOf(
 ): Moment | undefined {
   if (event.type === 'goal') {
     const scorer = event.homeGoals > (previous?.homeGoals ?? 0) ? match.home : match.away;
-    return { banner: `# ${EMOJI.gol} GOOOOL DO ${scorer.name.toUpperCase()}!`, color: '#e3a72f' };
+    return { banner: h1(`${EMOJI.gol} GOOOOL DO ${scorer.name.toUpperCase()}!`), color: '#e3a72f' };
   }
   if (event.type === 'red_card')
-    return { banner: `## ${EMOJI.cartao_vermelho} CARTÃO VERMELHO!`, color: '#e5484d' };
-  if (event.type === 'fulltime') {
-    const outcome = result(event.homeGoals, event.awayGoals);
-    if (outcome === 'Vitória') return { banner: `# ${EMOJI.trofeu} VITÓRIA!`, color: '#1f9d55' };
-    if (outcome === 'Empate') return { banner: '# 🤝 EMPATE', color: '#f59e0b' };
-    return { banner: '# 💔 DERROTA', color: '#e5484d' };
-  }
+    return { banner: h2(`${EMOJI.cartao_vermelho} CARTÃO VERMELHO!`), color: '#e5484d' };
+  if (event.type === 'fulltime') return outcome(event.homeGoals, event.awayGoals);
   return undefined;
 }
 
-function eventLine(match: TestMatch, event: TestMatchEvent): string {
-  const line = `\`${String(event.minute).padStart(2, '0')}'\` ${EMOJI[MATCH_EVENT_EMOJI[event.type]]} ${event.description}`;
+/** Placar com os nomes: `Alfa 2 × 1 Beta`. */
+export function scoreline(
+  home: Readonly<{ name: string }>,
+  homeGoals: number,
+  awayGoals: number,
+  away: Readonly<{ name: string }>,
+): string {
+  return `${home.name} ${homeGoals} × ${awayGoals} ${away.name}`;
+}
+
+/** Lance no histórico: minuto, ícone e descrição (liga e partida de teste). */
+export function eventLine(
+  event: Readonly<{ minute: number; type: keyof typeof MATCH_EVENT_EMOJI; description: string }>,
+): string {
+  return `${code(`${twoDigits(event.minute)}'`)} ${EMOJI[MATCH_EVENT_EMOJI[event.type]]} ${event.description}`;
+}
+
+function historyLine(match: TestMatch, event: TestMatchEvent): string {
+  const line = eventLine(event);
   if (event.type !== 'goal') return line;
-  return `${line} **${match.home.name} ${event.homeGoals} × ${event.awayGoals} ${match.away.name}**`;
+  return `${line} ${bold(scoreline(match.home, event.homeGoals, event.awayGoals, match.away))}`;
 }
 
 function halftimeLine(event: TestMatchEvent): string {
-  return `-# ${EMOJI.apito} Intervalo · ${event.homeGoals} × ${event.awayGoals}`;
+  return subtext(`${EMOJI.apito} Intervalo · ${event.homeGoals} × ${event.awayGoals}`);
 }
 
 function teamInfo(team: TestMatchTeam): string {
   return `${team.cpu ? `${EMOJI.cpu} ` : ''}Força ${team.rating} · ${tacticName(team.tactic)}`;
 }
 
-function result(homeGoals: number, awayGoals: number): string {
-  return homeGoals === awayGoals ? 'Empate' : homeGoals > awayGoals ? 'Vitória' : 'Derrota';
-}
-
-function tacticName(tactic: TestMatchTeam['tactic']): string {
+export function tacticName(tactic: TestMatchTeam['tactic']): string {
   return tactic === 'defensive' ? 'Defensiva' : tactic === 'offensive' ? 'Ofensiva' : 'Equilibrada';
 }
