@@ -1,10 +1,12 @@
 import type * as DatabaseModule from '@futhub/database';
+import { ForbiddenException } from '@nestjs/common';
 
 export type DiscordIdentity = Readonly<{ id: string; name: string; avatarUrl: string | null }>;
 
 type Database = typeof DatabaseModule;
 type Transaction = Parameters<Parameters<Database['db']['transaction']>[0]>[0];
 
+/** Loads the player behind every gameplay request; banned players are rejected here. */
 export async function upsertDiscordUser(
   tx: Transaction,
   schema: Database['schema'],
@@ -22,9 +24,11 @@ export async function upsertDiscordUser(
       id: schema.users.id,
       balance: schema.users.saldo,
       language: schema.users.language,
+      banned: schema.users.banned,
     });
   if (!user) throw new Error('Failed to load user.');
-  return user;
+  if (user.banned) throw new ForbiddenException('Usuário banido do FutHub.');
+  return { id: user.id, balance: user.balance, language: user.language };
 }
 
 export async function cardInventoryCapacity(

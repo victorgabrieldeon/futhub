@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { CompletedMissionDtoSchema } from '../missions/missions.dto.js';
+
 export const CardMarketPositionSchema = z.enum([
   'GOL',
   'LD',
@@ -96,6 +98,7 @@ export const PurchaseCardResponseSchema = z.object({
   userCardId: z.string(),
   balance: z.number(),
   price: z.number(),
+  completedMissions: z.array(CompletedMissionDtoSchema),
 });
 export type PurchaseCardResponse = z.infer<typeof PurchaseCardResponseSchema>;
 
@@ -109,5 +112,6 @@ export const SellCardsResponseSchema = z.object({
   userCardIds: z.array(z.string()),
   balance: z.number(),
   amount: z.number(),
+  completedMissions: z.array(CompletedMissionDtoSchema),
 });
 export type SellCardsResponse = z.infer<typeof SellCardsResponseSchema>;

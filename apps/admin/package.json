@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "predev": "pnpm --filter @futhub/api-client build",
+    "predev": "pnpm --filter @futhub/api-client --filter @futhub/bot-templates build",
     "dev": "vite",
     "start": "node server.mjs",
     "test": "vitest run src",
@@ -14,6 +14,7 @@
   "dependencies": {
     "@fastify/static": "10.1.2",
     "@futhub/api-client": "workspace:*",
+    "@futhub/bot-templates": "workspace:*",
     "@imgly/background-removal": "^1.7.0",
     "@skyra/discord-components-react": "^4.0.2",
     "fabric": "^7.4.0",

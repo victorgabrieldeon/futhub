@@ -37,6 +37,11 @@ nextContents = nextContents.replace(
   'MINIO_PUBLIC_URL=http://s3.futhub.localhost',
 );
 
+for (const name of ['DISCORD_TOKEN', 'DISCORD_CLIENT_ID']) {
+  if (!nextContents.match(new RegExp(`^${name}=(.*)$`, 'm'))?.[1].trim())
+    console.warn(`${name} está vazio no .env; o bot do Discord não vai conectar.`);
+}
+
 if (nextContents === contents) process.exit(0);
 
 await writeFile(envPath, nextContents);

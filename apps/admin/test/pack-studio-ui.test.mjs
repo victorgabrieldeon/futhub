@@ -27,8 +27,8 @@ try {
   await page.goto(process.env.PACK_STUDIO_URL ?? 'http://127.0.0.1:4173/app/studio/packs');
   await ready();
   await expect(page.getByRole('heading', { name: 'Biblioteca', exact: true })).toBeVisible();
-  await expect(page.locator('.pack-studio-layers .pack-studio-direction-list')).toBeVisible();
-  await expect(page.locator('.pack-studio-inspector .pack-studio-direction-list')).toHaveCount(0);
+  await expect(page.locator('.pack-studio-inspector .pack-studio-direction-list')).toBeVisible();
+  await expect(page.locator('.pack-studio-layers .pack-studio-direction-list')).toHaveCount(0);
   for (const section of ['Texto', 'Cores', 'Acabamento']) {
     await expect(page.getByRole('group', { name: section, exact: true })).toBeVisible();
   }

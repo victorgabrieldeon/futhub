@@ -37,7 +37,13 @@ docker_build(
                 'packages/api-client/package.json',
                 'packages/config/package.json',
                 'packages/database/package.json',
+                'packages/bot-templates/package.json',
             ],
+        ),
+        # After install, so a freshly added workspace link has its dist.
+        run(
+            'pnpm --filter @futhub/bot-templates build',
+            trigger=['packages/bot-templates/package.json', 'packages/bot-templates/src'],
         ),
     ],
 )

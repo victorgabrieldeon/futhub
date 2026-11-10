@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CompletedMissionDtoSchema } from '../missions/missions.dto.js';
 import { ProgressionDtoSchema } from '../progression/progression.dto.js';
 
 const packIdentitySchema = z.object({
@@ -18,12 +19,14 @@ export const PackCatalogItemSchema = z.object({
   cardsAmount: z.number().int().positive(),
   price: z.number().int().nonnegative(),
   limitPerUser: z.number().int().nonnegative(),
+  imageUrl: z.string().nullable(),
 });
 export type PackCatalogItem = z.infer<typeof PackCatalogItemSchema>;
 
 export type PackShopItemDto = Readonly<{
   id: string;
   name: string;
+  emoji: string;
   price: number;
   imageUrl: string;
   cardsPerPack: number;
@@ -43,13 +46,26 @@ export type PackShopQuery = z.infer<typeof PackShopQuerySchema>;
 export const PurchasePackResponseSchema = z.object({
   balance: z.number(),
   quantity: z.number(),
+  completedMissions: z.array(CompletedMissionDtoSchema),
 });
 export type PurchasePackResponse = z.infer<typeof PurchasePackResponseSchema>;
 
 export const OpenPackResponseSchema = z.object({
   cards: z.array(
-    z.object({ id: z.string(), card: z.object({ id: z.string(), overall: z.number() }) }),
+    z.object({
+      id: z.string(),
+      card: z.object({
+        id: z.string(),
+        overall: z.number(),
+        name: z.string(),
+        position: z.string(),
+        imageUrl: z.string().nullable(),
+        team: z.object({ name: z.string(), emoji: z.string() }),
+        collection: z.object({ name: z.string(), emoji: z.string() }),
+      }),
+    }),
   ),
   progression: ProgressionDtoSchema,
+  completedMissions: z.array(CompletedMissionDtoSchema),
 });
 export type OpenPackResponse = z.infer<typeof OpenPackResponseSchema>;

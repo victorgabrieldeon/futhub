@@ -5,210 +5,41 @@ import {
   request,
 } from '@futhub/api-client';
 import {
+  type Definition,
+  type Template,
+  createScope,
+  exampleData,
+  pipes,
+  validateTemplate,
+} from '@futhub/bot-templates';
+import {
   type FormEvent,
   type ReactNode,
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { adminApiOptions } from '../../api/admin-client';
 import { AdminIcon } from '../../components/admin-icon';
-import { ComponentsEditor, LegacyEditor, type TextFocus } from './editor';
 import {
-  type BotResponseComponentDto,
-  changeMode,
-  componentCount,
-  createResponseDrafts,
-  exampleText,
-  previewUrl,
-  templateError,
-} from './helpers';
+  type AdminEmoji,
+  ComponentsEditor,
+  LegacyEditor,
+  TemplateAssets,
+  type TextFocus,
+} from './editor';
+import { attachImage, changeMode, componentCount, createResponseDrafts } from './helpers';
+import { ImageDesigner } from './image-designer';
+import { ListsEditor } from './lists-editor';
+import { type ListSimulation, Preview } from './preview';
 import './bot-responses.css';
 
-function PreviewImage({ url, description = '' }: { url: string; description?: string }) {
-  const [failed, setFailed] = useState(false);
-  const src = previewUrl(url);
-  if (!url) return null;
-  if (!src || failed)
-    return (
-      <p className="response-image-fallback">{description || 'Imagem'}: prévia indisponível</p>
-    );
-  return (
-    <img
-      src={src}
-      alt={description}
-      loading="lazy"
-      referrerPolicy="no-referrer"
-      onError={() => setFailed(true)}
-    />
-  );
-}
-
-function PreviewBlocks({
-  components,
-  definition,
-}: { components: BotResponseComponentDto[]; definition: BotResponseDefinitionDto }) {
-  const text = (value: string) => exampleText(value, definition.variables);
-  return (
-    <>
-      {components.map((block, index) => {
-        switch (block.type) {
-          case 'text':
-            return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: Stateless preview follows template order.
-              <p className="response-preview-text" key={index}>
-                {text(block.content)}
-              </p>
-            );
-          case 'separator':
-            return (
-              <div
-                // biome-ignore lint/suspicious/noArrayIndexKey: Stateless preview follows template order.
-                key={index}
-                className="response-preview-separator"
-                style={{ paddingBlock: block.spacing === 2 ? 16 : 8 }}
-              >
-                {block.divider && <hr />}
-              </div>
-            );
-          case 'media':
-            return (
-              <PreviewImage
-                key={`${index}-${text(block.url)}`}
-                url={text(block.url)}
-                description={text(block.description)}
-              />
-            );
-          case 'row':
-            return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: Stateless preview follows template order.
-              <div className="response-preview-buttons" key={index}>
-                {block.buttons.map((button, i) => (
-                  <span
-                    // biome-ignore lint/suspicious/noArrayIndexKey: Preview buttons have no actions or local state.
-                    key={i}
-                    className="response-preview-button"
-                    data-style={button.style}
-                    data-disabled={button.disabled}
-                    title={button.disabled ? 'Desabilitado' : 'Simulação, sem ação'}
-                  >
-                    {text(button.label) ||
-                      definition.actions.find((action) => action.id === button.action)?.label ||
-                      'Sem rótulo'}
-                    {button.style === 'link' ? ' ↗' : ''}
-                  </span>
-                ))}
-              </div>
-            );
-          case 'container':
-            return (
-              <div
-                className="response-preview-container"
-                // biome-ignore lint/suspicious/noArrayIndexKey: Stateless preview follows template order.
-                key={index}
-                style={{
-                  borderLeftColor: /^#[\da-f]{6}$/i.test(block.color) ? block.color : undefined,
-                }}
-              >
-                <PreviewBlocks components={block.components} definition={definition} />
-              </div>
-            );
-        }
-      })}
-    </>
-  );
-}
-
-function Preview({
-  template,
-  definition,
-}: { template: BotResponseTemplateDto; definition: BotResponseDefinitionDto }) {
-  const text = (value: string) => exampleText(value, definition.variables);
-  return (
-    <aside className="response-preview" aria-label="Prévia aproximada da resposta">
-      <header>
-        <p className="eyebrow">Prévia ao vivo</p>
-        <h2>Resposta no Discord</h2>
-        <p>
-          Exemplos do catálogo. Markdown e layout aproximados. Nenhuma mensagem ou ação é enviada.
-        </p>
-      </header>
-      <div className="response-preview-message">
-        <p className="response-preview-author">
-          FutHub <small>APP</small>
-        </p>
-        {template.mode === 'legacy' && (
-          <>
-            {template.content && <p className="response-preview-text">{text(template.content)}</p>}
-            {template.embeds.map((embed, index) => {
-              const authorName = text(embed.authorName ?? '');
-              const authorUrl = previewUrl(text(embed.authorUrl ?? ''));
-              const authorIconUrl = text(embed.authorIconUrl ?? '');
-              return (
-                <article
-                  className="response-preview-embed"
-                  // biome-ignore lint/suspicious/noArrayIndexKey: Preview images are separately keyed by their URL.
-                  key={index}
-                  style={{
-                    borderLeftColor: /^#[\da-f]{6}$/i.test(embed.color) ? embed.color : undefined,
-                  }}
-                >
-                  {embed.thumbnailUrl && (
-                    <div className="response-preview-thumbnail">
-                      <PreviewImage
-                        key={text(embed.thumbnailUrl)}
-                        url={text(embed.thumbnailUrl)}
-                        description="Miniatura"
-                      />
-                    </div>
-                  )}
-                  {authorName && (
-                    <div className="response-preview-embed-author">
-                      <PreviewImage url={authorIconUrl} description="Ícone do autor" />
-                      {authorUrl ? (
-                        <a href={authorUrl} target="_blank" rel="noreferrer">
-                          {authorName}
-                        </a>
-                      ) : (
-                        <strong>{authorName}</strong>
-                      )}
-                    </div>
-                  )}
-                  {embed.title && <h3>{text(embed.title)}</h3>}
-                  {embed.description && (
-                    <p className="response-preview-text">{text(embed.description)}</p>
-                  )}
-                  <dl className="response-preview-fields">
-                    {embed.fields.map((field, i) => (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: Stateless preview follows template order.
-                      <div key={i} data-inline={field.inline}>
-                        <dt>{text(field.name)}</dt>
-                        <dd>{text(field.value)}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                  <PreviewImage key={text(embed.imageUrl)} url={text(embed.imageUrl)} />
-                  {embed.footer && <footer>{text(embed.footer)}</footer>}
-                </article>
-              );
-            })}
-          </>
-        )}
-        <PreviewBlocks components={template.components} definition={definition} />
-      </div>
-      {definition.key === 'pack.shop' && (
-        <p className="response-note">
-          O bot acrescenta controles de inspeção dos itens e paginação da loja. Eles não são botões
-          estáticos editáveis nesta tela.
-        </p>
-      )}
-    </aside>
-  );
-}
+type Tab = 'message' | 'lists' | 'images';
 
 function errorMessage(cause: unknown): string {
   if (cause instanceof ApiClientError && cause.status === 401) window.location.assign('/login');
@@ -254,6 +85,44 @@ export function BotResponsesPage() {
   const dirty = template !== null && JSON.stringify(template) !== baseline;
   const requested = params.get('resposta') ?? schema?.[0]?.key ?? '';
   const definition = schema?.find((item) => item.key === activeKey);
+  const entry = definition as Definition | undefined;
+  const current = template as Template | null;
+  const [tab, setTab] = useState<Tab>('message');
+  const [simulation, setSimulation] = useState<ListSimulation>('examples');
+  const [emojis, setEmojis] = useState<AdminEmoji[]>([]);
+  const scope = useMemo(() => {
+    if (!entry) return null;
+    const data = exampleData(entry);
+    for (const list of entry.lists)
+      data[list.name] =
+        simulation === 'empty'
+          ? []
+          : simulation === 'many'
+            ? Array.from({ length: 12 }, (_, i) => ({
+                ...list.examples[i % list.examples.length],
+              }))
+            : list.examples;
+    return createScope(current ?? {}, data, entry, emojis);
+  }, [entry, current, simulation, emojis]);
+  const assets = useMemo(
+    () => ({ images: (current?.images ?? []).map((image) => image.id), emojis }),
+    [current, emojis],
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    // Emojis are optional: without Discord credentials the editor simply hides the picker.
+    void request<{ emojis: AdminEmoji[] }>('/v1/admin/bot-emojis', {
+      ...adminApiOptions(),
+      method: 'GET',
+      signal: controller.signal,
+    })
+      .then((result) => {
+        if (!controller.signal.aborted) setEmojis(result.emojis);
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: The retry counter deliberately restarts this GET.
   useEffect(() => {
@@ -325,6 +194,10 @@ export function BotResponsesPage() {
     return () => controller.abort();
   }, [definition, retry, drafts]);
 
+  function editTemplate(next: Template) {
+    edit(next as BotResponseTemplateDto);
+  }
+
   function edit(next: BotResponseTemplateDto) {
     drafts.edit(activeKey, next);
     setNotice('');
@@ -362,7 +235,7 @@ export function BotResponsesPage() {
   async function save(event: FormEvent) {
     event.preventDefault();
     if (!template || !definition || pending) return;
-    const validation = templateError(template, definition);
+    const validation = validateTemplate(definition as Definition, template as Template);
     if (validation) {
       setError(validation);
       return;
@@ -477,127 +350,234 @@ export function BotResponsesPage() {
           )}
           {definition && !template && !error && <output>Carregando resposta…</output>}
           {definition && template && (
-            <div className="response-workbench">
-              <form
-                className="response-editor cards-panel"
-                onSubmit={(event) => void save(event)}
-                aria-busy={pending}
-              >
-                <fieldset className="response-editor-fields" disabled={pending}>
-                  <div className="response-mode">
-                    <label className="response-field">
-                      Formato
-                      <select
-                        aria-label="Formato"
-                        value={template.mode}
-                        onChange={(event) => {
-                          const mode = event.target.value as BotResponseTemplateDto['mode'];
-                          if (mode === template.mode) return;
-                          if (
-                            !window.confirm(
-                              mode === 'components_v2'
-                                ? 'Trocar para Components V2? O conteúdo e todos os embeds serão removidos do rascunho. Linhas de botões serão mantidas. A alteração só será publicada ao salvar.'
-                                : 'Trocar para legado? Textos, mídias, separadores e containers (incluindo seus botões) serão removidos do rascunho. Apenas linhas de botões no nível principal serão mantidas. A alteração só será publicada ao salvar.',
+            <TemplateAssets.Provider value={assets}>
+              <div className="response-workbench">
+                <form
+                  className="response-editor cards-panel"
+                  onSubmit={(event) => void save(event)}
+                  aria-busy={pending}
+                >
+                  <fieldset className="response-editor-fields" disabled={pending}>
+                    <div className="response-mode">
+                      <label className="response-field">
+                        Formato
+                        <select
+                          aria-label="Formato"
+                          value={template.mode}
+                          onChange={(event) => {
+                            const mode = event.target.value as BotResponseTemplateDto['mode'];
+                            if (mode === template.mode) return;
+                            if (
+                              !window.confirm(
+                                mode === 'components_v2'
+                                  ? 'Trocar para Components V2? O conteúdo e todos os embeds serão removidos do rascunho. Linhas de botões serão mantidas. A alteração só será publicada ao salvar.'
+                                  : 'Trocar para legado? Textos, mídias, separadores e containers (incluindo seus botões) serão removidos do rascunho. Apenas linhas de botões no nível principal serão mantidas. A alteração só será publicada ao salvar.',
+                              )
                             )
-                          )
-                            return;
-                          focus.current = null;
-                          edit(changeMode(template, mode));
+                              return;
+                            focus.current = null;
+                            edit(changeMode(template, mode));
+                          }}
+                        >
+                          <option value="legacy">Legado: conteúdo, embeds e botões</option>
+                          <option value="components_v2">Components V2</option>
+                        </select>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              'Substituir o rascunho pelo modelo padrão do catálogo? A alteração só será publicada ao salvar.',
+                            )
+                          ) {
+                            focus.current = null;
+                            edit(structuredClone(definition.defaultTemplate));
+                          }
                         }}
                       >
-                        <option value="legacy">Legado: conteúdo, embeds e botões</option>
-                        <option value="components_v2">Components V2</option>
-                      </select>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            'Substituir o rascunho pelo modelo padrão do catálogo? A alteração só será publicada ao salvar.',
-                          )
-                        ) {
-                          focus.current = null;
-                          edit(structuredClone(definition.defaultTemplate));
-                        }
-                      }}
-                    >
-                      Usar padrão
-                    </button>
-                  </div>
-                  <p className="response-note">
-                    Components V2 não pode ser misturado com conteúdo ou embeds. Campos opcionais
-                    podem ficar vazios.
-                  </p>
-                  <p className="response-note">
-                    Rascunhos ficam em memória ao navegar pelo painel. Sair da conta ou recarregar a
-                    página encerra essa sessão de edição.
-                  </p>
-                  <details className="response-variables" open>
-                    <summary>Variáveis disponíveis ({definition.variables.length})</summary>
-                    <p>Foque um campo de texto; clique em uma variável para inseri-la no cursor.</p>
-                    <div>
-                      {definition.variables.map((variable) => (
+                        Usar padrão
+                      </button>
+                    </div>
+                    <p className="response-note">
+                      Components V2 não pode ser misturado com conteúdo ou embeds. Campos opcionais
+                      podem ficar vazios.
+                    </p>
+                    <p className="response-note">
+                      Rascunhos ficam em memória ao navegar pelo painel. Sair da conta ou recarregar
+                      a página encerra essa sessão de edição.
+                    </p>
+                    <details className="response-variables" open>
+                      <summary>
+                        Variáveis ({definition.variables.length + definition.lists.length})
+                      </summary>
+                      <p>
+                        Foque um campo de texto e clique para inserir. Filtros:{' '}
+                        {Object.entries(pipes).map(([pipe, description]) => (
+                          <code key={pipe} title={description}>
+                            |{pipe}{' '}
+                          </code>
+                        ))}
+                        — ex.: <code>{'{balance|number}'}</code>.
+                      </p>
+                      <div>
+                        {definition.variables.map((variable) => (
+                          <button
+                            type="button"
+                            key={variable.token}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => insert(variable.token)}
+                            title={variable.description}
+                          >
+                            <code>{variable.token}</code>
+                            <span>{variable.description}</span>
+                            <small>Exemplo: {variable.example}</small>
+                          </button>
+                        ))}
+                        {entry?.lists.map((list) => (
+                          <button
+                            type="button"
+                            key={list.name}
+                            data-kind="list"
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => insert(`{${list.name}}`)}
+                            title={`Lista formatada na aba Listas: ${list.description}`}
+                          >
+                            <code>{`{${list.name}}`}</code>
+                            <span>Lista: {list.description}</span>
+                            <small>
+                              {list.examples.length} itens de exemplo ·{' '}
+                              <code>{`{${list.name}|count}`}</code>
+                            </small>
+                          </button>
+                        ))}
+                      </div>
+                      {emojis.length === 0 && (
+                        <p>
+                          Use <code>{'{emoji:nome}'}</code> para emojis do bot.{' '}
+                          <Link to="/app/emojis">Cadastrar emojis do bot</Link>
+                        </p>
+                      )}
+                      {emojis.length > 0 && (
+                        <div className="emoji-palette" aria-label="Emojis do bot">
+                          {emojis.map((emoji) => (
+                            <button
+                              type="button"
+                              key={emoji.id}
+                              title={`{emoji:${emoji.name}}`}
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={() => insert(`{emoji:${emoji.name}}`)}
+                            >
+                              <img src={emoji.imageUrl} alt={`:${emoji.name}:`} />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </details>
+                    <div className="response-tabs" role="tablist" aria-label="Seções do editor">
+                      {(
+                        [
+                          ['message', 'Mensagem'],
+                          ['lists', `Listas (${entry?.lists.length ?? 0})`],
+                          ['images', `Imagens (${current?.images?.length ?? 0})`],
+                        ] as const
+                      ).map(([id, text]) => (
                         <button
                           type="button"
-                          key={variable.token}
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => insert(variable.token)}
-                          title={variable.description}
+                          role="tab"
+                          key={id}
+                          aria-selected={tab === id}
+                          onClick={() => {
+                            focus.current = null;
+                            setTab(id);
+                          }}
                         >
-                          <code>{variable.token}</code>
-                          <span>{variable.description}</span>
-                          <small>Exemplo: {variable.example}</small>
+                          {text}
                         </button>
                       ))}
                     </div>
-                  </details>
-                  {definition.key === 'pack.shop' && (
-                    <p className="response-note">
-                      Inspeção dos itens e paginação são geradas pelo bot, não por estes botões
-                      estáticos.
+                    {tab === 'lists' && entry && scope && current && (
+                      <ListsEditor
+                        definition={entry}
+                        formats={current.lists ?? []}
+                        scope={scope}
+                        focus={focus}
+                        insert={insert}
+                        onChange={(lists) => editTemplate({ ...current, lists })}
+                      />
+                    )}
+                    {tab === 'images' && entry && scope && current && (
+                      <ImageDesigner
+                        images={current.images ?? []}
+                        definition={entry}
+                        scope={scope}
+                        focus={focus}
+                        insert={insert}
+                        onChange={(images) => editTemplate({ ...current, images })}
+                        onUse={(ref) => {
+                          editTemplate(attachImage(current, ref));
+                          setTab('message');
+                          setNotice('Imagem adicionada à mensagem.');
+                        }}
+                      />
+                    )}
+                    {tab === 'message' && (
+                      <>
+                        {template.mode === 'legacy' && (
+                          <LegacyEditor template={template} onChange={edit} focus={focus} />
+                        )}
+                        <h2>
+                          {template.mode === 'legacy' ? 'Linhas de botões' : 'Blocos visuais'}{' '}
+                          <small>
+                            {template.mode === 'legacy'
+                              ? `${template.components.length}/5`
+                              : `${componentCount(template.components)}/40 componentes`}
+                          </small>
+                        </h2>
+                        <ComponentsEditor
+                          components={template.components}
+                          definition={definition}
+                          focus={focus}
+                          legacy={template.mode === 'legacy'}
+                          onChange={(components) => edit({ ...template, components })}
+                        />
+                      </>
+                    )}
+                  </fieldset>
+                  <div className="response-save">
+                    <output>
+                      {pending
+                        ? 'Salvando…'
+                        : dirty
+                          ? 'Alterações não salvas'
+                          : 'Sem alterações pendentes'}
+                    </output>
+                    <button
+                      className="ops-button accent"
+                      type="submit"
+                      disabled={pending || !dirty}
+                    >
+                      {pending ? 'Salvando…' : 'Salvar resposta'}
+                    </button>
+                  </div>
+                  {(error || draft?.error) && (
+                    <p className="form-error" role="alert">
+                      {error || draft?.error}
                     </p>
                   )}
-                  {template.mode === 'legacy' && (
-                    <LegacyEditor template={template} onChange={edit} focus={focus} />
-                  )}
-                  <h2>
-                    {template.mode === 'legacy' ? 'Linhas de botões' : 'Blocos visuais'}{' '}
-                    <small>
-                      {template.mode === 'legacy'
-                        ? `${template.components.length}/5`
-                        : `${componentCount(template.components)}/40 componentes`}
-                    </small>
-                  </h2>
-                  <ComponentsEditor
-                    components={template.components}
-                    definition={definition}
-                    focus={focus}
-                    legacy={template.mode === 'legacy'}
-                    onChange={(components) => edit({ ...template, components })}
+                  <output>{notice || draft?.notice}</output>
+                </form>
+                {scope && current && (
+                  <Preview
+                    template={current}
+                    scope={scope}
+                    simulation={simulation}
+                    onSimulation={setSimulation}
+                    hasLists={Boolean(entry?.lists.length)}
                   />
-                </fieldset>
-                <div className="response-save">
-                  <output>
-                    {pending
-                      ? 'Salvando…'
-                      : dirty
-                        ? 'Alterações não salvas'
-                        : 'Sem alterações pendentes'}
-                  </output>
-                  <button className="ops-button accent" type="submit" disabled={pending || !dirty}>
-                    {pending ? 'Salvando…' : 'Salvar resposta'}
-                  </button>
-                </div>
-                {(error || draft?.error) && (
-                  <p className="form-error" role="alert">
-                    {error || draft?.error}
-                  </p>
                 )}
-                <output>{notice || draft?.notice}</output>
-              </form>
-              <Preview template={template} definition={definition} />
-            </div>
+              </div>
+            </TemplateAssets.Provider>
           )}
         </>
       )}

@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 
 import { LeagueController } from './league.controller.js';
 import { DrizzleLeagueRepository } from './repository/league.repository.js';
-import { LeagueRepository } from './use-cases/league/league.use-case.types.js';
 import { LeagueUseCase } from './use-cases/league/league.use-case.js';
+import { LeagueRepository } from './use-cases/league/league.use-case.types.js';
 
 @Module({
   controllers: [LeagueController],

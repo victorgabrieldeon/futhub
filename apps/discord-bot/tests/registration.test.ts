@@ -14,17 +14,23 @@ test('Seyfert discovers feature commands and components through its loader direc
     loadModule: (path) => import(path),
   });
 
-  assert.equal(bot.registeredCommands().length, 8);
+  // commands/shared.ts holds helpers, not a slash command.
+  assert.equal(
+    bot.registeredCommands().filter(({ path }) => path && !path.endsWith('/shared.ts')).length,
+    11,
+  );
   assert.deepEqual(
     bot.client.components?.commands.map((component) => component.constructor.name).sort(),
     [
       'LojaPackSelectComponent',
       'LojaTabComponent',
+      'NavButtonComponent',
       'TimeButtonComponent',
+      'TimeOpponentComponent',
       'TimeSearchComponent',
       'TimeSelectComponent',
     ],
   );
   const status = await bot.slash({ name: 'status-api' });
-  assert.equal(status.content, 'API online.');
+  assert.match(JSON.stringify(status.messages), /Servidor online/);
 });

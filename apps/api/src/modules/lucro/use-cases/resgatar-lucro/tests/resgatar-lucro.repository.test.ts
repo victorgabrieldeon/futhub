@@ -72,6 +72,7 @@ describe('DrizzleResgatarLucroRepository', () => {
       balance: 200,
       progression: { gainedXp: 10, level: 1, xp: 10, nextLevelXp: 100, rewards: [] },
       availableAt: new Date('2026-08-15T12:00:10.000Z'),
+      completedMissions: [],
       embed: lucroCommand.embed,
     });
   });
@@ -114,6 +115,7 @@ describe('DrizzleResgatarLucroRepository', () => {
         nextLevelXp: 250,
         rewards: [{ itemId: item.id, type: 'balance', quantity: 25, resourceId: null }],
       },
+      completedMissions: [],
       embed: lucroCommand.embed,
     });
   });

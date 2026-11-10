@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CompletedMissionDtoSchema } from '../missions/missions.dto.js';
 import { ProgressionDtoSchema } from '../progression/progression.dto.js';
 
 export const LucroEmbedDtoSchema = z.object({
@@ -40,6 +41,7 @@ export const LucroSuccessResponseSchema = z.object({
   balance: z.number(),
   availableAt: z.iso.datetime(),
   progression: ProgressionDtoSchema,
+  completedMissions: z.array(CompletedMissionDtoSchema),
   embed: LucroEmbedDtoSchema,
 });
 export type LucroSuccessResponse = z.infer<typeof LucroSuccessResponseSchema>;

@@ -44,8 +44,8 @@ export function PackStudioPresets({
   }, []);
 
   return (
-    <>
-      <div className="pack-studio-section-label">Direção de arte</div>
+    <section className="studio-section">
+      <h3 className="studio-section__title">Direção de arte</h3>
       <div aria-label="Presets de arte" className="pack-studio-direction-list">
         {packStudioPresets.map(({ label, description, art }) => {
           const image = images.find((item) => item.label === label);
@@ -55,24 +55,24 @@ export function PackStudioPresets({
               aria-pressed={packStudioArtKeys.every((key) => draft[key] === art[key])}
               key={label}
               onClick={() => onApplyArt(art)}
+              title={description}
               type="button"
             >
               <span className="pack-studio-preset-image">
                 {image?.url ? (
                   <img alt="" height={128} src={image.url} width={96} />
                 ) : (
-                  <span>{image ? 'Prévia indisponível' : 'Carregando…'}</span>
+                  <span>{image ? 'Indisponível' : 'Carregando…'}</span>
                 )}
               </span>
               <strong>{label}</strong>
-              <small>{description}</small>
             </button>
           );
         })}
       </div>
-      <p className="form-note">
-        Miniaturas com texto de exemplo. Presets alteram apenas acabamento e cores.
-      </p>
-    </>
+      <small className="studio-field__hint">
+        Presets alteram apenas acabamento e cores; textos e dados ficam como estão.
+      </small>
+    </section>
   );
 }

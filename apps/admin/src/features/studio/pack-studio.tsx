@@ -1,7 +1,6 @@
 import type { Canvas } from 'fabric';
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AdminIcon } from '../../components/admin-icon';
 import { type Pack, createPack, listPacks, updatePack, uploadPackImage } from '../packs/actions';
 import { ImageTreatment, type ImageTreatmentTarget } from './image-treatment';
 import { packCanvasPng } from './pack-canvas';
@@ -19,10 +18,17 @@ import {
   packStudioDraft,
   packStudioInput,
 } from './pack-studio-model';
-import { PackStudioPresets } from './pack-studio-presets';
 import { PackStudioPreview } from './pack-studio-preview';
 import { parsePackStudioProjectJson } from './pack-studio-project';
-import { StudioCanvas, StudioHeader, StudioSidebar, StudioWorkspace } from './studio-workspace';
+import { StudioIcon } from './studio-icon';
+import {
+  StudioBody,
+  StudioPanelHeader,
+  StudioRail,
+  StudioShell,
+  StudioTopbar,
+  isStudioDrawerViewport,
+} from './studio-workspace';
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : 'Não foi possível salvar o pack.';
@@ -71,6 +77,9 @@ export function PackStudio() {
   const [exportOpen, setExportOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
+  const [leftOpen, setLeftOpen] = useState(() => !isStudioDrawerViewport());
+  const [rightOpen, setRightOpen] = useState(true);
+  const [focusMode, setFocusMode] = useState(false);
   const [publishedDraft, setPublishedDraft] = useState(
     linkedPack ? JSON.stringify(packStudioDraft(linkedPack)) : '',
   );
@@ -90,6 +99,25 @@ export function PackStudio() {
       .catch((error: unknown) => setNotice(message(error)))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!focusMode) return;
+    document.body.classList.add('studio-focus-active');
+    function exitFocus(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !document.querySelector('dialog[open]')) setFocusMode(false);
+    }
+    window.addEventListener('keydown', exitFocus);
+    return () => {
+      document.body.classList.remove('studio-focus-active');
+      window.removeEventListener('keydown', exitFocus);
+    };
+  }, [focusMode]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(''), 6000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   const pack = useMemo(
     () => packs.find((item) => item.id === selectedId) ?? null,
@@ -122,6 +150,7 @@ export function PackStudio() {
   function selectLayer(layer: PackStudioLayer) {
     setActiveLayer(layer);
     setActiveTab('design');
+    setRightOpen(true);
   }
 
   async function applyFrontImage(image: Blob) {
@@ -141,6 +170,7 @@ export function PackStudio() {
     setDraft(selected ? packStudioDraft(selected) : defaultPackStudioDraft());
     setPublishedDraft(selected ? JSON.stringify(packStudioDraft(selected)) : '');
     setNotice('');
+    if (isStudioDrawerViewport()) setLeftOpen(false);
   }
 
   async function importProject(event: ChangeEvent<HTMLInputElement>) {
@@ -192,150 +222,277 @@ export function PackStudio() {
     }
   }
 
-  return (
-    <section aria-labelledby="pack-studio-title" className="pack-studio-page">
-      <StudioHeader className="pack-studio-topbar">
-        <div className="pack-studio-brand">
-          <AdminIcon className="pack-studio-brand__mark" name="pack" />
-          <div>
-            <p className="eyebrow">Studio de Packs</p>
-            <h1 id="pack-studio-title">{draft.name || 'Novo pack'}</h1>
-            <output className="pack-studio-save-state">{publicationState}</output>
-          </div>
-        </div>
-        <div className="pack-studio-topbar__actions">
-          <button
-            className="text-button"
-            onClick={() => navigate('/app/gerenciar/packs')}
-            type="button"
-          >
-            Gestão avançada
-          </button>
-          <input
-            accept=".futhub,application/json"
-            className="sr-only"
-            onChange={(event) => void importProject(event)}
-            ref={importInputRef}
-            type="file"
-          />
-          <button
-            className="text-button"
-            disabled={importing}
-            onClick={() => importInputRef.current?.click()}
-            type="button"
-          >
-            {importing ? 'Importando...' : 'Importar .futhub'}
-          </button>
-          <button
-            className="ops-button secondary"
-            onClick={() => setExperienceOpen(true)}
-            type="button"
-          >
-            Testar abertura
-          </button>
-          <button
-            className="ops-button secondary"
-            onClick={() => setExportOpen(true)}
-            type="button"
-          >
-            Exportar
-          </button>
-          <button
-            className="ops-button accent"
-            disabled={!canSave}
-            onClick={() => void saveArtwork()}
-            type="button"
-          >
-            {saving ? 'Publicando...' : 'Salvar e publicar'}
-          </button>
-        </div>
-      </StudioHeader>
+  const sortedPacks = [...packs].sort((first, second) => first.name.localeCompare(second.name));
 
-      <StudioWorkspace className="pack-studio-workspace">
-        <StudioSidebar aria-label="Biblioteca e camadas do pack" className="pack-studio-layers">
-          <div className="pack-studio-panel-heading">
-            <div>
-              <p className="eyebrow">Ponto de partida</p>
-              <h2>Biblioteca</h2>
-            </div>
+  return (
+    <StudioShell focus={focusMode} kind="packs" labelledBy="pack-studio-title">
+      <StudioTopbar
+        actions={
+          <>
             <button
-              className="pack-studio-icon-button"
-              disabled={loading || saving}
-              onClick={() => choosePack('')}
+              className="studio-btn studio-btn--ghost"
+              onClick={() => navigate('/app/gerenciar/packs')}
               type="button"
             >
-              <span aria-hidden="true">+</span>
-              <span className="sr-only">Criar novo pack</span>
+              Gestão avançada
             </button>
-          </div>
-          <PackStudioPresets
-            draft={draft}
-            onApplyArt={(art) => {
-              setDraft((current) => ({ ...current, ...art }));
-              selectLayer('background');
-            }}
-          />
-          <div className="pack-studio-composition-heading">
-            <h2>Camadas</h2>
-            <span>3 elementos</span>
-          </div>
-          <div className="pack-studio-layer-list" aria-label="Camadas editáveis">
-            {packStudioLayers.map((layer) => (
+            <input
+              accept=".futhub,application/json"
+              className="sr-only"
+              onChange={(event) => void importProject(event)}
+              ref={importInputRef}
+              tabIndex={-1}
+              type="file"
+            />
+            <button
+              className="studio-btn studio-btn--ghost"
+              disabled={importing}
+              onClick={() => importInputRef.current?.click()}
+              type="button"
+            >
+              <StudioIcon name="upload" />
+              {importing ? 'Importando…' : 'Importar .futhub'}
+            </button>
+            <button
+              className="studio-btn studio-btn--secondary"
+              onClick={() => setExperienceOpen(true)}
+              type="button"
+            >
+              <StudioIcon name="sparkle" />
+              Testar abertura
+            </button>
+            <button
+              className="studio-btn studio-btn--secondary"
+              onClick={() => setExportOpen(true)}
+              type="button"
+            >
+              <StudioIcon name="download" />
+              Exportar
+            </button>
+            <button
+              className="studio-btn studio-btn--primary"
+              disabled={!canSave}
+              onClick={() => void saveArtwork()}
+              type="button"
+            >
+              {saving ? 'Publicando…' : 'Salvar e publicar'}
+            </button>
+          </>
+        }
+        icon="pack"
+        status={
+          <>
+            <span
+              className="studio-status-dot"
+              data-state={
+                saving || loading
+                  ? 'saving'
+                  : publicationState === 'Versão publicada'
+                    ? 'saved'
+                    : 'pending'
+              }
+            />
+            <span>{draft.name || 'Novo pack'}</span>
+            <span aria-hidden="true">·</span>
+            <span className="pack-studio-save-state">{publicationState}</span>
+          </>
+        }
+        title="Studio de packs"
+        titleId="pack-studio-title"
+      />
+
+      <StudioBody left={leftOpen} right={rightOpen}>
+        {leftOpen && (
+          <StudioRail
+            aria-label="Biblioteca e camadas do pack"
+            className="studio-library pack-studio-layers"
+            side="left"
+          >
+            <StudioPanelHeader
+              actions={
+                <>
+                  <button
+                    aria-label="Criar novo pack"
+                    className="studio-icon-button"
+                    disabled={loading || saving}
+                    onClick={() => choosePack('')}
+                    title="Novo pack"
+                    type="button"
+                  >
+                    <StudioIcon name="plus" />
+                  </button>
+                  <button
+                    aria-label="Recolher biblioteca"
+                    className="studio-icon-button"
+                    onClick={() => setLeftOpen(false)}
+                    type="button"
+                  >
+                    <StudioIcon name="panel-left" />
+                  </button>
+                </>
+              }
+              eyebrow="Ponto de partida"
+              title="Biblioteca"
+            />
+            <div aria-busy={loading} className="studio-library__list pack-studio-pack-list">
+              {!selectedId && !loading && (
+                <div className="studio-library-row" data-selected="true">
+                  <div className="studio-library-row__main">
+                    <span className="studio-library-row__thumb pack-studio-pack-swatch">
+                      <i style={{ background: draft.color }} />
+                    </span>
+                    <span className="studio-library-row__copy">
+                      <strong>{draft.name || 'Novo pack'}</strong>
+                      <small>Rascunho local · não publicado</small>
+                    </span>
+                  </div>
+                </div>
+              )}
+              {loading ? (
+                <p className="studio-empty">Carregando packs…</p>
+              ) : sortedPacks.length ? (
+                sortedPacks.map((item) => (
+                  <div
+                    className="studio-library-row"
+                    data-selected={selectedId === item.id}
+                    key={item.id}
+                  >
+                    <button
+                      aria-pressed={selectedId === item.id}
+                      className="studio-library-row__main"
+                      disabled={saving}
+                      onClick={() => choosePack(item.id)}
+                      type="button"
+                    >
+                      <span className="studio-library-row__thumb pack-studio-pack-swatch">
+                        {item.imageUrl ? (
+                          <img alt="" src={item.imageUrl} />
+                        ) : (
+                          <i style={{ background: item.color }} />
+                        )}
+                      </span>
+                      <span className="studio-library-row__copy">
+                        <strong>{item.name}</strong>
+                        <small>
+                          {item.cardsAmount} {item.cardsAmount === 1 ? 'carta' : 'cartas'} ·{' '}
+                          {item.price.toLocaleString('pt-BR')} moedas
+                        </small>
+                      </span>
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p className="studio-empty">Nenhum pack publicado ainda.</p>
+              )}
+            </div>
+            <div className="studio-rail__section">
+              <div className="studio-section__heading">
+                <h3 className="studio-section__title">Camadas</h3>
+                <small>{packStudioLayers.length} elementos</small>
+              </div>
+              <fieldset className="pack-studio-layer-list">
+                <legend className="sr-only">Camadas editáveis</legend>
+                {packStudioLayers.map((layer) => (
+                  <button
+                    aria-pressed={activeLayer === layer.id}
+                    className="pack-studio-layer"
+                    key={layer.id}
+                    onClick={() => selectLayer(layer.id)}
+                    type="button"
+                  >
+                    <span aria-hidden="true" className="pack-studio-layer__glyph">
+                      {layer.glyph}
+                    </span>
+                    <span>
+                      <strong>{layer.label}</strong>
+                      <small>
+                        {layer.id === 'headline'
+                          ? draft.headline
+                          : layer.id === 'kicker'
+                            ? draft.kicker || 'Opcional'
+                            : layer.detail}
+                      </small>
+                    </span>
+                  </button>
+                ))}
+              </fieldset>
+            </div>
+          </StudioRail>
+        )}
+
+        <PackStudioPreview
+          dock={
+            <button
+              aria-label={focusMode ? 'Sair do modo criação' : 'Modo criação'}
+              aria-pressed={focusMode}
+              className="studio-tool studio-tool--icon"
+              onClick={() => setFocusMode((current) => !current)}
+              title={focusMode ? 'Sair do modo criação · Esc' : 'Modo criação'}
+              type="button"
+            >
+              <StudioIcon name={focusMode ? 'shrink' : 'expand'} />
+            </button>
+          }
+          draft={draft}
+          leading={
+            !leftOpen && (
               <button
-                aria-pressed={activeLayer === layer.id}
-                className="pack-studio-layer"
-                key={layer.id}
-                onClick={() => selectLayer(layer.id)}
+                aria-label="Mostrar biblioteca"
+                className="studio-tool studio-tool--icon"
+                onClick={() => setLeftOpen(true)}
                 type="button"
               >
-                <span aria-hidden="true" className="pack-studio-layer__glyph">
-                  {layer.glyph}
-                </span>
-                <span>
-                  <strong>{layer.label}</strong>
-                  <small>
-                    {layer.id === 'headline'
-                      ? draft.headline
-                      : layer.id === 'kicker'
-                        ? draft.kicker || 'Opcional'
-                        : layer.detail}
-                  </small>
-                </span>
+                <StudioIcon name="panel-left" />
               </button>
-            ))}
-          </div>
-          <p className="pack-studio-layers__hint">
-            Selecione uma camada e ajuste texto, posição ou acabamento no painel de propriedades.
-          </p>
-        </StudioSidebar>
+            )
+          }
+          notice={notice}
+          onCanvasReady={(canvas) => {
+            canvasRef.current = canvas;
+            setCanvasReady(canvas !== null);
+          }}
+          onDismissNotice={() => setNotice('')}
+          trailing={
+            !rightOpen && (
+              <button
+                aria-label="Mostrar propriedades"
+                className="studio-tool studio-tool--icon"
+                onClick={() => setRightOpen(true)}
+                type="button"
+              >
+                <StudioIcon name="panel-right" />
+              </button>
+            )
+          }
+        />
 
-        <StudioCanvas className="pack-studio-canvas">
-          <PackStudioPreview
-            draft={draft}
-            onCanvasReady={(canvas) => {
-              canvasRef.current = canvas;
-              setCanvasReady(canvas !== null);
-            }}
-          />
-        </StudioCanvas>
-
-        <StudioSidebar aria-label="Propriedades do pack" className="pack-studio-inspector">
-          <PackStudioInspector
-            activeLayer={activeLayer}
-            activeTab={activeTab}
-            draft={draft}
-            loading={loading}
-            packs={packs}
-            selectedId={selectedId}
-            onChoosePack={choosePack}
-            onChange={updateDraft}
-            onEditFrontImage={() => setFrontImageEditorOpen(true)}
-            onSelectLayer={selectLayer}
-            onSelectTab={setActiveTab}
-          />
-          {notice && <output className="pack-studio-notice">{notice}</output>}
-        </StudioSidebar>
-      </StudioWorkspace>
+        {rightOpen && (
+          <StudioRail
+            aria-label="Propriedades do pack"
+            className="studio-inspector pack-studio-inspector"
+            side="right"
+          >
+            <PackStudioInspector
+              activeLayer={activeLayer}
+              activeTab={activeTab}
+              draft={draft}
+              loading={loading}
+              packs={packs}
+              selectedId={selectedId}
+              onApplyArt={(art) => {
+                setDraft((current) => ({ ...current, ...art }));
+                setActiveLayer('background');
+              }}
+              onChoosePack={choosePack}
+              onChange={updateDraft}
+              onCollapse={() => setRightOpen(false)}
+              onEditFrontImage={() => setFrontImageEditorOpen(true)}
+              onSelectLayer={selectLayer}
+              onSelectTab={setActiveTab}
+            />
+          </StudioRail>
+        )}
+      </StudioBody>
 
       {experienceOpen && (
         <PackStudioExperience draft={draft} onClose={() => setExperienceOpen(false)} />
@@ -345,11 +502,11 @@ export function PackStudio() {
           <div className="pack-studio-image-dialog__surface">
             <button
               aria-label="Fechar ajuste de foto"
-              className="pack-studio-image-dialog__close"
+              className="studio-icon-button pack-studio-image-dialog__close"
               onClick={() => setFrontImageEditorOpen(false)}
               type="button"
             >
-              Fechar
+              <StudioIcon name="close" />
             </button>
             <ImageTreatment
               onApply={(_imageUrl, image) => void applyFrontImage(image)}
@@ -371,6 +528,6 @@ export function PackStudio() {
           onExported={setNotice}
         />
       )}
-    </section>
+    </StudioShell>
   );
 }

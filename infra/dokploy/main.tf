@@ -103,6 +103,7 @@ locals {
       DATABASE_URL                = "postgresql://postgres:${var.postgres_password}@__DOKPLOY_POSTGRES_HOST__:5432/postgres"
       DISCORD_CLIENT_ID           = var.discord_client_id
       DISCORD_CLIENT_SECRET       = var.discord_client_secret
+      DISCORD_TOKEN               = var.discord_token
       MINIO_ACCESS_KEY            = var.minio_root_user
       MINIO_BUCKET                = "futhub-card-images"
       MINIO_ENDPOINT              = var.minio_domain

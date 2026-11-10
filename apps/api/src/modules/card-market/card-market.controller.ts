@@ -59,11 +59,12 @@ export class CardMarketController {
     route.operationId = 'purchaseCard';
     route.security = [{ bearer: [] }];
   })
-  purchaseCard(
+  async purchaseCard(
     @Param('cardId') cardId: string,
     @Body({ schema: PurchaseCardRequestSchema }) request: PurchaseCardRequest,
   ): Promise<PurchaseCardResponse> {
-    return this.purchase.execute(request.identity, cardId);
+    const result = await this.purchase.execute(request.identity, cardId);
+    return { ...result, completedMissions: [...result.completedMissions] };
   }
 
   @TypedRoute.Post('sell')
@@ -76,6 +77,10 @@ export class CardMarketController {
     @Body({ schema: SellCardsRequestSchema }) request: SellCardsRequest,
   ): Promise<SellCardsResponse> {
     const result = await this.sell.execute(request.identity, request.userCardIds);
-    return { ...result, userCardIds: [...result.userCardIds] };
+    return {
+      ...result,
+      userCardIds: [...result.userCardIds],
+      completedMissions: [...result.completedMissions],
+    };
   }
 }

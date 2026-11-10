@@ -4,11 +4,15 @@ import { fileUrl } from '../../files/files.service.js';
 import { advanceMissions } from '../../missions/missions.service.js';
 import { upsertDiscordUser } from '../../users/user.repository.js';
 import type {
+  CpuDifficulty,
   LeagueStatusResponse,
   MatchEventDto,
   MatchResponse,
   QueueResponse,
+  TestMatchResponse,
+  TestMatchTeamDto,
 } from '../league.dto.js';
+import { buildCpuLineup, lineupRating } from '../use-cases/league/league.cpu.js';
 import { simulateMatch, validateLineup } from '../use-cases/league/league.simulator.js';
 import type { LineupCard, TeamTactic } from '../use-cases/league/league.types.js';
 import {
@@ -23,6 +27,13 @@ type DatabaseLoader = () => Promise<Database>;
 type Transaction = Parameters<Parameters<Database['db']['transaction']>[0]>[0];
 const INVALID_LINEUP_MESSAGE =
   'Complete a escalação com 11 titulares em posições compatíveis antes de buscar uma partida.';
+const CPU_NAME = 'FutHub CPU';
+
+type CardSource = Readonly<{
+  overall: number;
+  imageFileId: string | null;
+  imageUrl: string | null;
+}>;
 
 export class DrizzleLeagueRepository implements LeagueRepository {
   constructor(private readonly loadDatabase: DatabaseLoader) {}
@@ -194,6 +205,14 @@ export class DrizzleLeagueRepository implements LeagueRepository {
       );
       await advanceMissions(database, tx, queued.userId, 'play_match', now);
       await advanceMissions(database, tx, current.userId, 'play_match', now);
+      if (simulated.homeGoals !== simulated.awayGoals)
+        await advanceMissions(
+          database,
+          tx,
+          simulated.homeGoals > simulated.awayGoals ? queued.userId : current.userId,
+          'win_match',
+          now,
+        );
       return { kind: 'matched', matchId: room.id };
     });
   }
@@ -303,6 +322,104 @@ export class DrizzleLeagueRepository implements LeagueRepository {
       .map((event) => ({ ...event }));
   }
 
+  async testMatch(
+    identity: DiscordIdentity,
+    opponentId: string | null,
+    seed: number,
+    difficulty: CpuDifficulty,
+  ): Promise<TestMatchResponse> {
+    const database = await this.loadDatabase();
+    const { db, eq, schema } = database;
+    const owner = await db.query.users.findFirst({
+      columns: { id: true },
+      where: eq(schema.users.discordUserId, identity.id),
+    });
+    if (!owner) throw new LeagueInputError(INVALID_LINEUP_MESSAGE);
+    const home = await this.loadLineup(database, db, owner.id);
+
+    let awayTeam: Omit<TestMatchTeamDto, 'lineup' | 'rating' | 'slots'>;
+    let away: Awaited<ReturnType<typeof this.loadLineup>>;
+    if (opponentId) {
+      const opponent = await db.query.users.findFirst({
+        columns: { id: true, nome: true, urlAvatar: true },
+        where: eq(schema.users.discordUserId, opponentId),
+      });
+      if (!opponent) throw new LeagueNotFoundError('Adversário não encontrado no FutHub.');
+      away = await this.loadLineup(database, db, opponent.id).catch((error: unknown) => {
+        if (error instanceof LeagueInputError)
+          throw new LeagueInputError('O adversário ainda não tem 11 titulares escalados.');
+        throw error;
+      });
+      awayTeam = {
+        name: opponent.nome,
+        avatarUrl: opponent.urlAvatar,
+        cpu: false,
+        tactic: away.tactic,
+      };
+    } else {
+      const pool = await db
+        .select({
+          name: schema.cards.name,
+          position: schema.cards.position,
+          overall: schema.cards.overall,
+          imageFileId: schema.cards.imageFileId,
+          imageUrl: schema.cards.imageUrl,
+          attack: schema.cards.attack,
+          creation: schema.cards.creation,
+          defense: schema.cards.defense,
+          finishing: schema.cardStats.finishing,
+          passing: schema.cardStats.passing,
+          control: schema.cardStats.control,
+          marking: schema.cardStats.marking,
+        })
+        .from(schema.cards)
+        .innerJoin(schema.cardStats, eq(schema.cardStats.id, schema.cards.statsId))
+        .orderBy(schema.cards.id);
+      // A CPU espelha as posições do mandante, então joga na mesma formação.
+      away = {
+        cards: buildCpuLineup(pool, home.cards, seed, difficulty),
+        slots: home.slots,
+        tactic: 'balanced',
+      };
+      awayTeam = { name: CPU_NAME, avatarUrl: null, cpu: true, tactic: away.tactic };
+    }
+
+    const simulated = simulateMatch(home.cards, away.cards, seed, home.tactic, away.tactic);
+    const team = async ({ cards, slots }: typeof home) => ({
+      rating: lineupRating(cards),
+      slots,
+      lineup: await Promise.all(
+        cards.map(async ({ name, assignedPosition, source }) => ({
+          name,
+          position: assignedPosition,
+          overall: source.overall,
+          imageUrl: (await this.imageUrl(database, source.imageFileId)) ?? source.imageUrl,
+        })),
+      ),
+    });
+    return {
+      seed,
+      difficulty: opponentId ? null : difficulty,
+      home: {
+        name: identity.name,
+        avatarUrl: identity.avatarUrl,
+        cpu: false,
+        tactic: home.tactic,
+        ...(await team(home)),
+      },
+      away: { ...awayTeam, ...(await team(away)) },
+      homeGoals: simulated.homeGoals,
+      awayGoals: simulated.awayGoals,
+      events: simulated.events.map(({ minute, type, description, homeGoals, awayGoals }) => ({
+        minute,
+        type,
+        description,
+        homeGoals,
+        awayGoals,
+      })),
+    };
+  }
+
   private async ensureStanding(
     database: Database,
     tx: Transaction,
@@ -333,9 +450,13 @@ export class DrizzleLeagueRepository implements LeagueRepository {
 
   private async loadLineup(
     database: Database,
-    tx: Transaction,
+    tx: Database['db'] | Transaction,
     userId: string,
-  ): Promise<{ cards: LineupCard[]; tactic: TeamTactic }> {
+  ): Promise<{
+    cards: (LineupCard & { source: CardSource })[];
+    slots: { position: string; x: number; y: number }[];
+    tactic: TeamTactic;
+  }> {
     const { and, eq, inArray, schema } = database;
     const formation = await tx.query.userFormations.findFirst({
       where: eq(schema.userFormations.userId, userId),
@@ -378,6 +499,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
         passing: stats.passing,
         control: stats.control,
         marking: stats.marking,
+        source: card,
       };
     });
     try {
@@ -390,6 +512,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
     }
     return {
       cards,
+      slots: slots.map(({ position, x, y }) => ({ position, x, y })),
       tactic: formation.tactic,
     };
   }

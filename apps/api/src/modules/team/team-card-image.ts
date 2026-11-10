@@ -19,11 +19,12 @@ export type TeamCardImageInput = Readonly<{
     control: number;
   }>;
   playerImage?: Buffer;
+  teamLogo?: Buffer;
 }>;
 
 const imageFont = 'Fira Sans';
 for (const weight of ['Regular', 'SemiBold', 'ExtraBold'] as const) {
-  const path = workspacePath('apps/discord-bot/assets', `FiraSans-${weight}.otf`);
+  const path = workspacePath('packages/bot-templates/fonts', `FiraSans-${weight}.otf`);
   if (!GlobalFonts.registerFromPath(path)) throw new Error(`Failed to load image font: ${path}`);
 }
 
@@ -86,6 +87,9 @@ export async function renderTeamCardImage(input: TeamCardImageInput): Promise<Bu
   context.fillStyle = input.secondaryColor;
   context.fillRect(72, 213, 86, 3);
   label(context, input.position, 114, 248, 28, '#f8fafc', 'center', 800);
+  if (input.teamLogo) {
+    drawContained(context, await loadImage(input.teamLogo), 76, 282, 76, 76);
+  }
 
   label(
     context,

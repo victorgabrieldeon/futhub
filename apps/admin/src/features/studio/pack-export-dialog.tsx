@@ -3,6 +3,7 @@ import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { packCanvasBlob } from './pack-canvas';
 import type { PackStudioDraft } from './pack-studio-model';
 import { packStudioProjectFileName, packStudioProjectJson } from './pack-studio-project';
+import { StudioIcon } from './studio-icon';
 
 type PackExportDialogProps = Readonly<{
   canvas: Canvas | null;
@@ -86,29 +87,30 @@ export function PackExportDialog({ canvas, draft, onClose, onExported }: PackExp
     <div className="studio-dialog-backdrop" role="presentation">
       <dialog
         aria-labelledby="pack-export-title"
-        className="pack-export-dialog"
+        className="studio-dialog pack-export-dialog"
         onCancel={(event) => {
           event.preventDefault();
           closeDialog();
         }}
         ref={dialogRef}
       >
-        <header>
+        <header className="studio-dialog__header">
           <div>
-            <p className="eyebrow">Arquivo final</p>
+            <p className="studio-eyebrow">Arquivo final</p>
             <h2 id="pack-export-title">Exportar pack</h2>
           </div>
           <button
             aria-label="Fechar exportação"
+            className="studio-icon-button"
             onClick={closeDialog}
             ref={closeButtonRef}
             type="button"
           >
-            ×
+            <StudioIcon name="close" />
           </button>
         </header>
         <form onSubmit={(event) => void exportPack(event)}>
-          <fieldset className="pack-export-options">
+          <fieldset className="studio-option-list studio-option-list--compact">
             <legend>Arquivo</legend>
             <label>
               <input
@@ -137,7 +139,7 @@ export function PackExportDialog({ canvas, draft, onClose, onExported }: PackExp
           </fieldset>
           {type === 'image' && (
             <>
-              <fieldset className="pack-export-options">
+              <fieldset className="studio-option-list studio-option-list--compact">
                 <legend>Formato</legend>
                 {(['png', 'webp'] as const).map((value) => (
                   <label key={value}>
@@ -154,7 +156,7 @@ export function PackExportDialog({ canvas, draft, onClose, onExported }: PackExp
                   </label>
                 ))}
               </fieldset>
-              <fieldset className="pack-export-options">
+              <fieldset className="studio-option-list studio-option-list--compact">
                 <legend>Resolução</legend>
                 {([1, 2, 3] as const).map((value) => (
                   <label key={value}>
@@ -184,12 +186,12 @@ export function PackExportDialog({ canvas, draft, onClose, onExported }: PackExp
                 : `${format.toUpperCase()} · ${600 * scale} × ${800 * scale}px`}
             </small>
           </div>
-          <footer>
-            <button onClick={closeDialog} type="button">
+          <footer className="studio-dialog__footer">
+            <button className="studio-btn studio-btn--ghost" onClick={closeDialog} type="button">
               Cancelar
             </button>
             <button
-              className="ops-button accent"
+              className="studio-btn studio-btn--primary"
               disabled={exporting || (type === 'image' && !canvas)}
               type="submit"
             >

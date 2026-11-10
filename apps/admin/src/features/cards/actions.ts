@@ -13,12 +13,17 @@ import {
   getV1AdminCardsCatalog,
   getV1AdminCardsCollectionArtworkSuggestions,
   getV1AdminCardsCollections,
+  getV1AdminCardsSquadImportClubs,
+  getV1AdminCardsSquadImportLeagueClubs,
+  getV1AdminCardsSquadImportLeagues,
+  getV1AdminCardsSquadImportSquad,
   getV1AdminCardsTeamLogoDetails,
   getV1AdminCardsTeamLogoSuggestions,
   getV1AdminCardsTeams,
   getV1AdminCardsTemplate,
   postV1AdminCards,
   postV1AdminCardsCollections,
+  postV1AdminCardsSquadImport,
   postV1AdminCardsTeams,
   putV1AdminCardsCardId,
   putV1AdminCardsCollectionsCollectionId,
@@ -122,6 +127,41 @@ export type Collection = {
   contractsBlocked: boolean;
 };
 export type TeamInput = Omit<Team, 'id'>;
+export type SquadImportClub = { id: number; name: string; league: string; imageUrl: string };
+export type SquadImportLeague = { id: number; name: string; imageUrl: string; clubCount: number };
+export type SquadImportPlayer = {
+  sourceId: string;
+  name: string;
+  position: string;
+  secondaryPositions: string[];
+  overall: number;
+  defense: number;
+  attack: number;
+  creation: number;
+  passing: number;
+  control: number;
+  marking: number;
+  pace: number;
+  dribbling: number;
+  finishing: number;
+  photoUrl: string | null;
+};
+export type SquadImportPreview = {
+  provider: 'EA SPORTS FC' | 'TheSportsDB';
+  estimated: boolean;
+  sourceUrl: string;
+  team: TeamInput;
+  crestUrl: string | null;
+  existingTeam: Reference | null;
+  players: SquadImportPlayer[];
+};
+export type SquadImportResult = {
+  teamId: string;
+  createCount: number;
+  updateCount: number;
+  photoCount: number;
+  photoErrors: number;
+};
 export type CollectionInput = Omit<Collection, 'id'>;
 
 function adminMultipartRequest<T>(path: string, init: RequestInit): Promise<T> {
@@ -276,4 +316,44 @@ export async function downloadCardsTemplate(): Promise<{
 }> {
   const template = await getV1AdminCardsTemplate(adminApiOptions());
   return { filename: template.filename, contentBase64: template.content };
+}
+
+export async function searchSquadImportClubs(
+  query: string,
+  signal?: AbortSignal,
+): Promise<SquadImportClub[]> {
+  return getV1AdminCardsSquadImportClubs({ q: query }, { ...adminApiOptions(), signal });
+}
+
+export async function loadSquadImportLeagues(): Promise<SquadImportLeague[]> {
+  return getV1AdminCardsSquadImportLeagues(adminApiOptions());
+}
+
+export async function loadSquadImportLeagueClubs(
+  leagueId: number,
+  signal?: AbortSignal,
+): Promise<SquadImportClub[]> {
+  return getV1AdminCardsSquadImportLeagueClubs({ leagueId }, { ...adminApiOptions(), signal });
+}
+
+export async function loadSquadImportPreview(
+  source: Readonly<{ clubId: number } | { name: string }>,
+): Promise<SquadImportPreview> {
+  return getV1AdminCardsSquadImportSquad(source, adminApiOptions()) as Promise<SquadImportPreview>;
+}
+
+export async function importSquad(
+  input: Readonly<{
+    collectionId: string;
+    teamId: string | null;
+    team: TeamInput;
+    players: Omit<SquadImportPlayer, 'sourceId'>[];
+    crestUrl: string | null;
+    replaceImages?: boolean;
+  }>,
+): Promise<SquadImportResult> {
+  return postV1AdminCardsSquadImport(
+    input as Parameters<typeof postV1AdminCardsSquadImport>[0],
+    adminApiOptions(),
+  );
 }

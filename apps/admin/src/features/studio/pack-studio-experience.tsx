@@ -33,7 +33,7 @@ export function PackStudioExperience({ draft, onClose }: PackStudioExperiencePro
         Fechar preview
       </button>
       <div className="pack-studio-experience__copy">
-        <p className="eyebrow">Preview experience</p>
+        <p className="studio-eyebrow">Teste de abertura</p>
         <h2 id="pack-experience-title">
           {opened
             ? `${draft.cardsAmount} cartas reveladas`
@@ -45,7 +45,11 @@ export function PackStudioExperience({ draft, onClose }: PackStudioExperiencePro
             : 'Puxe o lacre como em uma embalagem física para testar a abertura.'}
         </p>
         {opened && (
-          <button className="ops-button secondary" onClick={() => setOpened(false)} type="button">
+          <button
+            className="studio-btn studio-btn--secondary"
+            onClick={() => setOpened(false)}
+            type="button"
+          >
             Fechar e testar de novo
           </button>
         )}

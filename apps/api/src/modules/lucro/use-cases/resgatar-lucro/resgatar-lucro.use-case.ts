@@ -1,3 +1,4 @@
+import { missionRewardBalance } from '../../../missions/missions.service.js';
 import {
   type Clock,
   type CommandConfig,
@@ -59,7 +60,7 @@ export class ResgatarLucroUseCase {
           club.payroll,
       };
       const balance = await transaction.credit(report.net);
-      await transaction.advanceMission();
+      const completedMissions = await transaction.advanceMission();
       const progression = await transaction.grantProgression();
       const levelRewardBalance = progression.rewards.reduce(
         (total, item) => total + (item.type === 'balance' ? item.quantity : 0),
@@ -71,9 +72,10 @@ export class ResgatarLucroUseCase {
         kind: 'success',
         reward,
         report,
-        balance: balance + levelRewardBalance,
+        balance: balance + levelRewardBalance + missionRewardBalance(completedMissions),
         availableAt: nextAvailableAt,
         progression,
+        completedMissions,
         embed: persistedCommand.embed ?? lucroCommand.embed,
       };
     });

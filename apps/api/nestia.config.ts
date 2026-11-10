@@ -12,10 +12,26 @@ export const swaggerConfig = {
     { name: 'Administração / Cards', description: 'Catálogo, coleções, times e imagens de cards.' },
     { name: 'Administração / Lucro', description: 'Configuração do comando de lucro.' },
     { name: 'Administração / Packs', description: 'Gerenciamento de packs e imagens.' },
+    {
+      name: 'Administração / Códigos de resgate',
+      description: 'Códigos promocionais e o Item concedido por eles.',
+    },
+    {
+      name: 'Administração / Missões',
+      description: 'Missões diárias, semanais e mensais e o pool de recompensas.',
+    },
     { name: 'Administração / Sessão', description: 'Sessão autenticada da área administrativa.' },
+    {
+      name: 'Administração / Usuários',
+      description: 'Perfil, saldo, cards, packs, campos e banimento de jogadores.',
+    },
     {
       name: 'Respostas do bot',
       description: 'Templates configuráveis de resposta do bot Discord.',
+    },
+    {
+      name: 'Emojis do bot',
+      description: 'Emojis da aplicação Discord usados nas respostas do bot.',
     },
     { name: 'Clube', description: 'Gestão financeira e estrutura do clube.' },
     { name: 'Comandos', description: 'Comandos executados por jogadores.' },
@@ -36,6 +52,7 @@ export default {
   input: [
     'src/modules/packs/packs.controller.ts',
     'src/modules/missions/missions.controller.ts',
+    'src/modules/missions/admin-missions.controller.ts',
     'src/modules/lucro/lucro.controller.ts',
     'src/modules/lucro/admin-lucro.controller.ts',
     'src/modules/league/league.controller.ts',
@@ -45,8 +62,12 @@ export default {
     'src/modules/team/team.controller.ts',
     'src/modules/auth/admin-session.controller.ts',
     'src/modules/bot-responses/bot-responses.controller.ts',
+    'src/modules/bot-emojis/bot-emojis.controller.ts',
     'src/modules/admin-packs/admin-packs.controller.ts',
     'src/modules/admin-cards/admin-cards.controller.ts',
+    'src/modules/redeem-codes/redeem-codes.controller.ts',
+    'src/modules/redeem-codes/admin-redeem-codes.controller.ts',
+    'src/modules/admin-users/admin-users.controller.ts',
   ],
   swagger: { ...swaggerConfig, output: 'openapi.json' },
 } satisfies INestiaConfig;

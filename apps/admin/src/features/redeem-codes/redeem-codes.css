@@ -1,0 +1,428 @@
+.redeem-codes {
+  color: var(--ink);
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.redeem-codes code {
+  font-size: 0.92em;
+}
+.redeem-form {
+  border: 1px solid var(--hairline-strong);
+  border-radius: 12px;
+  display: grid;
+  gap: 20px;
+  padding: 20px;
+}
+.redeem-form[aria-busy="true"] {
+  opacity: 0.7;
+}
+.redeem-form-heading h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+.redeem-form-heading p {
+  color: var(--muted);
+  margin: 0;
+}
+.redeem-fieldset {
+  border: 0;
+  display: grid;
+  gap: 16px 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+.redeem-fieldset legend {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+.redeem-field {
+  align-content: start;
+  display: grid;
+  font-size: 13px;
+  gap: 8px;
+  min-width: 0;
+}
+.redeem-field small {
+  color: var(--muted);
+}
+.redeem-field--code input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.04em;
+}
+.redeem-resource {
+  display: grid;
+  gap: 16px 20px;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.redeem-toggle {
+  align-items: center;
+  display: flex;
+  font-size: 14px;
+  gap: 10px;
+  min-height: 44px;
+}
+.redeem-toggle input {
+  accent-color: var(--ink);
+  flex: none;
+  height: 18px;
+  margin: 0;
+  width: 18px;
+}
+.redeem-form > .form-error {
+  margin: 0;
+}
+.redeem-form-actions,
+.redeem-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.redeem-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+.redeem-toolbar .redeem-field {
+  flex: 1;
+  max-width: 360px;
+}
+.redeem-toolbar output {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.redeem-list {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.redeem-row {
+  align-items: center;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 12px;
+  display: grid;
+  gap: 12px 24px;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr) auto;
+  padding: 16px;
+}
+.redeem-row[aria-busy="true"] {
+  opacity: 0.6;
+}
+.redeem-row > .form-error {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.redeem-row-main {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  min-width: 0;
+}
+.redeem-code {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.redeem-status {
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+}
+.redeem-status--active {
+  background: color-mix(in srgb, #1f9d55 16%, transparent);
+  color: #1f9d55;
+}
+.redeem-status--inactive {
+  background: var(--surface-strong);
+  color: var(--body-strong);
+}
+.redeem-status--expired,
+.redeem-status--exhausted {
+  background: color-mix(in srgb, #c2410c 14%, transparent);
+  color: #c2410c;
+}
+.redeem-row-facts {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+.redeem-row-facts dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+.redeem-row-facts dd {
+  font-variant-numeric: tabular-nums;
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+@media (min-width: 901px) {
+  .redeem-list {
+    grid-template-columns: minmax(160px, 240px) minmax(0, 1fr) auto;
+  }
+  .redeem-row {
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+  }
+}
+@media (max-width: 900px) {
+  .redeem-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .redeem-fieldset {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .redeem-fieldset {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .redeem-row-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .redeem-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .redeem-toolbar .redeem-field {
+    max-width: none;
+  }
+}
+.redeem-form--editing {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+.redeem-form-heading h2:focus {
+  outline: none;
+}
+.redeem-code-input {
+  display: flex;
+  gap: 8px;
+}
+.redeem-code-input input {
+  flex: 1;
+  min-width: 0;
+}
+.redeem-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.redeem-preset {
+  background: var(--surface-card);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  color: var(--body-strong);
+  font-size: 12px;
+  font-weight: 600;
+  min-height: 28px;
+  padding: 0 10px;
+}
+.redeem-preset:hover:not(:disabled) {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.redeem-preset:disabled {
+  opacity: 0.45;
+}
+.redeem-field small.redeem-warning,
+.redeem-warning {
+  color: #c2410c;
+}
+.redeem-field input[aria-invalid="true"] {
+  border-color: #c2410c;
+}
+.redeem-preview {
+  background: var(--surface-strong);
+  border-radius: 10px;
+  display: grid;
+  font-size: 14px;
+  gap: 4px;
+  padding: 12px 14px;
+}
+.redeem-preview-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.redeem-preview small {
+  color: var(--muted);
+}
+.redeem-form-actions {
+  align-items: center;
+}
+.redeem-shortcut {
+  color: var(--muted);
+  font-size: 12px;
+}
+.redeem-notice {
+  align-items: center;
+  background: color-mix(in srgb, #1f9d55 12%, transparent);
+  border: 1px solid color-mix(in srgb, #1f9d55 40%, transparent);
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 14px;
+}
+.redeem-notice > span {
+  flex: 1;
+  min-width: 200px;
+}
+.redeem-notice-close {
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  padding: 2px 6px;
+}
+.redeem-notice-close:hover {
+  color: var(--ink);
+}
+.redeem-copy {
+  background: none;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  min-height: 24px;
+  padding: 0 8px;
+}
+.redeem-copy:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.redeem-copy[data-state="copied"] {
+  border-color: #1f9d55;
+  color: #1f9d55;
+}
+.redeem-copy[data-state="failed"] {
+  border-color: #c2410c;
+  color: #c2410c;
+}
+.redeem-code-line {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.redeem-toolbar {
+  flex-wrap: wrap;
+}
+.redeem-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.redeem-filter {
+  align-items: center;
+  background: var(--surface-card);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  color: var(--body-strong);
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 12px;
+}
+.redeem-filter span {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.redeem-filter:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+.redeem-filter[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--surface-card);
+}
+.redeem-filter[aria-pressed="true"] span {
+  color: inherit;
+  opacity: 0.7;
+}
+.redeem-filter:disabled {
+  opacity: 0.45;
+}
+.redeem-row[aria-current="true"] {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+.redeem-row--inactive .redeem-code,
+.redeem-row--expired .redeem-code,
+.redeem-row--exhausted .redeem-code {
+  color: var(--muted);
+}
+.redeem-meter {
+  background: var(--surface-strong);
+  border-radius: 999px;
+  display: block;
+  height: 4px;
+  margin-top: 6px;
+  max-width: 160px;
+  overflow: hidden;
+}
+.redeem-meter > span {
+  background: var(--ink);
+  display: block;
+  height: 100%;
+}
+.redeem-row--exhausted .redeem-meter > span {
+  background: #c2410c;
+}
+.redeem-empty {
+  align-items: center;
+  border: 1px dashed var(--hairline-strong);
+  border-radius: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 20px;
+}
+.redeem-empty p {
+  margin: 0;
+}
+.redeem-presets,
+.redeem-filters {
+  border: 0;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+.redeem-field select {
+  height: 44px;
+}
+.redeem-row-actions {
+  justify-content: flex-end;
+}
+@media (max-width: 900px) {
+  .redeem-row-actions {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 1100px) {
+  .redeem-toolbar .redeem-field {
+    flex-basis: 100%;
+    max-width: none;
+  }
+}

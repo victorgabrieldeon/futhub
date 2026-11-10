@@ -1,3 +1,4 @@
+import { GameRuleError } from '../../../game-rule.js';
 import type {
   CardMarketRepository,
   DiscordIdentity,
@@ -33,10 +34,11 @@ export class PurchaseCardUseCase {
     if (!cardId) throw new Error('Card id is required.');
     return this.repository.runPurchase(identity, cardId, async (transaction) => {
       if (!transaction.cardExists) throw new Error('Card not found.');
-      if (transaction.contractsBlocked) throw new Error('Card is not available for purchase.');
+      if (transaction.contractsBlocked)
+        throw new GameRuleError('Card is not available for purchase.');
       if (transaction.cardCount >= transaction.maxCards)
-        throw new Error('Card inventory capacity exceeded.');
-      if (transaction.balance < transaction.price) throw new Error('Insufficient balance.');
+        throw new GameRuleError('Card inventory capacity exceeded.');
+      if (transaction.balance < transaction.price) throw new GameRuleError('Insufficient balance.');
       return transaction.commit();
     });
   }
@@ -56,9 +58,10 @@ export class SellCardsUseCase {
       if (transaction.cards.length !== userCardIds.length)
         throw new Error('One or more cards not found.');
       if (transaction.cards.some((card) => card.holder || card.favorite || card.captain))
-        throw new Error('Holder, favorite, and captain cards cannot be sold.');
+        throw new GameRuleError('Holder, favorite, and captain cards cannot be sold.');
       const amount = transaction.cards.reduce((total, card) => total + card.price, 0);
-      if (amount > maxBalance - transaction.balance) throw new Error('Balance limit exceeded.');
+      if (amount > maxBalance - transaction.balance)
+        throw new GameRuleError('Balance limit exceeded.');
       return transaction.commit(amount);
     });
   }

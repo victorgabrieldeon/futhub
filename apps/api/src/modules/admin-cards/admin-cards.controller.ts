@@ -46,6 +46,18 @@ import {
   type PlayerPhotoSuggestion,
   type PlayerPhotoSuggestionsQuery,
   PlayerPhotoSuggestionsQuerySchema,
+  type SquadImportClub,
+  type SquadImportClubsQuery,
+  SquadImportClubsQuerySchema,
+  type SquadImportInput,
+  SquadImportInputSchema,
+  type SquadImportLeague,
+  type SquadImportLeagueClubsQuery,
+  SquadImportLeagueClubsQuerySchema,
+  type SquadImportPreview,
+  type SquadImportResult,
+  type SquadImportSquadQuery,
+  SquadImportSquadQuerySchema,
   type TeamInput,
   TeamInputSchema,
   type TeamListQuery,
@@ -59,12 +71,16 @@ import {
   type TeamPage,
 } from './admin-cards.dto.js';
 import { AdminCardsService } from './admin-cards.service.js';
+import { SquadImportService } from './squad-import.service.js';
 
 @ApiTags('Administração / Cards')
 @Controller('v1/admin/cards')
 @UseGuards(AdminAuthGuard)
 export class AdminCardsController {
-  constructor(@Inject(AdminCardsService) private readonly cards: AdminCardsService) {}
+  constructor(
+    @Inject(AdminCardsService) private readonly cards: AdminCardsService,
+    @Inject(SquadImportService) private readonly squadImport: SquadImportService,
+  ) {}
 
   @TypedRoute.Get('catalog')
   catalog(): Promise<CardCatalog> {
@@ -135,6 +151,40 @@ export class AdminCardsController {
       .header('cache-control', 'private, max-age=86400')
       .type(image.contentType)
       .send(image.buffer);
+  }
+
+  @TypedRoute.Get('squad-import/clubs')
+  squadImportClubs(
+    @Query({ schema: SquadImportClubsQuerySchema }) query: SquadImportClubsQuery,
+  ): Promise<SquadImportClub[]> {
+    return this.squadImport.clubs(query.q);
+  }
+
+  @TypedRoute.Get('squad-import/leagues')
+  squadImportLeagues(): Promise<SquadImportLeague[]> {
+    return this.squadImport.leagues();
+  }
+
+  @TypedRoute.Get('squad-import/league-clubs')
+  squadImportLeagueClubs(
+    @Query({ schema: SquadImportLeagueClubsQuerySchema }) query: SquadImportLeagueClubsQuery,
+  ): Promise<SquadImportClub[]> {
+    return this.squadImport.leagueClubs(query.leagueId);
+  }
+
+  @TypedRoute.Get('squad-import/squad')
+  squadImportSquad(
+    @Query({ schema: SquadImportSquadQuerySchema }) query: SquadImportSquadQuery,
+  ): Promise<SquadImportPreview> {
+    return this.squadImport.squad(query);
+  }
+
+  @TypedRoute.Post('squad-import')
+  @HttpCode(200)
+  importSquad(
+    @Body({ schema: SquadImportInputSchema }) input: SquadImportInput,
+  ): Promise<SquadImportResult> {
+    return this.squadImport.import(input);
   }
 
   @TypedRoute.Get('collections')

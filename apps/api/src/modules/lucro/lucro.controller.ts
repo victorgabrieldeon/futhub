@@ -35,6 +35,12 @@ export class LucroController {
     @Body({ schema: DiscordIdentityDtoSchema }) identity: DiscordIdentityDto,
   ): Promise<LucroResponse> {
     const result = await this.resgatarLucro.execute(identity);
-    return { ...result, availableAt: result.availableAt.toISOString() };
+    if (result.kind === 'cooldown')
+      return { ...result, availableAt: result.availableAt.toISOString() };
+    return {
+      ...result,
+      availableAt: result.availableAt.toISOString(),
+      completedMissions: [...result.completedMissions],
+    };
   }
 }

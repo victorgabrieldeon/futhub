@@ -5,7 +5,7 @@ import type {
   TeamTactic,
 } from './league.types.js';
 
-function seededRandom(seed: number): () => number {
+export function seededRandom(seed: number): () => number {
   let state = seed >>> 0;
   return () => {
     state = (state + 0x6d2b79f5) >>> 0;
@@ -16,7 +16,7 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-function pick<T>(values: readonly T[], random: () => number): T {
+export function pick<T>(values: readonly T[], random: () => number): T {
   const value = values[Math.floor(random() * values.length)];
   if (value === undefined) throw new Error('Cannot select a player from an empty lineup.');
   return value;

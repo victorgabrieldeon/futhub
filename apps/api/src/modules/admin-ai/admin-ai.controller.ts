@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import { SwaggerCustomizer, TypedBody, TypedParam, TypedQuery, TypedRoute } from '@nestia/core';
-import { Controller, Header, HttpCode, Inject, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Header, HttpCode, Inject, Post, Res, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyReply } from 'fastify';
 import typia from 'typia';
-import { AdminAuthGuard, adminApiKeyFromHeaders } from '../auth/admin-auth.guard.js';
+import { AdminApiConfig, AdminAuthGuard } from '../auth/admin-auth.guard.js';
 import type {
   AiApprovalInput,
   AiChatState,
@@ -22,10 +22,8 @@ import { describeAiStream, streamAiResponse } from './ai-response-stream.js';
 import { AiSessions } from './ai-sessions.js';
 import { AiToolsService } from './ai-tools.service.js';
 
-function owner(request: FastifyRequest): string {
-  return createHash('sha256')
-    .update(adminApiKeyFromHeaders(request.headers) ?? '')
-    .digest('hex');
+function owner(config: AdminApiConfig): string {
+  return createHash('sha256').update(config.token).digest('hex');
 }
 
 @ApiTags('Administração / Assistente IA')
@@ -33,6 +31,7 @@ function owner(request: FastifyRequest): string {
 @UseGuards(AdminAuthGuard)
 export class AdminAiController {
   constructor(
+    @Inject(AdminApiConfig) private readonly adminConfig: AdminApiConfig,
     @Inject(AdminAiService) private readonly ai: AdminAiService,
     @Inject(AiSessions) private readonly sessions: AiSessions,
     @Inject(AiHistoryService) private readonly history: AiHistoryService,
@@ -48,23 +47,22 @@ export class AdminAiController {
 
   @TypedRoute.Get('config')
   @Header('Cache-Control', 'no-store')
-  config(@Req() request: FastifyRequest): Promise<AiSavedConfig | null> {
-    return this.configs.get(owner(request));
+  config(): Promise<AiSavedConfig | null> {
+    return this.configs.get(owner(this.adminConfig));
   }
 
   @TypedRoute.Put('config')
   @Header('Cache-Control', 'no-store')
   configure(
-    @Req() request: FastifyRequest,
     @TypedBody({ type: 'is', is: typia.createIs<AiSessionInput>() }) input: AiSessionInput,
   ): Promise<AiSavedConfig> {
-    return this.ai.configure(owner(request), input);
+    return this.ai.configure(owner(this.adminConfig), input);
   }
 
   @TypedRoute.Post('saved')
   @Header('Cache-Control', 'no-store')
-  connectSaved(@Req() request: FastifyRequest): Promise<AiChatState> {
-    return this.ai.connectSaved(owner(request));
+  connectSaved(): Promise<AiChatState> {
+    return this.ai.connectSaved(owner(this.adminConfig));
   }
 
   @TypedRoute.Get('history')
@@ -75,42 +73,39 @@ export class AdminAiController {
       schema.required = undefined;
   })
   @Header('Cache-Control', 'no-store')
-  list(
-    @Req() request: FastifyRequest,
-    @TypedQuery() query: AiHistoryQuery,
-  ): Promise<AiHistoryPage> {
-    return this.history.list(owner(request), query.page);
+  list(@TypedQuery() query: AiHistoryQuery): Promise<AiHistoryPage> {
+    return this.history.list(owner(this.adminConfig), query.page);
   }
 
   @TypedRoute.Get('history/:id')
   @Header('Cache-Control', 'no-store')
-  archived(@Req() request: FastifyRequest, @TypedParam('id') id: string): Promise<AiHistoryDetail> {
-    return this.history.get(owner(request), id);
+  archived(@TypedParam('id') id: string): Promise<AiHistoryDetail> {
+    return this.history.get(owner(this.adminConfig), id);
   }
 
   @Post(':id/messages/stream')
   @HttpCode(200)
   @SwaggerCustomizer(describeAiStream)
   streamMessage(
-    @Req() request: FastifyRequest,
     @TypedParam('id') id: string,
     @TypedBody() input: AiPromptInput,
     @Res() reply: FastifyReply,
   ): Promise<void> {
-    return streamAiResponse(reply, (send) => this.ai.message(owner(request), id, input, send));
+    return streamAiResponse(reply, (send) =>
+      this.ai.message(owner(this.adminConfig), id, input, send),
+    );
   }
 
   @Post(':id/actions/:actionId/stream')
   @HttpCode(200)
   @SwaggerCustomizer(describeAiStream)
   streamDecision(
-    @Req() request: FastifyRequest,
     @TypedParam('id') id: string,
     @TypedParam('actionId') actionId: string,
     @TypedBody() input: AiApprovalInput,
     @Res() reply: FastifyReply,
   ): Promise<void> {
-    const session = this.sessions.get(owner(request), id);
+    const session = this.sessions.get(owner(this.adminConfig), id);
     return streamAiResponse(reply, (send) =>
       this.ai.decide(session, actionId, input.approved, send),
     );
@@ -119,42 +114,36 @@ export class AdminAiController {
   @TypedRoute.Post()
   @Header('Cache-Control', 'no-store')
   connect(
-    @Req() request: FastifyRequest,
     @TypedBody({ type: 'is', is: typia.createIs<AiSessionInput>() }) input: AiSessionInput,
   ): Promise<AiChatState> {
-    return this.ai.connect(owner(request), input);
+    return this.ai.connect(owner(this.adminConfig), input);
   }
 
   @TypedRoute.Get(':id')
   @Header('Cache-Control', 'no-store')
-  state(@Req() request: FastifyRequest, @TypedParam('id') id: string): AiChatState {
-    return this.ai.state(owner(request), id);
+  state(@TypedParam('id') id: string): AiChatState {
+    return this.ai.state(owner(this.adminConfig), id);
   }
 
   @TypedRoute.Post(':id/messages')
   @Header('Cache-Control', 'no-store')
-  message(
-    @Req() request: FastifyRequest,
-    @TypedParam('id') id: string,
-    @TypedBody() input: AiPromptInput,
-  ): Promise<AiChatState> {
-    return this.ai.message(owner(request), id, input);
+  message(@TypedParam('id') id: string, @TypedBody() input: AiPromptInput): Promise<AiChatState> {
+    return this.ai.message(owner(this.adminConfig), id, input);
   }
 
   @TypedRoute.Post(':id/actions/:actionId')
   @Header('Cache-Control', 'no-store')
   decide(
-    @Req() request: FastifyRequest,
     @TypedParam('id') id: string,
     @TypedParam('actionId') actionId: string,
     @TypedBody() input: AiApprovalInput,
   ): Promise<AiChatState> {
-    return this.ai.decide(this.sessions.get(owner(request), id), actionId, input.approved);
+    return this.ai.decide(this.sessions.get(owner(this.adminConfig), id), actionId, input.approved);
   }
 
   @TypedRoute.Delete(':id')
   @HttpCode(204)
-  disconnect(@Req() request: FastifyRequest, @TypedParam('id') id: string): void {
-    this.ai.disconnect(owner(request), id);
+  disconnect(@TypedParam('id') id: string): void {
+    this.ai.disconnect(owner(this.adminConfig), id);
   }
 }

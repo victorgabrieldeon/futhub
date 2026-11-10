@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { definition as catalogDefinition, imagePresets, imageRef } from '@futhub/bot-templates';
 import { afterAll, beforeAll, expect, test } from 'vitest';
 
 import {
@@ -31,38 +32,47 @@ function request(method: 'GET' | 'PUT', url: string, payload?: unknown, token = 
     payload: payload === undefined ? undefined : JSON.stringify(payload),
   });
 }
+async function stored(key: string) {
+  const row = await context.database.db.query.botResponseTemplates.findFirst({
+    where: context.database.eq(context.database.schema.botResponseTemplates.key, key),
+  });
+  return row?.template;
+}
 const basic: BotResponseTemplateDto = {
   mode: 'legacy',
-  content: 'Hello {userName}',
+  content: 'Olá {userName}',
   embeds: [],
   components: [],
 };
 const button = {
-  action: 'pack.shop',
-  label: 'Shop',
-  style: 'primary',
-  url: '',
+  action: 'link',
+  label: 'Site',
+  style: 'link',
+  url: 'https://example.com',
   disabled: false,
 } as const;
 
 test('guards every route, whitelists keys, returns defaults without writing', async () => {
   for (const url of [
     '/v1/admin/bot-responses/schema',
-    '/v1/admin/bot-responses/pack.shop',
-    '/v1/bot-responses/pack.shop',
+    '/v1/admin/bot-responses/pack.purchase',
+    '/v1/bot-responses/pack.purchase',
     '/v1/packs/shop',
     '/v1/packs/123e4567-e89b-42d3-a456-426614174000',
   ]) {
     expect((await context.app.inject({ method: 'GET', url })).statusCode).toBe(401);
   }
   expect(
-    (await request('PUT', '/v1/admin/bot-responses/pack.shop', basic, internalToken)).statusCode,
+    (await request('PUT', '/v1/admin/bot-responses/pack.purchase', basic, internalToken))
+      .statusCode,
   ).toBe(401);
   expect(
-    (await request('GET', '/v1/bot-responses/pack.shop', undefined, adminToken)).statusCode,
+    (await request('GET', '/v1/bot-responses/pack.purchase', undefined, adminToken)).statusCode,
   ).toBe(401);
   expect((await request('GET', '/v1/admin/bot-responses/__proto__')).statusCode).toBe(404);
   expect((await request('PUT', '/v1/admin/bot-responses/arbitrary', basic)).statusCode).toBe(404);
+  // Keys the bot no longer renders are not editable.
+  expect((await request('PUT', '/v1/admin/bot-responses/pack.shop', basic)).statusCode).toBe(404);
   const schema = await request('GET', '/v1/admin/bot-responses/schema');
   expect(schema.statusCode).toBe(200);
   expect(schema.json()).toEqual(botResponseCatalog);
@@ -80,21 +90,27 @@ test('guards every route, whitelists keys, returns defaults without writing', as
       description: expect.any(String),
     });
   }
+  for (const name of ['Rect', 'Text', 'Image', 'List']) {
+    expect(document.components.schemas[`BotResponse${name}LayerDto`].properties.type).toMatchObject(
+      { type: 'string', enum: [name.toLowerCase()], title: expect.any(String) },
+    );
+  }
   expect(schema.json()).toContainEqual(
     expect.objectContaining({
-      key: 'lucro.cooldown',
-      label: 'Lucro em espera',
-      variables: expect.arrayContaining([
-        expect.objectContaining({ token: '{remaining}', example: '7800' }),
+      key: 'pack.open',
+      lists: expect.arrayContaining([
+        expect.objectContaining({
+          name: 'cards',
+          fields: expect.arrayContaining([expect.objectContaining({ name: 'overall' })]),
+        }),
       ]),
     }),
   );
-  const inspectionDefinition = botResponseCatalog.find(
-    (definition) => definition.key === 'pack.inspect',
-  );
-  expect(inspectionDefinition?.variables.map((variable) => variable.token)).not.toContain(
-    '{description}',
-  );
+  const rows = await context.database.db
+    .select()
+    .from(context.database.schema.botResponseTemplates);
+  // Only the lucro template migrated from the legacy embed editor is stored.
+  expect(rows.map((row) => row.key)).toEqual(['lucro.success']);
   for (const definition of botResponseCatalog) {
     expect(() => validateBotResponse(definition, definition.defaultTemplate)).not.toThrow();
     const result = await request(
@@ -104,12 +120,10 @@ test('guards every route, whitelists keys, returns defaults without writing', as
       internalToken,
     );
     expect(result.statusCode).toBe(200);
-    expect(result.json()).toEqual(definition.defaultTemplate);
+    expect(result.json()).toEqual(
+      rows.find((row) => row.key === definition.key)?.template ?? definition.defaultTemplate,
+    );
   }
-  const rows = await context.database.db
-    .select()
-    .from(context.database.schema.botResponseTemplates);
-  expect(rows.map((row) => row.key)).toEqual(['lucro.success']);
 });
 
 test('migration preserves lucro verbatim; legacy economy saves never overwrite templates', async () => {
@@ -133,6 +147,23 @@ test('migration preserves lucro verbatim; legacy economy saves never overwrite t
   expect(migrated.json().embeds).toEqual([
     { imageUrl: '', thumbnailUrl: '', fields: [], ...original },
   ]);
+  // 0025 restores the club closing the bot always appended; reapplying it is a no-op.
+  const closing = await readFile(
+    new URL(
+      '../../../../../../packages/database/drizzle/0025_lucro_closing_report.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+  for (let run = 0; run < 2; run++)
+    await context.database.db.execute(context.database.sql.raw(closing));
+  const closed = await request('GET', '/v1/bot-responses/lucro.success', undefined, internalToken);
+  expect(closed.json().embeds[0].description).toBe(
+    `${original.description}\n\n**Fechamento do clube**\n{report}`,
+  );
+  const lucro = botResponseCatalog.find((entry) => entry.key === 'lucro.success');
+  if (!lucro) throw new Error('Missing lucro definition.');
+  expect(() => validateBotResponse(lucro, closed.json())).not.toThrow();
   expect((await request('PUT', '/v1/admin/bot-responses/lucro.success', basic)).statusCode).toBe(
     200,
   );
@@ -156,63 +187,71 @@ test('migration preserves lucro verbatim; legacy economy saves never overwrite t
   expect(legacy).toMatchObject({ cooldownSeconds: 60, embed: economy.embed });
 });
 
-test('persists typed V2 components and safe optional image tokens', async () => {
+test('persists list formats and generated images; rejects unknown fields and references', async () => {
+  const definition = catalogDefinition('pack.open');
+  const preset = definition && imagePresets(definition).find((item) => item.id === 'cards-grid');
+  if (!preset) throw new Error('Missing card grid preset.');
   const template: BotResponseTemplateDto = {
     mode: 'components_v2',
     content: '',
     embeds: [],
+    lists: [
+      {
+        source: 'cards',
+        item: '`{index}.` **{name|upper}** · {overall}',
+        separator: '\n',
+        empty: 'Nada.',
+        limit: 5,
+        more: '+{rest}',
+      },
+    ],
+    images: [preset.image],
     components: [
       {
         type: 'container',
-        color: '#112233',
+        color: '#D9A21B',
         components: [
-          { type: 'text', content: '{packName} {userName}' },
-          { type: 'separator', spacing: 2, divider: true },
-          { type: 'media', url: '{imageUrl}', description: '{packName}' },
-          {
-            type: 'row',
-            buttons: [
-              { ...button, action: 'pack.purchase' },
-              {
-                ...button,
-                action: 'link',
-                style: 'link',
-                url: 'https://example.com/packs/{packId}',
-              },
-            ],
-          },
+          { type: 'text', content: '{cards|count} cartas, nível {level}\n{cards}' },
+          { type: 'media', url: imageRef(preset.image.id), description: '{userName}' },
+          { type: 'row', buttons: [button] },
         ],
       },
     ],
   };
-  const response = await request('PUT', '/v1/admin/bot-responses/pack.inspect', template);
-  expect(response.statusCode).toBe(200);
+  const response = await request('PUT', '/v1/admin/bot-responses/pack.open', template);
+  expect(response.statusCode, response.body).toBe(200);
   expect(response.json()).toEqual(template);
-  for (const components of [
-    [{ type: 'text', content: '{description}' }],
-    [{ type: 'text', content: '{imageUrl}' }],
-    [
-      { type: 'text', content: 'Outside text does not prevent an empty container.' },
-      {
-        type: 'container',
-        color: '',
-        components: [{ type: 'media', url: '{imageUrl}', description: '' }],
-      },
-    ],
+  const format = template.lists?.[0];
+  const image = template.images?.[0];
+  if (!format || !image) throw new Error('Missing fixture parts.');
+  const text = image.layers.find((layer) => layer.type === 'text');
+  if (!text) throw new Error('Missing text layer.');
+  for (const invalid of [
+    { ...template, lists: [{ ...format, item: '{missing}' }] },
+    { ...template, lists: [{ ...format, item: '{cards}' }] },
+    { ...template, lists: [{ ...format, source: 'missions' }] },
+    { ...template, lists: [format, format] },
+    { ...template, lists: [{ ...format, limit: 51 }] },
+    { ...template, images: [{ ...image, layers: [{ ...text, text: '{name}' }] }] },
+    { ...template, images: [{ ...image, width: 4096 }] },
+    { ...template, images: [{ ...image, id: 'Bad ID' }] },
+    { ...template, images: [image, image] },
+    {
+      ...template,
+      images: [{ ...image, layers: [{ ...text, type: 'list', source: 'missions', layers: [] }] }],
+    },
+    {
+      ...template,
+      components: [{ type: 'media', url: imageRef('ghost'), description: '' }],
+    },
   ]) {
-    expect(
-      (await request('PUT', '/v1/admin/bot-responses/pack.inspect', { ...template, components }))
-        .statusCode,
-    ).toBe(400);
+    const result = await request('PUT', '/v1/admin/bot-responses/pack.open', invalid);
+    expect(result.statusCode, JSON.stringify(invalid).slice(0, 300)).toBe(400);
   }
-  expect((await request('GET', '/v1/admin/bot-responses/pack.inspect')).json()).toEqual(template);
   expect(
-    (await request('GET', '/v1/bot-responses/pack.inspect', undefined, internalToken)).json(),
+    (await request('GET', '/v1/bot-responses/pack.open', undefined, internalToken)).json(),
   ).toEqual(template);
-  const row = await context.database.db.query.botResponseTemplates.findFirst({
-    where: context.database.eq(context.database.schema.botResponseTemplates.key, 'pack.inspect'),
-  });
-  expect(row?.template).toEqual(template);
+  expect(await stored('pack.open')).toEqual(template);
 });
 
 test('allows 39 container children within the 40-component and 4000-text aggregate limits', async () => {
@@ -250,10 +289,7 @@ test('allows 39 container children within the 40-component and 4000-text aggrega
       })
     ).statusCode,
   ).toBe(400);
-  const stored = await context.database.db.query.botResponseTemplates.findFirst({
-    where: context.database.eq(context.database.schema.botResponseTemplates.key, 'pack.open'),
-  });
-  expect(stored?.template).toEqual(template);
+  expect(await stored('pack.open')).toEqual(template);
 
   const text: BotResponseTemplateDto = {
     ...template,
@@ -300,10 +336,37 @@ test('persists and returns embed author metadata and thumbnail', async () => {
   expect(updated.statusCode).toBe(200);
   expect(updated.json()).toEqual(template);
   expect((await request('GET', '/v1/admin/bot-responses/pack.open')).json()).toEqual(template);
-  const stored = await context.database.db.query.botResponseTemplates.findFirst({
-    where: context.database.eq(context.database.schema.botResponseTemplates.key, 'pack.open'),
-  });
-  expect(stored?.template).toEqual(template);
+  expect(await stored('pack.open')).toEqual(template);
+});
+
+test('persists emoji tokens and button emojis; rejects them in URLs and over expanded limits', async () => {
+  const template: BotResponseTemplateDto = {
+    ...basic,
+    content: '{emoji:moeda} {userName} ganhou {emoji:trofeu_2}',
+    components: [{ type: 'row', buttons: [{ ...button, emoji: 'moeda' }] }],
+  };
+  const saved = await request('PUT', '/v1/admin/bot-responses/pack.purchase', template);
+  expect(saved.statusCode, saved.body).toBe(200);
+  expect(
+    (await request('GET', '/v1/bot-responses/pack.purchase', undefined, internalToken)).json(),
+  ).toEqual(template);
+  const invalid: BotResponseTemplateDto[] = [
+    { ...basic, content: '{emoji:x}' },
+    { ...basic, content: '{emoji:nome-invalido}' },
+    { ...basic, content: '{emoji:moeda|upper}' },
+    // 75 tokens fit as written but expand past 2000 characters as <a:name:snowflake>.
+    { ...basic, content: '{emoji:ab}'.repeat(75) },
+    {
+      ...basic,
+      components: [{ type: 'row', buttons: [{ ...button, url: 'https://x.test/{emoji:ab}' }] }],
+    },
+    { ...basic, components: [{ type: 'row', buttons: [{ ...button, emoji: 'a' }] }] },
+  ];
+  for (const payload of invalid)
+    expect(
+      (await request('PUT', '/v1/admin/bot-responses/pack.purchase', payload)).statusCode,
+    ).toBe(400);
+  expect(await stored('pack.purchase')).toEqual(template);
 });
 
 test('rejects example-expanded limits without changing the stored template', async () => {
@@ -337,17 +400,7 @@ test('rejects example-expanded limits without changing the stored template', asy
     {
       ...basic,
       components: [
-        {
-          type: 'row',
-          buttons: [
-            {
-              ...button,
-              action: 'link',
-              style: 'link',
-              url: `https://example.com/${token.repeat(14)}`,
-            },
-          ],
-        },
+        { type: 'row', buttons: [{ ...button, url: `https://example.com/${token.repeat(14)}` }] },
       ],
     },
     {
@@ -372,22 +425,20 @@ test('rejects example-expanded limits without changing the stored template', asy
       ],
     },
   ];
-  expect((await request('PUT', '/v1/admin/bot-responses/pack.inspect', basic)).statusCode).toBe(
+  expect((await request('PUT', '/v1/admin/bot-responses/pack.purchase', basic)).statusCode).toBe(
     200,
   );
   for (const template of invalid) {
     expect(
-      (await request('PUT', '/v1/admin/bot-responses/pack.inspect', template)).statusCode,
+      (await request('PUT', '/v1/admin/bot-responses/pack.purchase', template)).statusCode,
       JSON.stringify(template),
     ).toBe(400);
   }
-  const row = await context.database.db.query.botResponseTemplates.findFirst({
-    where: context.database.eq(context.database.schema.botResponseTemplates.key, 'pack.inspect'),
-  });
-  expect(row?.template).toEqual(basic);
+  expect(await stored('pack.purchase')).toEqual(basic);
 
-  const definition = botResponseCatalog.find((entry) => entry.key === 'pack.inspect');
-  if (!definition) throw new Error('Missing inspection definition.');
+  const definition = botResponseCatalog.find((entry) => entry.key === 'pack.purchase');
+  if (!definition) throw new Error('Missing purchase definition.');
+  // Example values are inserted literally: braces inside them are never expanded again.
   expect(() =>
     validateBotResponse(
       {
@@ -423,9 +474,11 @@ test('rejects malformed, unsafe and over-limit payloads without changing persist
     { ...basic, mode: 'raw' },
     { ...basic, content: '' },
     { ...basic, content: 'x'.repeat(2001) },
-    { ...basic, content: '{packId}' },
+    { ...basic, content: '{cards}' },
     { ...basic, content: '{unknown}' },
     { ...basic, content: '{{userName}}' },
+    { ...basic, content: '{balance|shout}' },
+    { ...basic, content: '{balance|count}' },
     { ...basic, embeds: Array.from({ length: 11 }, () => embed) },
     {
       ...basic,
@@ -443,7 +496,7 @@ test('rejects malformed, unsafe and over-limit payloads without changing persist
         },
       ],
     },
-    { ...basic, embeds: [{ ...embed, fields: [{ name: 'n', value: '{packId}', inline: false }] }] },
+    { ...basic, embeds: [{ ...embed, fields: [{ name: 'n', value: '{cards}', inline: false }] }] },
     { ...basic, embeds: [{ ...embed, color: 'red' }] },
     { ...basic, embeds: [{ ...embed, imageUrl: 'javascript:alert(1)' }] },
     { ...basic, embeds: [{ ...embed, thumbnailUrl: 'file:///etc/passwd' }] },
@@ -451,20 +504,8 @@ test('rejects malformed, unsafe and over-limit payloads without changing persist
     { ...basic, components: [{ type: 'row', buttons: [{ ...button, action: 'pack.purchase' }] }] },
     { ...basic, components: [{ type: 'row', buttons: [{ ...button, action: 'execute' }] }] },
     { ...basic, components: [{ type: 'row', buttons: [{ ...button, custom_id: 'arbitrary' }] }] },
-    { ...basic, components: [{ type: 'row', buttons: [{ ...button, style: 'link' }] }] },
-    {
-      ...basic,
-      components: [{ type: 'row', buttons: [{ ...button, url: 'https://example.com' }] }],
-    },
-    {
-      ...basic,
-      components: [
-        {
-          type: 'row',
-          buttons: [{ ...button, action: 'link', style: 'link', url: 'data:text/html,test' }],
-        },
-      ],
-    },
+    { ...basic, components: [{ type: 'row', buttons: [{ ...button, style: 'primary' }] }] },
+    { ...basic, components: [{ type: 'row', buttons: [{ ...button, url: 'data:text/html,x' }] }] },
     { ...basic, components: [{ type: 'row', buttons: Array.from({ length: 6 }, () => button) }] },
     { ...basic, components: Array.from({ length: 6 }, () => ({ type: 'row', buttons: [button] })) },
     { ...basic, components: [{ type: 'text', content: 'V2 only' }] },
@@ -511,16 +552,17 @@ test('rejects malformed, unsafe and over-limit payloads without changing persist
         buttons: Array.from({ length: 5 }, () => button),
       })),
     },
+    {
+      ...basic,
+      lists: [{ source: 'cards', item: 'x', separator: '', empty: '', limit: 1, more: '' }],
+    },
   ];
-  await request('PUT', '/v1/admin/bot-responses/pack.shop', basic);
+  await request('PUT', '/v1/admin/bot-responses/pack.purchase', basic);
   for (const payload of invalid) {
-    const response = await request('PUT', '/v1/admin/bot-responses/pack.shop', payload);
+    const response = await request('PUT', '/v1/admin/bot-responses/pack.purchase', payload);
     expect(response.statusCode, JSON.stringify(payload)).toBe(400);
   }
-  const row = await context.database.db.query.botResponseTemplates.findFirst({
-    where: context.database.eq(context.database.schema.botResponseTemplates.key, 'pack.shop'),
-  });
-  expect(row?.template).toEqual(basic);
+  expect(await stored('pack.purchase')).toEqual(basic);
 });
 
 test('shop paginates purchasable packs; inspection matches persisted state and validates inputs', async () => {
