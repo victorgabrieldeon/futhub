@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio de packs: FutHub Admin</title>
+<meta name="description" content="Desenhe a embalagem 3D dos packs do FutHub com presets, acabamentos e efeitos, e teste a abertura puxando o lacre.">
+<meta property="og:title" content="Studio de packs: FutHub Admin">
+<meta property="og:description" content="Desenhe a embalagem 3D dos packs do FutHub com presets, acabamentos e efeitos, e teste a abertura puxando o lacre.">
+<meta property="og:image" content="https://victorgabrieldeon.github.io/futhub/admin/assets/og.png">
+<meta property="og:url" content="https://victorgabrieldeon.github.io/futhub/admin/features/pack-studio.html">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://victorgabrieldeon.github.io/futhub/admin/features/pack-studio.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23111'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23d99a2b'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<script src="../assets/site.js"></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../index.html" aria-label="FutHub Admin — início">
+      <span class="brand-mark" aria-hidden="true"></span><strong>FutHub</strong><small>ADMIN</small>
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="site-nav" id="site-nav" aria-label="Principal"><a href="../index.html">Início</a><a href="../features/index.html" aria-current="page">Recursos</a><a href="../how-it-works.html">Como funciona</a><a href="../use-cases/index.html">Casos de uso</a></nav>
+    <div class="header-actions">
+      <button class="theme-toggle" type="button">Tema: auto</button>
+      <a class="btn btn-primary btn-sm" href="https://victorgabrieldeon.github.io/futhub/">Documentação <span class="arrow">→</span></a>
+    </div>
+  </div>
+</header>
+<main>
+
+<section class="page-hero"><div class="wrap">
+  <p class="crumbs"><a href="../index.html">Início</a> / <a href="index.html">Recursos</a> / Studio de packs</p>
+  <p class="eyebrow">02 · Studio de packs</p>
+  <h1>A embalagem também faz parte do jogo.</h1>
+  <p class="lede">O pack é desenhado sobre um modelo 3D da embalagem. Escolha a direção de arte, o acabamento e o efeito, ajuste título e subtítulo e teste a abertura como o jogador vai ver.</p>
+</div></section>
+<section style="padding-top:0"><div class="wrap">
+  <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio/packs</span></div><img src="../assets/screens/pack-studio.webp" alt="Studio de packs com o Pack padrão em azul, biblioteca de packs e painel de design" loading="lazy" width="1440" height="900"></div><figcaption><strong>Studio de packs.</strong> Biblioteca e camadas à esquerda, embalagem 3D no centro, design à direita.</figcaption></figure>
+</div></section>
+
+<section class="band"><div class="wrap split">
+  <div class="prose">
+    <p class="eyebrow">O que faz</p>
+    <h2>Quatro direções de arte, prontas.</h2>
+    <p>Os presets <strong>Padrão</strong>, <strong>Neon</strong>, <strong>Gold</strong> e <strong>Ice</strong> mudam acabamento, cores, textos e efeitos de uma vez. Os dados do pack não mudam. A partir do preset você refina: acabamento <strong>Foil</strong>, <strong>Holográfico</strong> ou <strong>Chrome</strong>, efeito de <strong>Aura</strong>, <strong>Fogo</strong> ou <strong>Raios</strong>, foto frontal, título e subtítulo posicionados por controle deslizante.</p>
+  </div>
+  <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio/packs</span></div><img src="../assets/workflows/pack-presets.gif" alt="Animação alternando os presets Neon, Gold, Ice e Padrão" loading="lazy" width="960" height="600"></div><figcaption>Troca de preset.</figcaption></figure>
+</div></section>
+
+<section><div class="wrap">
+  <div class="section-head"><div><p class="eyebrow">Momento mágico</p><h2>Teste a abertura antes do jogador.</h2></div><p>“Testar abertura” mostra o pack numa tela escura, como no jogo. Puxe o lacre e as cartas se revelam na ordem em que o jogo vai mostrá-las.</p></div>
+  <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio/packs</span></div><img src="../assets/workflows/pack-opening.gif" alt="Animação do teste de abertura: o lacre é puxado e o pack se abre revelando 3 cartas" loading="lazy" width="960" height="600"></div><figcaption><strong>Testar abertura.</strong> “Pack padrão está pronto”, depois “3 cartas reveladas”.</figcaption></figure>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <div class="section-head"><div><p class="eyebrow">Como funciona</p><h2>Do rascunho à loja.</h2></div></div>
+  <div class="grid-3">
+    <div class="tile reveal"><span class="num">01</span><h3>Escolha o pack</h3><p>A biblioteca lista os packs com quantidade de cartas e preço. Cada um tem três camadas editáveis: Fundo &amp; efeito, Título e Subtítulo.</p></div>
+    <div class="tile reveal"><span class="num">02</span><h3>Veja em três modos</h3><p><strong>Edição</strong> para trabalhar, <strong>Loja</strong> para ver como aparece à venda e <strong>Miniatura</strong> para conferir se continua legível em tamanho pequeno.</p></div>
+    <div class="tile reveal"><span class="num">03</span><h3>Salve e publique</h3><p>Exporte a arte com fundo transparente, salve um arquivo de projeto <code>.futhub</code> para reabrir depois, ou use “Salvar e publicar” para atualizar o pack no jogo.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap grid-2">
+  <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio/packs</span></div><img src="../assets/screens/pack-studio-neon.webp" alt="Preset Neon no tema escuro" loading="lazy" width="1440" height="900"></div><figcaption>Preset Neon no tema escuro.</figcaption></figure>
+  <figure class="reveal"><div class="frame"><div class="frame-bar"><i></i><i></i><i></i><span>admin.futhub/app/studio/packs</span></div><img src="../assets/screens/pack-studio-gold.webp" alt="Preset Gold aplicado à embalagem" loading="lazy" width="1440" height="900"></div><figcaption>Preset Gold.</figcaption></figure>
+</div></section>
+
+<section style="padding-top:0"><div class="wrap">
+  <a class="next" href="../features/acervo.html"><div><p class="eyebrow plain">Próximo recurso</p><span class="display">Acervo e importação</span></div><span class="arrow">→</span></a>
+</div></section>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <a class="brand" href="../index.html"><span class="brand-mark" aria-hidden="true"></span><strong>FutHub</strong><small>ADMIN</small></a>
+        <p style="margin-top:18px;max-width:36ch">O painel que opera o FutHub: cards, packs, economia e cada resposta do bot no Discord.</p>
+      </div>
+      <div><h4>Criar</h4><ul>
+        <li><a href="../features/card-studio.html">Studio de cards</a></li>
+        <li><a href="../features/pack-studio.html">Studio de packs</a></li>
+        <li><a href="../features/acervo.html">Acervo e importação</a></li>
+      </ul></div>
+      <div><h4>Operar</h4><ul>
+        <li><a href="../features/packs.html">Gestão de packs</a></li>
+        <li><a href="../features/economia.html">Economia e /lucro</a></li>
+        <li><a href="../features/respostas-do-bot.html">Respostas do bot</a></li>
+        <li><a href="../features/assistente-ia.html">Assistente IA</a></li>
+      </ul></div>
+      <div><h4>Entender</h4><ul>
+        <li><a href="../how-it-works.html">Como funciona</a></li>
+        <li><a href="../use-cases/index.html">Casos de uso</a></li>
+        <li><a href="https://victorgabrieldeon.github.io/futhub/">Documentação</a></li>
+      </ul></div>
+    </div>
+    <div class="footer-base"><span>FutHub · Futebol. Em coleção.</span><span>Telas reais do painel</span></div>
+  </div>
+</footer>
+</body>
+</html>
