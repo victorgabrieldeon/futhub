@@ -10,7 +10,7 @@ import { teamResponse } from '../features/team/team.js';
 
 export default class TimeSearchComponent extends ModalCommand {
   filter(context: ModalContext): boolean {
-    return context.customId.startsWith('tm1:');
+    return context.customId.startsWith('tm2:');
   }
 
   async run(context: ModalContext): Promise<void> {

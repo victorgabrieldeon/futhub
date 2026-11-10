@@ -34,7 +34,7 @@ export default class TimeButtonComponent extends ComponentCommand {
   componentType = 'Button' as const;
 
   filter(context: ComponentContext<'Button'>): boolean {
-    return context.customId.startsWith('tm1:');
+    return context.customId.startsWith('tm2:');
   }
 
   async run(context: ComponentContext<'Button'>): Promise<void> {
@@ -197,7 +197,8 @@ export default class TimeButtonComponent extends ComponentCommand {
           !session.confirmSale ||
           cards.length === 0 ||
           cards.length !== session.selectedCardIds.length ||
-          cards.some((card) => card.holder || card.favorite || card.captain)
+          session.tab !== 'sale' ||
+          cards.some((card) => card.holder || card.favorite || card.captain || card.sellPrice <= 0)
         )
           throw new Error('Card is not available for sale.');
         const sale = await sellTeamCards(session.identity, session.selectedCardIds);

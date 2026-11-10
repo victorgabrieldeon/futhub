@@ -26,7 +26,7 @@ export default class TimeSelectComponent extends ComponentCommand {
   componentType = 'StringSelect' as const;
 
   filter(context: ComponentContext<'StringSelect'>): boolean {
-    return context.customId.startsWith('tm1:');
+    return context.customId.startsWith('tm2:');
   }
 
   async run(context: ComponentContext<'StringSelect'>): Promise<void> {

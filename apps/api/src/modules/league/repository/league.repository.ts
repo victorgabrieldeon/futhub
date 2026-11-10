@@ -76,7 +76,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
         where: eq(schema.divisions.id, current.standing.divisionId),
       });
       if (!division) throw new Error('Standing division is missing.');
-      const ownLineup = await this.loadLineup(database, current.userId);
+      const ownLineup = await this.loadLineup(database, tx, current.userId);
       const queued = await tx.query.rankedQueues.findFirst({
         columns: { userId: true },
         where: and(
@@ -119,7 +119,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
         };
       }
 
-      const homeLineup = await this.loadLineup(database, queued.userId);
+      const homeLineup = await this.loadLineup(database, tx, queued.userId);
       const seed = Math.floor(Math.random() * 2_147_483_647) + 1;
       const simulated = simulateMatch(
         homeLineup.cards,
@@ -335,7 +335,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
       where: eq(schema.users.discordUserId, identity.id),
     });
     if (!owner) throw new LeagueInputError(INVALID_LINEUP_MESSAGE);
-    const home = await this.loadLineup(database, owner.id);
+    const home = await this.loadLineup(database, db, owner.id);
 
     let awayTeam: Omit<TestMatchTeamDto, 'lineup' | 'rating' | 'slots'>;
     let away: Awaited<ReturnType<typeof this.loadLineup>>;
@@ -345,7 +345,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
         where: eq(schema.users.discordUserId, opponentId),
       });
       if (!opponent) throw new LeagueNotFoundError('Adversário não encontrado no FutHub.');
-      away = await this.loadLineup(database, opponent.id).catch((error: unknown) => {
+      away = await this.loadLineup(database, db, opponent.id).catch((error: unknown) => {
         if (error instanceof LeagueInputError)
           throw new LeagueInputError('O adversário ainda não tem 11 titulares escalados.');
         throw error;
@@ -450,51 +450,58 @@ export class DrizzleLeagueRepository implements LeagueRepository {
 
   private async loadLineup(
     database: Database,
+    tx: Database['db'] | Transaction,
     userId: string,
   ): Promise<{
     cards: (LineupCard & { source: CardSource })[];
     slots: { position: string; x: number; y: number }[];
     tactic: TeamTactic;
   }> {
-    const { and, db, eq, schema } = database;
-    const formation = await db.query.userFormations.findFirst({
+    const { and, eq, inArray, schema } = database;
+    const formation = await tx.query.userFormations.findFirst({
       where: eq(schema.userFormations.userId, userId),
     });
     if (!formation) throw new LeagueInputError(INVALID_LINEUP_MESSAGE);
-    const slots = await db.query.formationSlots.findMany({
+    const slots = await tx.query.formationSlots.findMany({
       where: eq(schema.formationSlots.formationId, formation.formationId),
     });
-    const holders = await db.query.userCards.findMany({
-      where: and(eq(schema.userCards.userId, userId), eq(schema.userCards.holder, true)),
+    const holders = await tx
+      .select({ holder: schema.userCards, card: schema.cards, stats: schema.cardStats })
+      .from(schema.userCards)
+      .innerJoin(schema.cards, eq(schema.cards.id, schema.userCards.cardId))
+      .innerJoin(schema.cardStats, eq(schema.cardStats.id, schema.cards.statsId))
+      .where(and(eq(schema.userCards.userId, userId), eq(schema.userCards.holder, true)));
+    const secondary = holders.length
+      ? await tx.query.cardSecondaryPositions.findMany({
+          where: inArray(
+            schema.cardSecondaryPositions.cardId,
+            holders.map(({ card }) => card.id),
+          ),
+        })
+      : [];
+    const positionsByCard = new Map<string, string[]>();
+    for (const { cardId, position } of secondary) {
+      const positions = positionsByCard.get(cardId) ?? [];
+      positions.push(position);
+      positionsByCard.set(cardId, positions);
+    }
+    const cards = holders.map(({ holder, card, stats }) => {
+      if (!holder.holderPosition) throw new LeagueInputError(INVALID_LINEUP_MESSAGE);
+      return {
+        userCardId: holder.id,
+        name: card.name,
+        assignedPosition: holder.holderPosition,
+        allowedPositions: [card.position, ...(positionsByCard.get(card.id) ?? [])],
+        attack: card.attack,
+        creation: card.creation,
+        defense: card.defense,
+        finishing: stats.finishing,
+        passing: stats.passing,
+        control: stats.control,
+        marking: stats.marking,
+        source: card,
+      };
     });
-    const cards = await Promise.all(
-      holders.map(async (holder) => {
-        const card = await db.query.cards.findFirst({ where: eq(schema.cards.id, holder.cardId) });
-        if (!card) throw new Error('Holder card is missing.');
-        if (!holder.holderPosition) throw new LeagueInputError(INVALID_LINEUP_MESSAGE);
-        const stats = await db.query.cardStats.findFirst({
-          where: eq(schema.cardStats.id, card.statsId),
-        });
-        if (!stats) throw new Error('Holder statistics are missing.');
-        const secondary = await db.query.cardSecondaryPositions.findMany({
-          where: eq(schema.cardSecondaryPositions.cardId, card.id),
-        });
-        return {
-          userCardId: holder.id,
-          name: card.name,
-          assignedPosition: holder.holderPosition,
-          allowedPositions: [card.position, ...secondary.map((position) => position.position)],
-          attack: card.attack,
-          creation: card.creation,
-          defense: card.defense,
-          finishing: stats.finishing,
-          passing: stats.passing,
-          control: stats.control,
-          marking: stats.marking,
-          source: card,
-        };
-      }),
-    );
     try {
       validateLineup(
         cards,
@@ -506,7 +513,7 @@ export class DrizzleLeagueRepository implements LeagueRepository {
     return {
       cards,
       slots: slots.map(({ position, x, y }) => ({ position, x, y })),
-      tactic: (formation as typeof formation & { tactic: TeamTactic }).tactic,
+      tactic: formation.tactic,
     };
   }
 

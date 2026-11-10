@@ -118,7 +118,7 @@ function controlsFor(bot: Awaited<ReturnType<typeof createMockBot>>) {
     const customId =
       button?.customId ??
       (selection
-        ? new RegExp(`"custom_id":"(tm1:[^"]+:${selection}:[^"]+)"`).exec(
+        ? new RegExp(`"custom_id":"(tm2:[^"]+:${selection}:[^"]+)"`).exec(
             JSON.stringify(message?.components),
           )?.[1]
         : undefined);

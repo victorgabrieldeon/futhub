@@ -11,7 +11,7 @@ export default class TimeOpponentComponent extends ComponentCommand {
   componentType = 'UserSelect' as const;
 
   filter(context: ComponentContext<'UserSelect'>): boolean {
-    return context.customId.startsWith('tm1:');
+    return context.customId.startsWith('tm2:');
   }
 
   async run(context: ComponentContext<'UserSelect'>): Promise<void> {

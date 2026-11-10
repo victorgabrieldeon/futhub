@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import type {
   LeagueStatusResponse,
   MatchResponse,
@@ -10,6 +10,8 @@ import type { MatchFrame } from '../test-match.js';
 
 const ttlMs = 15 * 60_000;
 const maxSessions = 1_000;
+const secret = randomBytes(32);
+const version = 'tm2';
 
 export type TeamPosition = 'GOL' | 'LD' | 'LE' | 'ZAG' | 'VOL' | 'MA' | 'MC' | 'PD' | 'PE' | 'CA';
 export type TeamCard = {
@@ -175,7 +177,10 @@ export function updateTeamSession(
 }
 
 export function teamCustomId(session: TeamSession, action: TeamAction, argument = '_'): string {
-  return `tm1:${session.id}:${action}:${argument}`;
+  const payload = `${version}:${session.id}:${action}:${argument}`;
+  const id = `${payload}:${signature(payload)}`;
+  if (id.length >= 100 || argument.includes(':')) throw new Error('Invalid team action ID.');
+  return id;
 }
 
 export function parseTeamAction(
@@ -190,9 +195,25 @@ export function parseTeamAction(
       readonly argument: string;
     }
   | { readonly kind: 'foreign' | 'expired' | 'invalid' } {
-  const [version, id, action, argument, extra] = customId.split(':');
-  if (version !== 'tm1' || !id || !action || !argument || extra) return { kind: 'invalid' };
+  const [prefix, id, action, argument, digest, extra] = customId.split(':');
+  if (
+    customId.length >= 100 ||
+    prefix !== version ||
+    !id ||
+    !/^[A-Za-z0-9_-]{16}$/.test(id) ||
+    !action ||
+    !argument ||
+    !digest ||
+    extra
+  )
+    return { kind: 'invalid' };
   if (!isTeamAction(action)) return { kind: 'invalid' };
+  const expected = signature(`${prefix}:${id}:${action}:${argument}`);
+  if (
+    digest.length !== expected.length ||
+    !timingSafeEqual(Buffer.from(digest), Buffer.from(expected))
+  )
+    return { kind: 'invalid' };
   const session = sessions.get(id);
   if (!session || session.expiresAt <= now) {
     if (session) sessions.delete(id);
@@ -200,6 +221,10 @@ export function parseTeamAction(
   }
   if (session.ownerId !== ownerId) return { kind: 'foreign' };
   return { kind: 'owned', session, action, argument };
+}
+
+function signature(payload: string): string {
+  return createHmac('sha256', secret).update(payload).digest('base64url').slice(0, 16);
 }
 
 function cleanup(now: number): void {

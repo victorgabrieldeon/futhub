@@ -699,8 +699,17 @@ test('lista só vendáveis na aba Venda e vende vários jogadores de uma vez', a
     'reserve-2',
   ]);
   assert.match(body(picked.messages), /2 selecionado\(s\)\*\* · Total: \*\*300\*\*/);
+  const confirmId = buttonId(picked.messages, 'Vender 2 jogadores');
+  // custom_id assinado: trocar a ação não pula a confirmação.
   bot.reset();
-  const confirm = await bot.clickButton(buttonId(picked.messages, 'Vender 2 jogadores'));
+  const forged = await bot.clickButton(confirmId.replace(':sell-confirm:', ':sell:'));
+  assert.match(body(forged.messages), /Painel expirado/);
+  assert.equal(
+    api.requests.some(({ path }) => path === '/v1/cards/sell'),
+    false,
+  );
+  bot.reset();
+  const confirm = await bot.clickButton(confirmId);
   // Paginação e confirmação aparecem juntas; o Discord rejeita custom_id repetido.
   const customIds = Array.from(
     JSON.stringify(confirm.messages[0]?.components).matchAll(/"custom_id":"([^"]+)"/g),
