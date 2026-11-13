@@ -1,18 +1,19 @@
-import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
-import { Body, Controller, HttpCode, Inject, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Body, Controller, HttpCode, Inject, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
+import { PlayerOrInternalAuthGuard } from '../auth/player-auth.guard.js';
 import {
   type ResgatarCodigoInputDto,
   ResgatarCodigoInputSchema,
   type ResgatarCodigoResponse,
+  ResgatarCodigoResponseSchema,
 } from './redeem-codes.dto.js';
 import { ResgatarCodigoUseCase } from './use-cases/resgatar-codigo/resgatar-codigo.use-case.js';
 
 @ApiTags('Comandos')
+@ApiBearerAuth('bearer')
 @Controller('v1/commands')
-@UseGuards(InternalAuthGuard)
+@UseGuards(PlayerOrInternalAuthGuard)
 export class RedeemCodesController {
   constructor(
     @Inject(ResgatarCodigoUseCase)
@@ -25,11 +26,15 @@ export class RedeemCodesController {
    * @param input Identidade Discord e código digitado.
    * @returns Item concedido ou motivo da recusa.
    */
-  @TypedRoute.Post('resgatar')
+  @Post('resgatar')
   @HttpCode(200)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'redeemCode';
-    route.security = [{ bearer: [] }];
+  @ApiOperation({
+    operationId: 'redeemCode',
+    summary: 'Resgata um Código de resgate para o jogador.',
+  })
+  @ApiOkResponse({
+    standardSchema: ResgatarCodigoResponseSchema,
+    description: 'Item concedido ou motivo da recusa.',
   })
   execute(
     @Body({ schema: ResgatarCodigoInputSchema }) input: ResgatarCodigoInputDto,

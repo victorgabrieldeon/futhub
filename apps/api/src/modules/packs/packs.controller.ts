@@ -1,36 +1,44 @@
-import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   Inject,
   Param,
   ParseUUIDPipe,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { z } from 'zod';
 
-import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
+import { PlayerOrInternalAuthGuard } from '../auth/player-auth.guard.js';
 import { PackShopService } from './pack-shop.service.js';
 import {
   type OpenPackResponse,
+  OpenPackResponseSchema,
   type PackActionRequest,
   PackActionRequestSchema,
   type PackCatalogItem,
+  PackCatalogItemSchema,
   type PackShopDto,
+  PackShopDtoSchema,
   type PackShopItemDto,
+  PackShopItemDtoSchema,
   type PackShopQuery,
   PackShopQuerySchema,
   type PurchasePackResponse,
+  PurchasePackResponseSchema,
 } from './packs.dto.js';
 import { OpenPackUseCase } from './use-cases/open-pack/open-pack.use-case.js';
 import { PackCatalogRepository } from './use-cases/pack.types.js';
 import { PurchasePackUseCase } from './use-cases/purchase-pack/purchase-pack.use-case.js';
 
 @ApiTags('Packs')
+@ApiBearerAuth('bearer')
 @Controller('v1/packs')
-@UseGuards(InternalAuthGuard)
+@UseGuards(PlayerOrInternalAuthGuard)
 export class PacksController {
   constructor(
     @Inject(PackCatalogRepository) private readonly packs: PackCatalogRepository,
@@ -39,39 +47,31 @@ export class PacksController {
     @Inject(PackShopService) private readonly shop: PackShopService,
   ) {}
 
-  @TypedRoute.Get()
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'listPackCatalog';
-    route.security = [{ bearer: [] }];
-  })
-  listPacks(): Promise<readonly PackCatalogItem[]> {
-    return this.packs.listAvailable();
+  @Get()
+  @ApiOperation({ operationId: 'listPackCatalog' })
+  @ApiOkResponse({ standardSchema: z.array(PackCatalogItemSchema) })
+  async listPacks(): Promise<PackCatalogItem[]> {
+    return [...(await this.packs.listAvailable())];
   }
 
-  @TypedRoute.Get('shop')
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'getPackShop';
-    route.security = [{ bearer: [] }];
-  })
+  @Get('shop')
+  @ApiOperation({ operationId: 'getPackShop' })
+  @ApiOkResponse({ standardSchema: PackShopDtoSchema })
   getPackShop(@Query({ schema: PackShopQuerySchema }) query: PackShopQuery): Promise<PackShopDto> {
     return this.shop.list(query.page ?? 1);
   }
 
-  @TypedRoute.Get(':packId')
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'inspectPack';
-    route.security = [{ bearer: [] }];
-  })
+  @Get(':packId')
+  @ApiOperation({ operationId: 'inspectPack' })
+  @ApiOkResponse({ standardSchema: PackShopItemDtoSchema })
   inspectPack(@Param('packId', new ParseUUIDPipe()) packId: string): Promise<PackShopItemDto> {
     return this.shop.inspect(packId);
   }
 
-  @TypedRoute.Post(':packId/purchase')
+  @Post(':packId/purchase')
   @HttpCode(200)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'purchasePack';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOperation({ operationId: 'purchasePack' })
+  @ApiOkResponse({ standardSchema: PurchasePackResponseSchema })
   async purchasePack(
     @Param('packId', new ParseUUIDPipe()) packId: string,
     @Body({ schema: PackActionRequestSchema }) request: PackActionRequest,
@@ -80,12 +80,10 @@ export class PacksController {
     return { ...result, completedMissions: [...result.completedMissions] };
   }
 
-  @TypedRoute.Post(':packId/open')
+  @Post(':packId/open')
   @HttpCode(200)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'openPack';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOperation({ operationId: 'openPack' })
+  @ApiOkResponse({ standardSchema: OpenPackResponseSchema })
   async openPack(
     @Param('packId', new ParseUUIDPipe()) packId: string,
     @Body({ schema: PackActionRequestSchema }) request: PackActionRequest,

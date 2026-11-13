@@ -4,16 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "ttsc -p tsconfig.build.json",
-    "dev": "pnpm openapi:generate && ttsc -p tsconfig.build.json && concurrently -k \"ttsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"node --env-file=../../.env --watch-path=dist --watch-path=../../packages/database --watch-path=../../packages/bot-templates dist/server.js\"",
-    "openapi:generate": "nestia swagger && node scripts/normalize-openapi.mjs && biome format --write openapi.json",
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "pnpm openapi:generate && concurrently -k \"tsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"node --env-file=../../.env --watch-path=dist --watch-path=../../packages/database --watch-path=../../packages/bot-templates dist/server.js\"",
+    "openapi:generate": "tsc -p tsconfig.build.json && node dist/scripts/generate-openapi.js && biome format --write openapi.json",
     "generate:module": "node scripts/generate-module.mjs",
     "generate:usecase": "node scripts/generate-usecase.mjs",
-    "files:backfill": "ttsc -p tsconfig.build.json && node --env-file=../../.env dist/scripts/backfill-file-references.js",
+    "files:backfill": "tsc -p tsconfig.build.json && node --env-file=../../.env dist/scripts/backfill-file-references.js",
     "start": "node --env-file=../../.env dist/server.js",
     "test": "vitest run",
     "test:generators": "node --test scripts/*.test.mjs",
-    "typecheck": "ttsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "3.0.58",
@@ -23,9 +23,6 @@
     "@futhub/bot-templates": "workspace:*",
     "@futhub/database": "workspace:*",
     "@napi-rs/canvas": "0.1.95",
-    "@nestia/core": "13.0.2",
-    "@nestia/fetcher": "13.0.2",
-    "@nestia/sdk": "13.0.2",
     "@nestjs/common": "12",
     "@nestjs/core": "12",
     "@nestjs/platform-fastify": "12",
@@ -37,18 +34,15 @@
     "minio": "^8.0.7",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "typia": "14.0.6",
     "zod": "4.6.2"
   },
   "devDependencies": {
     "@futhub/config": "workspace:*",
     "@nestjs/testing": "12",
-    "@ttsc/unplugin": "0.30.4",
     "@types/node": "22.13.4",
     "concurrently": "10.0.5",
-    "nestia": "13.0.2",
     "testcontainers": "11",
-    "ttsc": "0.30.4",
+    "typescript": "6.0.3",
     "vitest": "3.0.5"
   }
 }

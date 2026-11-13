@@ -1,36 +1,30 @@
-import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
-import { Body, Controller, HttpCode, Inject, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Body, Controller, HttpCode, Inject, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
+import { PlayerOrInternalAuthGuard } from '../auth/player-auth.guard.js';
 import {
   type DiscordIdentityDto,
   DiscordIdentityDtoSchema,
   type LucroResponse,
+  LucroResponseSchema,
 } from './lucro.dto.js';
 import { ResgatarLucroUseCase } from './use-cases/resgatar-lucro/resgatar-lucro.use-case.js';
 
 @ApiTags('Comandos')
+@ApiBearerAuth('bearer')
 @Controller('v1/commands')
-@UseGuards(InternalAuthGuard)
+@UseGuards(PlayerOrInternalAuthGuard)
 export class LucroController {
   constructor(
     @Inject(ResgatarLucroUseCase)
     private readonly resgatarLucro: ResgatarLucroUseCase,
   ) {}
 
-  /**
-   * Executa o comando lucro.
-   *
-   * @param identity Identidade atual do usuário Discord.
-   * @returns Recompensa concedida ou cooldown ativo.
-   */
-  @TypedRoute.Post('lucro')
+  /** Executa o comando lucro: recompensa concedida ou cooldown ativo. */
+  @Post('lucro')
   @HttpCode(200)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'executeLucro';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOperation({ operationId: 'executeLucro' })
+  @ApiOkResponse({ standardSchema: LucroResponseSchema })
   async execute(
     @Body({ schema: DiscordIdentityDtoSchema }) identity: DiscordIdentityDto,
   ): Promise<LucroResponse> {

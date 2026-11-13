@@ -15,6 +15,7 @@ import { LeagueModule } from './modules/league/league.module.js';
 import { LucroModule } from './modules/lucro/lucro.module.js';
 import { MissionsModule } from './modules/missions/missions.module.js';
 import { PacksModule } from './modules/packs/packs.module.js';
+import { PlayerAuthModule } from './modules/player-auth/player-auth.module.js';
 import { RedeemCodesModule } from './modules/redeem-codes/redeem-codes.module.js';
 import { TeamModule } from './modules/team/team.module.js';
 
@@ -35,6 +36,7 @@ import { TeamModule } from './modules/team/team.module.js';
     LucroModule,
     MissionsModule,
     PacksModule,
+    PlayerAuthModule,
     RedeemCodesModule,
     TeamModule,
   ],

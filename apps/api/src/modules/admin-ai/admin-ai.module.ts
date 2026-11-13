@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { AdminCardsModule } from '../admin-cards/admin-cards.module.js';
 import { AdminPacksModule } from '../admin-packs/admin-packs.module.js';
 import { AuthModule } from '../auth/auth.module.js';
-import { AdminAiController } from './admin-ai.controller.js';
+import { AdminAiController, AdminAiStreamController } from './admin-ai.controller.js';
 import { AdminAiService } from './admin-ai.service.js';
 import { AiConfigService } from './ai-config.service.js';
 import { AiHistoryService } from './ai-history.service.js';
@@ -14,7 +14,7 @@ import { AiWebSearchService } from './ai-web-search.service.js';
 
 @Module({
   imports: [AuthModule, AdminCardsModule, AdminPacksModule],
-  controllers: [AdminAiController],
+  controllers: [AdminAiController, AdminAiStreamController],
   providers: [
     AdminAiService,
     AiHttpClient,

@@ -28,14 +28,23 @@ export class PlayerAuthService {
     return { state, url: url.toString() };
   }
 
-  async createSession(code: string): Promise<PlayerSession> {
+  /** `activity`: código do Embedded App SDK, trocado sem redirect_uri. */
+  async createSession(
+    code: string,
+    flow: 'web' | 'activity' = 'web',
+  ): Promise<PlayerSession & Readonly<{ accessToken: string }>> {
     const config = this.config();
-    const accessToken = await exchangeCode(code, config);
+    const accessToken = await exchangeCode(
+      code,
+      config,
+      flow === 'web' ? config.redirectUri : undefined,
+    );
     const profile = await loadDiscordProfile(accessToken);
     const user = await database.db.transaction((tx) =>
       upsertDiscordUser(tx, database.schema, profile, new Date()),
     );
     return {
+      accessToken,
       avatarUrl: profile.avatarUrl,
       balance: user.balance,
       expiresAt: Date.now() + sessionMaxAgeSeconds * 1000,
@@ -50,8 +59,15 @@ export class PlayerAuthService {
     return session;
   }
 
-  serialize(session: PlayerSession): string {
-    return createPlayerSession(session, this.config().sessionSecret);
+  serialize({ avatarUrl, balance, expiresAt, id, name }: PlayerSession): string {
+    return createPlayerSession(
+      { avatarUrl, balance, expiresAt, id, name },
+      this.config().sessionSecret,
+    );
+  }
+
+  clientId(): string {
+    return this.config().clientId;
   }
 
   playerAppUrl(): string {
@@ -82,14 +98,18 @@ type PlayerAuthConfig = Readonly<{
   sessionSecret: string;
 }>;
 
-async function exchangeCode(code: string, config: PlayerAuthConfig): Promise<string> {
+async function exchangeCode(
+  code: string,
+  config: PlayerAuthConfig,
+  redirectUri: string | undefined,
+): Promise<string> {
   const response = await fetch(`${discordApiUrl}/oauth2/token`, {
     body: new URLSearchParams({
       client_id: config.clientId,
       client_secret: config.clientSecret,
       code,
       grant_type: 'authorization_code',
-      redirect_uri: config.redirectUri,
+      ...(redirectUri ? { redirect_uri: redirectUri } : {}),
     }),
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
     method: 'POST',

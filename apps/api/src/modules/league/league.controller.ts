@@ -1,79 +1,89 @@
-import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
 import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   HttpCode,
   Inject,
   NotFoundException,
   Param,
+  Post,
   Sse,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExcludeEndpoint,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { type Observable, from } from 'rxjs';
 
-import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
+import { PlayerOrInternalAuthGuard } from '../auth/player-auth.guard.js';
 import {
   type DiscordIdentityDto,
   DiscordIdentityDtoSchema,
   type LeagueStatusResponse,
+  LeagueStatusResponseSchema,
   type MatchEventDto,
   type MatchResponse,
+  MatchResponseSchema,
   type QueueResponse,
+  QueueResponseSchema,
   type TestMatchRequest,
   TestMatchRequestSchema,
   type TestMatchResponse,
+  TestMatchResponseSchema,
 } from './league.dto.js';
 import { LeagueUseCase } from './use-cases/league/league.use-case.js';
 import { LeagueInputError, LeagueNotFoundError } from './use-cases/league/league.use-case.types.js';
 
 @ApiTags('Liga')
 @Controller('v1')
-@UseGuards(InternalAuthGuard)
+@UseGuards(PlayerOrInternalAuthGuard)
 export class LeagueController {
   constructor(@Inject(LeagueUseCase) private readonly league: LeagueUseCase) {}
 
-  @TypedRoute.Post('league')
+  @Post('league')
   @HttpCode(200)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'getLeague';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ operationId: 'getLeague' })
+  @ApiOkResponse({ standardSchema: LeagueStatusResponseSchema })
   async open(
     @Body({ schema: DiscordIdentityDtoSchema }) identity: DiscordIdentityDto,
   ): Promise<LeagueStatusResponse> {
     return this.handle(() => this.league.open(identity));
   }
 
-  @TypedRoute.Post('ranked/queue')
+  @Post('ranked/queue')
   @HttpCode(200)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'joinRankedQueue';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ operationId: 'joinRankedQueue' })
+  @ApiOkResponse({ standardSchema: QueueResponseSchema })
   async join(
     @Body({ schema: DiscordIdentityDtoSchema }) identity: DiscordIdentityDto,
   ): Promise<QueueResponse> {
     return this.handle(() => this.league.join(identity));
   }
 
-  @TypedRoute.Get('ranked/status/:discordUserId')
+  @Get('ranked/status/:discordUserId')
+  @ApiOkResponse({ standardSchema: QueueResponseSchema.nullable() })
   async status(@Param('discordUserId') discordUserId: string): Promise<QueueResponse | null> {
     return this.handle(() => this.league.status(discordUserId));
   }
 
-  @TypedRoute.Get('league/:discordUserId')
+  @Get('league/:discordUserId')
+  @ApiOkResponse({ standardSchema: LeagueStatusResponseSchema })
   async standings(@Param('discordUserId') discordUserId: string): Promise<LeagueStatusResponse> {
     return this.handle(() => this.league.standings(discordUserId));
   }
 
-  @TypedRoute.Post('matches/test')
+  @Post('matches/test')
   @HttpCode(200)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'simulateTestMatch';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiBearerAuth('bearer')
+  @ApiOperation({ operationId: 'simulateTestMatch' })
+  @ApiOkResponse({ standardSchema: TestMatchResponseSchema })
   async testMatch(
     @Body({ schema: TestMatchRequestSchema }) input: TestMatchRequest,
   ): Promise<TestMatchResponse> {
@@ -87,13 +97,14 @@ export class LeagueController {
     );
   }
 
-  @TypedRoute.Get('matches/:matchId')
+  @Get('matches/:matchId')
+  @ApiOkResponse({ standardSchema: MatchResponseSchema })
   async match(@Param('matchId') matchId: string): Promise<MatchResponse> {
     return this.handle(() => this.league.match(matchId));
   }
 
-  /** @hidden */
   @Sse('matches/:matchId/events')
+  @ApiExcludeEndpoint()
   async events(
     @Param('matchId') matchId: string,
   ): Promise<Observable<{ data: MatchEventDto; id: string; type: string }>> {

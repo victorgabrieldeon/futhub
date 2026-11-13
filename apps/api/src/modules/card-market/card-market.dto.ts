@@ -16,13 +16,18 @@ export const CardMarketPositionSchema = z.enum([
 ]);
 export type CardMarketPosition = z.infer<typeof CardMarketPositionSchema>;
 
-const CardMarketPositionsQuerySchema = z
-  .union([z.string(), z.array(z.string())])
-  .transform((value) => {
-    const values = typeof value === 'string' ? [value] : value;
-    return [...new Set(values.flatMap((position) => position.split(',')))];
-  })
-  .pipe(z.array(CardMarketPositionSchema).min(1).max(10));
+// Aceita `positions=GOL,LD` ou `positions=GOL&positions=LD`; preprocess mantém o OpenAPI como array do enum.
+const CardMarketPositionsQuerySchema = z.preprocess((value) => {
+  const values = typeof value === 'string' ? [value] : value;
+  if (!Array.isArray(values)) return value;
+  return [
+    ...new Set(
+      values.flatMap((position) =>
+        typeof position === 'string' ? position.split(',') : [position],
+      ),
+    ),
+  ];
+}, z.array(CardMarketPositionSchema).min(1).max(10));
 
 export const CardMarketListQuerySchema = z
   .object({
@@ -94,12 +99,14 @@ export type CardMarketIdentity = z.infer<typeof CardMarketIdentitySchema>;
 export const PurchaseCardRequestSchema = z.object({ identity: CardMarketIdentitySchema });
 export type PurchaseCardRequest = z.infer<typeof PurchaseCardRequestSchema>;
 
-export const PurchaseCardResponseSchema = z.object({
-  userCardId: z.string(),
-  balance: z.number(),
-  price: z.number(),
-  completedMissions: z.array(CompletedMissionDtoSchema),
-});
+export const PurchaseCardResponseSchema = z
+  .object({
+    userCardId: z.string(),
+    balance: z.number(),
+    price: z.number(),
+    completedMissions: z.array(CompletedMissionDtoSchema),
+  })
+  .meta({ id: 'PurchaseCardResponse' });
 export type PurchaseCardResponse = z.infer<typeof PurchaseCardResponseSchema>;
 
 export const SellCardsRequestSchema = z.object({
@@ -108,10 +115,12 @@ export const SellCardsRequestSchema = z.object({
 });
 export type SellCardsRequest = z.infer<typeof SellCardsRequestSchema>;
 
-export const SellCardsResponseSchema = z.object({
-  userCardIds: z.array(z.string()),
-  balance: z.number(),
-  amount: z.number(),
-  completedMissions: z.array(CompletedMissionDtoSchema),
-});
+export const SellCardsResponseSchema = z
+  .object({
+    userCardIds: z.array(z.string()),
+    balance: z.number(),
+    amount: z.number(),
+    completedMissions: z.array(CompletedMissionDtoSchema),
+  })
+  .meta({ id: 'SellCardsResponse' });
 export type SellCardsResponse = z.infer<typeof SellCardsResponseSchema>;

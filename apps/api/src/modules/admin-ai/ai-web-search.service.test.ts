@@ -1,18 +1,15 @@
 import { BadGatewayException, BadRequestException } from '@nestjs/common';
-import typia from 'typia';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import { AiHttpClient } from './ai-http-client.js';
 import { AiWebSearchService } from './ai-web-search.service.js';
 
-type Output = {
-  readonly query: string;
-  readonly sources: readonly {
-    readonly title: string;
-    readonly url: string;
-    readonly description: string;
-  }[];
-  readonly truncated: boolean;
-};
+const OutputSchema = z.object({
+  query: z.string(),
+  sources: z.array(z.object({ title: z.string(), url: z.string(), description: z.string() })),
+  truncated: z.boolean(),
+});
+type Output = z.infer<typeof OutputSchema>;
 const source = {
   title: 'First team squad',
   url: 'https://www.fcbarcelona.com/en/football/first-team/players',
@@ -35,7 +32,7 @@ function response(body: unknown = page()) {
 }
 
 function output(value: string): Output {
-  return typia.assert<Output>(JSON.parse(value));
+  return OutputSchema.parse(JSON.parse(value));
 }
 
 afterEach(() => vi.restoreAllMocks());

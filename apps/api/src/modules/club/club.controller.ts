@@ -1,33 +1,34 @@
-import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
-import { Body, Controller, HttpCode, Inject, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Body, Controller, HttpCode, Inject, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
-import { type ClubRequest, ClubRequestSchema, type ClubResponse } from './club.dto.js';
+import { PlayerOrInternalAuthGuard } from '../auth/player-auth.guard.js';
+import {
+  type ClubRequest,
+  ClubRequestSchema,
+  type ClubResponse,
+  ClubResponseSchema,
+} from './club.dto.js';
 import { ClubService } from './club.service.js';
 
 @ApiTags('Clube')
+@ApiBearerAuth('bearer')
 @Controller('v1/club')
-@UseGuards(InternalAuthGuard)
+@UseGuards(PlayerOrInternalAuthGuard)
 export class ClubController {
   constructor(@Inject(ClubService) private readonly club: ClubService) {}
 
-  @TypedRoute.Post()
+  @Post()
   @HttpCode(200)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'getClub';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOperation({ operationId: 'getClub' })
+  @ApiOkResponse({ standardSchema: ClubResponseSchema })
   get(@Body({ schema: ClubRequestSchema }) identity: ClubRequest): Promise<ClubResponse> {
     return this.club.get(identity);
   }
 
-  @TypedRoute.Post('stadium/upgrade')
+  @Post('stadium/upgrade')
   @HttpCode(200)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'upgradeStadium';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOperation({ operationId: 'upgradeStadium' })
+  @ApiOkResponse({ standardSchema: ClubResponseSchema })
   upgradeStadium(
     @Body({ schema: ClubRequestSchema }) identity: ClubRequest,
   ): Promise<ClubResponse> {

@@ -34,13 +34,21 @@ async function proxyApiRequest(request, reply) {
       method: request.method,
       headers,
       body,
+      // OAuth (/v1/auth/player/discord) responde 302: o navegador é quem deve seguir.
+      redirect: 'manual',
       ...(body ? { duplex: 'half' } : {}),
     });
   } catch {
     return reply.status(502).send({ message: 'Não foi possível conectar à API.' });
   }
 
-  for (const name of ['cache-control', 'content-disposition', 'content-length', 'content-type']) {
+  for (const name of [
+    'cache-control',
+    'content-disposition',
+    'content-length',
+    'content-type',
+    'location',
+  ]) {
     const value = response.headers.get(name);
     if (value) reply.header(name, value);
   }

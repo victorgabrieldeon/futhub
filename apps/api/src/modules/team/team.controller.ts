@@ -1,4 +1,3 @@
-import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
 import {
   BadRequestException,
   Body,
@@ -6,11 +5,13 @@ import {
   HttpCode,
   Inject,
   Param,
+  Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
+import { PlayerOrInternalAuthGuard } from '../auth/player-auth.guard.js';
 import {
   type SetCaptainRequest,
   SetCaptainRequestSchema,
@@ -23,89 +24,71 @@ import {
   type TeamIdentityRequest,
   TeamIdentityRequestSchema,
   type TeamResponse,
+  TeamResponseSchema,
   type TeamViewRequest,
   TeamViewRequestSchema,
 } from './team.dto.js';
 import { TeamInputError, TeamService } from './team.service.js';
 
 @ApiTags('Time')
+@ApiBearerAuth('bearer')
 @Controller('v1/team')
-@UseGuards(InternalAuthGuard)
+@UseGuards(PlayerOrInternalAuthGuard)
 export class TeamController {
   constructor(@Inject(TeamService) private readonly team: TeamService) {}
 
-  @TypedRoute.Post()
+  @Post()
   @HttpCode(200)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'getTeam';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOperation({ operationId: 'getTeam' })
+  @ApiOkResponse({ standardSchema: TeamResponseSchema })
   view(@Body({ schema: TeamViewRequestSchema }) request: TeamViewRequest): Promise<TeamResponse> {
     return this.handle(() => this.team.view(request));
   }
 
-  @TypedRoute.Put('formation')
+  @Put('formation')
   @HttpCode(204)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'setTeamFormation';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOperation({ operationId: 'setTeamFormation' })
   setFormation(
     @Body({ schema: SetFormationRequestSchema }) request: SetFormationRequest,
   ): Promise<void> {
     return this.handle(() => this.team.setFormation(request.identity, request.formationId));
   }
 
-  @TypedRoute.Put('tactic')
+  @Put('tactic')
   @HttpCode(204)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'setTeamTactic';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOperation({ operationId: 'setTeamTactic' })
   setTactic(@Body({ schema: SetTacticRequestSchema }) request: SetTacticRequest): Promise<void> {
     return this.handle(() => this.team.setTactic(request.identity, request.tactic));
   }
 
-  @TypedRoute.Post('lineup/auto')
+  @Post('lineup/auto')
   @HttpCode(204)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'autoSelectTeamLineup';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOperation({ operationId: 'autoSelectTeamLineup' })
   autoLineup(
     @Body({ schema: TeamIdentityRequestSchema }) request: TeamIdentityRequest,
   ): Promise<void> {
     return this.handle(() => this.team.autoSelect(request.identity));
   }
 
-  @TypedRoute.Put('lineup')
+  @Put('lineup')
   @HttpCode(204)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'setTeamLineupCard';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOperation({ operationId: 'setTeamLineupCard' })
   setLineupCard(
     @Body({ schema: SetLineupCardRequestSchema }) request: SetLineupCardRequest,
   ): Promise<void> {
     return this.handle(() => this.team.setLineupCard(request));
   }
 
-  @TypedRoute.Put('captain')
+  @Put('captain')
   @HttpCode(204)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'setTeamCaptain';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOperation({ operationId: 'setTeamCaptain' })
   setCaptain(@Body({ schema: SetCaptainRequestSchema }) request: SetCaptainRequest): Promise<void> {
     return this.handle(() => this.team.setCaptain(request.identity, request.userCardId));
   }
 
-  @TypedRoute.Put('cards/:userCardId/favorite')
+  @Put('cards/:userCardId/favorite')
   @HttpCode(204)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'toggleTeamCardFavorite';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOperation({ operationId: 'toggleTeamCardFavorite' })
   toggleFavorite(
     @Param('userCardId') userCardId: string,
     @Body({ schema: TeamIdentityRequestSchema }) request: TeamIdentityRequest,

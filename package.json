@@ -16,7 +16,7 @@
     "dev:devspace:down": "devspace purge",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "generate:api": "pnpm --filter @futhub/api openapi:generate && pnpm --filter @futhub/api-client generate",
+    "generate:api": "turbo run build --filter=@futhub/api^... && pnpm --filter @futhub/api openapi:generate && pnpm --filter @futhub/api-client generate",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
     "test": "turbo run test",

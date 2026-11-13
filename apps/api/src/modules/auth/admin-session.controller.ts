@@ -1,15 +1,17 @@
-import { TypedRoute } from '@nestia/core';
 import {
   Body,
   Controller,
+  Delete,
+  Get,
   Header,
   HttpCode,
   Inject,
+  Post,
   Req,
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import { AdminApiConfig, isValidAdminApiKey } from './admin-auth.guard.js';
@@ -17,6 +19,7 @@ import {
   type AdminSessionInput,
   AdminSessionInputSchema,
   type AdminSessionResponse,
+  AdminSessionResponseSchema,
 } from './admin-session.dto.js';
 import {
   AdminSessionService,
@@ -33,8 +36,9 @@ export class AdminSessionController {
     @Inject(AdminSessionService) private readonly sessions: AdminSessionService,
   ) {}
 
-  @TypedRoute.Post()
+  @Post()
   @Header('Cache-Control', 'no-store')
+  @ApiCreatedResponse({ standardSchema: AdminSessionResponseSchema })
   async create(
     @Body({ schema: AdminSessionInputSchema }) body: AdminSessionInput,
     @Req() request: FastifyRequest,
@@ -56,15 +60,16 @@ export class AdminSessionController {
     return { ok: true };
   }
 
-  @TypedRoute.Get()
+  @Get()
   @Header('Cache-Control', 'no-store')
+  @ApiOkResponse({ standardSchema: AdminSessionResponseSchema })
   async status(@Req() request: FastifyRequest): Promise<AdminSessionResponse> {
     if (!(await this.sessions.valid(cookieToken(request.headers.cookie))))
       throw new UnauthorizedException();
     return { ok: true };
   }
 
-  @TypedRoute.Delete()
+  @Delete()
   @Header('Cache-Control', 'no-store')
   @HttpCode(204)
   async destroy(

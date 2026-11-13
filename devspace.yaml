@@ -79,12 +79,11 @@ dev:
               onChange:
                 - packages/bot-templates/package.json
                 - packages/bot-templates/src/**
-            # ttsc --watch already rebuilds the API; only the OpenAPI contract needs a refresh.
+            # tsc --watch already rebuilds the API; only the OpenAPI contract needs a refresh.
             - name: regenerate-api-contract
               command: pnpm --filter @futhub/api openapi:generate
               onChange:
                 - apps/api/src/**
-                - apps/api/nestia.config.ts
                 - packages/database/src/**
   admin:
     labelSelector:

@@ -1,18 +1,19 @@
-import type { SwaggerCustomizer } from '@nestia/core';
-import { HttpException } from '@nestjs/common';
+import { HttpException, applyDecorators } from '@nestjs/common';
+import { ApiOkResponse, ApiProduces } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
 import type { AiChatState, AiStreamSink } from './admin-ai.dto.js';
 
-export function describeAiStream({ route }: SwaggerCustomizer.IProps): void {
-  route.tags = ['Administração / Assistente IA streaming'];
-  route.responses = {
-    '200': {
+export const AI_STREAM_TAG = 'Administração / Assistente IA streaming';
+
+export const AiStreamDocs = (): MethodDecorator =>
+  applyDecorators(
+    ApiProduces('text/event-stream'),
+    ApiOkResponse({
       description:
         'SSE data JSON: text deltas, authoritative state, error, done. EOF without done requires GET reconciliation.',
-      content: { 'text/event-stream': { schema: { type: 'string' } } },
-    },
-  };
-}
+      schema: { type: 'string' },
+    }),
+  );
 
 export async function streamAiResponse(
   reply: FastifyReply,

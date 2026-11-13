@@ -3,7 +3,6 @@ import { z } from 'zod';
 import {
   type CardMarketIdentity,
   CardMarketIdentitySchema,
-  type CardMarketPosition,
   CardMarketPositionSchema,
 } from '../card-market/card-market.dto.js';
 
@@ -47,79 +46,100 @@ export const SetCaptainRequestSchema = TeamIdentityRequestSchema.extend({
 export type SetCaptainRequest = z.infer<typeof SetCaptainRequestSchema>;
 
 /** Time real da carta (clube do jogador), não o clube do usuário. */
-export interface TeamClub {
-  name: string;
-  emoji: string;
-}
-export interface TeamCollection {
-  id: string;
-  name: string;
-  emoji: string;
-}
-export interface TeamFormationSlot {
-  id: string;
-  position: CardMarketPosition;
-  x: number;
-  y: number;
-}
-export interface TeamFormation {
-  id: string;
-  name: string;
-  slots: TeamFormationSlot[];
-}
-export interface TeamCard {
-  userCardId: string;
-  name: string;
-  imageUrl: string | null;
-  overall: number;
-  position: CardMarketPosition;
-  secondaryPositions: CardMarketPosition[];
-  team: TeamClub;
-  collection: TeamCollection;
-  favorite: boolean;
-  holder: boolean;
-  holderPosition: CardMarketPosition | null;
-  captain: boolean;
-  sellPrice: number;
-  claimedAt: string;
-}
-export interface TeamInventory {
-  items: TeamCard[];
-  total: number;
-  page: number;
-  pageSize: 10;
-  totalPages: number;
-}
-export interface TeamPack {
-  id: string;
-  name: string;
-  emoji: string;
-  cardsAmount: number;
-  imageUrl: string | null;
-  quantity: number;
-}
-export interface TeamProfile {
-  level: number;
-  xp: number;
-  nextLevelXp: number;
-}
-export interface TeamProfit {
-  /** Quando o próximo lucro libera; `null` se já pode ser resgatado. */
-  availableAt: string | null;
-}
-export interface TeamResponse {
-  balance: number;
-  strength: number;
-  inventoryCount: number;
-  tactic: TeamTactic;
-  formation: TeamFormation;
-  formations: TeamFormation[];
-  lineup: TeamCard[];
-  inventory: TeamInventory;
-  packs: TeamPack[];
-  collections: TeamCollection[];
-  profile: TeamProfile;
-  profit: TeamProfit;
-}
+export const TeamClubSchema = z
+  .object({ name: z.string(), emoji: z.string() })
+  .meta({ id: 'TeamClub' });
+export type TeamClub = z.infer<typeof TeamClubSchema>;
+
+export const TeamCollectionSchema = z
+  .object({ id: z.string(), name: z.string(), emoji: z.string() })
+  .meta({ id: 'TeamCollection' });
+export type TeamCollection = z.infer<typeof TeamCollectionSchema>;
+
+export const TeamFormationSlotSchema = z
+  .object({ id: z.string(), position: CardMarketPositionSchema, x: z.number(), y: z.number() })
+  .meta({ id: 'TeamFormationSlot' });
+export type TeamFormationSlot = z.infer<typeof TeamFormationSlotSchema>;
+
+export const TeamFormationSchema = z
+  .object({ id: z.string(), name: z.string(), slots: z.array(TeamFormationSlotSchema) })
+  .meta({ id: 'TeamFormation' });
+export type TeamFormation = z.infer<typeof TeamFormationSchema>;
+
+export const TeamCardSchema = z
+  .object({
+    userCardId: z.string(),
+    name: z.string(),
+    imageUrl: z.string().nullable(),
+    overall: z.number(),
+    position: CardMarketPositionSchema,
+    secondaryPositions: z.array(CardMarketPositionSchema),
+    team: TeamClubSchema,
+    collection: TeamCollectionSchema,
+    favorite: z.boolean(),
+    holder: z.boolean(),
+    holderPosition: CardMarketPositionSchema.nullable(),
+    captain: z.boolean(),
+    sellPrice: z.number(),
+    claimedAt: z.string(),
+  })
+  .meta({ id: 'TeamCard' });
+export type TeamCard = z.infer<typeof TeamCardSchema>;
+
+export const TeamInventorySchema = z
+  .object({
+    items: z.array(TeamCardSchema),
+    total: z.number(),
+    page: z.number(),
+    pageSize: z.literal(10),
+    totalPages: z.number(),
+  })
+  .meta({ id: 'TeamInventory' });
+export type TeamInventory = z.infer<typeof TeamInventorySchema>;
+
+export const TeamPackSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    emoji: z.string(),
+    cardsAmount: z.number(),
+    imageUrl: z.string().nullable(),
+    quantity: z.number(),
+  })
+  .meta({ id: 'TeamPack' });
+export type TeamPack = z.infer<typeof TeamPackSchema>;
+
+export const TeamProfileSchema = z
+  .object({ level: z.number(), xp: z.number(), nextLevelXp: z.number() })
+  .meta({ id: 'TeamProfile' });
+export type TeamProfile = z.infer<typeof TeamProfileSchema>;
+
+export const TeamProfitSchema = z
+  .object({
+    availableAt: z
+      .string()
+      .nullable()
+      .describe('Quando o próximo lucro libera; `null` se já pode ser resgatado.'),
+  })
+  .meta({ id: 'TeamProfit' });
+export type TeamProfit = z.infer<typeof TeamProfitSchema>;
+
+export const TeamResponseSchema = z
+  .object({
+    balance: z.number(),
+    strength: z.number(),
+    inventoryCount: z.number(),
+    tactic: TeamTacticSchema,
+    formation: TeamFormationSchema,
+    formations: z.array(TeamFormationSchema),
+    lineup: z.array(TeamCardSchema),
+    inventory: TeamInventorySchema,
+    packs: z.array(TeamPackSchema),
+    collections: z.array(TeamCollectionSchema),
+    profile: TeamProfileSchema,
+    profit: TeamProfitSchema,
+  })
+  .meta({ id: 'TeamResponse' });
+export type TeamResponse = z.infer<typeof TeamResponseSchema>;
 
 export type TeamIdentity = CardMarketIdentity;

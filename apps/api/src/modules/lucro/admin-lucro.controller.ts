@@ -1,13 +1,14 @@
-import { TypedRoute } from '@nestia/core';
-import { Body, Controller, Inject, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Inject, Put, UseGuards } from '@nestjs/common';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { AdminAuthGuard } from '../auth/admin-auth.guard.js';
 import {
   type LucroConfigDto,
+  LucroConfigDtoSchema,
   type LucroConfigInputDto,
   LucroConfigInputDtoSchema,
   type LucroEmbedSchemaDto,
+  LucroEmbedSchemaDtoSchema,
 } from './admin-lucro.dto.js';
 import { AdminLucroService } from './admin-lucro.service.js';
 
@@ -17,17 +18,20 @@ import { AdminLucroService } from './admin-lucro.service.js';
 export class AdminLucroController {
   constructor(@Inject(AdminLucroService) private readonly lucro: AdminLucroService) {}
 
-  @TypedRoute.Get()
+  @Get()
+  @ApiOkResponse({ standardSchema: LucroConfigDtoSchema })
   get(): Promise<LucroConfigDto> {
     return this.lucro.get();
   }
 
-  @TypedRoute.Get('schema')
+  @Get('schema')
+  @ApiOkResponse({ standardSchema: LucroEmbedSchemaDtoSchema })
   schema(): LucroEmbedSchemaDto {
     return this.lucro.schema();
   }
 
-  @TypedRoute.Put()
+  @Put()
+  @ApiOkResponse({ standardSchema: LucroConfigDtoSchema })
   update(
     @Body({ schema: LucroConfigInputDtoSchema }) input: LucroConfigInputDto,
   ): Promise<LucroConfigDto> {

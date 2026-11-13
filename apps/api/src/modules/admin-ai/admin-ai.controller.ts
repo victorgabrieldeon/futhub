@@ -1,24 +1,46 @@
 import { createHash } from 'node:crypto';
-import { SwaggerCustomizer, TypedBody, TypedParam, TypedQuery, TypedRoute } from '@nestia/core';
-import { Controller, Header, HttpCode, Inject, Post, Res, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Header,
+  HttpCode,
+  Inject,
+  Param,
+  Post,
+  Put,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
-import typia from 'typia';
 import { AdminApiConfig, AdminAuthGuard } from '../auth/admin-auth.guard.js';
-import type {
-  AiApprovalInput,
-  AiChatState,
-  AiHistoryDetail,
-  AiHistoryPage,
-  AiHistoryQuery,
-  AiPromptInput,
-  AiSavedConfig,
-  AiSessionInput,
+import {
+  type AiApprovalInput,
+  AiApprovalInputSchema,
+  type AiCapabilities,
+  AiCapabilitiesSchema,
+  type AiChatState,
+  AiChatStateSchema,
+  type AiHistoryDetail,
+  AiHistoryDetailSchema,
+  type AiHistoryPage,
+  AiHistoryPageSchema,
+  type AiHistoryQuery,
+  AiHistoryQuerySchema,
+  type AiPromptInput,
+  AiPromptInputSchema,
+  type AiSavedConfig,
+  AiSavedConfigSchema,
+  type AiSessionInput,
+  AiSessionInputSchema,
 } from './admin-ai.dto.js';
 import { AdminAiService } from './admin-ai.service.js';
 import { AiConfigService } from './ai-config.service.js';
 import { AiHistoryService } from './ai-history.service.js';
-import { describeAiStream, streamAiResponse } from './ai-response-stream.js';
+import { AI_STREAM_TAG, AiStreamDocs, streamAiResponse } from './ai-response-stream.js';
 import { AiSessions } from './ai-sessions.js';
 import { AiToolsService } from './ai-tools.service.js';
 
@@ -39,56 +61,108 @@ export class AdminAiController {
     @Inject(AiToolsService) private readonly tools: AiToolsService,
   ) {}
 
-  @TypedRoute.Get('capabilities')
+  @Get('capabilities')
   @Header('Cache-Control', 'no-store')
-  capabilities(): { webSearch: boolean } {
+  @ApiOkResponse({ standardSchema: AiCapabilitiesSchema })
+  capabilities(): AiCapabilities {
     return { webSearch: this.tools.webAvailable() };
   }
 
-  @TypedRoute.Get('config')
+  @Get('config')
   @Header('Cache-Control', 'no-store')
+  @ApiOkResponse({ standardSchema: AiSavedConfigSchema.nullable() })
   config(): Promise<AiSavedConfig | null> {
     return this.configs.get(owner(this.adminConfig));
   }
 
-  @TypedRoute.Put('config')
+  @Put('config')
   @Header('Cache-Control', 'no-store')
-  configure(
-    @TypedBody({ type: 'is', is: typia.createIs<AiSessionInput>() }) input: AiSessionInput,
-  ): Promise<AiSavedConfig> {
+  @ApiOkResponse({ standardSchema: AiSavedConfigSchema })
+  configure(@Body({ schema: AiSessionInputSchema }) input: AiSessionInput): Promise<AiSavedConfig> {
     return this.ai.configure(owner(this.adminConfig), input);
   }
 
-  @TypedRoute.Post('saved')
+  @Post('saved')
   @Header('Cache-Control', 'no-store')
+  @ApiCreatedResponse({ standardSchema: AiChatStateSchema })
   connectSaved(): Promise<AiChatState> {
     return this.ai.connectSaved(owner(this.adminConfig));
   }
 
-  @TypedRoute.Get('history')
-  @SwaggerCustomizer(({ swagger }) => {
-    // ponytail: Nestia 12 emits required: [] for optional-only query DTOs; remove until generator upgrade.
-    const schema = swagger.components.schemas?.AiHistoryQuery;
-    if (schema && 'required' in schema && schema.required?.length === 0)
-      schema.required = undefined;
-  })
+  @Get('history')
   @Header('Cache-Control', 'no-store')
-  list(@TypedQuery() query: AiHistoryQuery): Promise<AiHistoryPage> {
+  @ApiOkResponse({ standardSchema: AiHistoryPageSchema })
+  list(@Query({ schema: AiHistoryQuerySchema }) query: AiHistoryQuery): Promise<AiHistoryPage> {
     return this.history.list(owner(this.adminConfig), query.page);
   }
 
-  @TypedRoute.Get('history/:id')
+  @Get('history/:id')
   @Header('Cache-Control', 'no-store')
-  archived(@TypedParam('id') id: string): Promise<AiHistoryDetail> {
+  @ApiOkResponse({ standardSchema: AiHistoryDetailSchema })
+  archived(@Param('id') id: string): Promise<AiHistoryDetail> {
     return this.history.get(owner(this.adminConfig), id);
   }
 
+  @Post()
+  @Header('Cache-Control', 'no-store')
+  @ApiCreatedResponse({ standardSchema: AiChatStateSchema })
+  connect(@Body({ schema: AiSessionInputSchema }) input: AiSessionInput): Promise<AiChatState> {
+    return this.ai.connect(owner(this.adminConfig), input);
+  }
+
+  @Get(':id')
+  @Header('Cache-Control', 'no-store')
+  @ApiOkResponse({ standardSchema: AiChatStateSchema })
+  state(@Param('id') id: string): AiChatState {
+    return this.ai.state(owner(this.adminConfig), id);
+  }
+
+  @Post(':id/messages')
+  @Header('Cache-Control', 'no-store')
+  @ApiCreatedResponse({ standardSchema: AiChatStateSchema })
+  message(
+    @Param('id') id: string,
+    @Body({ schema: AiPromptInputSchema }) input: AiPromptInput,
+  ): Promise<AiChatState> {
+    return this.ai.message(owner(this.adminConfig), id, input);
+  }
+
+  @Post(':id/actions/:actionId')
+  @Header('Cache-Control', 'no-store')
+  @ApiCreatedResponse({ standardSchema: AiChatStateSchema })
+  decide(
+    @Param('id') id: string,
+    @Param('actionId') actionId: string,
+    @Body({ schema: AiApprovalInputSchema }) input: AiApprovalInput,
+  ): Promise<AiChatState> {
+    return this.ai.decide(this.sessions.get(owner(this.adminConfig), id), actionId, input.approved);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  disconnect(@Param('id') id: string): void {
+    this.ai.disconnect(owner(this.adminConfig), id);
+  }
+}
+
+// Separate controller: @nestjs/swagger concatenates class and method tags, and the SDK
+// generator excludes streaming routes by this tag alone.
+@ApiTags(AI_STREAM_TAG)
+@Controller('v1/admin/ai/sessions')
+@UseGuards(AdminAuthGuard)
+export class AdminAiStreamController {
+  constructor(
+    @Inject(AdminApiConfig) private readonly adminConfig: AdminApiConfig,
+    @Inject(AdminAiService) private readonly ai: AdminAiService,
+    @Inject(AiSessions) private readonly sessions: AiSessions,
+  ) {}
+
   @Post(':id/messages/stream')
   @HttpCode(200)
-  @SwaggerCustomizer(describeAiStream)
+  @AiStreamDocs()
   streamMessage(
-    @TypedParam('id') id: string,
-    @TypedBody() input: AiPromptInput,
+    @Param('id') id: string,
+    @Body({ schema: AiPromptInputSchema }) input: AiPromptInput,
     @Res() reply: FastifyReply,
   ): Promise<void> {
     return streamAiResponse(reply, (send) =>
@@ -98,52 +172,16 @@ export class AdminAiController {
 
   @Post(':id/actions/:actionId/stream')
   @HttpCode(200)
-  @SwaggerCustomizer(describeAiStream)
+  @AiStreamDocs()
   streamDecision(
-    @TypedParam('id') id: string,
-    @TypedParam('actionId') actionId: string,
-    @TypedBody() input: AiApprovalInput,
+    @Param('id') id: string,
+    @Param('actionId') actionId: string,
+    @Body({ schema: AiApprovalInputSchema }) input: AiApprovalInput,
     @Res() reply: FastifyReply,
   ): Promise<void> {
     const session = this.sessions.get(owner(this.adminConfig), id);
     return streamAiResponse(reply, (send) =>
       this.ai.decide(session, actionId, input.approved, send),
     );
-  }
-
-  @TypedRoute.Post()
-  @Header('Cache-Control', 'no-store')
-  connect(
-    @TypedBody({ type: 'is', is: typia.createIs<AiSessionInput>() }) input: AiSessionInput,
-  ): Promise<AiChatState> {
-    return this.ai.connect(owner(this.adminConfig), input);
-  }
-
-  @TypedRoute.Get(':id')
-  @Header('Cache-Control', 'no-store')
-  state(@TypedParam('id') id: string): AiChatState {
-    return this.ai.state(owner(this.adminConfig), id);
-  }
-
-  @TypedRoute.Post(':id/messages')
-  @Header('Cache-Control', 'no-store')
-  message(@TypedParam('id') id: string, @TypedBody() input: AiPromptInput): Promise<AiChatState> {
-    return this.ai.message(owner(this.adminConfig), id, input);
-  }
-
-  @TypedRoute.Post(':id/actions/:actionId')
-  @Header('Cache-Control', 'no-store')
-  decide(
-    @TypedParam('id') id: string,
-    @TypedParam('actionId') actionId: string,
-    @TypedBody() input: AiApprovalInput,
-  ): Promise<AiChatState> {
-    return this.ai.decide(this.sessions.get(owner(this.adminConfig), id), actionId, input.approved);
-  }
-
-  @TypedRoute.Delete(':id')
-  @HttpCode(204)
-  disconnect(@TypedParam('id') id: string): void {
-    this.ai.disconnect(owner(this.adminConfig), id);
   }
 }
