@@ -18,16 +18,16 @@ export class ClubController {
   constructor(@Inject(ClubService) private readonly club: ClubService) {}
 
   @Post()
+  @ApiOperation({ operationId: 'getClub', summary: 'Lê a economia e a estrutura do clube' })
   @HttpCode(200)
-  @ApiOperation({ operationId: 'getClub' })
   @ApiOkResponse({ standardSchema: ClubResponseSchema })
   get(@Body({ schema: ClubRequestSchema }) identity: ClubRequest): Promise<ClubResponse> {
     return this.club.get(identity);
   }
 
   @Post('stadium/upgrade')
+  @ApiOperation({ operationId: 'upgradeStadium', summary: 'Melhora o estádio do clube' })
   @HttpCode(200)
-  @ApiOperation({ operationId: 'upgradeStadium' })
   @ApiOkResponse({ standardSchema: ClubResponseSchema })
   upgradeStadium(
     @Body({ schema: ClubRequestSchema }) identity: ClubRequest,

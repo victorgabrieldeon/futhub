@@ -1,8 +1,8 @@
 import {
   type SimulateTestMatchBodyDifficulty,
   getLeague,
-  getV1MatchesMatchId,
-  getV1RankedStatusDiscordUserId,
+  getMatch,
+  getRankedStatus,
   joinRankedQueue,
   simulateTestMatch,
 } from '@futhub/api-client';
@@ -52,7 +52,7 @@ export function League({ me, notify }: ScreenProps) {
 
   const showMatch = useCallback(
     async (matchId: string) => {
-      const match = await getV1MatchesMatchId(matchId);
+      const match = await getMatch(matchId);
       setWaiting(false);
       setReplay({ ...match, away: match.away.name, home: match.home.name });
       void league.reload();
@@ -64,7 +64,7 @@ export function League({ me, notify }: ScreenProps) {
   useEffect(() => {
     if (!waiting) return;
     const timer = window.setInterval(() => {
-      getV1RankedStatusDiscordUserId(me.id).then(
+      getRankedStatus(me.id).then(
         (status) => {
           if (status?.kind === 'matched') void showMatch(status.matchId);
           else if (status === null) setWaiting(false);

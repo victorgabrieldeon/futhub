@@ -48,29 +48,29 @@ export class PacksController {
   ) {}
 
   @Get()
-  @ApiOperation({ operationId: 'listPackCatalog' })
+  @ApiOperation({ operationId: 'listPackCatalog', summary: 'Lista o catálogo de Packs' })
   @ApiOkResponse({ standardSchema: z.array(PackCatalogItemSchema) })
   async listPacks(): Promise<PackCatalogItem[]> {
     return [...(await this.packs.listAvailable())];
   }
 
   @Get('shop')
-  @ApiOperation({ operationId: 'getPackShop' })
+  @ApiOperation({ operationId: 'getPackShop', summary: 'Lê a página da loja de Packs' })
   @ApiOkResponse({ standardSchema: PackShopDtoSchema })
   getPackShop(@Query({ schema: PackShopQuerySchema }) query: PackShopQuery): Promise<PackShopDto> {
     return this.shop.list(query.page ?? 1);
   }
 
   @Get(':packId')
-  @ApiOperation({ operationId: 'inspectPack' })
+  @ApiOperation({ operationId: 'inspectPack', summary: 'Lê os detalhes de um Pack' })
   @ApiOkResponse({ standardSchema: PackShopItemDtoSchema })
   inspectPack(@Param('packId', new ParseUUIDPipe()) packId: string): Promise<PackShopItemDto> {
     return this.shop.inspect(packId);
   }
 
   @Post(':packId/purchase')
+  @ApiOperation({ operationId: 'purchasePack', summary: 'Compra um Pack' })
   @HttpCode(200)
-  @ApiOperation({ operationId: 'purchasePack' })
   @ApiOkResponse({ standardSchema: PurchasePackResponseSchema })
   async purchasePack(
     @Param('packId', new ParseUUIDPipe()) packId: string,
@@ -81,8 +81,8 @@ export class PacksController {
   }
 
   @Post(':packId/open')
+  @ApiOperation({ operationId: 'openPack', summary: 'Abre um Pack do inventário' })
   @HttpCode(200)
-  @ApiOperation({ operationId: 'openPack' })
   @ApiOkResponse({ standardSchema: OpenPackResponseSchema })
   async openPack(
     @Param('packId', new ParseUUIDPipe()) packId: string,

@@ -15,7 +15,14 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiConsumes, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
@@ -100,12 +107,17 @@ export class AdminCardsController {
   ) {}
 
   @Get('catalog')
+  @ApiOperation({
+    operationId: 'getAdminCardCatalog',
+    summary: 'Lê Times e Coleções para os formulários de card',
+  })
   @ApiOkResponse({ standardSchema: CardCatalogSchema })
   catalog(): Promise<CardCatalog> {
     return this.cards.catalog();
   }
 
   @Get('team-logo-suggestions')
+  @ApiOperation({ operationId: 'listTeamLogoSuggestions', summary: 'Sugere escudos para um Time' })
   @ApiOkResponse({ standardSchema: z.array(TeamLogoSuggestionSchema) })
   teamLogoSuggestions(
     @Query({ schema: TeamLogoSuggestionsQuerySchema }) query: TeamLogoSuggestionsQuery,
@@ -114,6 +126,10 @@ export class AdminCardsController {
   }
 
   @Get('team-logo-details')
+  @ApiOperation({
+    operationId: 'getTeamLogoDetails',
+    summary: 'Lê os detalhes de um escudo sugerido',
+  })
   @ApiOkResponse({ standardSchema: TeamLogoDetailsSchema })
   teamLogoDetails(
     @Query({ schema: TeamLogoDetailsQuerySchema }) query: TeamLogoDetailsQuery,
@@ -122,6 +138,7 @@ export class AdminCardsController {
   }
 
   @Get('team-logos/:filename')
+  @ApiOperation({ operationId: 'getTeamLogo', summary: 'Baixa um escudo sugerido' })
   async teamLogo(
     @Param('filename') filename: string,
     @Res() response: FastifyReply,
@@ -134,6 +151,10 @@ export class AdminCardsController {
       .send(image.buffer);
   }
   @Get('collection-artwork-suggestions')
+  @ApiOperation({
+    operationId: 'listCollectionArtworkSuggestions',
+    summary: 'Sugere artes para uma Coleção',
+  })
   @ApiOkResponse({ standardSchema: z.array(CollectionArtworkSuggestionSchema) })
   collectionArtworkSuggestions(
     @Query({ schema: CollectionArtworkSuggestionsQuerySchema })
@@ -143,6 +164,10 @@ export class AdminCardsController {
   }
 
   @Get('player-photo-suggestions')
+  @ApiOperation({
+    operationId: 'listPlayerPhotoSuggestions',
+    summary: 'Sugere fotos para um jogador',
+  })
   @ApiOkResponse({ standardSchema: z.array(PlayerPhotoSuggestionSchema) })
   playerPhotoSuggestions(
     @Query({ schema: PlayerPhotoSuggestionsQuerySchema }) query: PlayerPhotoSuggestionsQuery,
@@ -151,6 +176,7 @@ export class AdminCardsController {
   }
 
   @Get('player-photos/:filename')
+  @ApiOperation({ operationId: 'getPlayerPhoto', summary: 'Baixa uma foto de jogador sugerida' })
   async playerPhoto(
     @Param('filename') filename: string,
     @Res() response: FastifyReply,
@@ -163,6 +189,10 @@ export class AdminCardsController {
   }
 
   @Get('player-photos/:kind/:filename')
+  @ApiOperation({
+    operationId: 'getPlayerPhotoByKind',
+    summary: 'Baixa uma foto de jogador sugerida por tipo',
+  })
   async playerPhotoVariant(
     @Param('kind') kind: string,
     @Param('filename') filename: string,
@@ -176,6 +206,10 @@ export class AdminCardsController {
   }
 
   @Get('squad-import/clubs')
+  @ApiOperation({
+    operationId: 'listSquadImportClubs',
+    summary: 'Busca clubes para importar elenco',
+  })
   @ApiOkResponse({ standardSchema: z.array(SquadImportClubSchema) })
   squadImportClubs(
     @Query({ schema: SquadImportClubsQuerySchema }) query: SquadImportClubsQuery,
@@ -184,12 +218,20 @@ export class AdminCardsController {
   }
 
   @Get('squad-import/leagues')
+  @ApiOperation({
+    operationId: 'listSquadImportLeagues',
+    summary: 'Lista ligas disponíveis para importar elenco',
+  })
   @ApiOkResponse({ standardSchema: z.array(SquadImportLeagueSchema) })
   squadImportLeagues(): Promise<SquadImportLeague[]> {
     return this.squadImport.leagues();
   }
 
   @Get('squad-import/league-clubs')
+  @ApiOperation({
+    operationId: 'listSquadImportLeagueClubs',
+    summary: 'Lista os clubes de uma liga para importar elenco',
+  })
   @ApiOkResponse({ standardSchema: z.array(SquadImportClubSchema) })
   squadImportLeagueClubs(
     @Query({ schema: SquadImportLeagueClubsQuerySchema }) query: SquadImportLeagueClubsQuery,
@@ -198,6 +240,10 @@ export class AdminCardsController {
   }
 
   @Get('squad-import/squad')
+  @ApiOperation({
+    operationId: 'getSquadImportSquad',
+    summary: 'Lê o elenco de um clube para importação',
+  })
   @ApiOkResponse({ standardSchema: SquadImportPreviewSchema })
   squadImportSquad(
     @Query({ schema: SquadImportSquadQuerySchema }) query: SquadImportSquadQuery,
@@ -206,6 +252,7 @@ export class AdminCardsController {
   }
 
   @Post('squad-import')
+  @ApiOperation({ operationId: 'importSquad', summary: 'Importa o elenco de um clube como Cards' })
   @HttpCode(200)
   @ApiOkResponse({ standardSchema: SquadImportResultSchema })
   importSquad(
@@ -215,6 +262,7 @@ export class AdminCardsController {
   }
 
   @Get('collections')
+  @ApiOperation({ operationId: 'listAdminCollections', summary: 'Lista Coleções' })
   @ApiOkResponse({ standardSchema: CollectionPageSchema })
   collections(
     @Query({ schema: CollectionListQuerySchema }) query: CollectionListQuery,
@@ -223,6 +271,7 @@ export class AdminCardsController {
   }
 
   @Post('collections')
+  @ApiOperation({ operationId: 'createAdminCollection', summary: 'Cria uma Coleção' })
   @ApiCreatedResponse({ standardSchema: AdminCollectionSchema })
   createCollection(
     @Body({ schema: CollectionInputSchema }) input: CollectionInput,
@@ -231,6 +280,7 @@ export class AdminCardsController {
   }
 
   @Put('collections/:collectionId')
+  @ApiOperation({ operationId: 'updateAdminCollection', summary: 'Atualiza uma Coleção' })
   @ApiOkResponse({ standardSchema: AdminCollectionSchema })
   updateCollection(
     @Param('collectionId') collectionId: string,
@@ -240,24 +290,28 @@ export class AdminCardsController {
   }
 
   @Delete('collections/:collectionId')
+  @ApiOperation({ operationId: 'deleteAdminCollection', summary: 'Remove uma Coleção' })
   @HttpCode(204)
   async removeCollection(@Param('collectionId') collectionId: string): Promise<void> {
     await this.cards.removeCollection(collectionId);
   }
 
   @Get('teams')
+  @ApiOperation({ operationId: 'listAdminTeams', summary: 'Lista Times' })
   @ApiOkResponse({ standardSchema: TeamPageSchema })
   teams(@Query({ schema: TeamListQuerySchema }) query: TeamListQuery): Promise<TeamPage> {
     return this.cards.teams(query);
   }
 
   @Post('teams')
+  @ApiOperation({ operationId: 'createAdminTeam', summary: 'Cria um Time' })
   @ApiCreatedResponse({ standardSchema: AdminTeamSchema })
   createTeam(@Body({ schema: TeamInputSchema }) input: TeamInput): Promise<AdminTeam> {
     return this.cards.createTeam(input);
   }
 
   @Put('teams/:teamId')
+  @ApiOperation({ operationId: 'updateAdminTeam', summary: 'Atualiza um Time' })
   @ApiOkResponse({ standardSchema: AdminTeamSchema })
   updateTeam(
     @Param('teamId') teamId: string,
@@ -267,12 +321,17 @@ export class AdminCardsController {
   }
 
   @Delete('teams/:teamId')
+  @ApiOperation({ operationId: 'deleteAdminTeam', summary: 'Remove um Time' })
   @HttpCode(204)
   async removeTeam(@Param('teamId') teamId: string): Promise<void> {
     await this.cards.removeTeam(teamId);
   }
 
   @Get('template')
+  @ApiOperation({
+    operationId: 'downloadCardImportTemplate',
+    summary: 'Baixa a planilha modelo de importação de Cards',
+  })
   @ApiOkResponse({ standardSchema: CardTemplateSchema })
   async template(): Promise<CardTemplate> {
     return {
@@ -282,6 +341,10 @@ export class AdminCardsController {
   }
 
   @Post('preview')
+  @ApiOperation({
+    operationId: 'previewCardImport',
+    summary: 'Valida uma planilha de Cards sem importar',
+  })
   @HttpCode(200)
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -293,6 +356,7 @@ export class AdminCardsController {
   }
 
   @Post('import')
+  @ApiOperation({ operationId: 'importCards', summary: 'Importa Cards de uma planilha' })
   @HttpCode(200)
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -304,24 +368,28 @@ export class AdminCardsController {
   }
 
   @Get()
+  @ApiOperation({ operationId: 'listAdminCards', summary: 'Lista Cards' })
   @ApiOkResponse({ standardSchema: CardPageSchema })
   list(@Query({ schema: CardListQuerySchema }) query: CardListQuery): Promise<CardPage> {
     return this.cards.list(query);
   }
 
   @Post()
+  @ApiOperation({ operationId: 'createAdminCard', summary: 'Cria um Card' })
   @ApiCreatedResponse({ standardSchema: AdminCardSchema })
   create(@Body({ schema: CardInputSchema }) input: CardInput): Promise<AdminCard> {
     return this.cards.create(input);
   }
 
   @Get(':cardId')
+  @ApiOperation({ operationId: 'getAdminCard', summary: 'Lê um Card' })
   @ApiOkResponse({ standardSchema: AdminCardSchema })
   get(@Param('cardId') cardId: string): Promise<AdminCard> {
     return this.cards.get(cardId);
   }
 
   @Put(':cardId')
+  @ApiOperation({ operationId: 'updateAdminCard', summary: 'Atualiza um Card' })
   @ApiOkResponse({ standardSchema: AdminCardSchema })
   update(
     @Param('cardId') cardId: string,
@@ -331,6 +399,7 @@ export class AdminCardsController {
   }
 
   @Put(':cardId/image')
+  @ApiOperation({ operationId: 'uploadAdminCardImage', summary: 'Envia a imagem de um Card' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
@@ -346,12 +415,14 @@ export class AdminCardsController {
   }
 
   @Delete(':cardId/image')
+  @ApiOperation({ operationId: 'deleteAdminCardImage', summary: 'Remove a imagem de um Card' })
   @ApiOkResponse({ standardSchema: AdminCardSchema })
   removeImage(@Param('cardId') cardId: string): Promise<AdminCard> {
     return this.cards.removeImage(cardId);
   }
 
   @Delete(':cardId')
+  @ApiOperation({ operationId: 'deleteAdminCard', summary: 'Remove um Card' })
   @HttpCode(204)
   async remove(@Param('cardId') cardId: string): Promise<void> {
     await this.cards.remove(cardId);

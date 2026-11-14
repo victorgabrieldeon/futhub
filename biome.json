@@ -14,7 +14,7 @@
       "**/dist/**",
       "**/coverage/**",
       "**/drizzle/**",
-      "packages/api-client/src/generated.ts",
+      "packages/api-client/src/generated/**",
       "apps/admin/src/api/generated.ts",
       ".agents/**",
       ".openclaude/skills/**",

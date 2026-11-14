@@ -2,11 +2,11 @@ import {
   type AdminMission,
   type AdminMissionOptions,
   ApiClientError,
-  deleteV1AdminMissionsId,
-  getV1AdminMissions,
-  getV1AdminMissionsOptions,
-  postV1AdminMissions,
-  putV1AdminMissionsId,
+  createAdminMission,
+  deleteAdminMission,
+  getAdminMissionOptions,
+  listAdminMissions,
+  updateAdminMission,
 } from '@futhub/api-client';
 import { type FormEvent, useEffect, useState } from 'react';
 import { adminApiOptions } from '../../api/admin-client';
@@ -211,8 +211,8 @@ function MissionForm({
     try {
       onSaved(
         editing
-          ? await putV1AdminMissionsId(editing.id, result.input, adminApiOptions())
-          : await postV1AdminMissions(result.input, adminApiOptions()),
+          ? await updateAdminMission(editing.id, result.input, adminApiOptions())
+          : await createAdminMission(result.input, adminApiOptions()),
       );
       if (!editing) setDraft(emptyDraft());
     } catch (cause) {
@@ -410,14 +410,14 @@ function MissionRow({
     run(async () => {
       const result = inputFrom({ ...draftFrom(mission), active: !mission.active });
       if ('error' in result) throw new Error(result.error);
-      onChanged(await putV1AdminMissionsId(mission.id, result.input, adminApiOptions()));
+      onChanged(await updateAdminMission(mission.id, result.input, adminApiOptions()));
     });
 
   const remove = () => {
     if (!window.confirm(`Excluir a missão "${mission.title}"? Esta ação não pode ser desfeita.`))
       return;
     void run(async () => {
-      await deleteV1AdminMissionsId(mission.id, adminApiOptions());
+      await deleteAdminMission(mission.id, adminApiOptions());
       onDeleted(mission.id);
     });
   };
@@ -492,8 +492,8 @@ export function MissionsPage() {
     let active = true;
     setError('');
     void Promise.all([
-      getV1AdminMissions(adminApiOptions()),
-      getV1AdminMissionsOptions(adminApiOptions()),
+      listAdminMissions(adminApiOptions()),
+      getAdminMissionOptions(adminApiOptions()),
     ])
       .then(([loadedMissions, loadedOptions]) => {
         if (!active) return;

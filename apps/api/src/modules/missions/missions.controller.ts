@@ -18,8 +18,8 @@ export class MissionsController {
   constructor(@Inject(MissionsService) private readonly missions: MissionsService) {}
 
   @Post()
+  @ApiOperation({ operationId: 'listMissions', summary: 'Lista as missões do jogador' })
   @HttpCode(200)
-  @ApiOperation({ operationId: 'listMissions' })
   @ApiOkResponse({ standardSchema: MissionsResponseSchema })
   async list(
     @Body({ schema: MissionsRequestSchema }) identity: MissionsRequest,

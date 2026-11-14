@@ -11,7 +11,7 @@ import {
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import { AdminApiConfig, isValidAdminApiKey } from './admin-auth.guard.js';
@@ -37,6 +37,7 @@ export class AdminSessionController {
   ) {}
 
   @Post()
+  @ApiOperation({ operationId: 'createAdminSession', summary: 'Inicia a sessão administrativa' })
   @Header('Cache-Control', 'no-store')
   @ApiCreatedResponse({ standardSchema: AdminSessionResponseSchema })
   async create(
@@ -61,6 +62,7 @@ export class AdminSessionController {
   }
 
   @Get()
+  @ApiOperation({ operationId: 'getAdminSession', summary: 'Lê a sessão administrativa atual' })
   @Header('Cache-Control', 'no-store')
   @ApiOkResponse({ standardSchema: AdminSessionResponseSchema })
   async status(@Req() request: FastifyRequest): Promise<AdminSessionResponse> {
@@ -70,6 +72,7 @@ export class AdminSessionController {
   }
 
   @Delete()
+  @ApiOperation({ operationId: 'deleteAdminSession', summary: 'Encerra a sessão administrativa' })
   @Header('Cache-Control', 'no-store')
   @HttpCode(204)
   async destroy(

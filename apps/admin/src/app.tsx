@@ -1,9 +1,9 @@
 import {
   ApiClientError,
-  deleteV1AdminSession,
-  getV1AdminLucro,
-  getV1AdminSession,
-  postV1AdminSession,
+  createAdminSession,
+  deleteAdminSession,
+  getAdminSession,
+  getLucroConfig,
 } from '@futhub/api-client';
 import { type FormEvent, Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { NavLink, Navigate, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
@@ -128,7 +128,7 @@ function RequireSession() {
 
   useEffect(() => {
     let active = true;
-    void getV1AdminSession(adminApiOptions())
+    void getAdminSession(adminApiOptions())
       .then(() => {
         if (active) setAuthorized(true);
       })
@@ -167,7 +167,7 @@ function LoginPage() {
       return;
     }
     try {
-      await postV1AdminSession({ apiKey }, adminApiOptions());
+      await createAdminSession({ apiKey }, adminApiOptions());
       navigate('/app');
     } catch (cause) {
       setError(cause instanceof ApiClientError ? cause.message : 'Não foi possível autenticar.');
@@ -229,7 +229,7 @@ function AdminLayout() {
   const navigate = useNavigate();
 
   async function logout() {
-    await deleteV1AdminSession(adminApiOptions()).catch(() => undefined);
+    await deleteAdminSession(adminApiOptions()).catch(() => undefined);
     navigate('/login');
   }
 
@@ -340,7 +340,7 @@ function CommandsPage() {
 
   useEffect(() => {
     let active = true;
-    void getV1AdminLucro(adminApiOptions())
+    void getLucroConfig(adminApiOptions())
       .then((response) => {
         if (!active) return;
         setConfig(response as LucroConfig);

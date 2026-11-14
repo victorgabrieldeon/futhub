@@ -40,14 +40,17 @@ export class AdminBotEmojisController {
   constructor(@Inject(BotEmojisService) private readonly emojis: BotEmojisService) {}
 
   @Get()
-  @ApiOperation({ operationId: 'listAdminBotEmojis' })
+  @ApiOperation({
+    operationId: 'listAdminBotEmojis',
+    summary: 'Lista os emojis do bot para administração',
+  })
   @ApiOkResponse({ standardSchema: BotEmojiListDtoSchema })
   list(): Promise<BotEmojiListDto> {
     return this.emojis.list();
   }
 
   @Post()
-  @ApiOperation({ operationId: 'createBotEmoji' })
+  @ApiOperation({ operationId: 'createBotEmoji', summary: 'Cria um emoji do bot' })
   @ApiCreatedResponse({ standardSchema: BotEmojiDtoSchema })
   create(
     @Body({ schema: CreateBotEmojiDtoSchema }) input: CreateBotEmojiDto,
@@ -56,7 +59,7 @@ export class AdminBotEmojisController {
   }
 
   @Patch(':id')
-  @ApiOperation({ operationId: 'renameBotEmoji' })
+  @ApiOperation({ operationId: 'renameBotEmoji', summary: 'Renomeia um emoji do bot' })
   @ApiOkResponse({ standardSchema: BotEmojiDtoSchema })
   rename(
     @Param('id') id: string,
@@ -66,8 +69,8 @@ export class AdminBotEmojisController {
   }
 
   @Delete(':id')
+  @ApiOperation({ operationId: 'deleteBotEmoji', summary: 'Remove um emoji do bot' })
   @HttpCode(204)
-  @ApiOperation({ operationId: 'deleteBotEmoji' })
   remove(@Param('id') id: string): Promise<void> {
     return this.emojis.remove(id);
   }
@@ -81,7 +84,10 @@ export class BotEmojisController {
   constructor(@Inject(BotEmojisService) private readonly emojis: BotEmojisService) {}
 
   @Get()
-  @ApiOperation({ operationId: 'listBotEmojis' })
+  @ApiOperation({
+    operationId: 'listBotEmojis',
+    summary: 'Lista os emojis usados nas respostas do bot',
+  })
   @ApiOkResponse({ standardSchema: BotEmojiListDtoSchema })
   list(): Promise<BotEmojiListDto> {
     return this.emojis.list(false);

@@ -22,8 +22,8 @@ export class LucroController {
 
   /** Executa o comando lucro: recompensa concedida ou cooldown ativo. */
   @Post('lucro')
+  @ApiOperation({ operationId: 'executeLucro', summary: 'Resgata o lucro do clube' })
   @HttpCode(200)
-  @ApiOperation({ operationId: 'executeLucro' })
   @ApiOkResponse({ standardSchema: LucroResponseSchema })
   async execute(
     @Body({ schema: DiscordIdentityDtoSchema }) identity: DiscordIdentityDto,

@@ -17,6 +17,7 @@ const tags: [name: string, description: string][] = [
   ['Administração / Assistente IA', 'Assistente que propõe Times, Coleções, Cards e Packs.'],
   ['Administração / Assistente IA streaming', 'Variantes SSE do assistente; fora do SDK gerado.'],
   ['Administração / Usuários', 'Perfil, saldo, cards, packs, campos e banimento de jogadores.'],
+  ['Administração / Respostas do bot', 'Edição dos templates de resposta do bot Discord.'],
   ['Respostas do bot', 'Templates configuráveis de resposta do bot Discord.'],
   ['Emojis do bot', 'Emojis da aplicação Discord usados nas respostas do bot.'],
   ['Clube', 'Gestão financeira e estrutura do clube.'],
@@ -57,16 +58,15 @@ export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
     standardSchemaConverter: zodSchemaConverter,
     operationIdFactory: () => '',
   });
-  // Routes without @ApiOperation({ operationId }) stay anonymous, so orval keeps naming
-  // their SDK functions from method + path (getV1AdminCards, ...), as consumers expect.
-  for (const path of Object.values(document.paths))
-    for (const operation of Object.values(path))
-      if (
-        operation &&
-        typeof operation === 'object' &&
-        'operationId' in operation &&
-        !operation.operationId
+  // SDK function and type names come from operationId: every route must name itself.
+  const anonymous = Object.entries(document.paths).flatMap(([path, item]) =>
+    Object.entries(item)
+      .filter(
+        ([, operation]) => typeof operation === 'object' && operation && !operation.operationId,
       )
-        operation.operationId = undefined;
+      .map(([method]) => `${method.toUpperCase()} ${path}`),
+  );
+  if (anonymous.length)
+    throw new Error(`Rotas sem @ApiOperation({ operationId }): ${anonymous.join(', ')}`);
   return document;
 }

@@ -3,6 +3,7 @@
   "paths": {
     "/v1/admin/session": {
       "post": {
+        "operationId": "createAdminSession",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -41,9 +42,11 @@
             }
           }
         },
+        "summary": "Inicia a sessão administrativa",
         "tags": ["Administração / Sessão"]
       },
       "get": {
+        "operationId": "getAdminSession",
         "parameters": [],
         "responses": {
           "200": {
@@ -64,15 +67,18 @@
             }
           }
         },
+        "summary": "Lê a sessão administrativa atual",
         "tags": ["Administração / Sessão"]
       },
       "delete": {
+        "operationId": "deleteAdminSession",
         "parameters": [],
         "responses": {
           "204": {
             "description": ""
           }
         },
+        "summary": "Encerra a sessão administrativa",
         "tags": ["Administração / Sessão"]
       }
     },
@@ -97,7 +103,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Lista os emojis do bot para administração",
         "tags": ["Emojis do bot"]
       },
       "post": {
@@ -130,7 +136,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Cria um emoji do bot",
         "tags": ["Emojis do bot"]
       }
     },
@@ -174,7 +180,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Renomeia um emoji do bot",
         "tags": ["Emojis do bot"]
       },
       "delete": {
@@ -199,7 +205,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Remove um emoji do bot",
         "tags": ["Emojis do bot"]
       }
     },
@@ -224,7 +230,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Lista os emojis usados nas respostas do bot",
         "tags": ["Emojis do bot"]
       }
     },
@@ -252,8 +258,8 @@
             "bearer": []
           }
         ],
-        "summary": "",
-        "tags": ["Admin bot responses"]
+        "summary": "Lê o catálogo de respostas configuráveis do bot",
+        "tags": ["Administração / Respostas do bot"]
       }
     },
     "/v1/admin/bot-responses/{key}": {
@@ -286,8 +292,8 @@
             "bearer": []
           }
         ],
-        "summary": "",
-        "tags": ["Admin bot responses"]
+        "summary": "Lê o template editável de uma resposta do bot",
+        "tags": ["Administração / Respostas do bot"]
       },
       "put": {
         "operationId": "updateBotResponse",
@@ -328,8 +334,8 @@
             "bearer": []
           }
         ],
-        "summary": "",
-        "tags": ["Admin bot responses"]
+        "summary": "Salva o template de uma resposta do bot",
+        "tags": ["Administração / Respostas do bot"]
       }
     },
     "/v1/bot-responses/{key}": {
@@ -362,12 +368,13 @@
             "bearer": []
           }
         ],
-        "summary": "",
-        "tags": ["Bot responses"]
+        "summary": "Lê o template em uso de uma resposta do bot",
+        "tags": ["Respostas do bot"]
       }
     },
     "/v1/admin/ai/sessions/capabilities": {
       "get": {
+        "operationId": "getAiCapabilities",
         "parameters": [],
         "responses": {
           "200": {
@@ -388,11 +395,13 @@
             }
           }
         },
+        "summary": "Lista os recursos disponíveis ao assistente IA",
         "tags": ["Administração / Assistente IA"]
       }
     },
     "/v1/admin/ai/sessions/config": {
       "get": {
+        "operationId": "getAiConfig",
         "parameters": [],
         "responses": {
           "200": {
@@ -431,9 +440,11 @@
             }
           }
         },
+        "summary": "Lê a configuração salva do provedor de IA",
         "tags": ["Administração / Assistente IA"]
       },
       "put": {
+        "operationId": "saveAiConfig",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -498,11 +509,13 @@
             }
           }
         },
+        "summary": "Salva a configuração do provedor de IA",
         "tags": ["Administração / Assistente IA"]
       }
     },
     "/v1/admin/ai/sessions/saved": {
       "post": {
+        "operationId": "connectSavedAiSession",
         "parameters": [],
         "responses": {
           "201": {
@@ -590,11 +603,13 @@
             }
           }
         },
+        "summary": "Abre uma sessão do assistente com a configuração salva",
         "tags": ["Administração / Assistente IA"]
       }
     },
     "/v1/admin/ai/sessions/history": {
       "get": {
+        "operationId": "listAiHistory",
         "parameters": [
           {
             "name": "page",
@@ -662,11 +677,13 @@
             }
           }
         },
+        "summary": "Lista o histórico de conversas do assistente",
         "tags": ["Administração / Assistente IA"]
       }
     },
     "/v1/admin/ai/sessions/history/{id}": {
       "get": {
+        "operationId": "getAiHistory",
         "parameters": [
           {
             "name": "id",
@@ -798,11 +815,13 @@
             }
           }
         },
+        "summary": "Lê uma conversa arquivada do assistente",
         "tags": ["Administração / Assistente IA"]
       }
     },
     "/v1/admin/ai/sessions": {
       "post": {
+        "operationId": "createAiSession",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -917,11 +936,13 @@
             }
           }
         },
+        "summary": "Abre uma sessão do assistente IA",
         "tags": ["Administração / Assistente IA"]
       }
     },
     "/v1/admin/ai/sessions/{id}": {
       "get": {
+        "operationId": "getAiSession",
         "parameters": [
           {
             "name": "id",
@@ -1018,9 +1039,11 @@
             }
           }
         },
+        "summary": "Lê o estado de uma sessão do assistente",
         "tags": ["Administração / Assistente IA"]
       },
       "delete": {
+        "operationId": "deleteAiSession",
         "parameters": [
           {
             "name": "id",
@@ -1036,11 +1059,13 @@
             "description": ""
           }
         },
+        "summary": "Encerra uma sessão do assistente",
         "tags": ["Administração / Assistente IA"]
       }
     },
     "/v1/admin/ai/sessions/{id}/messages": {
       "post": {
+        "operationId": "sendAiMessage",
         "parameters": [
           {
             "name": "id",
@@ -1160,11 +1185,13 @@
             }
           }
         },
+        "summary": "Envia uma mensagem ao assistente",
         "tags": ["Administração / Assistente IA"]
       }
     },
     "/v1/admin/ai/sessions/{id}/actions/{actionId}": {
       "post": {
+        "operationId": "decideAiAction",
         "parameters": [
           {
             "name": "id",
@@ -1285,11 +1312,13 @@
             }
           }
         },
+        "summary": "Aprova ou rejeita uma ação proposta pelo assistente",
         "tags": ["Administração / Assistente IA"]
       }
     },
     "/v1/admin/ai/sessions/{id}/messages/stream": {
       "post": {
+        "operationId": "streamAiMessage",
         "parameters": [
           {
             "name": "id",
@@ -1335,11 +1364,13 @@
             }
           }
         },
+        "summary": "Envia uma mensagem ao assistente com resposta em SSE",
         "tags": ["Administração / Assistente IA streaming"]
       }
     },
     "/v1/admin/ai/sessions/{id}/actions/{actionId}/stream": {
       "post": {
+        "operationId": "streamAiAction",
         "parameters": [
           {
             "name": "id",
@@ -1386,11 +1417,13 @@
             }
           }
         },
+        "summary": "Decide uma ação proposta com resposta em SSE",
         "tags": ["Administração / Assistente IA streaming"]
       }
     },
     "/v1/admin/cards/catalog": {
       "get": {
+        "operationId": "getAdminCardCatalog",
         "parameters": [],
         "responses": {
           "200": {
@@ -1468,11 +1501,13 @@
             }
           }
         },
+        "summary": "Lê Times e Coleções para os formulários de card",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/team-logo-suggestions": {
       "get": {
+        "operationId": "listTeamLogoSuggestions",
         "parameters": [
           {
             "name": "q",
@@ -1521,11 +1556,13 @@
             }
           }
         },
+        "summary": "Sugere escudos para um Time",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/team-logo-details": {
       "get": {
+        "operationId": "getTeamLogoDetails",
         "parameters": [
           {
             "name": "slug",
@@ -1577,11 +1614,13 @@
             }
           }
         },
+        "summary": "Lê os detalhes de um escudo sugerido",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/team-logos/{filename}": {
       "get": {
+        "operationId": "getTeamLogo",
         "parameters": [
           {
             "name": "filename",
@@ -1597,11 +1636,13 @@
             "description": ""
           }
         },
+        "summary": "Baixa um escudo sugerido",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/collection-artwork-suggestions": {
       "get": {
+        "operationId": "listCollectionArtworkSuggestions",
         "parameters": [
           {
             "name": "q",
@@ -1677,11 +1718,13 @@
             }
           }
         },
+        "summary": "Sugere artes para uma Coleção",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/player-photo-suggestions": {
       "get": {
+        "operationId": "listPlayerPhotoSuggestions",
         "parameters": [
           {
             "name": "q",
@@ -1709,11 +1752,13 @@
             }
           }
         },
+        "summary": "Sugere fotos para um jogador",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/player-photos/{filename}": {
       "get": {
+        "operationId": "getPlayerPhoto",
         "parameters": [
           {
             "name": "filename",
@@ -1729,11 +1774,13 @@
             "description": ""
           }
         },
+        "summary": "Baixa uma foto de jogador sugerida",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/player-photos/{kind}/{filename}": {
       "get": {
+        "operationId": "getPlayerPhotoByKind",
         "parameters": [
           {
             "name": "kind",
@@ -1757,11 +1804,13 @@
             "description": ""
           }
         },
+        "summary": "Baixa uma foto de jogador sugerida por tipo",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/squad-import/clubs": {
       "get": {
+        "operationId": "listSquadImportClubs",
         "parameters": [
           {
             "name": "q",
@@ -1805,11 +1854,13 @@
             }
           }
         },
+        "summary": "Busca clubes para importar elenco",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/squad-import/leagues": {
       "get": {
+        "operationId": "listSquadImportLeagues",
         "parameters": [],
         "responses": {
           "200": {
@@ -1842,11 +1893,13 @@
             }
           }
         },
+        "summary": "Lista ligas disponíveis para importar elenco",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/squad-import/league-clubs": {
       "get": {
+        "operationId": "listSquadImportLeagueClubs",
         "parameters": [
           {
             "name": "leagueId",
@@ -1891,11 +1944,13 @@
             }
           }
         },
+        "summary": "Lista os clubes de uma liga para importar elenco",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/squad-import/squad": {
       "get": {
+        "operationId": "getSquadImportSquad",
         "parameters": [
           {
             "name": "clubId",
@@ -2123,11 +2178,13 @@
             }
           }
         },
+        "summary": "Lê o elenco de um clube para importação",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/squad-import": {
       "post": {
+        "operationId": "importSquad",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -2320,11 +2377,13 @@
             }
           }
         },
+        "summary": "Importa o elenco de um clube como Cards",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/collections": {
       "get": {
+        "operationId": "listAdminCollections",
         "parameters": [
           {
             "name": "query",
@@ -2453,9 +2512,11 @@
             }
           }
         },
+        "summary": "Lista Coleções",
         "tags": ["Administração / Cards"]
       },
       "post": {
+        "operationId": "createAdminCollection",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -2577,11 +2638,13 @@
             }
           }
         },
+        "summary": "Cria uma Coleção",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/collections/{collectionId}": {
       "put": {
+        "operationId": "updateAdminCollection",
         "parameters": [
           {
             "name": "collectionId",
@@ -2712,9 +2775,11 @@
             }
           }
         },
+        "summary": "Atualiza uma Coleção",
         "tags": ["Administração / Cards"]
       },
       "delete": {
+        "operationId": "deleteAdminCollection",
         "parameters": [
           {
             "name": "collectionId",
@@ -2730,11 +2795,13 @@
             "description": ""
           }
         },
+        "summary": "Remove uma Coleção",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/teams": {
       "get": {
+        "operationId": "listAdminTeams",
         "parameters": [
           {
             "name": "query",
@@ -2847,9 +2914,11 @@
             }
           }
         },
+        "summary": "Lista Times",
         "tags": ["Administração / Cards"]
       },
       "post": {
+        "operationId": "createAdminTeam",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -2951,11 +3020,13 @@
             }
           }
         },
+        "summary": "Cria um Time",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/teams/{teamId}": {
       "put": {
+        "operationId": "updateAdminTeam",
         "parameters": [
           {
             "name": "teamId",
@@ -3066,9 +3137,11 @@
             }
           }
         },
+        "summary": "Atualiza um Time",
         "tags": ["Administração / Cards"]
       },
       "delete": {
+        "operationId": "deleteAdminTeam",
         "parameters": [
           {
             "name": "teamId",
@@ -3084,11 +3157,13 @@
             "description": ""
           }
         },
+        "summary": "Remove um Time",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/template": {
       "get": {
+        "operationId": "downloadCardImportTemplate",
         "parameters": [],
         "responses": {
           "200": {
@@ -3112,11 +3187,13 @@
             }
           }
         },
+        "summary": "Baixa a planilha modelo de importação de Cards",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/preview": {
       "post": {
+        "operationId": "previewCardImport",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -3178,11 +3255,13 @@
             }
           }
         },
+        "summary": "Valida uma planilha de Cards sem importar",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/import": {
       "post": {
+        "operationId": "importCards",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -3244,11 +3323,13 @@
             }
           }
         },
+        "summary": "Importa Cards de uma planilha",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards": {
       "get": {
+        "operationId": "listAdminCards",
         "parameters": [
           {
             "name": "query",
@@ -3509,9 +3590,11 @@
             }
           }
         },
+        "summary": "Lista Cards",
         "tags": ["Administração / Cards"]
       },
       "post": {
+        "operationId": "createAdminCard",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -3767,11 +3850,13 @@
             }
           }
         },
+        "summary": "Cria um Card",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/{cardId}": {
       "get": {
+        "operationId": "getAdminCard",
         "parameters": [
           {
             "name": "cardId",
@@ -3932,9 +4017,11 @@
             }
           }
         },
+        "summary": "Lê um Card",
         "tags": ["Administração / Cards"]
       },
       "put": {
+        "operationId": "updateAdminCard",
         "parameters": [
           {
             "name": "cardId",
@@ -4193,9 +4280,11 @@
             }
           }
         },
+        "summary": "Atualiza um Card",
         "tags": ["Administração / Cards"]
       },
       "delete": {
+        "operationId": "deleteAdminCard",
         "parameters": [
           {
             "name": "cardId",
@@ -4211,11 +4300,13 @@
             "description": ""
           }
         },
+        "summary": "Remove um Card",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/cards/{cardId}/image": {
       "put": {
+        "operationId": "uploadAdminCardImage",
         "parameters": [
           {
             "name": "cardId",
@@ -4392,9 +4483,11 @@
             }
           }
         },
+        "summary": "Envia a imagem de um Card",
         "tags": ["Administração / Cards"]
       },
       "delete": {
+        "operationId": "deleteAdminCardImage",
         "parameters": [
           {
             "name": "cardId",
@@ -4555,11 +4648,13 @@
             }
           }
         },
+        "summary": "Remove a imagem de um Card",
         "tags": ["Administração / Cards"]
       }
     },
     "/v1/admin/packs": {
       "get": {
+        "operationId": "listAdminPacks",
         "parameters": [],
         "responses": {
           "200": {
@@ -4755,9 +4850,11 @@
             }
           }
         },
+        "summary": "Lista Packs",
         "tags": ["Administração / Packs"]
       },
       "post": {
+        "operationId": "createAdminPack",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -5085,11 +5182,13 @@
             }
           }
         },
+        "summary": "Cria um Pack",
         "tags": ["Administração / Packs"]
       }
     },
     "/v1/admin/packs/{id}": {
       "put": {
+        "operationId": "updateAdminPack",
         "parameters": [
           {
             "name": "id",
@@ -5426,9 +5525,11 @@
             }
           }
         },
+        "summary": "Atualiza um Pack",
         "tags": ["Administração / Packs"]
       },
       "delete": {
+        "operationId": "deleteAdminPack",
         "parameters": [
           {
             "name": "id",
@@ -5608,11 +5709,13 @@
             }
           }
         },
+        "summary": "Remove um Pack",
         "tags": ["Administração / Packs"]
       }
     },
     "/v1/admin/packs/{id}/image": {
       "put": {
+        "operationId": "uploadAdminPackImage",
         "parameters": [
           {
             "name": "id",
@@ -5808,11 +5911,13 @@
             }
           }
         },
+        "summary": "Envia a imagem de um Pack",
         "tags": ["Administração / Packs"]
       }
     },
     "/v1/admin/users": {
       "get": {
+        "operationId": "listAdminUsers",
         "parameters": [
           {
             "name": "query",
@@ -5856,11 +5961,13 @@
             }
           }
         },
+        "summary": "Lista jogadores",
         "tags": ["Administração / Usuários"]
       }
     },
     "/v1/admin/users/options": {
       "get": {
+        "operationId": "getAdminUserOptions",
         "parameters": [],
         "responses": {
           "200": {
@@ -5874,11 +5981,13 @@
             }
           }
         },
+        "summary": "Lista Cards, Packs e campos para editar jogadores",
         "tags": ["Administração / Usuários"]
       }
     },
     "/v1/admin/users/{id}": {
       "get": {
+        "operationId": "getAdminUser",
         "parameters": [
           {
             "name": "id",
@@ -5901,9 +6010,11 @@
             }
           }
         },
+        "summary": "Lê o perfil completo de um jogador",
         "tags": ["Administração / Usuários"]
       },
       "put": {
+        "operationId": "updateAdminUser",
         "parameters": [
           {
             "name": "id",
@@ -5936,11 +6047,13 @@
             }
           }
         },
+        "summary": "Atualiza o perfil de um jogador",
         "tags": ["Administração / Usuários"]
       }
     },
     "/v1/admin/users/{id}/balance": {
       "post": {
+        "operationId": "adjustAdminUserBalance",
         "parameters": [
           {
             "name": "id",
@@ -5981,11 +6094,13 @@
             }
           }
         },
+        "summary": "Ajusta o saldo de um jogador",
         "tags": ["Administração / Usuários"]
       }
     },
     "/v1/admin/users/{id}/cards": {
       "post": {
+        "operationId": "addAdminUserCards",
         "parameters": [
           {
             "name": "id",
@@ -6031,11 +6146,13 @@
             }
           }
         },
+        "summary": "Concede Cards a um jogador",
         "tags": ["Administração / Usuários"]
       }
     },
     "/v1/admin/users/{id}/cards/{userCardId}": {
       "delete": {
+        "operationId": "removeAdminUserCard",
         "parameters": [
           {
             "name": "id",
@@ -6066,11 +6183,13 @@
             }
           }
         },
+        "summary": "Remove um Card de um jogador",
         "tags": ["Administração / Usuários"]
       }
     },
     "/v1/admin/users/{id}/packs/{packId}": {
       "put": {
+        "operationId": "setAdminUserPack",
         "parameters": [
           {
             "name": "id",
@@ -6119,11 +6238,13 @@
             }
           }
         },
+        "summary": "Define a quantidade de um Pack de um jogador",
         "tags": ["Administração / Usuários"]
       }
     },
     "/v1/admin/users/{id}/fields/{fieldId}": {
       "put": {
+        "operationId": "grantAdminUserField",
         "parameters": [
           {
             "name": "id",
@@ -6154,9 +6275,11 @@
             }
           }
         },
+        "summary": "Concede um campo a um jogador",
         "tags": ["Administração / Usuários"]
       },
       "delete": {
+        "operationId": "revokeAdminUserField",
         "parameters": [
           {
             "name": "id",
@@ -6187,6 +6310,7 @@
             }
           }
         },
+        "summary": "Remove um campo de um jogador",
         "tags": ["Administração / Usuários"]
       }
     },
@@ -6438,7 +6562,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Lista Cards à venda no mercado",
         "tags": ["Mercado de cards"]
       }
     },
@@ -6509,7 +6633,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Lista Times e Coleções para filtrar o mercado",
         "tags": ["Mercado de cards"]
       }
     },
@@ -6578,7 +6702,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Compra um Card do mercado",
         "tags": ["Mercado de cards"]
       }
     },
@@ -6647,7 +6771,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Vende Cards do elenco",
         "tags": ["Mercado de cards"]
       }
     },
@@ -6682,7 +6806,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Lê a economia e a estrutura do clube",
         "tags": ["Clube"]
       }
     },
@@ -6717,13 +6841,13 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Melhora o estádio do clube",
         "tags": ["Clube"]
       }
     },
     "/health": {
       "get": {
-        "operationId": "HealthController_health",
+        "operationId": "getHealth",
         "parameters": [],
         "responses": {
           "200": {
@@ -6745,7 +6869,7 @@
             }
           }
         },
-        "summary": "",
+        "summary": "Verifica se a API está no ar",
         "tags": ["Saúde"]
       }
     },
@@ -6780,7 +6904,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Lê a divisão e a classificação do jogador",
         "tags": ["Liga"]
       }
     },
@@ -6815,12 +6939,13 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Entra na fila da partida ranqueada",
         "tags": ["Liga"]
       }
     },
     "/v1/ranked/status/{discordUserId}": {
       "get": {
+        "operationId": "getRankedStatus",
         "parameters": [
           {
             "name": "discordUserId",
@@ -6848,11 +6973,13 @@
             }
           }
         },
+        "summary": "Lê o estado do jogador na fila ranqueada",
         "tags": ["Liga"]
       }
     },
     "/v1/league/{discordUserId}": {
       "get": {
+        "operationId": "getLeagueStatus",
         "parameters": [
           {
             "name": "discordUserId",
@@ -6875,6 +7002,7 @@
             }
           }
         },
+        "summary": "Lê a divisão e a classificação de um jogador",
         "tags": ["Liga"]
       }
     },
@@ -7135,12 +7263,13 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Simula um amistoso contra a CPU",
         "tags": ["Liga"]
       }
     },
     "/v1/matches/{matchId}": {
       "get": {
+        "operationId": "getMatch",
         "parameters": [
           {
             "name": "matchId",
@@ -7163,6 +7292,7 @@
             }
           }
         },
+        "summary": "Lê o resultado e os eventos de uma partida",
         "tags": ["Liga"]
       }
     },
@@ -7197,12 +7327,13 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Resgata o lucro do clube",
         "tags": ["Comandos"]
       }
     },
     "/v1/admin/lucro": {
       "get": {
+        "operationId": "getLucroConfig",
         "parameters": [],
         "responses": {
           "200": {
@@ -7295,9 +7426,11 @@
             }
           }
         },
+        "summary": "Lê a configuração do comando de lucro",
         "tags": ["Administração / Lucro"]
       },
       "put": {
+        "operationId": "updateLucroConfig",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -7400,11 +7533,13 @@
             }
           }
         },
+        "summary": "Salva a configuração do comando de lucro",
         "tags": ["Administração / Lucro"]
       }
     },
     "/v1/admin/lucro/schema": {
       "get": {
+        "operationId": "getLucroEmbedSchema",
         "parameters": [],
         "responses": {
           "200": {
@@ -7515,6 +7650,7 @@
             }
           }
         },
+        "summary": "Lê as variáveis disponíveis no embed de lucro",
         "tags": ["Administração / Lucro"]
       }
     },
@@ -7568,12 +7704,13 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Lista as missões do jogador",
         "tags": ["Missões"]
       }
     },
     "/v1/admin/missions": {
       "get": {
+        "operationId": "listAdminMissions",
         "parameters": [],
         "responses": {
           "200": {
@@ -7590,9 +7727,11 @@
             }
           }
         },
+        "summary": "Lista missões",
         "tags": ["Administração / Missões"]
       },
       "post": {
+        "operationId": "createAdminMission",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -7616,11 +7755,13 @@
             }
           }
         },
+        "summary": "Cria uma missão",
         "tags": ["Administração / Missões"]
       }
     },
     "/v1/admin/missions/options": {
       "get": {
+        "operationId": "getAdminMissionOptions",
         "parameters": [],
         "responses": {
           "200": {
@@ -7634,11 +7775,13 @@
             }
           }
         },
+        "summary": "Lista Cards, Packs e campos usados como recompensa",
         "tags": ["Administração / Missões"]
       }
     },
     "/v1/admin/missions/{id}": {
       "put": {
+        "operationId": "updateAdminMission",
         "parameters": [
           {
             "name": "id",
@@ -7671,9 +7814,11 @@
             }
           }
         },
+        "summary": "Atualiza uma missão",
         "tags": ["Administração / Missões"]
       },
       "delete": {
+        "operationId": "deleteAdminMission",
         "parameters": [
           {
             "name": "id",
@@ -7696,6 +7841,7 @@
             }
           }
         },
+        "summary": "Remove uma missão",
         "tags": ["Administração / Missões"]
       }
     },
@@ -7723,7 +7869,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Lista o catálogo de Packs",
         "tags": ["Packs"]
       }
     },
@@ -7797,7 +7943,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Lê a página da loja de Packs",
         "tags": ["Packs"]
       }
     },
@@ -7853,7 +7999,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Lê os detalhes de um Pack",
         "tags": ["Packs"]
       }
     },
@@ -7922,7 +8068,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Compra um Pack",
         "tags": ["Packs"]
       }
     },
@@ -7991,12 +8137,13 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Abre um Pack do inventário",
         "tags": ["Packs"]
       }
     },
     "/v1/auth/player/activity": {
       "get": {
+        "operationId": "getActivityConfig",
         "parameters": [],
         "responses": {
           "200": {
@@ -8021,9 +8168,11 @@
             }
           }
         },
+        "summary": "Lê a configuração pública da Activity do Discord",
         "tags": ["Autenticação do jogador"]
       },
       "post": {
+        "operationId": "createActivitySession",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -8092,11 +8241,13 @@
             }
           }
         },
+        "summary": "Troca o código da Activity por uma sessão de jogador",
         "tags": ["Autenticação do jogador"]
       }
     },
     "/v1/auth/player/session": {
       "get": {
+        "operationId": "getPlayerSession",
         "parameters": [],
         "responses": {
           "200": {
@@ -8134,15 +8285,18 @@
             }
           }
         },
+        "summary": "Lê a sessão do jogador logado",
         "tags": ["Autenticação do jogador"]
       },
       "delete": {
+        "operationId": "deletePlayerSession",
         "parameters": [],
         "responses": {
           "204": {
             "description": ""
           }
         },
+        "summary": "Encerra a sessão do jogador",
         "tags": ["Autenticação do jogador"]
       }
     },
@@ -8188,12 +8342,13 @@
             "bearer": []
           }
         ],
-        "summary": "Resgata um Código de resgate para o jogador.",
+        "summary": "Resgata um código promocional",
         "tags": ["Comandos"]
       }
     },
     "/v1/admin/redeem-codes": {
       "get": {
+        "operationId": "listAdminRedeemCodes",
         "parameters": [],
         "responses": {
           "200": {
@@ -8210,9 +8365,11 @@
             }
           }
         },
+        "summary": "Lista códigos de resgate",
         "tags": ["Administração / Códigos de resgate"]
       },
       "post": {
+        "operationId": "createAdminRedeemCode",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -8236,11 +8393,13 @@
             }
           }
         },
+        "summary": "Cria um código de resgate",
         "tags": ["Administração / Códigos de resgate"]
       }
     },
     "/v1/admin/redeem-codes/options": {
       "get": {
+        "operationId": "getAdminRedeemCodeOptions",
         "parameters": [],
         "responses": {
           "200": {
@@ -8254,11 +8413,13 @@
             }
           }
         },
+        "summary": "Lista Cards, Packs e campos concedidos por códigos",
         "tags": ["Administração / Códigos de resgate"]
       }
     },
     "/v1/admin/redeem-codes/{id}": {
       "put": {
+        "operationId": "updateAdminRedeemCode",
         "parameters": [
           {
             "name": "id",
@@ -8291,9 +8452,11 @@
             }
           }
         },
+        "summary": "Atualiza um código de resgate",
         "tags": ["Administração / Códigos de resgate"]
       },
       "delete": {
+        "operationId": "deleteAdminRedeemCode",
         "parameters": [
           {
             "name": "id",
@@ -8316,6 +8479,7 @@
             }
           }
         },
+        "summary": "Remove um código de resgate",
         "tags": ["Administração / Códigos de resgate"]
       }
     },
@@ -8408,7 +8572,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Lê elenco, escalação, formação e inventário do jogador",
         "tags": ["Time"]
       }
     },
@@ -8466,7 +8630,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Troca a formação do time",
         "tags": ["Time"]
       }
     },
@@ -8523,7 +8687,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Troca a tática do time",
         "tags": ["Time"]
       }
     },
@@ -8576,7 +8740,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Escala automaticamente os melhores titulares",
         "tags": ["Time"]
       }
     },
@@ -8638,7 +8802,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Escala um Card numa posição",
         "tags": ["Time"]
       }
     },
@@ -8696,7 +8860,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Define o capitão do time",
         "tags": ["Time"]
       }
     },
@@ -8758,7 +8922,7 @@
             "bearer": []
           }
         ],
-        "summary": "",
+        "summary": "Marca ou desmarca um Card como favorito",
         "tags": ["Time"]
       }
     }
@@ -8805,6 +8969,10 @@
     {
       "name": "Administração / Usuários",
       "description": "Perfil, saldo, cards, packs, campos e banimento de jogadores."
+    },
+    {
+      "name": "Administração / Respostas do bot",
+      "description": "Edição dos templates de resposta do bot Discord."
     },
     {
       "name": "Respostas do bot",

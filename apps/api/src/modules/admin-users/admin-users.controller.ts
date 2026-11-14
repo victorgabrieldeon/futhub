@@ -11,7 +11,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { AdminAuthGuard } from '../auth/admin-auth.guard.js';
 import {
@@ -41,6 +41,7 @@ export class AdminUsersController {
   constructor(@Inject(AdminUsersService) private readonly users: AdminUsersService) {}
 
   @Get()
+  @ApiOperation({ operationId: 'listAdminUsers', summary: 'Lista jogadores' })
   @ApiOkResponse({ standardSchema: AdminUserPageSchema })
   list(
     @Query({ schema: AdminUserListQuerySchema }) query: AdminUserListQuery,
@@ -49,18 +50,24 @@ export class AdminUsersController {
   }
 
   @Get('options')
+  @ApiOperation({
+    operationId: 'getAdminUserOptions',
+    summary: 'Lista Cards, Packs e campos para editar jogadores',
+  })
   @ApiOkResponse({ standardSchema: AdminUserOptionsSchema })
   options(): Promise<AdminUserOptions> {
     return this.users.options();
   }
 
   @Get(':id')
+  @ApiOperation({ operationId: 'getAdminUser', summary: 'Lê o perfil completo de um jogador' })
   @ApiOkResponse({ standardSchema: AdminUserDetailSchema })
   detail(@Param('id', ParseUUIDPipe) id: string): Promise<AdminUserDetail> {
     return this.users.detail(id);
   }
 
   @Put(':id')
+  @ApiOperation({ operationId: 'updateAdminUser', summary: 'Atualiza o perfil de um jogador' })
   @ApiOkResponse({ standardSchema: AdminUserDetailSchema })
   updateProfile(
     @Param('id', ParseUUIDPipe) id: string,
@@ -70,6 +77,7 @@ export class AdminUsersController {
   }
 
   @Post(':id/balance')
+  @ApiOperation({ operationId: 'adjustAdminUserBalance', summary: 'Ajusta o saldo de um jogador' })
   @ApiCreatedResponse({ standardSchema: AdminUserDetailSchema })
   adjustBalance(
     @Param('id', ParseUUIDPipe) id: string,
@@ -79,6 +87,7 @@ export class AdminUsersController {
   }
 
   @Post(':id/cards')
+  @ApiOperation({ operationId: 'addAdminUserCards', summary: 'Concede Cards a um jogador' })
   @ApiCreatedResponse({ standardSchema: AdminUserDetailSchema })
   addCards(
     @Param('id', ParseUUIDPipe) id: string,
@@ -88,6 +97,7 @@ export class AdminUsersController {
   }
 
   @Delete(':id/cards/:userCardId')
+  @ApiOperation({ operationId: 'removeAdminUserCard', summary: 'Remove um Card de um jogador' })
   @ApiOkResponse({ standardSchema: AdminUserDetailSchema })
   removeCard(
     @Param('id', ParseUUIDPipe) id: string,
@@ -97,6 +107,10 @@ export class AdminUsersController {
   }
 
   @Put(':id/packs/:packId')
+  @ApiOperation({
+    operationId: 'setAdminUserPack',
+    summary: 'Define a quantidade de um Pack de um jogador',
+  })
   @ApiOkResponse({ standardSchema: AdminUserDetailSchema })
   setPack(
     @Param('id', ParseUUIDPipe) id: string,
@@ -107,6 +121,7 @@ export class AdminUsersController {
   }
 
   @Put(':id/fields/:fieldId')
+  @ApiOperation({ operationId: 'grantAdminUserField', summary: 'Concede um campo a um jogador' })
   @ApiOkResponse({ standardSchema: AdminUserDetailSchema })
   grantField(
     @Param('id', ParseUUIDPipe) id: string,
@@ -116,6 +131,7 @@ export class AdminUsersController {
   }
 
   @Delete(':id/fields/:fieldId')
+  @ApiOperation({ operationId: 'revokeAdminUserField', summary: 'Remove um campo de um jogador' })
   @ApiOkResponse({ standardSchema: AdminUserDetailSchema })
   revokeField(
     @Param('id', ParseUUIDPipe) id: string,

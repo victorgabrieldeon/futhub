@@ -38,16 +38,19 @@ export class TeamController {
   constructor(@Inject(TeamService) private readonly team: TeamService) {}
 
   @Post()
+  @ApiOperation({
+    operationId: 'getTeam',
+    summary: 'Lê elenco, escalação, formação e inventário do jogador',
+  })
   @HttpCode(200)
-  @ApiOperation({ operationId: 'getTeam' })
   @ApiOkResponse({ standardSchema: TeamResponseSchema })
   view(@Body({ schema: TeamViewRequestSchema }) request: TeamViewRequest): Promise<TeamResponse> {
     return this.handle(() => this.team.view(request));
   }
 
   @Put('formation')
+  @ApiOperation({ operationId: 'setTeamFormation', summary: 'Troca a formação do time' })
   @HttpCode(204)
-  @ApiOperation({ operationId: 'setTeamFormation' })
   setFormation(
     @Body({ schema: SetFormationRequestSchema }) request: SetFormationRequest,
   ): Promise<void> {
@@ -55,15 +58,18 @@ export class TeamController {
   }
 
   @Put('tactic')
+  @ApiOperation({ operationId: 'setTeamTactic', summary: 'Troca a tática do time' })
   @HttpCode(204)
-  @ApiOperation({ operationId: 'setTeamTactic' })
   setTactic(@Body({ schema: SetTacticRequestSchema }) request: SetTacticRequest): Promise<void> {
     return this.handle(() => this.team.setTactic(request.identity, request.tactic));
   }
 
   @Post('lineup/auto')
+  @ApiOperation({
+    operationId: 'autoSelectTeamLineup',
+    summary: 'Escala automaticamente os melhores titulares',
+  })
   @HttpCode(204)
-  @ApiOperation({ operationId: 'autoSelectTeamLineup' })
   autoLineup(
     @Body({ schema: TeamIdentityRequestSchema }) request: TeamIdentityRequest,
   ): Promise<void> {
@@ -71,8 +77,8 @@ export class TeamController {
   }
 
   @Put('lineup')
+  @ApiOperation({ operationId: 'setTeamLineupCard', summary: 'Escala um Card numa posição' })
   @HttpCode(204)
-  @ApiOperation({ operationId: 'setTeamLineupCard' })
   setLineupCard(
     @Body({ schema: SetLineupCardRequestSchema }) request: SetLineupCardRequest,
   ): Promise<void> {
@@ -80,15 +86,18 @@ export class TeamController {
   }
 
   @Put('captain')
+  @ApiOperation({ operationId: 'setTeamCaptain', summary: 'Define o capitão do time' })
   @HttpCode(204)
-  @ApiOperation({ operationId: 'setTeamCaptain' })
   setCaptain(@Body({ schema: SetCaptainRequestSchema }) request: SetCaptainRequest): Promise<void> {
     return this.handle(() => this.team.setCaptain(request.identity, request.userCardId));
   }
 
   @Put('cards/:userCardId/favorite')
+  @ApiOperation({
+    operationId: 'toggleTeamCardFavorite',
+    summary: 'Marca ou desmarca um Card como favorito',
+  })
   @HttpCode(204)
-  @ApiOperation({ operationId: 'toggleTeamCardFavorite' })
   toggleFavorite(
     @Param('userCardId') userCardId: string,
     @Body({ schema: TeamIdentityRequestSchema }) request: TeamIdentityRequest,

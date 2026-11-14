@@ -1,7 +1,4 @@
-import {
-  type PlayerPhotoSuggestion,
-  getV1AdminCardsPlayerPhotoSuggestions,
-} from '@futhub/api-client';
+import { type PlayerPhotoSuggestion, listPlayerPhotoSuggestions } from '@futhub/api-client';
 import {
   type CSSProperties,
   type DragEvent as ReactDragEvent,
@@ -288,7 +285,7 @@ export function Studio() {
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       setPhotosLoading(true);
-      void getV1AdminCardsPlayerPhotoSuggestions(
+      void listPlayerPhotoSuggestions(
         { q: query },
         { ...adminApiOptions(), signal: controller.signal },
       )

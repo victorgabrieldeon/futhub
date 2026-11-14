@@ -48,7 +48,7 @@ export class CardMarketController {
   ) {}
 
   @Get()
-  @ApiOperation({ operationId: 'listCardMarket' })
+  @ApiOperation({ operationId: 'listCardMarket', summary: 'Lista Cards à venda no mercado' })
   @ApiOkResponse({ standardSchema: CardMarketPageSchema })
   listCards(
     @Query({ schema: CardMarketListQuerySchema }) query: CardMarketListQuery,
@@ -57,15 +57,18 @@ export class CardMarketController {
   }
 
   @Get('catalog')
-  @ApiOperation({ operationId: 'listCardMarketCatalog' })
+  @ApiOperation({
+    operationId: 'listCardMarketCatalog',
+    summary: 'Lista Times e Coleções para filtrar o mercado',
+  })
   @ApiOkResponse({ standardSchema: CardMarketCatalogSchema })
   listCatalog(): Promise<CardMarketCatalog> {
     return this.catalog.execute();
   }
 
   @Post(':cardId/purchase')
+  @ApiOperation({ operationId: 'purchaseCard', summary: 'Compra um Card do mercado' })
   @HttpCode(200)
-  @ApiOperation({ operationId: 'purchaseCard' })
   @ApiOkResponse({ standardSchema: PurchaseCardResponseSchema })
   async purchaseCard(
     @Param('cardId') cardId: string,
@@ -76,8 +79,8 @@ export class CardMarketController {
   }
 
   @Post('sell')
+  @ApiOperation({ operationId: 'sellCards', summary: 'Vende Cards do elenco' })
   @HttpCode(200)
-  @ApiOperation({ operationId: 'sellCards' })
   @ApiOkResponse({ standardSchema: SellCardsResponseSchema })
   async sellCards(
     @Body({ schema: SellCardsRequestSchema }) request: SellCardsRequest,

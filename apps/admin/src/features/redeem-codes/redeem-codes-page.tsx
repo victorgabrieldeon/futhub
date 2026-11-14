@@ -2,11 +2,11 @@ import {
   type AdminRedeemCode,
   type AdminRedeemCodeOptions,
   ApiClientError,
-  deleteV1AdminRedeemCodesId,
-  getV1AdminRedeemCodes,
-  getV1AdminRedeemCodesOptions,
-  postV1AdminRedeemCodes,
-  putV1AdminRedeemCodesId,
+  createAdminRedeemCode,
+  deleteAdminRedeemCode,
+  getAdminRedeemCodeOptions,
+  listAdminRedeemCodes,
+  updateAdminRedeemCode,
 } from '@futhub/api-client';
 import { type FormEvent, type KeyboardEvent, useEffect, useId, useRef, useState } from 'react';
 import { adminApiOptions } from '../../api/admin-client';
@@ -174,8 +174,8 @@ function RedeemCodeForm({
     try {
       onSaved(
         editing
-          ? await putV1AdminRedeemCodesId(editing.id, result.input, adminApiOptions())
-          : await postV1AdminRedeemCodes(result.input, adminApiOptions()),
+          ? await updateAdminRedeemCode(editing.id, result.input, adminApiOptions())
+          : await createAdminRedeemCode(result.input, adminApiOptions()),
       );
       if (!editing) setDraft(emptyDraft);
     } catch (cause) {
@@ -444,13 +444,13 @@ function RedeemCodeRow({
     run(async () => {
       const result = inputFrom({ ...draftFrom(code), active: !code.active });
       if ('error' in result) throw new Error(result.error);
-      onChanged(await putV1AdminRedeemCodesId(code.id, result.input, adminApiOptions()));
+      onChanged(await updateAdminRedeemCode(code.id, result.input, adminApiOptions()));
     });
 
   const remove = () => {
     if (!window.confirm(`Excluir o código ${code.code}? Esta ação não pode ser desfeita.`)) return;
     void run(async () => {
-      await deleteV1AdminRedeemCodesId(code.id, adminApiOptions());
+      await deleteAdminRedeemCode(code.id, adminApiOptions());
       onDeleted(code.id);
     });
   };
@@ -571,8 +571,8 @@ export function RedeemCodesPage() {
     let active = true;
     setError('');
     void Promise.all([
-      getV1AdminRedeemCodes(adminApiOptions()),
-      getV1AdminRedeemCodesOptions(adminApiOptions()),
+      listAdminRedeemCodes(adminApiOptions()),
+      getAdminRedeemCodeOptions(adminApiOptions()),
     ])
       .then(([loadedCodes, loadedOptions]) => {
         if (!active) return;

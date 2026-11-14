@@ -11,7 +11,7 @@ import {
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ApiExcludeEndpoint, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
 import {
@@ -63,6 +63,10 @@ export class PlayerAuthController {
 
   /** Config pública da Activity, lida em runtime para o build do front não depender de env. */
   @Get('activity')
+  @ApiOperation({
+    operationId: 'getActivityConfig',
+    summary: 'Lê a configuração pública da Activity do Discord',
+  })
   @ApiOkResponse({ standardSchema: ActivityConfigSchema })
   activityConfig(): ActivityConfig {
     const storage = process.env.MINIO_PUBLIC_URL;
@@ -74,6 +78,10 @@ export class PlayerAuthController {
 
   /** Troca o código do Embedded App SDK; no iframe da Activity a sessão viaja como Bearer. */
   @Post('activity')
+  @ApiOperation({
+    operationId: 'createActivitySession',
+    summary: 'Troca o código da Activity por uma sessão de jogador',
+  })
   @HttpCode(200)
   @ApiOkResponse({ standardSchema: ActivitySessionResponseSchema })
   async activity(
@@ -84,6 +92,7 @@ export class PlayerAuthController {
   }
 
   @Get('session')
+  @ApiOperation({ operationId: 'getPlayerSession', summary: 'Lê a sessão do jogador logado' })
   @ApiOkResponse({ standardSchema: PlayerSessionResponseSchema })
   session(@Req() request: FastifyRequest): PlayerSessionResponse {
     const token = this.cookieValue(request, sessionCookieName);
@@ -93,6 +102,7 @@ export class PlayerAuthController {
   }
 
   @Delete('session')
+  @ApiOperation({ operationId: 'deletePlayerSession', summary: 'Encerra a sessão do jogador' })
   @HttpCode(204)
   logout(@Res({ passthrough: true }) reply: FastifyReply): void {
     reply.header('set-cookie', this.cookie(sessionCookieName, '', 0));

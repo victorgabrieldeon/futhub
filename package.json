@@ -10,7 +10,7 @@
   "scripts": {
     "build": "pnpm generate:api && turbo run build",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
-    "codegen:check": "pnpm generate:api && git diff --exit-code -- apps/api/openapi.json packages/api-client/src/generated.ts",
+    "codegen:check": "pnpm generate:api && git diff --exit-code -- apps/api/openapi.json packages/api-client/src/generated",
     "dev": "turbo run dev --parallel",
     "dev:devspace": "devspace dev",
     "dev:devspace:down": "devspace purge",

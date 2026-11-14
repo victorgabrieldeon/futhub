@@ -1,6 +1,6 @@
-import type { LucroResponse, QueueResponse } from './generated.js';
+import type { LucroResponse, QueueResponse } from './generated/index.js';
 
-export * from './generated.js';
+export * from './generated/index.js';
 export { ApiClientError, configureApiClient, request, type ApiClientOptions } from './request.js';
 export type QueueMatchedResponse = Extract<QueueResponse, { kind: 'matched' }>;
 export type QueueWaitingResponse = Extract<QueueResponse, { kind: 'waiting' }>;

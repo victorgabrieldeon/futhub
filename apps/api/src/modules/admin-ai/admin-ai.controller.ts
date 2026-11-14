@@ -14,7 +14,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { FastifyReply } from 'fastify';
 import { AdminApiConfig, AdminAuthGuard } from '../auth/admin-auth.guard.js';
 import {
@@ -62,6 +62,10 @@ export class AdminAiController {
   ) {}
 
   @Get('capabilities')
+  @ApiOperation({
+    operationId: 'getAiCapabilities',
+    summary: 'Lista os recursos disponíveis ao assistente IA',
+  })
   @Header('Cache-Control', 'no-store')
   @ApiOkResponse({ standardSchema: AiCapabilitiesSchema })
   capabilities(): AiCapabilities {
@@ -69,6 +73,10 @@ export class AdminAiController {
   }
 
   @Get('config')
+  @ApiOperation({
+    operationId: 'getAiConfig',
+    summary: 'Lê a configuração salva do provedor de IA',
+  })
   @Header('Cache-Control', 'no-store')
   @ApiOkResponse({ standardSchema: AiSavedConfigSchema.nullable() })
   config(): Promise<AiSavedConfig | null> {
@@ -76,6 +84,7 @@ export class AdminAiController {
   }
 
   @Put('config')
+  @ApiOperation({ operationId: 'saveAiConfig', summary: 'Salva a configuração do provedor de IA' })
   @Header('Cache-Control', 'no-store')
   @ApiOkResponse({ standardSchema: AiSavedConfigSchema })
   configure(@Body({ schema: AiSessionInputSchema }) input: AiSessionInput): Promise<AiSavedConfig> {
@@ -83,6 +92,10 @@ export class AdminAiController {
   }
 
   @Post('saved')
+  @ApiOperation({
+    operationId: 'connectSavedAiSession',
+    summary: 'Abre uma sessão do assistente com a configuração salva',
+  })
   @Header('Cache-Control', 'no-store')
   @ApiCreatedResponse({ standardSchema: AiChatStateSchema })
   connectSaved(): Promise<AiChatState> {
@@ -90,6 +103,10 @@ export class AdminAiController {
   }
 
   @Get('history')
+  @ApiOperation({
+    operationId: 'listAiHistory',
+    summary: 'Lista o histórico de conversas do assistente',
+  })
   @Header('Cache-Control', 'no-store')
   @ApiOkResponse({ standardSchema: AiHistoryPageSchema })
   list(@Query({ schema: AiHistoryQuerySchema }) query: AiHistoryQuery): Promise<AiHistoryPage> {
@@ -97,6 +114,7 @@ export class AdminAiController {
   }
 
   @Get('history/:id')
+  @ApiOperation({ operationId: 'getAiHistory', summary: 'Lê uma conversa arquivada do assistente' })
   @Header('Cache-Control', 'no-store')
   @ApiOkResponse({ standardSchema: AiHistoryDetailSchema })
   archived(@Param('id') id: string): Promise<AiHistoryDetail> {
@@ -104,6 +122,7 @@ export class AdminAiController {
   }
 
   @Post()
+  @ApiOperation({ operationId: 'createAiSession', summary: 'Abre uma sessão do assistente IA' })
   @Header('Cache-Control', 'no-store')
   @ApiCreatedResponse({ standardSchema: AiChatStateSchema })
   connect(@Body({ schema: AiSessionInputSchema }) input: AiSessionInput): Promise<AiChatState> {
@@ -111,6 +130,7 @@ export class AdminAiController {
   }
 
   @Get(':id')
+  @ApiOperation({ operationId: 'getAiSession', summary: 'Lê o estado de uma sessão do assistente' })
   @Header('Cache-Control', 'no-store')
   @ApiOkResponse({ standardSchema: AiChatStateSchema })
   state(@Param('id') id: string): AiChatState {
@@ -118,6 +138,7 @@ export class AdminAiController {
   }
 
   @Post(':id/messages')
+  @ApiOperation({ operationId: 'sendAiMessage', summary: 'Envia uma mensagem ao assistente' })
   @Header('Cache-Control', 'no-store')
   @ApiCreatedResponse({ standardSchema: AiChatStateSchema })
   message(
@@ -128,6 +149,10 @@ export class AdminAiController {
   }
 
   @Post(':id/actions/:actionId')
+  @ApiOperation({
+    operationId: 'decideAiAction',
+    summary: 'Aprova ou rejeita uma ação proposta pelo assistente',
+  })
   @Header('Cache-Control', 'no-store')
   @ApiCreatedResponse({ standardSchema: AiChatStateSchema })
   decide(
@@ -139,6 +164,7 @@ export class AdminAiController {
   }
 
   @Delete(':id')
+  @ApiOperation({ operationId: 'deleteAiSession', summary: 'Encerra uma sessão do assistente' })
   @HttpCode(204)
   disconnect(@Param('id') id: string): void {
     this.ai.disconnect(owner(this.adminConfig), id);
@@ -158,6 +184,10 @@ export class AdminAiStreamController {
   ) {}
 
   @Post(':id/messages/stream')
+  @ApiOperation({
+    operationId: 'streamAiMessage',
+    summary: 'Envia uma mensagem ao assistente com resposta em SSE',
+  })
   @HttpCode(200)
   @AiStreamDocs()
   streamMessage(
@@ -171,6 +201,10 @@ export class AdminAiStreamController {
   }
 
   @Post(':id/actions/:actionId/stream')
+  @ApiOperation({
+    operationId: 'streamAiAction',
+    summary: 'Decide uma ação proposta com resposta em SSE',
+  })
   @HttpCode(200)
   @AiStreamDocs()
   streamDecision(

@@ -46,9 +46,9 @@ export class LeagueController {
   constructor(@Inject(LeagueUseCase) private readonly league: LeagueUseCase) {}
 
   @Post('league')
+  @ApiOperation({ operationId: 'getLeague', summary: 'Lê a divisão e a classificação do jogador' })
   @HttpCode(200)
   @ApiBearerAuth('bearer')
-  @ApiOperation({ operationId: 'getLeague' })
   @ApiOkResponse({ standardSchema: LeagueStatusResponseSchema })
   async open(
     @Body({ schema: DiscordIdentityDtoSchema }) identity: DiscordIdentityDto,
@@ -57,9 +57,9 @@ export class LeagueController {
   }
 
   @Post('ranked/queue')
+  @ApiOperation({ operationId: 'joinRankedQueue', summary: 'Entra na fila da partida ranqueada' })
   @HttpCode(200)
   @ApiBearerAuth('bearer')
-  @ApiOperation({ operationId: 'joinRankedQueue' })
   @ApiOkResponse({ standardSchema: QueueResponseSchema })
   async join(
     @Body({ schema: DiscordIdentityDtoSchema }) identity: DiscordIdentityDto,
@@ -68,21 +68,29 @@ export class LeagueController {
   }
 
   @Get('ranked/status/:discordUserId')
+  @ApiOperation({
+    operationId: 'getRankedStatus',
+    summary: 'Lê o estado do jogador na fila ranqueada',
+  })
   @ApiOkResponse({ standardSchema: QueueResponseSchema.nullable() })
   async status(@Param('discordUserId') discordUserId: string): Promise<QueueResponse | null> {
     return this.handle(() => this.league.status(discordUserId));
   }
 
   @Get('league/:discordUserId')
+  @ApiOperation({
+    operationId: 'getLeagueStatus',
+    summary: 'Lê a divisão e a classificação de um jogador',
+  })
   @ApiOkResponse({ standardSchema: LeagueStatusResponseSchema })
   async standings(@Param('discordUserId') discordUserId: string): Promise<LeagueStatusResponse> {
     return this.handle(() => this.league.standings(discordUserId));
   }
 
   @Post('matches/test')
+  @ApiOperation({ operationId: 'simulateTestMatch', summary: 'Simula um amistoso contra a CPU' })
   @HttpCode(200)
   @ApiBearerAuth('bearer')
-  @ApiOperation({ operationId: 'simulateTestMatch' })
   @ApiOkResponse({ standardSchema: TestMatchResponseSchema })
   async testMatch(
     @Body({ schema: TestMatchRequestSchema }) input: TestMatchRequest,
@@ -98,6 +106,7 @@ export class LeagueController {
   }
 
   @Get('matches/:matchId')
+  @ApiOperation({ operationId: 'getMatch', summary: 'Lê o resultado e os eventos de uma partida' })
   @ApiOkResponse({ standardSchema: MatchResponseSchema })
   async match(@Param('matchId') matchId: string): Promise<MatchResponse> {
     return this.handle(() => this.league.match(matchId));

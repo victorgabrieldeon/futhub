@@ -12,7 +12,14 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiConsumes, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
@@ -33,18 +40,21 @@ export class AdminPacksController {
   constructor(@Inject(AdminPacksService) private readonly packs: AdminPacksService) {}
 
   @Get()
+  @ApiOperation({ operationId: 'listAdminPacks', summary: 'Lista Packs' })
   @ApiOkResponse({ standardSchema: z.array(AdminPackSchema) })
   list(): Promise<AdminPack[]> {
     return this.packs.list();
   }
 
   @Post()
+  @ApiOperation({ operationId: 'createAdminPack', summary: 'Cria um Pack' })
   @ApiCreatedResponse({ standardSchema: AdminPackSchema })
   create(@Body({ schema: AdminPackInputSchema }) input: AdminPackInput): Promise<AdminPack> {
     return this.packs.create(input);
   }
 
   @Put(':id')
+  @ApiOperation({ operationId: 'updateAdminPack', summary: 'Atualiza um Pack' })
   @ApiOkResponse({ standardSchema: AdminPackSchema })
   update(
     @Param('id') id: string,
@@ -54,6 +64,7 @@ export class AdminPacksController {
   }
 
   @Put(':id/image')
+  @ApiOperation({ operationId: 'uploadAdminPackImage', summary: 'Envia a imagem de um Pack' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
@@ -66,6 +77,7 @@ export class AdminPacksController {
   }
 
   @Delete(':id')
+  @ApiOperation({ operationId: 'deleteAdminPack', summary: 'Remove um Pack' })
   @ApiOkResponse({ standardSchema: AdminPackSchema })
   remove(@Param('id') id: string): Promise<AdminPack> {
     return this.packs.disable(id);

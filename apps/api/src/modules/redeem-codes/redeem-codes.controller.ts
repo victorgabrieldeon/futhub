@@ -27,11 +27,8 @@ export class RedeemCodesController {
    * @returns Item concedido ou motivo da recusa.
    */
   @Post('resgatar')
+  @ApiOperation({ operationId: 'redeemCode', summary: 'Resgata um código promocional' })
   @HttpCode(200)
-  @ApiOperation({
-    operationId: 'redeemCode',
-    summary: 'Resgata um Código de resgate para o jogador.',
-  })
   @ApiOkResponse({
     standardSchema: ResgatarCodigoResponseSchema,
     description: 'Item concedido ou motivo da recusa.',

@@ -12,7 +12,7 @@ import {
 } from './bot-responses.dto.js';
 import { BotResponsesService } from './bot-responses.service.js';
 
-@ApiTags('Admin bot responses')
+@ApiTags('Administração / Respostas do bot')
 @ApiBearerAuth('bearer')
 @Controller('v1/admin/bot-responses')
 @UseGuards(AdminAuthGuard)
@@ -20,21 +20,30 @@ export class AdminBotResponsesController {
   constructor(@Inject(BotResponsesService) private readonly responses: BotResponsesService) {}
 
   @Get('schema')
-  @ApiOperation({ operationId: 'getBotResponseSchema' })
+  @ApiOperation({
+    operationId: 'getBotResponseSchema',
+    summary: 'Lê o catálogo de respostas configuráveis do bot',
+  })
   @ApiOkResponse({ standardSchema: z.array(BotResponseDefinitionDtoSchema) })
   schema(): BotResponseDefinitionDto[] {
     return this.responses.schema();
   }
 
   @Get(':key')
-  @ApiOperation({ operationId: 'getAdminBotResponse' })
+  @ApiOperation({
+    operationId: 'getAdminBotResponse',
+    summary: 'Lê o template editável de uma resposta do bot',
+  })
   @ApiOkResponse({ standardSchema: BotResponseTemplateDtoSchema })
   get(@Param('key') key: string): Promise<BotResponseTemplateDto> {
     return this.responses.get(key);
   }
 
   @Put(':key')
-  @ApiOperation({ operationId: 'updateBotResponse' })
+  @ApiOperation({
+    operationId: 'updateBotResponse',
+    summary: 'Salva o template de uma resposta do bot',
+  })
   @ApiOkResponse({ standardSchema: BotResponseTemplateDtoSchema })
   update(
     @Param('key') key: string,
@@ -44,7 +53,7 @@ export class AdminBotResponsesController {
   }
 }
 
-@ApiTags('Bot responses')
+@ApiTags('Respostas do bot')
 @ApiBearerAuth('bearer')
 @Controller('v1/bot-responses')
 @UseGuards(InternalAuthGuard)
@@ -52,7 +61,10 @@ export class BotResponsesController {
   constructor(@Inject(BotResponsesService) private readonly responses: BotResponsesService) {}
 
   @Get(':key')
-  @ApiOperation({ operationId: 'getBotResponse' })
+  @ApiOperation({
+    operationId: 'getBotResponse',
+    summary: 'Lê o template em uso de uma resposta do bot',
+  })
   @ApiOkResponse({ standardSchema: BotResponseTemplateDtoSchema })
   get(@Param('key') key: string): Promise<BotResponseTemplateDto> {
     return this.responses.get(key);
