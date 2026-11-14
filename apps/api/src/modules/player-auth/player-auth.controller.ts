@@ -40,7 +40,7 @@ export class PlayerAuthController {
   start(@Res() reply: FastifyReply): void {
     const { state, url } = this.auth.authorizationUrl();
     reply.header('set-cookie', this.cookie(stateCookieName, state, 10 * 60));
-    reply.redirect(url);
+    reply.redirect(url, 302);
   }
 
   @Get('discord/callback')
@@ -58,7 +58,7 @@ export class PlayerAuthController {
       this.cookie(sessionCookieName, this.auth.serialize(session), this.auth.sessionMaxAge()),
       this.cookie(stateCookieName, '', 0),
     ]);
-    reply.redirect(this.auth.playerAppUrl());
+    reply.redirect(this.auth.playerAppUrl(), 302);
   }
 
   /** Config pública da Activity, lida em runtime para o build do front não depender de env. */
