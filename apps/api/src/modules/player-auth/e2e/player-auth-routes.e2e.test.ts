@@ -42,6 +42,12 @@ test('rotas de autenticação do jogador estão montadas e a sessão do cookie v
     playerSessionSecret,
   );
 
+  // Navegadores só seguem `location` em 3xx: o login web depende do 302.
+  const login = await app.inject({ method: 'GET', url: '/v1/auth/player/discord' });
+  expect(login.statusCode).toBe(302);
+  expect(login.headers.location).toMatch(/^https:\/\/discord\.com\/oauth2\/authorize\?/);
+  expect(String(login.headers['set-cookie'])).toContain('futhub_discord_oauth_state=');
+
   const config = await app.inject({ method: 'GET', url: '/v1/auth/player/activity' });
   expect(config.statusCode).toBe(200);
   expect(config.json()).toEqual({ clientId: 'e2e-client-id', storageHost: 'minio.test' });
