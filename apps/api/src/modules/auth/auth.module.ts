@@ -4,6 +4,7 @@ import { AdminApiConfig, AdminAuthGuard } from './admin-auth.guard.js';
 import { AdminSessionController } from './admin-session.controller.js';
 import { AdminSessionService } from './admin-session.service.js';
 import { InternalApiConfig, InternalAuthGuard } from './internal-auth.guard.js';
+import { PlayerOrInternalAuthGuard } from './player-auth.guard.js';
 
 @Global()
 @Module({
@@ -14,6 +15,7 @@ import { InternalApiConfig, InternalAuthGuard } from './internal-auth.guard.js';
     AdminSessionService,
     AdminAuthGuard,
     InternalAuthGuard,
+    PlayerOrInternalAuthGuard,
   ],
   exports: [
     AdminApiConfig,
@@ -21,6 +23,7 @@ import { InternalApiConfig, InternalAuthGuard } from './internal-auth.guard.js';
     AdminSessionService,
     InternalApiConfig,
     InternalAuthGuard,
+    PlayerOrInternalAuthGuard,
   ],
 })
 export class AuthModule {}

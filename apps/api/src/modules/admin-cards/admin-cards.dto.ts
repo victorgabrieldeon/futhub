@@ -194,15 +194,17 @@ export type CollectionArtworkSuggestion = z.infer<typeof CollectionArtworkSugges
 export const PlayerPhotoSuggestionsQuerySchema = z.object({ q: z.string().min(2).max(100) });
 export type PlayerPhotoSuggestionsQuery = z.infer<typeof PlayerPhotoSuggestionsQuerySchema>;
 
-export const PlayerPhotoSuggestionSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  team: z.string(),
-  position: z.string(),
-  imageUrl: z.string(),
-  sourceUrl: z.string(),
-  provider: z.string(),
-});
+export const PlayerPhotoSuggestionSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    team: z.string(),
+    position: z.string(),
+    imageUrl: z.string(),
+    sourceUrl: z.string(),
+    provider: z.string(),
+  })
+  .meta({ id: 'PlayerPhotoSuggestion' });
 export type PlayerPhotoSuggestion = z.infer<typeof PlayerPhotoSuggestionSchema>;
 
 export const TeamInputSchema = z.object({

@@ -2,7 +2,7 @@ import {
   type MissionsResponse,
   type SellCardsResponse,
   getLeague,
-  getV1MatchesMatchId,
+  getMatch,
   joinRankedQueue,
   listMissions,
   request,
@@ -31,8 +31,7 @@ export const defaultTeamView = {
 export async function loadLeague(identity: Identity): Promise<LeaguePanelState> {
   refreshApiClient();
   const status = await getLeague(identity);
-  const match =
-    status.queue?.kind === 'matched' ? await getV1MatchesMatchId(status.queue.matchId) : null;
+  const match = status.queue?.kind === 'matched' ? await getMatch(status.queue.matchId) : null;
   return { status, match };
 }
 

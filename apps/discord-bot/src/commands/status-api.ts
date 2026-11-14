@@ -1,4 +1,4 @@
-import { healthControllerHealth } from '@futhub/api-client';
+import { getHealth } from '@futhub/api-client';
 import { Declare } from 'seyfert';
 import type { CommandContext } from 'seyfert';
 
@@ -10,7 +10,7 @@ export default class StatusApiCommand extends FutHubCommand {
   async run(context: CommandContext): Promise<void> {
     await this.respond(context, 'status-api', async () => {
       const startedAt = Date.now();
-      const { status } = await healthControllerHealth();
+      const { status } = await getHealth();
       return status === 'ok'
         ? notice('success', 'Servidor online', `Respondeu em ${Date.now() - startedAt} ms.`)
         : notice('error', 'Servidor indisponível', 'O jogo pode falhar até ele voltar.');

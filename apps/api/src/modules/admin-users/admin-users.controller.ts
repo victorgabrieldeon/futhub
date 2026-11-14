@@ -1,6 +1,17 @@
-import { TypedRoute } from '@nestia/core';
-import { Body, Controller, Inject, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { AdminAuthGuard } from '../auth/admin-auth.guard.js';
 import {
@@ -9,12 +20,15 @@ import {
   type AdminUserCardsInput,
   AdminUserCardsInputSchema,
   type AdminUserDetail,
+  AdminUserDetailSchema,
   type AdminUserListQuery,
   AdminUserListQuerySchema,
   type AdminUserOptions,
+  AdminUserOptionsSchema,
   type AdminUserPackInput,
   AdminUserPackInputSchema,
   type AdminUserPage,
+  AdminUserPageSchema,
   type AdminUserProfileInput,
   AdminUserProfileInputSchema,
 } from './admin-users.dto.js';
@@ -26,24 +40,35 @@ import { AdminUsersService } from './admin-users.service.js';
 export class AdminUsersController {
   constructor(@Inject(AdminUsersService) private readonly users: AdminUsersService) {}
 
-  @TypedRoute.Get()
+  @Get()
+  @ApiOperation({ operationId: 'listAdminUsers', summary: 'Lista jogadores' })
+  @ApiOkResponse({ standardSchema: AdminUserPageSchema })
   list(
     @Query({ schema: AdminUserListQuerySchema }) query: AdminUserListQuery,
   ): Promise<AdminUserPage> {
     return this.users.list(query);
   }
 
-  @TypedRoute.Get('options')
+  @Get('options')
+  @ApiOperation({
+    operationId: 'getAdminUserOptions',
+    summary: 'Lista Cards, Packs e campos para editar jogadores',
+  })
+  @ApiOkResponse({ standardSchema: AdminUserOptionsSchema })
   options(): Promise<AdminUserOptions> {
     return this.users.options();
   }
 
-  @TypedRoute.Get(':id')
+  @Get(':id')
+  @ApiOperation({ operationId: 'getAdminUser', summary: 'Lê o perfil completo de um jogador' })
+  @ApiOkResponse({ standardSchema: AdminUserDetailSchema })
   detail(@Param('id', ParseUUIDPipe) id: string): Promise<AdminUserDetail> {
     return this.users.detail(id);
   }
 
-  @TypedRoute.Put(':id')
+  @Put(':id')
+  @ApiOperation({ operationId: 'updateAdminUser', summary: 'Atualiza o perfil de um jogador' })
+  @ApiOkResponse({ standardSchema: AdminUserDetailSchema })
   updateProfile(
     @Param('id', ParseUUIDPipe) id: string,
     @Body({ schema: AdminUserProfileInputSchema }) input: AdminUserProfileInput,
@@ -51,7 +76,9 @@ export class AdminUsersController {
     return this.users.updateProfile(id, input);
   }
 
-  @TypedRoute.Post(':id/balance')
+  @Post(':id/balance')
+  @ApiOperation({ operationId: 'adjustAdminUserBalance', summary: 'Ajusta o saldo de um jogador' })
+  @ApiCreatedResponse({ standardSchema: AdminUserDetailSchema })
   adjustBalance(
     @Param('id', ParseUUIDPipe) id: string,
     @Body({ schema: AdminUserBalanceInputSchema }) input: AdminUserBalanceInput,
@@ -59,7 +86,9 @@ export class AdminUsersController {
     return this.users.adjustBalance(id, input);
   }
 
-  @TypedRoute.Post(':id/cards')
+  @Post(':id/cards')
+  @ApiOperation({ operationId: 'addAdminUserCards', summary: 'Concede Cards a um jogador' })
+  @ApiCreatedResponse({ standardSchema: AdminUserDetailSchema })
   addCards(
     @Param('id', ParseUUIDPipe) id: string,
     @Body({ schema: AdminUserCardsInputSchema }) input: AdminUserCardsInput,
@@ -67,7 +96,9 @@ export class AdminUsersController {
     return this.users.addCards(id, input);
   }
 
-  @TypedRoute.Delete(':id/cards/:userCardId')
+  @Delete(':id/cards/:userCardId')
+  @ApiOperation({ operationId: 'removeAdminUserCard', summary: 'Remove um Card de um jogador' })
+  @ApiOkResponse({ standardSchema: AdminUserDetailSchema })
   removeCard(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('userCardId', ParseUUIDPipe) userCardId: string,
@@ -75,7 +106,12 @@ export class AdminUsersController {
     return this.users.removeCard(id, userCardId);
   }
 
-  @TypedRoute.Put(':id/packs/:packId')
+  @Put(':id/packs/:packId')
+  @ApiOperation({
+    operationId: 'setAdminUserPack',
+    summary: 'Define a quantidade de um Pack de um jogador',
+  })
+  @ApiOkResponse({ standardSchema: AdminUserDetailSchema })
   setPack(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('packId', ParseUUIDPipe) packId: string,
@@ -84,7 +120,9 @@ export class AdminUsersController {
     return this.users.setPack(id, packId, input);
   }
 
-  @TypedRoute.Put(':id/fields/:fieldId')
+  @Put(':id/fields/:fieldId')
+  @ApiOperation({ operationId: 'grantAdminUserField', summary: 'Concede um campo a um jogador' })
+  @ApiOkResponse({ standardSchema: AdminUserDetailSchema })
   grantField(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('fieldId', ParseUUIDPipe) fieldId: string,
@@ -92,7 +130,9 @@ export class AdminUsersController {
     return this.users.grantField(id, fieldId);
   }
 
-  @TypedRoute.Delete(':id/fields/:fieldId')
+  @Delete(':id/fields/:fieldId')
+  @ApiOperation({ operationId: 'revokeAdminUserField', summary: 'Remove um campo de um jogador' })
+  @ApiOkResponse({ standardSchema: AdminUserDetailSchema })
   revokeField(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('fieldId', ParseUUIDPipe) fieldId: string,

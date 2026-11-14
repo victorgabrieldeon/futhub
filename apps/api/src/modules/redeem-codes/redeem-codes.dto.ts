@@ -20,65 +20,73 @@ export const RedeemRewardDtoSchema = z.object({
 });
 export type RedeemRewardDto = z.infer<typeof RedeemRewardDtoSchema>;
 
-export const ResgatarCodigoResponseSchema = z.discriminatedUnion('kind', [
-  z.object({
-    kind: z.enum(['success']),
-    code: z.string(),
-    reward: RedeemRewardDtoSchema,
-    balance: z.number().int(),
-  }),
-  z.object({
-    kind: z.enum(['rejected']),
-    reason: z.enum([
-      'not_found',
-      'inactive',
-      'expired',
-      'already_redeemed',
-      'exhausted',
-      'inventory_full',
-    ]),
-  }),
-]);
+export const ResgatarCodigoResponseSchema = z
+  .discriminatedUnion('kind', [
+    z.object({
+      kind: z.enum(['success']),
+      code: z.string(),
+      reward: RedeemRewardDtoSchema,
+      balance: z.number().int(),
+    }),
+    z.object({
+      kind: z.enum(['rejected']),
+      reason: z.enum([
+        'not_found',
+        'inactive',
+        'expired',
+        'already_redeemed',
+        'exhausted',
+        'inventory_full',
+      ]),
+    }),
+  ])
+  .meta({ id: 'RedeemCodeResponse' });
 export type ResgatarCodigoResponse = z.infer<typeof ResgatarCodigoResponseSchema>;
 
-export const AdminRedeemCodeInputSchema = z.object({
-  code: z.string().min(1).max(100),
-  reward: z.object({
-    type: RedeemRewardTypeSchema,
-    amount: z.number().int().min(1).max(1_000_000),
-    resourceId: z.uuid().nullable(),
-  }),
-  maxClaims: z.number().int().min(1).nullable(),
-  expiresAt: z.iso.datetime({ offset: true }).nullable(),
-  active: z.boolean(),
-});
+export const AdminRedeemCodeInputSchema = z
+  .object({
+    code: z.string().min(1).max(100),
+    reward: z.object({
+      type: RedeemRewardTypeSchema,
+      amount: z.number().int().min(1).max(1_000_000),
+      resourceId: z.uuid().nullable(),
+    }),
+    maxClaims: z.number().int().min(1).nullable(),
+    expiresAt: z.iso.datetime({ offset: true }).nullable(),
+    active: z.boolean(),
+  })
+  .meta({ id: 'AdminRedeemCodeInput' });
 export type AdminRedeemCodeInput = z.infer<typeof AdminRedeemCodeInputSchema>;
 
-export const AdminRedeemCodeSchema = z.object({
-  id: z.uuid(),
-  code: z.string(),
-  active: z.boolean(),
-  maxClaims: z.number().int().nullable(),
-  expiresAt: z.iso.datetime().nullable(),
-  createdAt: z.iso.datetime(),
-  claims: z.number().int().min(0),
-  /** Code and reward are immutable once the first Resgate happened. */
-  locked: z.boolean(),
-  reward: z.object({
-    itemId: z.uuid(),
-    type: RedeemRewardTypeSchema,
-    amount: z.number().int().min(1),
-    resourceId: z.uuid().nullable(),
-    resourceName: z.string().nullable(),
-  }),
-});
+export const AdminRedeemCodeSchema = z
+  .object({
+    id: z.uuid(),
+    code: z.string(),
+    active: z.boolean(),
+    maxClaims: z.number().int().nullable(),
+    expiresAt: z.iso.datetime().nullable(),
+    createdAt: z.iso.datetime(),
+    claims: z.number().int().min(0),
+    /** Code and reward are immutable once the first Resgate happened. */
+    locked: z.boolean(),
+    reward: z.object({
+      itemId: z.uuid(),
+      type: RedeemRewardTypeSchema,
+      amount: z.number().int().min(1),
+      resourceId: z.uuid().nullable(),
+      resourceName: z.string().nullable(),
+    }),
+  })
+  .meta({ id: 'AdminRedeemCode' });
 export type AdminRedeemCode = z.infer<typeof AdminRedeemCodeSchema>;
 
 const ResourceOptionSchema = z.object({ id: z.uuid(), name: z.string() });
 
-export const AdminRedeemCodeOptionsSchema = z.object({
-  cards: z.array(ResourceOptionSchema),
-  packs: z.array(ResourceOptionSchema),
-  fields: z.array(ResourceOptionSchema),
-});
+export const AdminRedeemCodeOptionsSchema = z
+  .object({
+    cards: z.array(ResourceOptionSchema),
+    packs: z.array(ResourceOptionSchema),
+    fields: z.array(ResourceOptionSchema),
+  })
+  .meta({ id: 'AdminRedeemCodeOptions' });
 export type AdminRedeemCodeOptions = z.infer<typeof AdminRedeemCodeOptionsSchema>;

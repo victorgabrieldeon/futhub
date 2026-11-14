@@ -1,4 +1,4 @@
-import { type AdminUserPage, getV1AdminUsers } from '@futhub/api-client';
+import { type AdminUserPage, listAdminUsers } from '@futhub/api-client';
 import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { adminApiOptions } from '../../api/admin-client';
@@ -31,7 +31,7 @@ export function UsersPage() {
   useEffect(() => {
     let active = true;
     setError('');
-    void getV1AdminUsers({ query: query || undefined, page, pageSize }, adminApiOptions())
+    void listAdminUsers({ query: query || undefined, page, pageSize }, adminApiOptions())
       .then((loaded) => {
         if (active) setResult(loaded);
       })

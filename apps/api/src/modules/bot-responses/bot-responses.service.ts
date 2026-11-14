@@ -1,15 +1,18 @@
 import { validateTemplate } from '@futhub/bot-templates';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import typia from 'typia';
 
 import { botResponseCatalog } from './bot-responses.catalog.js';
-import type { BotResponseDefinitionDto, BotResponseTemplateDto } from './bot-responses.dto.js';
+import {
+  type BotResponseDefinitionDto,
+  type BotResponseTemplateDto,
+  BotResponseTemplateDtoSchema,
+} from './bot-responses.dto.js';
 
 export function validateBotResponse(
   definition: BotResponseDefinitionDto,
   input: BotResponseTemplateDto,
 ): void {
-  if (!typia.equals<BotResponseTemplateDto>(input))
+  if (!BotResponseTemplateDtoSchema.safeParse(input).success)
     throw new BadRequestException('Formato de resposta inválido.');
   // Shared with the admin editor and the bot renderer; also checks limits after expanding examples.
   const error = validateTemplate(definition, input);

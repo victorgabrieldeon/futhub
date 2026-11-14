@@ -1,4 +1,4 @@
-// Wire shape of a bot response. The API mirrors these with typia tags in bot-responses.dto.ts.
+// Wire shape of a bot response. The API mirrors these with zod schemas in bot-responses.dto.ts.
 
 export type ButtonStyle = 'primary' | 'secondary' | 'success' | 'danger' | 'link';
 

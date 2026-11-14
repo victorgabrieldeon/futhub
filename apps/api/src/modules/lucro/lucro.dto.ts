@@ -11,12 +11,8 @@ export const LucroEmbedDtoSchema = z.object({
 });
 export type LucroEmbedDto = z.infer<typeof LucroEmbedDtoSchema>;
 
-export const DiscordIdentityDtoSchema = z.object({
-  id: z.string().min(1).max(80),
-  name: z.string().min(1).max(80),
-  avatarUrl: z.url().max(2048).nullable(),
-});
-export type DiscordIdentityDto = z.infer<typeof DiscordIdentityDtoSchema>;
+// Mesmo schema da liga: um único objeto para o componente `DiscordIdentityDto` do OpenAPI.
+export { type DiscordIdentityDto, DiscordIdentityDtoSchema } from '../league/league.dto.js';
 
 export const LucroRewardDtoSchema = z.object({
   value: z.number(),
@@ -52,8 +48,7 @@ export const LucroCooldownResponseSchema = z.object({
 });
 export type LucroCooldownResponse = z.infer<typeof LucroCooldownResponseSchema>;
 
-export const LucroResponseSchema = z.discriminatedUnion('kind', [
-  LucroSuccessResponseSchema,
-  LucroCooldownResponseSchema,
-]);
+export const LucroResponseSchema = z
+  .discriminatedUnion('kind', [LucroSuccessResponseSchema, LucroCooldownResponseSchema])
+  .meta({ id: 'LucroResponse' });
 export type LucroResponse = z.infer<typeof LucroResponseSchema>;

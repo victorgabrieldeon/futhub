@@ -1,19 +1,32 @@
-import { SwaggerCustomizer, TypedRoute } from '@nestia/core';
-import { Body, Controller, HttpCode, Inject, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Inject,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { InternalAuthGuard } from '../auth/internal-auth.guard.js';
+import { PlayerOrInternalAuthGuard } from '../auth/player-auth.guard.js';
 import {
   type CardMarketCatalog,
+  CardMarketCatalogSchema,
   type CardMarketListQuery,
   CardMarketListQuerySchema,
   type CardMarketPage,
+  CardMarketPageSchema,
   type PurchaseCardRequest,
   PurchaseCardRequestSchema,
   type PurchaseCardResponse,
+  PurchaseCardResponseSchema,
   type SellCardsRequest,
   SellCardsRequestSchema,
   type SellCardsResponse,
+  SellCardsResponseSchema,
 } from './card-market.dto.js';
 import {
   ListCardCatalogUseCase,
@@ -23,8 +36,9 @@ import {
 } from './use-cases/card-market.use-case.js';
 
 @ApiTags('Mercado de cards')
+@ApiBearerAuth('bearer')
 @Controller('v1/cards')
-@UseGuards(InternalAuthGuard)
+@UseGuards(PlayerOrInternalAuthGuard)
 export class CardMarketController {
   constructor(
     @Inject(ListCardsUseCase) private readonly list: ListCardsUseCase,
@@ -33,32 +47,29 @@ export class CardMarketController {
     @Inject(SellCardsUseCase) private readonly sell: SellCardsUseCase,
   ) {}
 
-  @TypedRoute.Get()
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'listCardMarket';
-    route.security = [{ bearer: [] }];
-  })
+  @Get()
+  @ApiOperation({ operationId: 'listCardMarket', summary: 'Lista Cards à venda no mercado' })
+  @ApiOkResponse({ standardSchema: CardMarketPageSchema })
   listCards(
     @Query({ schema: CardMarketListQuerySchema }) query: CardMarketListQuery,
   ): Promise<CardMarketPage> {
     return this.list.execute(query);
   }
 
-  @TypedRoute.Get('catalog')
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'listCardMarketCatalog';
-    route.security = [{ bearer: [] }];
+  @Get('catalog')
+  @ApiOperation({
+    operationId: 'listCardMarketCatalog',
+    summary: 'Lista Times e Coleções para filtrar o mercado',
   })
+  @ApiOkResponse({ standardSchema: CardMarketCatalogSchema })
   listCatalog(): Promise<CardMarketCatalog> {
     return this.catalog.execute();
   }
 
-  @TypedRoute.Post(':cardId/purchase')
+  @Post(':cardId/purchase')
+  @ApiOperation({ operationId: 'purchaseCard', summary: 'Compra um Card do mercado' })
   @HttpCode(200)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'purchaseCard';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOkResponse({ standardSchema: PurchaseCardResponseSchema })
   async purchaseCard(
     @Param('cardId') cardId: string,
     @Body({ schema: PurchaseCardRequestSchema }) request: PurchaseCardRequest,
@@ -67,12 +78,10 @@ export class CardMarketController {
     return { ...result, completedMissions: [...result.completedMissions] };
   }
 
-  @TypedRoute.Post('sell')
+  @Post('sell')
+  @ApiOperation({ operationId: 'sellCards', summary: 'Vende Cards do elenco' })
   @HttpCode(200)
-  @SwaggerCustomizer(({ route }) => {
-    route.operationId = 'sellCards';
-    route.security = [{ bearer: [] }];
-  })
+  @ApiOkResponse({ standardSchema: SellCardsResponseSchema })
   async sellCards(
     @Body({ schema: SellCardsRequestSchema }) request: SellCardsRequest,
   ): Promise<SellCardsResponse> {

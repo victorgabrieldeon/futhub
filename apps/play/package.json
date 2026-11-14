@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
+    "predev": "pnpm --filter @futhub/api-client build",
     "dev": "vite",
     "start": "node server.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@discord/embedded-app-sdk": "2.5.0",
     "@fastify/static": "10.1.2",
+    "@futhub/api-client": "workspace:*",
     "fastify": "5.2.1",
     "react": "19.0.0",
     "react-dom": "19.0.0"

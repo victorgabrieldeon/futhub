@@ -24,7 +24,7 @@ function checkRefs(root: unknown, value: unknown = root): void {
 
 describe('AI provider wire schemas', () => {
   it.each(['openai', 'opencode-go', 'anthropic'] as const)(
-    'preserves self-contained typia schemas for %s',
+    'preserves self-contained zod schemas for %s',
     async (provider) => {
       const client = new AiHttpClient();
       const request = vi.spyOn(client, 'request').mockResolvedValue({

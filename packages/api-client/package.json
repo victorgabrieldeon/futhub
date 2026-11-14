@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "generate": "orval --config orval.config.ts --formatter prettier",
+    "generate": "orval --config orval.config.ts --formatter prettier && node scripts/finish-generated.mjs",
     "test": "tsx --test src/*.test.ts",
     "typecheck": "tsc --noEmit"
   },

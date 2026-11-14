@@ -1,34 +1,69 @@
 import { BadRequestException } from '@nestjs/common';
-import typia, { type tags } from 'typia';
-import type { CardInput, CollectionInput, TeamInput } from '../admin-cards/admin-cards.dto.js';
-import type { AdminPackInput } from '../admin-packs/admin-packs.dto.js';
+import type { JSONSchema7 } from 'ai';
+import { z } from 'zod';
+import {
+  CardInputSchema,
+  CollectionInputSchema,
+  TeamInputSchema,
+} from '../admin-cards/admin-cards.dto.js';
+import {
+  AdminPackConfigInputSchema,
+  AdminPackInputSchema,
+} from '../admin-packs/admin-packs.dto.js';
 import type { AiToolCall, AiToolDefinition } from './ai-provider.types.js';
 
-type Team = Omit<TeamInput, 'imageUrl'>;
-type Collection = Omit<CollectionInput, 'imageUrl' | 'overlayUrl' | 'bannerUrl'>;
-type Pack = Omit<AdminPackInput, 'imageUrl'>;
-type Search = {
-  query?: string & tags.MaxLength<100>;
-  page: number & tags.Type<'int32'> & tags.Minimum<1>;
-};
-type WebSearch = { query: string & tags.MinLength<1> & tags.MaxLength<400> };
-type TeamPlayerSearch = { team: string & tags.MinLength<2> & tags.MaxLength<100> };
-export type AiMutation =
-  | { name: 'create_team'; input: Team }
-  | { name: 'create_collection'; input: Collection }
-  | { name: 'create_card'; input: CardInput }
-  | { name: 'create_pack'; input: Pack };
-export type AiCommand =
-  | AiMutation
-  | { name: 'search_teams' | 'search_collections' | 'search_cards'; input: Search }
-  | { name: 'list_packs'; input: Record<string, never> }
-  | { name: 'search_team_players'; input: TeamPlayerSearch }
-  | { name: 'web_search'; input: WebSearch };
+// Strict objects: tool arguments with unknown keys are rejected, like the former typia `equals`.
+const Team = TeamInputSchema.omit({ imageUrl: true }).strict();
+const Collection = CollectionInputSchema.omit({
+  imageUrl: true,
+  overlayUrl: true,
+  bannerUrl: true,
+}).strict();
+const Card = CardInputSchema.strict();
+const Pack = AdminPackInputSchema.omit({ imageUrl: true })
+  .extend({ config: AdminPackConfigInputSchema.strict() })
+  .strict();
+const Search = z.strictObject({
+  query: z.string().max(100).optional(),
+  page: z.number().int().min(1),
+});
+// Providers may send `{}` for tools without arguments.
+const Empty = z.strictObject({});
+const WebSearch = z.strictObject({ query: z.string().min(1).max(400) });
+const TeamPlayerSearch = z.strictObject({ team: z.string().min(2).max(100) });
 
-const schemas =
-  typia.json.schemas<
-    [Team, Collection, CardInput, Pack, Search, Record<string, never>, WebSearch, TeamPlayerSearch]
-  >();
+const AiMutationSchema = z.discriminatedUnion('name', [
+  z.strictObject({ name: z.literal('create_team'), input: Team }),
+  z.strictObject({ name: z.literal('create_collection'), input: Collection }),
+  z.strictObject({ name: z.literal('create_card'), input: Card }),
+  z.strictObject({ name: z.literal('create_pack'), input: Pack }),
+]);
+export type AiMutation = z.infer<typeof AiMutationSchema>;
+
+const AiCommandSchema = z.discriminatedUnion('name', [
+  ...AiMutationSchema.options,
+  z.strictObject({
+    name: z.enum(['search_teams', 'search_collections', 'search_cards']),
+    input: Search,
+  }),
+  z.strictObject({ name: z.literal('list_packs'), input: Empty }),
+  z.strictObject({ name: z.literal('search_team_players'), input: TeamPlayerSearch }),
+  z.strictObject({ name: z.literal('web_search'), input: WebSearch }),
+]);
+export type AiCommand = z.infer<typeof AiCommandSchema>;
+
+function parameters(schema: z.ZodType): JSONSchema7 {
+  const { $schema: _, ...json } = z.toJSONSchema(schema, {
+    target: 'draft-07',
+    io: 'input',
+    unrepresentable: 'any',
+  });
+  return json;
+}
+
+const schemas = [Team, Collection, Card, Pack, Search, Empty, WebSearch, TeamPlayerSearch].map(
+  parameters,
+);
 const specs = [
   [
     'create_team',
@@ -78,11 +113,9 @@ const specs = [
   ],
 ] as const;
 export const aiTools: AiToolDefinition[] = specs.map(([name, description, index]) => {
-  const schema = schemas.schemas[index];
+  const schema = schemas[index];
   if (!schema) throw new BadRequestException('Schema de tool ausente.');
-  const root =
-    '$ref' in schema ? schemas.components.schemas?.[schema.$ref.split('/').at(-1) ?? ''] : schema;
-  return { name, description, parameters: { ...root, components: schemas.components } };
+  return { name, description, parameters: schema };
 });
 
 export function parseAiCommand(call: AiToolCall): AiCommand {
@@ -94,9 +127,12 @@ export function parseAiCommand(call: AiToolCall): AiCommand {
       throw new BadRequestException('Argumentos devem ser JSON válido.');
     throw error;
   }
-  const result = typia.validateEquals<AiCommand>({ name: call.name, input });
+  const result = AiCommandSchema.safeParse({ name: call.name, input });
   if (!result.success) {
-    const errors = result.errors.map(({ path, expected }) => ({ path, expected }));
+    const errors = result.error.issues.map((issue) => ({
+      path: ['$input', ...issue.path.map(String)].join('.'),
+      expected: issue.message,
+    }));
     throw new BadRequestException(
       `Tool ou argumentos inválidos: ${JSON.stringify(errors).slice(0, 2000)}`,
     );

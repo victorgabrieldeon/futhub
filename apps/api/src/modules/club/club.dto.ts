@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { DiscordIdentityDtoSchema } from '../lucro/lucro.dto.js';
+import { DiscordIdentityDtoSchema } from '../league/league.dto.js';
 
 export const ClubRequestSchema = DiscordIdentityDtoSchema;
 export type ClubRequest = z.infer<typeof ClubRequestSchema>;
@@ -21,11 +21,13 @@ export const SponsorDtoSchema = z.object({
   completed: z.boolean(),
 });
 
-export const ClubResponseSchema = z.object({
-  balance: z.number().int(),
-  stadium: StadiumDtoSchema,
-  sponsor: SponsorDtoSchema,
-  payroll: z.number().int(),
-  projectedNet: z.number().int(),
-});
+export const ClubResponseSchema = z
+  .object({
+    balance: z.number().int(),
+    stadium: StadiumDtoSchema,
+    sponsor: SponsorDtoSchema,
+    payroll: z.number().int(),
+    projectedNet: z.number().int(),
+  })
+  .meta({ id: 'ClubEconomyResponse' });
 export type ClubResponse = z.infer<typeof ClubResponseSchema>;

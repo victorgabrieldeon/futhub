@@ -7,6 +7,7 @@ import type {
   TeamSession,
   TeamTab,
 } from '../features/team/team-session.js';
+import type { TestMatch } from '../features/test-match.js';
 import { cardArt } from './card-art.js';
 import { drawClubImage, stadiumIcon } from './club-image.js';
 import {
@@ -33,7 +34,6 @@ import {
   ui,
   write,
 } from './kit.js';
-import type { TestMatch } from '../features/test-match.js';
 import { CARD_RATIO, type CardFace, playerCard } from './player-card.js';
 import { cardsIcon, coinsIcon, crowd, pack, peopleIcon, star, strengthIcon } from './props.js';
 import { remoteImage } from './remote-image.js';

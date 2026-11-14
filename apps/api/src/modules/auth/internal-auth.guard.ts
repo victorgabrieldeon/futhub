@@ -28,10 +28,14 @@ export class InternalAuthGuard implements CanActivate {
       .switchToHttp()
       .getRequest<{ headers: { authorization?: string } }>().headers.authorization;
     if (!authorization?.startsWith('Bearer ')) throw new UnauthorizedException();
-    const received = Buffer.from(authorization.slice(7));
-    const expected = Buffer.from(this.config.token);
-    if (received.length !== expected.length || !timingSafeEqual(received, expected))
+    if (!isValidInternalToken(authorization.slice(7), this.config))
       throw new UnauthorizedException();
     return true;
   }
+}
+
+export function isValidInternalToken(token: string, config: InternalApiConfig): boolean {
+  const received = Buffer.from(token);
+  const expected = Buffer.from(config.token);
+  return received.length === expected.length && timingSafeEqual(received, expected);
 }

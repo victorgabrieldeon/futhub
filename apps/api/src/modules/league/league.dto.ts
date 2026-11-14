@@ -1,10 +1,12 @@
 import { z } from 'zod';
 
-export const DiscordIdentityDtoSchema = z.object({
-  id: z.string().min(1).max(80),
-  name: z.string().min(1).max(80),
-  avatarUrl: z.url().max(2048).nullable(),
-});
+export const DiscordIdentityDtoSchema = z
+  .object({
+    id: z.string().min(1).max(80),
+    name: z.string().min(1).max(80),
+    avatarUrl: z.url().max(2048).nullable(),
+  })
+  .meta({ id: 'DiscordIdentityDto' });
 export type DiscordIdentityDto = z.infer<typeof DiscordIdentityDtoSchema>;
 
 export const LeagueDivisionDtoSchema = z.object({
@@ -29,20 +31,21 @@ export const QueueMatchedResponseSchema = z.object({
 });
 export type QueueMatchedResponse = z.infer<typeof QueueMatchedResponseSchema>;
 
-export const QueueResponseSchema = z.discriminatedUnion('kind', [
-  QueueWaitingResponseSchema,
-  QueueMatchedResponseSchema,
-]);
+export const QueueResponseSchema = z
+  .discriminatedUnion('kind', [QueueWaitingResponseSchema, QueueMatchedResponseSchema])
+  .meta({ id: 'QueueResponse' });
 export type QueueResponse = z.infer<typeof QueueResponseSchema>;
 
-export const LeagueStatusResponseSchema = z.object({
-  points: z.number(),
-  wins: z.number(),
-  draws: z.number(),
-  losses: z.number(),
-  division: LeagueDivisionDtoSchema,
-  queue: QueueResponseSchema.nullable(),
-});
+export const LeagueStatusResponseSchema = z
+  .object({
+    points: z.number(),
+    wins: z.number(),
+    draws: z.number(),
+    losses: z.number(),
+    division: LeagueDivisionDtoSchema,
+    queue: QueueResponseSchema.nullable(),
+  })
+  .meta({ id: 'LeagueStatusResponse' });
 export type LeagueStatusResponse = z.infer<typeof LeagueStatusResponseSchema>;
 
 export const MatchEventDtoSchema = z.object({
@@ -57,15 +60,17 @@ export const MatchEventDtoSchema = z.object({
 });
 export type MatchEventDto = z.infer<typeof MatchEventDtoSchema>;
 
-export const MatchResponseSchema = z.object({
-  id: z.uuid(),
-  home: DiscordIdentityDtoSchema,
-  away: DiscordIdentityDtoSchema,
-  homeGoals: z.number(),
-  awayGoals: z.number(),
-  completedAt: z.iso.datetime(),
-  events: z.array(MatchEventDtoSchema),
-});
+export const MatchResponseSchema = z
+  .object({
+    id: z.uuid(),
+    home: DiscordIdentityDtoSchema,
+    away: DiscordIdentityDtoSchema,
+    homeGoals: z.number(),
+    awayGoals: z.number(),
+    completedAt: z.iso.datetime(),
+    events: z.array(MatchEventDtoSchema),
+  })
+  .meta({ id: 'MatchResponse' });
 export type MatchResponse = z.infer<typeof MatchResponseSchema>;
 
 export const CpuDifficultySchema = z.enum(['easy', 'medium', 'hard']);

@@ -8,6 +8,7 @@ import { GenericContainer, type StartedTestContainer, Wait } from 'testcontainer
 const execFileAsync = promisify(execFile);
 export const internalToken = 'test-token';
 export const adminToken = 'admin-test-token';
+export const playerSessionSecret = 'e2e-player-session-secret';
 
 export type E2eContext = Readonly<{
   app: NestFastifyApplication;
@@ -21,7 +22,8 @@ function restoreEnvironment(
     | 'API_INTERNAL_TOKEN'
     | 'ADMIN_API_TOKEN'
     | 'MINIO_BUCKET'
-    | 'MINIO_PUBLIC_URL',
+    | 'MINIO_PUBLIC_URL'
+    | 'PLAYER_SESSION_SECRET',
   value: string | undefined,
 ): void {
   if (value === undefined) delete process.env[name];
@@ -34,6 +36,7 @@ export async function startE2eContext(): Promise<E2eContext> {
   const adminApiToken = process.env.ADMIN_API_TOKEN;
   const minioBucket = process.env.MINIO_BUCKET;
   const minioPublicUrl = process.env.MINIO_PUBLIC_URL;
+  const sessionSecret = process.env.PLAYER_SESSION_SECRET;
   let container: StartedTestContainer | undefined;
   let database: typeof DatabaseModule | undefined;
   let app: NestFastifyApplication | undefined;
@@ -57,6 +60,7 @@ export async function startE2eContext(): Promise<E2eContext> {
     process.env.DATABASE_URL = `postgresql://futhub:futhub@${container.getHost()}:${container.getMappedPort(5432)}/futhub_e2e`;
     process.env.API_INTERNAL_TOKEN = internalToken;
     process.env.ADMIN_API_TOKEN = adminToken;
+    process.env.PLAYER_SESSION_SECRET = playerSessionSecret;
     process.env.MINIO_BUCKET ??= 'e2e';
     process.env.MINIO_PUBLIC_URL ??= 'https://minio.test';
     await execFileAsync('pnpm', ['--filter', '@futhub/database', 'db:migrate'], {
@@ -84,6 +88,7 @@ export async function startE2eContext(): Promise<E2eContext> {
         restoreEnvironment('ADMIN_API_TOKEN', adminApiToken);
         restoreEnvironment('MINIO_BUCKET', minioBucket);
         restoreEnvironment('MINIO_PUBLIC_URL', minioPublicUrl);
+        restoreEnvironment('PLAYER_SESSION_SECRET', sessionSecret);
       },
     };
   } catch (error) {
@@ -95,6 +100,7 @@ export async function startE2eContext(): Promise<E2eContext> {
     restoreEnvironment('ADMIN_API_TOKEN', adminApiToken);
     restoreEnvironment('MINIO_BUCKET', minioBucket);
     restoreEnvironment('MINIO_PUBLIC_URL', minioPublicUrl);
+    restoreEnvironment('PLAYER_SESSION_SECRET', sessionSecret);
     throw error;
   }
 }

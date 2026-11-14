@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AdminIcon } from '../components/admin-icon';
 
-import { ApiClientError, getV1AdminLucro } from '@futhub/api-client';
+import { ApiClientError, getLucroConfig } from '@futhub/api-client';
 import { adminApiOptions } from '../api/admin-client';
 import { LucroForm } from '../features/lucro-form';
 import type { LucroConfig } from '../lib/lucro';
@@ -53,7 +53,7 @@ export function LucroPage() {
 
   useEffect(() => {
     let active = true;
-    void getV1AdminLucro(adminApiOptions())
+    void getLucroConfig(adminApiOptions())
       .then((config) => {
         if (!active) return;
         const lucroConfig = config as LucroConfig;

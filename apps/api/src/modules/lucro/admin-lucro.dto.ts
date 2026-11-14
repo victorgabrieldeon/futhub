@@ -22,11 +22,13 @@ export const LucroEmbedDtoSchema = z.object({
 });
 export type LucroEmbedDto = z.infer<typeof LucroEmbedDtoSchema>;
 
-export const LucroConfigInputDtoSchema = z.object({
-  cooldownSeconds: z.number().int().min(1),
-  rewards: z.array(LucroRewardInputDtoSchema).min(1),
-  embed: LucroEmbedDtoSchema,
-});
+export const LucroConfigInputDtoSchema = z
+  .object({
+    cooldownSeconds: z.number().int().min(1),
+    rewards: z.array(LucroRewardInputDtoSchema).min(1),
+    embed: LucroEmbedDtoSchema,
+  })
+  .meta({ id: 'LucroConfigInputDto' });
 export type LucroConfigInputDto = z.infer<typeof LucroConfigInputDtoSchema>;
 
 export const LucroRewardDtoSchema = LucroRewardInputDtoSchema.extend({ id: z.uuid() });

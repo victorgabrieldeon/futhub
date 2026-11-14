@@ -7,28 +7,32 @@ export const AdminUserListQuerySchema = z.object({
 });
 export type AdminUserListQuery = z.infer<typeof AdminUserListQuerySchema>;
 
-export const AdminUserSummarySchema = z.object({
-  id: z.uuid(),
-  discordUserId: z.string(),
-  name: z.string(),
-  avatarUrl: z.string().nullable(),
-  balance: z.number().int(),
-  level: z.number().int(),
-  xp: z.number().int(),
-  booster: z.boolean(),
-  banned: z.boolean(),
-  cardCount: z.number().int().min(0),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-});
+export const AdminUserSummarySchema = z
+  .object({
+    id: z.uuid(),
+    discordUserId: z.string(),
+    name: z.string(),
+    avatarUrl: z.string().nullable(),
+    balance: z.number().int(),
+    level: z.number().int(),
+    xp: z.number().int(),
+    booster: z.boolean(),
+    banned: z.boolean(),
+    cardCount: z.number().int().min(0),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+  })
+  .meta({ id: 'AdminUserSummary' });
 export type AdminUserSummary = z.infer<typeof AdminUserSummarySchema>;
 
-export const AdminUserPageSchema = z.object({
-  items: z.array(AdminUserSummarySchema),
-  total: z.number().int().min(0),
-  page: z.number().int().min(1),
-  pageSize: z.number().int().min(1),
-});
+export const AdminUserPageSchema = z
+  .object({
+    items: z.array(AdminUserSummarySchema),
+    total: z.number().int().min(0),
+    page: z.number().int().min(1),
+    pageSize: z.number().int().min(1),
+  })
+  .meta({ id: 'AdminUserPage' });
 export type AdminUserPage = z.infer<typeof AdminUserPageSchema>;
 
 export const AdminUserCardSchema = z.object({
@@ -75,15 +79,17 @@ export const AdminUserDetailSchema = AdminUserSummarySchema.extend({
   fields: z.array(AdminUserFieldSchema),
   /** Most recent balance movements, newest first. */
   transactions: z.array(AdminUserTransactionSchema),
-});
+}).meta({ id: 'AdminUserDetail' });
 export type AdminUserDetail = z.infer<typeof AdminUserDetailSchema>;
 
-export const AdminUserProfileInputSchema = z.object({
-  level: z.number().int().min(1).max(1_000),
-  xp: z.number().int().min(0),
-  booster: z.boolean(),
-  banned: z.boolean(),
-});
+export const AdminUserProfileInputSchema = z
+  .object({
+    level: z.number().int().min(1).max(1_000),
+    xp: z.number().int().min(0),
+    booster: z.boolean(),
+    banned: z.boolean(),
+  })
+  .meta({ id: 'AdminUserProfileInput' });
 export type AdminUserProfileInput = z.infer<typeof AdminUserProfileInputSchema>;
 
 export const AdminUserBalanceInputSchema = z.object({
@@ -111,9 +117,11 @@ export type AdminUserPackInput = z.infer<typeof AdminUserPackInputSchema>;
 
 const ResourceOptionSchema = z.object({ id: z.uuid(), name: z.string() });
 
-export const AdminUserOptionsSchema = z.object({
-  cards: z.array(ResourceOptionSchema),
-  packs: z.array(ResourceOptionSchema),
-  fields: z.array(ResourceOptionSchema),
-});
+export const AdminUserOptionsSchema = z
+  .object({
+    cards: z.array(ResourceOptionSchema),
+    packs: z.array(ResourceOptionSchema),
+    fields: z.array(ResourceOptionSchema),
+  })
+  .meta({ id: 'AdminUserOptions' });
 export type AdminUserOptions = z.infer<typeof AdminUserOptionsSchema>;

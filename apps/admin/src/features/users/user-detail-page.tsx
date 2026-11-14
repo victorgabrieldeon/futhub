@@ -1,15 +1,15 @@
 import {
   type AdminUserDetail,
   type AdminUserOptions,
-  deleteV1AdminUsersIdCardsUserCardId,
-  deleteV1AdminUsersIdFieldsFieldId,
-  getV1AdminUsersId,
-  getV1AdminUsersOptions,
-  postV1AdminUsersIdBalance,
-  postV1AdminUsersIdCards,
-  putV1AdminUsersId,
-  putV1AdminUsersIdFieldsFieldId,
-  putV1AdminUsersIdPacksPackId,
+  addAdminUserCards,
+  adjustAdminUserBalance,
+  getAdminUser,
+  getAdminUserOptions,
+  grantAdminUserField,
+  removeAdminUserCard,
+  revokeAdminUserField,
+  setAdminUserPack,
+  updateAdminUser,
 } from '@futhub/api-client';
 import { type FormEvent, type KeyboardEvent, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
@@ -187,8 +187,7 @@ function BalancePanel({ user, onSaved }: Readonly<{ user: AdminUserDetail; onSav
       setError(result.error);
       return;
     }
-    if (await run(() => postV1AdminUsersIdBalance(user.id, result, adminApiOptions())))
-      setValue('');
+    if (await run(() => adjustAdminUserBalance(user.id, result, adminApiOptions()))) setValue('');
   }
 
   return (
@@ -247,7 +246,7 @@ function ProfilePanel({ user, onSaved }: Readonly<{ user: AdminUserDetail; onSav
     )
       return;
     await run(() =>
-      putV1AdminUsersId(
+      updateAdminUser(
         user.id,
         { level: Number(level), xp: Number(xp), booster, banned },
         adminApiOptions(),
@@ -334,7 +333,7 @@ function CardsPanel({
     event.preventDefault();
     if (
       await run(() =>
-        postV1AdminUsersIdCards(user.id, { cardId, quantity: Number(quantity) }, adminApiOptions()),
+        addAdminUserCards(user.id, { cardId, quantity: Number(quantity) }, adminApiOptions()),
       )
     )
       setQuantity('1');
@@ -343,7 +342,7 @@ function CardsPanel({
   function remove(card: AdminUserDetail['cards'][number]) {
     const lineup = card.holder ? ' Ele está escalado como titular.' : '';
     if (!window.confirm(`Remover ${card.name} (${card.overall}) do inventário?${lineup}`)) return;
-    void run(() => deleteV1AdminUsersIdCardsUserCardId(user.id, card.id, adminApiOptions()));
+    void run(() => removeAdminUserCard(user.id, card.id, adminApiOptions()));
   }
 
   return (
@@ -464,9 +463,7 @@ function PackRow({
   const [quantity, setQuantity] = useState(String(pack.quantity));
   const { pending, error, run } = useAction(onSaved);
   const save = (next: number) =>
-    void run(() =>
-      putV1AdminUsersIdPacksPackId(userId, pack.packId, { quantity: next }, adminApiOptions()),
-    );
+    void run(() => setAdminUserPack(userId, pack.packId, { quantity: next }, adminApiOptions()));
 
   return (
     <li className="users-item" aria-busy={pending}>
@@ -524,11 +521,7 @@ function PacksPanel({
   async function add(event: FormEvent) {
     event.preventDefault();
     const total = owned + Number(quantity);
-    if (
-      await run(() =>
-        putV1AdminUsersIdPacksPackId(user.id, packId, { quantity: total }, adminApiOptions()),
-      )
-    )
+    if (await run(() => setAdminUserPack(user.id, packId, { quantity: total }, adminApiOptions())))
       setQuantity('1');
   }
 
@@ -594,13 +587,12 @@ function FieldsPanel({
 
   async function grant(event: FormEvent) {
     event.preventDefault();
-    if (await run(() => putV1AdminUsersIdFieldsFieldId(user.id, fieldId, adminApiOptions())))
-      setFieldId('');
+    if (await run(() => grantAdminUserField(user.id, fieldId, adminApiOptions()))) setFieldId('');
   }
 
   function revoke(field: AdminUserDetail['fields'][number]) {
     if (!window.confirm(`Remover o campo ${field.name}?`)) return;
-    void run(() => deleteV1AdminUsersIdFieldsFieldId(user.id, field.fieldId, adminApiOptions()));
+    void run(() => revokeAdminUserField(user.id, field.fieldId, adminApiOptions()));
   }
 
   return (
@@ -699,10 +691,7 @@ export function UserDetailPage() {
   useEffect(() => {
     let active = true;
     setError('');
-    void Promise.all([
-      getV1AdminUsersId(id, adminApiOptions()),
-      getV1AdminUsersOptions(adminApiOptions()),
-    ])
+    void Promise.all([getAdminUser(id, adminApiOptions()), getAdminUserOptions(adminApiOptions())])
       .then(([loadedUser, loadedOptions]) => {
         if (!active) return;
         setUser(loadedUser);

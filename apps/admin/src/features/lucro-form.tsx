@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 
-import { ApiClientError, type LucroConfigInputDto, putV1AdminLucro } from '@futhub/api-client';
+import { ApiClientError, type LucroConfigInputDto, updateLucroConfig } from '@futhub/api-client';
 import { adminApiOptions } from '../api/admin-client';
 import type { LucroConfig, LucroReward, LucroRewardMessages } from '../lib/lucro';
 import { getLucroRewardTier } from '../lib/lucro-economy';
@@ -247,7 +247,7 @@ export function LucroForm({
     };
     let savedConfig: LucroConfig;
     try {
-      savedConfig = (await putV1AdminLucro(payload, adminApiOptions())) as LucroConfig;
+      savedConfig = (await updateLucroConfig(payload, adminApiOptions())) as LucroConfig;
     } catch (cause) {
       if (cause instanceof ApiClientError && cause.status === 401) window.location.assign('/login');
       else setError(cause instanceof ApiClientError ? cause.message : 'Não foi possível salvar.');

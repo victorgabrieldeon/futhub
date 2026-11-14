@@ -1,34 +1,34 @@
 import {
   ApiClientError,
-  type GetV1AdminCardsCollectionsParams,
-  type GetV1AdminCardsParams,
-  type GetV1AdminCardsTeamsParams,
-  deleteV1AdminCardsCardId,
-  deleteV1AdminCardsCollectionsCollectionId,
-  deleteV1AdminCardsTeamsTeamId,
-  getPostV1AdminCardsImportUrl,
-  getPostV1AdminCardsPreviewUrl,
-  getPutV1AdminCardsCardIdImageUrl,
-  getV1AdminCards,
-  getV1AdminCardsCatalog,
-  getV1AdminCardsCollectionArtworkSuggestions,
-  getV1AdminCardsCollections,
-  getV1AdminCardsSquadImportClubs,
-  getV1AdminCardsSquadImportLeagueClubs,
-  getV1AdminCardsSquadImportLeagues,
-  getV1AdminCardsSquadImportSquad,
-  getV1AdminCardsTeamLogoDetails,
-  getV1AdminCardsTeamLogoSuggestions,
-  getV1AdminCardsTeams,
-  getV1AdminCardsTemplate,
-  postV1AdminCards,
-  postV1AdminCardsCollections,
-  postV1AdminCardsSquadImport,
-  postV1AdminCardsTeams,
-  putV1AdminCardsCardId,
-  putV1AdminCardsCollectionsCollectionId,
-  putV1AdminCardsTeamsTeamId,
+  type ListAdminCardsParams,
+  type ListAdminCollectionsParams,
+  type ListAdminTeamsParams,
+  createAdminCard,
+  createAdminCollection,
+  createAdminTeam,
+  deleteAdminCard,
+  deleteAdminCollection,
+  deleteAdminTeam,
+  downloadCardImportTemplate,
+  getAdminCardCatalog,
+  getImportCardsUrl,
+  getPreviewCardImportUrl,
+  getSquadImportSquad,
+  getUploadAdminCardImageUrl,
+  listAdminCards,
+  listAdminCollections,
+  listAdminTeams,
+  listCollectionArtworkSuggestions,
+  listSquadImportClubs,
+  listSquadImportLeagueClubs,
+  listSquadImportLeagues,
+  listTeamLogoSuggestions,
   request,
+  importSquad as requestSquadImport,
+  getTeamLogoDetails as requestTeamLogoDetails,
+  updateAdminCard,
+  updateAdminCollection,
+  updateAdminTeam,
 } from '@futhub/api-client';
 import { adminApiOptions } from '../../api/admin-client';
 
@@ -68,9 +68,9 @@ export type CardMutationResult =
   | Readonly<{ ok: true; card: Card }>
   | Readonly<{ ok: false; error: string }>;
 export type Page<T> = { items: T[]; total: number; page: number; pageSize: number };
-export type CardFilters = Omit<GetV1AdminCardsParams, 'page' | 'pageSize'>;
-export type CollectionFilters = Omit<GetV1AdminCardsCollectionsParams, 'page' | 'pageSize'>;
-export type TeamFilters = Omit<GetV1AdminCardsTeamsParams, 'page' | 'pageSize'>;
+export type CardFilters = Omit<ListAdminCardsParams, 'page' | 'pageSize'>;
+export type CollectionFilters = Omit<ListAdminCollectionsParams, 'page' | 'pageSize'>;
+export type TeamFilters = Omit<ListAdminTeamsParams, 'page' | 'pageSize'>;
 export type Preview = {
   valid: boolean;
   createCount: number;
@@ -170,7 +170,7 @@ function adminMultipartRequest<T>(path: string, init: RequestInit): Promise<T> {
 }
 
 export async function getCatalog(): Promise<Catalog> {
-  return getV1AdminCardsCatalog(adminApiOptions()) as Promise<Catalog>;
+  return getAdminCardCatalog(adminApiOptions()) as Promise<Catalog>;
 }
 
 export async function listCards(
@@ -178,7 +178,7 @@ export async function listCards(
   pageSize: number,
   filters: CardFilters = {},
 ): Promise<Page<Card>> {
-  return getV1AdminCards({ page, pageSize, ...filters }, adminApiOptions()) as Promise<Page<Card>>;
+  return listAdminCards({ page, pageSize, ...filters }, adminApiOptions()) as Promise<Page<Card>>;
 }
 
 export async function listTeamCards(
@@ -186,7 +186,7 @@ export async function listTeamCards(
   page: number,
   pageSize: number,
 ): Promise<Page<Card>> {
-  return getV1AdminCards({ page, pageSize, teamId }, adminApiOptions()) as Promise<Page<Card>>;
+  return listAdminCards({ page, pageSize, teamId }, adminApiOptions()) as Promise<Page<Card>>;
 }
 
 export async function listCollections(
@@ -194,7 +194,7 @@ export async function listCollections(
   pageSize: number,
   filters: CollectionFilters = {},
 ): Promise<Page<Collection>> {
-  return getV1AdminCardsCollections({ page, pageSize, ...filters }, adminApiOptions()) as Promise<
+  return listAdminCollections({ page, pageSize, ...filters }, adminApiOptions()) as Promise<
     Page<Collection>
   >;
 }
@@ -204,15 +204,13 @@ export async function listTeams(
   pageSize: number,
   filters: TeamFilters = {},
 ): Promise<Page<Team>> {
-  return getV1AdminCardsTeams({ page, pageSize, ...filters }, adminApiOptions()) as Promise<
-    Page<Team>
-  >;
+  return listAdminTeams({ page, pageSize, ...filters }, adminApiOptions()) as Promise<Page<Team>>;
 }
 export async function searchCollectionArtworkSuggestions(
   query = '',
   signal?: AbortSignal,
 ): Promise<CollectionArtworkSuggestion[]> {
-  return getV1AdminCardsCollectionArtworkSuggestions(
+  return listCollectionArtworkSuggestions(
     { q: query },
     { ...adminApiOptions(), signal },
   ) as Promise<CollectionArtworkSuggestion[]>;
@@ -222,48 +220,43 @@ export async function searchTeamLogoSuggestions(
   query: string,
   signal?: AbortSignal,
 ): Promise<TeamLogoSuggestion[]> {
-  return getV1AdminCardsTeamLogoSuggestions(
-    { q: query },
-    { ...adminApiOptions(), signal },
-  ) as Promise<TeamLogoSuggestion[]>;
+  return listTeamLogoSuggestions({ q: query }, { ...adminApiOptions(), signal }) as Promise<
+    TeamLogoSuggestion[]
+  >;
 }
 
 export async function getTeamLogoDetails(
   slug: string,
   signal?: AbortSignal,
 ): Promise<TeamLogoDetails> {
-  return getV1AdminCardsTeamLogoDetails(
+  return requestTeamLogoDetails(
     { slug },
     { ...adminApiOptions(), signal },
   ) as Promise<TeamLogoDetails>;
 }
 
 export async function createCollection(input: CollectionInput): Promise<Collection> {
-  return postV1AdminCardsCollections(input, adminApiOptions()) as Promise<Collection>;
+  return createAdminCollection(input, adminApiOptions()) as Promise<Collection>;
 }
 
 export async function updateCollection(id: string, input: CollectionInput): Promise<Collection> {
-  return putV1AdminCardsCollectionsCollectionId(
-    id,
-    input,
-    adminApiOptions(),
-  ) as Promise<Collection>;
+  return updateAdminCollection(id, input, adminApiOptions()) as Promise<Collection>;
 }
 
 export async function removeCollection(id: string): Promise<void> {
-  await deleteV1AdminCardsCollectionsCollectionId(id, adminApiOptions());
+  await deleteAdminCollection(id, adminApiOptions());
 }
 
 export async function createTeam(input: TeamInput): Promise<Team> {
-  return postV1AdminCardsTeams(input, adminApiOptions()) as Promise<Team>;
+  return createAdminTeam(input, adminApiOptions()) as Promise<Team>;
 }
 
 export async function updateTeam(id: string, input: TeamInput): Promise<Team> {
-  return putV1AdminCardsTeamsTeamId(id, input, adminApiOptions()) as Promise<Team>;
+  return updateAdminTeam(id, input, adminApiOptions()) as Promise<Team>;
 }
 
 export async function removeTeam(id: string): Promise<void> {
-  await deleteV1AdminCardsTeamsTeamId(id, adminApiOptions());
+  await deleteAdminTeam(id, adminApiOptions());
 }
 
 async function cardMutation(action: () => Promise<Card>): Promise<CardMutationResult> {
@@ -277,7 +270,7 @@ async function cardMutation(action: () => Promise<Card>): Promise<CardMutationRe
 
 export async function createCard(input: Record<string, unknown>): Promise<CardMutationResult> {
   return cardMutation(
-    async () => postV1AdminCards(input as never, adminApiOptions()) as Promise<Card>,
+    async () => createAdminCard(input as never, adminApiOptions()) as Promise<Card>,
   );
 }
 
@@ -286,20 +279,20 @@ export async function updateCard(
   input: Record<string, unknown>,
 ): Promise<CardMutationResult> {
   return cardMutation(
-    async () => putV1AdminCardsCardId(id, input as never, adminApiOptions()) as Promise<Card>,
+    async () => updateAdminCard(id, input as never, adminApiOptions()) as Promise<Card>,
   );
 }
 
 export async function removeCard(id: string): Promise<void> {
-  await deleteV1AdminCardsCardId(id, adminApiOptions());
+  await deleteAdminCard(id, adminApiOptions());
 }
 
 export async function uploadCardImage(id: string, form: FormData): Promise<Card> {
-  return adminMultipartRequest(getPutV1AdminCardsCardIdImageUrl(id), { method: 'PUT', body: form });
+  return adminMultipartRequest(getUploadAdminCardImageUrl(id), { method: 'PUT', body: form });
 }
 
 export async function previewCards(form: FormData, signal?: AbortSignal): Promise<Preview> {
-  return adminMultipartRequest(getPostV1AdminCardsPreviewUrl(), {
+  return adminMultipartRequest(getPreviewCardImportUrl(), {
     method: 'POST',
     body: form,
     signal,
@@ -307,14 +300,14 @@ export async function previewCards(form: FormData, signal?: AbortSignal): Promis
 }
 
 export async function importCards(form: FormData): Promise<Preview> {
-  return adminMultipartRequest(getPostV1AdminCardsImportUrl(), { method: 'POST', body: form });
+  return adminMultipartRequest(getImportCardsUrl(), { method: 'POST', body: form });
 }
 
 export async function downloadCardsTemplate(): Promise<{
   filename: string;
   contentBase64: string;
 }> {
-  const template = await getV1AdminCardsTemplate(adminApiOptions());
+  const template = await downloadCardImportTemplate(adminApiOptions());
   return { filename: template.filename, contentBase64: template.content };
 }
 
@@ -322,24 +315,24 @@ export async function searchSquadImportClubs(
   query: string,
   signal?: AbortSignal,
 ): Promise<SquadImportClub[]> {
-  return getV1AdminCardsSquadImportClubs({ q: query }, { ...adminApiOptions(), signal });
+  return listSquadImportClubs({ q: query }, { ...adminApiOptions(), signal });
 }
 
 export async function loadSquadImportLeagues(): Promise<SquadImportLeague[]> {
-  return getV1AdminCardsSquadImportLeagues(adminApiOptions());
+  return listSquadImportLeagues(adminApiOptions());
 }
 
 export async function loadSquadImportLeagueClubs(
   leagueId: number,
   signal?: AbortSignal,
 ): Promise<SquadImportClub[]> {
-  return getV1AdminCardsSquadImportLeagueClubs({ leagueId }, { ...adminApiOptions(), signal });
+  return listSquadImportLeagueClubs({ leagueId }, { ...adminApiOptions(), signal });
 }
 
 export async function loadSquadImportPreview(
   source: Readonly<{ clubId: number } | { name: string }>,
 ): Promise<SquadImportPreview> {
-  return getV1AdminCardsSquadImportSquad(source, adminApiOptions()) as Promise<SquadImportPreview>;
+  return getSquadImportSquad(source, adminApiOptions()) as Promise<SquadImportPreview>;
 }
 
 export async function importSquad(
@@ -352,8 +345,5 @@ export async function importSquad(
     replaceImages?: boolean;
   }>,
 ): Promise<SquadImportResult> {
-  return postV1AdminCardsSquadImport(
-    input as Parameters<typeof postV1AdminCardsSquadImport>[0],
-    adminApiOptions(),
-  );
+  return requestSquadImport(input as Parameters<typeof requestSquadImport>[0], adminApiOptions());
 }

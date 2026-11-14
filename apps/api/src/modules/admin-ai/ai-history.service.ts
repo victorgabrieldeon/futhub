@@ -1,7 +1,12 @@
 import { and, db, desc, eq, schema, sql } from '@futhub/database';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import typia from 'typia';
-import type { AiHistoryDetail, AiHistoryPage } from './admin-ai.dto.js';
+import { z } from 'zod';
+import {
+  type AiHistoryDetail,
+  AiHistoryDetailSchema,
+  type AiHistoryPage,
+  AiHistoryPageSchema,
+} from './admin-ai.dto.js';
 import type { AiSession } from './ai-sessions.js';
 
 @Injectable()
@@ -54,7 +59,7 @@ export class AiHistoryService {
         .offset((page - 1) * 20),
       db.select({ total: sql<number>`count(*)::int` }).from(table).where(filter),
     ]);
-    return typia.assert<AiHistoryPage>({
+    return AiHistoryPageSchema.parse({
       items: items.map((item) => ({
         ...item,
         createdAt: item.createdAt.toISOString(),
@@ -67,15 +72,14 @@ export class AiHistoryService {
   }
 
   async get(owner: string, id: string): Promise<AiHistoryDetail> {
-    if (!typia.is<string & typia.tags.Format<'uuid'>>(id))
-      throw new NotFoundException('Conversa não encontrada.');
+    if (!z.uuid().safeParse(id).success) throw new NotFoundException('Conversa não encontrada.');
     const table = schema.adminAiHistory;
     const [row] = await db
       .select()
       .from(table)
       .where(and(eq(table.id, id), eq(table.owner, owner)));
     if (!row) throw new NotFoundException('Conversa não encontrada.');
-    return typia.assert<AiHistoryDetail>({
+    return AiHistoryDetailSchema.parse({
       id: row.id,
       title: row.title,
       provider: row.provider,
